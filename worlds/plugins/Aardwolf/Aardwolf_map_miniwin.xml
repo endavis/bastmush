@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- Saved on Saturday, June 30, 2007, 10:48  -->
+<!-- MuClient version 4.13 -->
+
+<muclient>
+<plugin
+   name="Aardwolf_Map_v2"
+   author="Nick Gammon/Bast"
+   id="86810b755a33169f0f1d9585"
+   language="Lua"
+   purpose="Redirects Aardwolf map messages to another pane"
+   date_written="2008-07-18"
+   requires="4.34"
+   version="1.1"
+   save_state="y"
+   >
+<description trim="y">
+Redirects the map to a mini window.
+</description>
+
+</plugin>
+
+<!--  Triggers  -->
+<triggers>
+  <trigger
+      enabled="y"
+      match="{coords}*"
+      send_to="12"
+      sequence="100"
+      script="process_coords"
+      omit_from_output="y"
+      />
+      
+  <trigger
+   enabled="y"
+   match="<MAPSTART>"
+   script="map_redirect"
+   omit_from_output="y"
+   name="map_start"
+   sequence="100"
+  >
+  </trigger>
+  
+  <trigger
+   enabled="n"
+   match="*"
+   script="map_redirect"
+   name="multi_line_map"
+   omit_from_output="y"
+   sequence="10"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="<MAPEND>"
+   script="map_redirect"
+   omit_from_output="y"
+   name="map_end"
+   sequence="5"
+  >
+  </trigger>
+    
+  <trigger
+   enabled="y"
+   match="You can now sense anger in your immediate area."
+   sequence="100"
+   send_to="12"
+  >
+  <send>SendNoEcho ("map")</send>
+  </trigger>
+    
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   script="togglewindow"
+   match="^togglemap$"
+   enabled="y"
+   regexp="y"
+   sequence="100"
+   ignore_case="y"
+  >
+  </alias>
+</aliases>
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+require "checkplugin"
+require "miniwin"
+require "tprint"
+require "stringfuncs"
+
+mapwin = Miniwindow{name="Map", header_height=2, width=31, height=19}
+mapwin:disable()
+
+map_lines = {}
+coords = nil
+
+-- showhide
+function togglewindow()
+  mapwin:togglewindow()
+end
+
+-- mousedown
+function mousedown (flags, hotspotid)
+  mapwin:mousedown(flags, hotspotid)
+end -- mousedown
+
+function process_coords ( name, line, wildcards, styles )
+  local tcoords = wildcards[1]
+  if tcoords == "-1" then
+    coords = nil
+    return
+  end
+  local tstyle = {}
+  style = {}
+  style.text = "["
+  style.len = #style.text
+  style.backcolour = mapwin.bg_colour
+  style.textcolour = 0x00D600
+  style.style = 0
+  table.insert (tstyle, style)    
+  style = {}
+  style.text = " Coords: "
+  style.len = #style.text
+  style.backcolour = mapwin.bg_colour
+  style.textcolour = 0xF0FFFF
+  style.style = 0
+  table.insert (tstyle, style)    
+  style = {}
+  style.text = tcoords
+  style.len = #style.text
+  style.backcolour = mapwin.bg_colour
+  style.textcolour = 0x00D600
+  style.style = 0
+  table.insert (tstyle, style)    
+  style = {}
+  style.text = "]"
+  style.len = #style.text
+  style.backcolour = mapwin.bg_colour
+  style.textcolour = 0x00D600
+  style.style = 0
+  table.insert (tstyle, style)   
+  
+  coords = tstyle
+end
+
+-- map redirector
+function map_redirect (name, line, wildcards, styles)
+  EnableTrigger ("multi_line_map", true)  -- capture subsequent lines
+
+  if name == "map_start" then
+    map_lines = {}
+  elseif name == "map_end" then
+    if coords then
+      map_lines[#map_lines - 1] = coords
+    end
+    EnableTrigger ("multi_line_map", false)  -- no more lines to go
+    mapwin:enable()
+    if #map_lines > 19 then
+      if strip(map_lines[2][1].text) == "" then
+        table.remove(map_lines, 2)
+      elseif strip(map_lines[3][1].text) == "" then
+        table.remove(map_lines, 3)
+      end
+    end
+    mapwin:createwin(map_lines)
+  else
+    for i,v in ipairs(styles) do
+      v.backcolour = "bg_colour"
+    end
+    table.insert (map_lines, styles)
+  end -- if
+
+end -- function map_redirect 
+
+function OnPluginInstall ()
+
+  if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    mapwin:disable()
+    return
+  end -- they didn't enable us last time
+  
+  OnPluginEnable ()  -- do initialization stuff
+  
+end -- OnPluginInstall
+
+-- pull in telnet option handling
+dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+  
+function OnPluginConnect ()
+  TelnetOptionOn (TELOPT_AUTOMAP)
+  TelnetOptionOff (TELOPT_SHORTMAP)
+  TelnetOptionOn (TELOPT_MAP)
+  TelnetOptionOn (TELOPT_ROOM_NAMES)
+  TelnetOptionOn (TELOPT_EXIT_NAMES)
+end -- function OnPluginConnect
+
+function OnPluginClose ()
+  -- if enabled
+  if GetPluginInfo (GetPluginID (), 17) then
+    TelnetOptionOff (TELOPT_MAP)
+    TelnetOptionOff (TELOPT_ROOM_NAMES)
+    TelnetOptionOff (TELOPT_EXIT_NAMES)
+  end -- if was enabled
+end -- OnPluginClose
+
+function OnPluginEnable ()
+ 
+  -- if we are connected when the plugin loads, it must have been reloaded whilst playing
+  if IsConnected () then
+    OnPluginConnect ()
+  end -- if already connected
+  mapwin:enable()
+  
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+  TelnetOptionOff (TELOPT_MAP)
+  TelnetOptionOff (TELOPT_ROOM_NAMES)
+  TelnetOptionOff (TELOPT_EXIT_NAMES)
+  
+  mapwin:disable()  
+end -- OnPluginDisable
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  --mapwin:savestate()
+end -- OnPluginSaveState
+
+]]>
+</script>
+</muclient>
