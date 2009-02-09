@@ -341,6 +341,7 @@ function OnPluginEnable ()
   status = tstatus or status
   if status.statestring == "active" then
     SendNoEcho "slist noprompt"
+    spellup_refresh()     
   end
 end -- OnPluginEnable
 
