@@ -1,5 +1,5 @@
 -- miniw.lua
-
+-- $Id$
 -- class for creating windows miniwindows
 
 -- Author: Eric Davis - 28th September 2008
