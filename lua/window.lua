@@ -79,6 +79,8 @@ function Window:initialize(args)
     self[i] = tvalue or v.default
   end
 
+  self.default_font = nil
+  self:getdefaultfont()
   self.skeys = sort_settings(self.set_options)
 
   self:changefont(self.font, true) 
@@ -116,6 +118,24 @@ function Window:checkfont(font)
   return found
 end
 
+function Window:getdefaultfont(font)
+  check (WindowCreate (self.win, 
+                 0, 0, 1, 1,  
+                 6,   -- top right
+                 0, 
+                 self.bg_colour) )
+
+  check (WindowFont (self.win, "--NoFont--", "--NoFont--", 8, false, false, false, false, 0, 49))  -- normal
+  
+  fonts = WindowFontList(self.win)
+
+  for i, v in pairs(fonts) do
+    self.default_font = string.lower(WindowFontInfo (self.win, v, 21))
+  end
+  
+end
+
+
 function Window:changefont(font, from_init)
   if not font then
     return
@@ -134,18 +154,21 @@ function Window:changefont(font, from_init)
   self.font_height = WindowFontInfo (self.win, self.font_id, 1) + 1 -- height
   self.font_width = WindowFontInfo (self.win, self.font_id, 6)  -- avg width
 
-  if from_init then
-    self.font = WindowFontInfo (self.win, self.font_id, 21)
-  else
-    found = self:checkfont(font)
+  found = self:checkfont(font)
 
-    if found then
-      self.font = font
-      return true
+  if found then
+    self.font = font
+    return true
+  else
+    print("Font", font, "not loaded for window", self.name)
+    if from_init then
+      print("Using", self.default_font)
+      self:changefont(self.default_font, true)
     else
+      print("Falling back to", oldfont)
       self:changefont(oldfont, true)
-      return false
     end
+    return false
   end
 
 end
