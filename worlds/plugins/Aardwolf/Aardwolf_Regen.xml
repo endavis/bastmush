@@ -110,7 +110,7 @@ function OnPluginEnable ()
   
   checkplugin ("18c24130ab326dc05b49420d", "Aardwolf Exits Detector")
   checkplugin ("8a710e0783b431c06d61a54c", "Aardwolf Stats Detector")
-  checkplugin ("f5b05e8826711cdb0d141939", "Aardwolf Playing Detector")
+  checkplugin ("3448fed8734053327438a4df", "Aardwolf State Detector")
 
 end
 
@@ -124,9 +124,9 @@ function OnPluginBroadcast (msg, id, name, text)
     oldstats = stats
     stats = GetPluginVariableList("8a710e0783b431c06d61a54c")    
   -- state change
-  elseif id == "f5b05e8826711cdb0d141939" then
+  elseif id == "3448fed8734053327438a4df" then
     oldstatus = status
-    status = GetPluginVariableList("f5b05e8826711cdb0d141939")
+    status = GetPluginVariableList("3448fed8734053327438a4df")
     if status.statestring == 'active' then
        checkstand()
     end

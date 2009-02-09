@@ -102,9 +102,10 @@ failed_attempt_count = {}  -- what we failed to cast
 skip = {}            -- ones we have decided to ignore for now
 stats = {}           -- table will be replaced by Stats_Detector plugin
 fdebug = false
+
 status = {
-  ["state"] = 1,
-  ["statestring"] = 'login',
+  state = 1,
+  statestring = 'login',
 }
 
 last_buff = os.time ()
@@ -309,7 +310,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   checkplugin ("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
-  checkplugin ("f5b05e8826711cdb0d141939", "Playing_Detector.xml")
+  checkplugin ("3448fed8734053327438a4df", "State_Detector.xml")
  
   -- ensure world file exists
   local w = get_a_world (affect_world, folder)
@@ -335,7 +336,8 @@ function OnPluginEnable ()
   end -- if already connected
   
   -- see if we are playing at install time
-  status = GetPluginVariableList("f5b05e8826711cdb0d141939")
+  tstatus = GetPluginVariableList("3448fed8734053327438a4df")
+  status = tstatus or status
   if status.statestring == "active" then
     Send "slist noprompt"
   end
@@ -452,8 +454,8 @@ function OnPluginBroadcast (msg, id, name, text)
     end    
     stats = GetPluginVariableList("8a710e0783b431c06d61a54c")    
   -- state change
-  elseif id == "f5b05e8826711cdb0d141939" then
-    status = GetPluginVariableList("f5b05e8826711cdb0d141939")
+  elseif id == "3448fed8734053327438a4df" then
+    status = GetPluginVariableList("3448fed8734053327438a4df")
   end -- if
 
   if old_state ~= status.state then

@@ -2,12 +2,12 @@
 <!DOCTYPE muclient>
 <muclient>
 <plugin
-   name="xPlaying_Detector"
-   author="Nick Gammon"
-   id="f5b05e8826711cdb0d141939"
+   name="xAardwolf_State_Detector"
+   author="Eric Davis"
+   id="3448fed8734053327438a4df"
    language="Lua"
-   purpose="Detects if you are actually playing."
-   date_written="2008-07-02"
+   purpose="Sends updates when the playing state changes"
+   date_written="2009-02-02"
    requires="4.28"
    version="1.0"
    >
@@ -16,20 +16,27 @@
 
 [FOR PLUGIN AUTHORS ONLY]
 
-Detects if you are playing (as opposed to logging in, creating
-a new character, etc.)
+Detects when there is a change in state
 
 Example:
 
   function OnPluginBroadcast (msg, id, name, text)
-    if id == "f5b05e8826711cdb0d141939" then
-      playing = text == "y"
+    if id == "3448fed8734053327438a4df" then
+      state = GetPluginVariable ("3448fed8734053327438a4df", "state")
+      statestring = GetPluginVariable ("3448fed8734053327438a4df", "statestring")
     end -- playing status changed
   end
 
 To test if you are currently playing (after a reinstall):
 
-  playing = GetPluginVariable ("f5b05e8826711cdb0d141939", "playing")
+  state = GetPluginVariable ("3448fed8734053327438a4df", "state")
+  
+You can also just do:
+  state = GetPluginVariable ("3448fed8734053327438a4df")
+  
+and then get the values by:
+  state.state
+  state.statestring
 
 </description>
 
@@ -69,31 +76,12 @@ function OnPluginTelnetOption (option)
 
   var.state = state
   var.statestring = statestrings[state]
+  
+  print("state is now", var.state)
 
   BroadcastPlugin(state, "y")
 
 end -- function
-
-function now_playing (name, line, wildcards)
-  if playing then
-    return
-  end -- if already playing
-
-   
-  playing = true
-  var.playing = "y"
-  BroadcastPlugin (1, "y")
-end -- now_playing
-
-function stopped_playing (name, line, wildcards)
-  if not playing then
-    return
-  end -- if already not playing
-
-  playing = false
-  var.playing = "n"
-  BroadcastPlugin (1, "n")
-end -- stopped_playing
 
 -- pull in telnet option handling
 dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
@@ -108,11 +96,11 @@ function OnPluginInstall ()
 end -- function OnPluginInstall
 
 function OnPluginDisconnect ()
-  stopped_playing ()
+  return
 end -- function OnPluginInstall
 
 function OnPluginConnect ()
-  stopped_playing ()  -- wait for playing message
+  return
 end -- function OnPluginConnect
 
 
