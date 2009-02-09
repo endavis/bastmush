@@ -1,3 +1,4 @@
+-- $Id$
 
 --[[
   Class library for lua 5.0 (& 5.1)
