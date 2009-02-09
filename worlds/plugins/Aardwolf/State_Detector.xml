@@ -62,7 +62,6 @@ statestrings = {
   [11] = 'resting'
   }
 
-playing = false
 var.statestring = statestrings[1]
 var.state = 1
 
