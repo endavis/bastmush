@@ -43,6 +43,7 @@ spellup other (name) --> try to spellup another player with all spellups
                           (eg. spellup other johnsmith)
                         
 spellup block   --> block a spell with another spell
+                           (eg. spellup block 68 121)
 spellup disable --> disable a spell without taking it out of the list
 
 spellup help    --> this message
@@ -339,7 +340,7 @@ function OnPluginEnable ()
   tstatus = GetPluginVariableList("3448fed8734053327438a4df")
   status = tstatus or status
   if status.statestring == "active" then
-    Send "slist noprompt"
+    SendNoEcho "slist noprompt"
   end
 end -- OnPluginEnable
 
@@ -1897,7 +1898,6 @@ function try_to_buff_us (reason)
                     "', skipping it for now.")
       else
         if spells[sn].skilltype == 1 then
-          --Send ("kill fom")
           Send ("cast '" .. spells [sn].name .. "'")
         else
           words = justWords(spells[sn].name)
