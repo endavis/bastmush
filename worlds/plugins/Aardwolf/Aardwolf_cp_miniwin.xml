@@ -7,9 +7,9 @@
 
 <muclient>
 <plugin
-   name="Aardwolf_Campaign_Noter_v2"
-   author="Nick Gammon"
-   id="23c3c91af0a26790c625f5d1"
+   name="Aardwolf_Campaign_Miniwindow"
+   author="Nick Gammon/Bast"
+   id="3743b98b021c1bee534ef093"
    language="Lua"
    purpose="Shows remaining campaign objectives"
    date_written="2008-07-22"
@@ -22,7 +22,7 @@
 Shows outstanding campaign objectives.
 
 To activate, type: cp check
-You are not currently on a campaign.
+
 TODO:
    add ability to colour mobs in scan
 ]]>
@@ -149,7 +149,7 @@ require 'miniwin'
 require 'stringfuncs'
 require 'tprint'
 
-cpwin = Miniwindow{name="CP", windowpos=7, font_size=8, font="Sylfaen"}
+cpwin = Miniwindow{name="CP", windowpos=7, font_size=7, font="Verdana"}
 cpwin:disable()
 
 mobs = {}
@@ -181,7 +181,7 @@ function campaign_item (name, line, wildcards)
   text = string.sub (text, 1, 1):upper () .. string.sub (text, 2)
   ttable = utils.split(text, "(")
   name = strip(ttable[1])
-  room = strip(string.sub(ttable[2], 1, -2))
+  room = strip(string.sub(ttable[2], 1, -3))
   table.insert(mobs, {name=name, room=room, clean=cleanname(name)})
 end -- campaign_item
 
