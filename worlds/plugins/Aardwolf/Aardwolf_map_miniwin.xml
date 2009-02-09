@@ -5,7 +5,7 @@
 
 <muclient>
 <plugin
-   name="Aardwolf_Map_v2"
+   name="Aardwolf_Map_Miniwindow"
    author="Nick Gammon/Bast"
    id="86810b755a33169f0f1d9585"
    language="Lua"
