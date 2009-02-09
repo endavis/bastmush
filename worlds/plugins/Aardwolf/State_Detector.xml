@@ -77,8 +77,6 @@ function OnPluginTelnetOption (option)
   var.state = state
   var.statestring = statestrings[state]
   
-  print("state is now", var.state)
-
   BroadcastPlugin(state, "y")
 
 end -- function
