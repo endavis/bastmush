@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: State_Detector.xml 46 2009-02-09 17:56:12Z endavis $ -->
+<muclient>
+<plugin
+   name="xAardwolf_Tick_Detector"
+   author="Eric Davis"
+   id="55567d873405332743347afc"
+   language="Lua"
+   purpose="Sends updates when the tick comes in from telopts"
+   date_written="2009-02-010"
+   requires="4.37"
+   version="1.0"
+   >
+
+<description trim="y">
+
+[FOR PLUGIN AUTHORS ONLY]
+
+Detects when a tick is sent through telopts
+
+Example:
+
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "55567d873405332743347afc" and msg == 1 then
+      -- do something on tick
+    end -- playing status changed
+  end
+
+
+</description>
+
+</plugin>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+
+
+function OnPluginTelnetOption (option)
+  --- ignore not type 100.
+  
+  if string.byte(option,1) ~= 101 then return end
+
+  itype = tonumber(string.byte(option,2))
+  BroadcastPlugin(itype, "y")
+
+end -- function
+
+-- pull in telnet option handling
+dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+
+function OnPluginInstall ()
+
+  -- if we are connected when the plugin loads, it must have been reloaded whilst playing
+--  if IsConnected () then
+--    TelnetOptionOn (TELOPT_AUTOTICK)  -- get actual status (eg. afk, playing)
+--  end -- if already connected
+ 
+end -- function OnPluginInstall
+
+function OnPluginDisconnect ()
+  return
+end -- function OnPluginInstall
+
+function OnPluginConnect ()
+  return
+end -- function OnPluginConnect
+
+
+]]>
+</script>
+</muclient>
