@@ -1,6 +1,8 @@
 -- $Id$
 --[[
-this modules will help with setting up plugin commands and variables
+this module will help with setting up plugin commands and variables
+
+requires the verify and stringfuncs modules
 
 an option table looks like this
 options_table  = {
