@@ -24,7 +24,7 @@ Example:
   function OnPluginBroadcast (msg, id, name, text)
     if id == "55567d873405332743347afc" and msg == 1 then
       -- do something on tick
-    end -- playing status changed
+    end
   end
 
 
