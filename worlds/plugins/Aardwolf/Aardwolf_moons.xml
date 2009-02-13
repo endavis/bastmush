@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
 <!-- $Id$ -->
-<!-- $Id$ -->
 <!-- Saved on Thursday, May 17, 2007, 9:30 AM -->
 <!-- MuClient version 4.05 -->
 
@@ -70,8 +69,8 @@ moonwin:disable()
 moonwin:add_setting("black_colour", {help="the colour for the black moon", type="colour", default=verify_colour("midnightblue"), sortlev=1})
 moonwin:add_setting("white_colour", {help="the colour for the white moon", type="colour", default=verify_colour("white"), sortlev=1})
 moonwin:add_setting("grey_colour", {help="the colour for the grey moon", type="colour", default=verify_colour("dimgray"), sortlev=1})
-moonwin:add_setting("three_colour", {help="the colour for the when three moons are up", type="colour", default=verify_colour("gold"), sortlev=2})
-moonwin:add_setting("three_bg_colour", {help="the colour for the background when the three moons are up", type="colour", default=verify_colour("lime"), sortlev=2})
+moonwin:add_setting("three_colour", {help="the colour for the when three moons are up", type="colour", default=verify_colour("lime"), sortlev=2})
+moonwin:add_setting("three_bg_colour", {help="the colour for the background when the three moons are up", type="colour", default=verify_colour("bg_colour", {window = moonwin}), sortlev=2})
 
 
 countdown = nil
@@ -219,8 +218,17 @@ end
 
 function moonsetting( tname, tstr, wildcards )
   local moon = wildcards[1]
+  local changed = false
   if moons[moon].now == nil then
     moons[moon].now = moons[moon].up - 1
+    changed = true
+  end  
+  if moons[moon].now ~= moons[moon].up - 1 then
+    moons[moon].now = moons[moon].up - 1
+    print("moonbot: lost the", moon, "moon, had to reset")
+    changed = true
+  end
+  if changed then
     styleplotdata()
   end
 end-- moonsetting
@@ -228,8 +236,17 @@ end-- moonsetting
 
 function moonrising( tname, tstr, wildcards)
   local moon = wildcards[1]
+  local changed = false
   if moons[moon].now == nil then
-    moons[moon].now = moons[moon].cycle
+    moons[moon].now = 0
+    changed = true
+  end  
+  if moons[moon].now ~= 0 then
+    print("moonbot: lost the", moon, "moon, had to reset")
+    moons[moon].now = 0    
+    changed = true    
+  end
+  if changed then
     styleplotdata()
   end
 end
@@ -287,16 +304,6 @@ function nextunion()
     return offset,duration
   end
 end -- nextunion()
-
-function check_tickgag()
-  if var.tickgag then
-     temp = "y"
-  else
-     temp = "n"
-  end
-  SetTriggerOption( "moontick", "omit_from_output", temp )
-  return true
-end -- tickgag
 
 function OnPluginBroadcast (msg, id, name, text)
   if id == "55567d873405332743347afc" and msg == 1 then
@@ -380,7 +387,6 @@ end -- moonbot_reset
 options_table  = {
   plotlength = {help="set the length of the moon plot", type="number", high=80, low=0, after=styleplotdata, default=66},
   plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("lime")},
-  tickgag = {help="toggle gagging the tick", type="bool", after=check_tickgag, default=false},
   shortcmd = {help="the short command for this plugin", type="string", after=set_plugin_alias, default="mb"},
   longcmd = {help="the long command for this plugin", type="string", after=set_plugin_alias, default="moonbot"},
 }
