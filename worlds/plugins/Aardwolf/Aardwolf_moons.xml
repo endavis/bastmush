@@ -31,40 +31,6 @@
   <trigger
    enabled="y"
    group="moons"
-   match="--&gt; TICK &lt;--*"
-   name="moontick"
-   send_to="12"
-   sequence="100"
-  >
-  <send>
-for i,v in pairs(moons) do
-  if moons[i].now ~= nil then
-    moons[i].now = (v.now+1) % v.cycle
-  end
-end
-if countdown == nil then
-  countdown, countdowndur = nextunion()
-  if countdown == 0 and countdowndur > 0 then
-    ColourNote("lime", "black", "Three moons are up for "..countdowndur.." ticks!" )
-  end
-else
-  if countdown == 0 then
-    countdowndur = countdowndur - 1
-  else
-    countdown = countdown - 1
-  end
-  if countdown == 0 and countdowndur > 0 then
-    ColourNote("lime", "black", "Three moons are up for "..countdowndur.." ticks!" )
-  elseif countdowndur == 0 then
-    countdown, countdowndur = nextunion()
-  end
-end
-styleplotdata()
-</send>
-  </trigger>
-  <trigger
-   enabled="y"
-   group="moons"
    match="^You notice the (black|grey|white) moon falling to the (ea|we)st.$"
    name="moonsetting"
    regexp="y"
@@ -253,15 +219,46 @@ end
 
 function moonsetting( tname, tstr, wildcards )
   local moon = wildcards[1]
-  moons[moon].now = moons[moon].up - 2
+  if moons[moon].now == nil then
+    moons[moon].now = moons[moon].up - 1
+    styleplotdata()
+  end
 end-- moonsetting
 
 
 function moonrising( tname, tstr, wildcards)
   local moon = wildcards[1]
-  moons[moon].now = moons[moon].cycle - 1
+  if moons[moon].now == nil then
+    moons[moon].now = moons[moon].cycle
+    styleplotdata()
+  end
 end
 
+function ontick( tname, tstr, wildcards)
+  for i,v in pairs(moons) do
+    if moons[i].now ~= nil then
+      moons[i].now = (v.now+1) % v.cycle
+    end
+  end
+  if countdown == nil then
+    countdown, countdowndur = nextunion()
+    if countdown == 0 and countdowndur > 0 then
+      ColourNote("lime", "black", "Three moons are up for "..countdowndur.." ticks!" )
+    end
+  else
+    if countdown == 0 then
+      countdowndur = countdowndur - 1
+    else
+      countdown = countdown - 1
+    end
+    if countdown == 0 and countdowndur > 0 then
+      ColourNote("lime", "black", "Three moons are up for "..countdowndur.." ticks!" )
+    elseif countdowndur == 0 then
+      countdown, countdowndur = nextunion()
+    end
+  end
+  styleplotdata()
+end
 
 function printmoons()
   Note( "Black="..(moons.black.now or "nil")..
@@ -301,6 +298,12 @@ function check_tickgag()
   return true
 end -- tickgag
 
+function OnPluginBroadcast (msg, id, name, text)
+  if id == "55567d873405332743347afc" and msg == 1 then
+    ontick()
+  end
+end
+
 function OnPluginInstall()
   if GetVariable ("enabled") == "false" then
     ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
@@ -309,7 +312,7 @@ function OnPluginInstall()
     return
   end -- they didn't enable us last time
   OnPluginEnable ()  -- do initialization stuff              
-  plugin_help_helper("", "", "", plugin_options)
+  plugin_help_helper("", "", "", cmds_table)
 end -- OnPluginInstall
 
 function OnPluginClose()
@@ -324,7 +327,7 @@ function OnPluginDisable ()
 end -- OnPluginDisable
 
 function OnPluginSaveState()
-  plugin_save_vars(set_options)
+  plugin_save_vars(options_table)
   moonwin:savestate()
 end
 
@@ -374,15 +377,15 @@ function moonbot_reset()
   ColourNote("", "", "")
 end -- moonbot_reset
 
-set_options  = {
+options_table  = {
   plotlength = {help="set the length of the moon plot", type="number", high=80, low=0, after=styleplotdata, default=66},
-  plugin_colour = {help="set the plugin colour", type="colour", default="lime"},
-  tickgag = {help="toggle gagging the tick", type="bool", after=check_tickgag,default=false},
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("lime")},
+  tickgag = {help="toggle gagging the tick", type="bool", after=check_tickgag, default=false},
   shortcmd = {help="the short command for this plugin", type="string", after=set_plugin_alias, default="mb"},
   longcmd = {help="the long command for this plugin", type="string", after=set_plugin_alias, default="moonbot"},
 }
 
-plugin_options = {
+cmds_table = {
   plot      = {func=plotdata, help="plot moons"},
   union     = {func=moonbot_union, help="show next moons union"}, 
   print     = {func=printmoons, help="print the current moon phase #s"},
@@ -391,10 +394,10 @@ plugin_options = {
 }
   
 function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, plugin_options, set_options, moonwin)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table, moonwin)
 end -- plugin_parse
 
-init_plugin_vars(set_options)
+init_plugin_vars(options_table)
 set_plugin_alias()
 ]]>
 </script>
