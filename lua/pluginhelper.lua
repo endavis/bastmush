@@ -23,7 +23,7 @@ valid values:
   high,low -- valid for numbers only, the lowest and highest values for this option
   after    -- the function to run after this option has been set
   sortlev  -- you can group options by setting this, all options with the same number will be printed together
-  
+NOTE: the plugin_colour, shortcmd, and longcmd options are required!!  
   
 a command table looks like this
 cmds_table = {
@@ -98,7 +98,7 @@ function print_setting_helper(setting, value, help, ttype)
               "white", "black", " - " .. help)
 end
 
-function print_settings_helper(ttype, setoptions, window)
+function print_settings_helper(ttype, options_table, window)
   --[[
     this function goes through the setoptions table and the window and prints each setting
   --]]
@@ -108,13 +108,14 @@ function print_settings_helper(ttype, setoptions, window)
              "white", "black", " Settings")    
   ColourNote("white", "black", "-----------------------------------------------")
   if ttype == "plugin" or ttype == "all" then
-    for i,v in pairs(setoptions) do  
-      if v.get then
-        value = v.get(i)
+    skeys = sort_settings(options_table)  
+    for _,v in ipairs(skeys) do  
+      if options_table[v].get then
+        value = options_table[v].get(v)
       else
-        value = var[i]
-      end
-      print_setting_helper(i, value, v.help, v.type)
+        value = var[v]
+      end    
+      print_setting_helper(v, value, options_table[v].help, options_table[v].type)
     end
   end
   if ttype == "window" or ttype == "all" then
