@@ -1,5 +1,8 @@
 -- $Id$
 --[[
+http://code.google.com/p/bastmush
+ - Documentation and examples
+ 
 this module will help with setting up plugin commands and variables
 
 requires the verify and stringfuncs modules
@@ -34,7 +37,7 @@ valid values -
   func     -- the function to call 
               the arguments are sent in this order (name, line, wildcards, cmds_table, options_table, window)
               
-see http://code.google.com/p/bastmush for a sample plugin
+
 --]]
 
 require "tprint"
