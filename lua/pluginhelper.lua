@@ -36,7 +36,7 @@ cmds_table = {
 valid values -
   func     -- the function to call 
               the arguments are sent in this order (name, line, wildcards, cmds_table, options_table, window)
-              
+  help     -- the help for this command
 
 --]]
 
@@ -170,7 +170,10 @@ function plugin_set_helper(name, line, wildcards, cmds_table, options_table, win
     if not f then
       f = set_var
     end
-    f(value, option, options_table[option].type, {low=options_table[option].low, high=options_table[option].high})  
+    test = f(value, option, options_table[option].type, {low=options_table[option].low, high=options_table[option].high})  
+    if test == nil then
+      return
+    end    
     afterf = options_table[option].after
     if afterf then
       afterf()
@@ -205,7 +208,10 @@ function plugin_parse_helper(name, line, wildcards, cmds_table, options_table, w
     else
        f = cmds_table [option].func
     end
-    
+    if not f then
+      ColourNote("red", "", "The function for this command is invalid, please check plugin")
+      return
+    end
     if f (name, line, wildcards, cmds_table, options_table, window) then
       return
     end -- all done
@@ -219,6 +225,10 @@ function set_var(value, option, type, args)
      set a variable in a plugin, requires the "var" module
   --]]
   local tvalue = verify(value, type, args)    
+  if tvalue == nil then
+    ColourNote("red", "black", "That is not a valid value.")  
+    return nil
+  end
   if type == "colour" then
     colourname = RGBColourToName(tvalue)
     ColourNote("orange", "black", option .. " set to : ",

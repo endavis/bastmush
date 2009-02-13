@@ -15,7 +15,11 @@ function verify_colour(colour, args)
       return colour
     end
   end
-    
+  
+  local ttest = string.find(colour, '"')
+  if ttest ~= nil then
+    return nil
+  end
   -- see if it is a number
   local tcolour = tonumber(colour)
   if tcolour and tcolour >= 0 then
