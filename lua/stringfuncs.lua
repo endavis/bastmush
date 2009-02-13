@@ -1,5 +1,5 @@
 -- $Id$
-[[--
+--[[
 http://code.google.com/p/bastmush
  - Documentation and examples
  
