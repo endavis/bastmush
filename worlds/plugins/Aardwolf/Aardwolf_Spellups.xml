@@ -340,7 +340,7 @@ function OnPluginEnable ()
   tstatus = GetPluginVariableList("3448fed8734053327438a4df")
   status = tstatus or status
   if status.statestring == "active" then
-    SendNoEcho "slist noprompt"
+    stats = GetPluginVariableList("8a710e0783b431c06d61a54c")  
     spellup_refresh()     
   end
 end -- OnPluginEnable
