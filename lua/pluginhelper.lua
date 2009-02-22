@@ -5,7 +5,7 @@ http://code.google.com/p/bastmush
  
 this module will help with setting up plugin commands and variables
 
-requires the verify and stringfuncs modules
+requires the verify module
 
 an option table looks like this
 options_table  = {
@@ -41,7 +41,7 @@ valid values -
 --]]
 
 require "tprint"
-require "stringfuncs"
+require "commas"
 require "verify"
 require "utils"
 
@@ -56,9 +56,12 @@ function set_plugin_alias()
   match, n = string.gsub (match, "shortcmd", var.shortcmd or "")
   match, n = string.gsub (match, "longcmd", var.longcmd or "")
   SetAliasOption ("plugin_parse", "match", match)
+  if var.shortcmd and var.longcmd then
+    BroadcastPlugin(1001)  
+  end
 end
 
-function plugin_help_helper(name, line, wildcards, cmds_table, options_table, window)
+function plugin_help_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world)
   --[[
     this function prints a help table for cmds_table
   --]]
@@ -70,14 +73,22 @@ function plugin_help_helper(name, line, wildcards, cmds_table, options_table, wi
   ColourNote("white", "black", "-----------------------------------------------")
              
   for i,v in pairs(cmds_table) do
-     ColourNote( "white", "black", string.format("%-15s", i),
+    if v.help ~= '' then
+      ColourNote( "white", "black", string.format("%-15s", i),
               RGBColourToName(var.plugin_colour),  "black", ": " .. v.help )
+    end
   end
   for i,v in pairs(default_cmds_table) do
-     ColourNote( "white", "black", string.format("%-15s", i),
-              RGBColourToName(var.plugin_colour),  "black", ": " .. v.help )
+    if v.help ~= '' then
+      ColourNote( "white", "black", string.format("%-15s", i),
+             RGBColourToName(var.plugin_colour),  "black", ": " .. v.help )
+    end
   end
   ColourNote( "", "", "")
+  if send_to_world then
+    SendNoEcho(line)
+  end
+  
 end
 
 function print_setting_helper(setting, value, help, ttype)
@@ -143,7 +154,7 @@ function plugin_set_helper(name, line, wildcards, cmds_table, options_table, win
   local tvar = utils.split(wildcards.list, " ")
   local option = tvar[1]
   if option ~= nil then
-    option = strip(option)
+    option = trim(option)
   end
   if option == "all" or option == "window" then
     print_settings_helper(option, options_table, window)
@@ -152,7 +163,7 @@ function plugin_set_helper(name, line, wildcards, cmds_table, options_table, win
   table.remove(tvar, 1)
   local value = table.concat(tvar, " ")
   if value ~= nil then
-    value = strip(value)
+    value = trim(value)
   end
   if not option then
     nooption()
@@ -173,7 +184,7 @@ function plugin_set_helper(name, line, wildcards, cmds_table, options_table, win
     end
     test = f(value, option, options_table[option].type, {low=options_table[option].low, high=options_table[option].high})  
     if test == nil then
-      return
+      return false
     end    
     afterf = options_table[option].after
     if afterf then
@@ -188,38 +199,66 @@ default_cmds_table = {
   set       = {func=plugin_set_helper, help="set script and window vars, show plugin vars when called with no arguments, 'window': show window vars, 'all': show all vars"},
 }
 
-function plugin_parse_helper(name, line, wildcards, cmds_table, options_table, window)
+function find_cmd(cmd, cmds_table)
+  --[[
+    find the cmd in the cmds and default_cmds tables
+  --]]
+  cmd = string.lower(cmd)
+  if cmds_table[cmd] then
+    return cmd, cmds_table[cmd]
+  end
+  if default_cmds_table[cmd] then
+    return cmd, default_cmds_table[cmd]
+  end
+  fcmd = "^" .. cmd .. ".*$"
+  for tcmd,cmditem in pairs(cmds_table) do
+    tstart, tend =  string.find(string.lower(tcmd), fcmd)
+    if tstart and tstart > 0 then
+      return tcmd, cmds_table[tcmd]
+    end
+  end
+  for tcmd,cmditem in pairs(default_cmds_table) do
+    tstart, tend =  string.find(string.lower(tcmd), fcmd)
+    if tstart and tstart > 0 then
+      return tcmd, default_cmds_table[tcmd]
+    end
+  end
+  
+  return nil, nil
+
+end
+
+function plugin_parse_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world)
   --[[
     find the command that was specified and pass arguments to it
   --]]
   if wildcards.action == "" then
-    plugin_help_helper(name, line, wildcards, cmds_table, options_table)    
+    plugin_help_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world) 
+    return true
   else
-    option = wildcards.action
-    if not cmds_table[option] and not default_cmds_table[option] then 
+    fullcmd, cmd = find_cmd(wildcards.action, cmds_table)
+    if cmd == nil then
+      if send_to_world then
+        SendNoEcho(line)
+        return false
+      end
       ColourNote("", "", "") 
       ColourNote("white", "black", "That is not a valid option")
-      plugin_help_helper(name, line, wildcards, cmds_table, options_table, window)
+      plugin_help_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world)
       return
     end
 
-    local f = nil
-    if default_cmds_table[option] then
-       f = default_cmds_table [option].func
-    else
-       f = cmds_table [option].func
+
+    if not cmd.func then
+      ColourNote("red", "", "The function for command " .. fullcmd .. " is invalid, please check plugin")
+      return false
     end
-    if not f then
-      ColourNote("red", "", "The function for this command is invalid, please check plugin")
-      return
-    end
-    if f (name, line, wildcards, cmds_table, options_table, window) then
-      return
+    if cmd.func (name, line, wildcards, cmds_table, options_table, window, send_to_world) then
+      return true
     end -- all done
   end
-
+  return false
 end
-
 
 function set_var(value, option, type, args)
   --[[
@@ -268,7 +307,7 @@ end
 
 function sort_settings(options_table)
   --[[
-     sort the settings in the options table
+     sort the keys of the options table
   --]]  
   local function sortfunc (a, b) 
     asortlev = options_table[a].sortlev or 50
@@ -285,4 +324,18 @@ function sort_settings(options_table)
   
   return t2
 
+end
+
+function send_cmd_world(name, line, wildcards, cmds_table, options_table, window)
+   SendNoEcho(line)
+end
+
+function togglewindow(name, line, wildcards, cmds_table, options_table, window)
+  if window ~= nil then 
+    window:togglewindow(window)
+  end
+end
+
+function nofunc(name, line, wildcards, cmds_table, options_table, window)
+  return true
 end
