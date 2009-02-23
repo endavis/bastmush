@@ -47,6 +47,8 @@ spellup block   --> block a spell with another spell
 spellup disable --> disable a spell without taking it out of the list
 
 spellup help    --> this message
+
+Bugs - Hide shows up as a negative spellup
 </description>
 
 
@@ -536,7 +538,7 @@ function spellheaders_redirect (name, line, wildcards, styles)
       recovery = recovery,    -- depends on which recovery
       skilltype = skilltype,  -- 1 = spell, 2 = skill
       } -- end spells table item
-      
+
   spells_count = spells_count + 1
   
 end -- function spellheaders_redirect 
@@ -576,7 +578,7 @@ function spellups_redirect (name, line, wildcards, styles)
   if name == "start_spellups" then
     -- mark all as not spellups for now
     for k, v in pairs (spells) do
-      v.spellup = false
+        v.spellup = false
     end -- for
     
     EnableTrigger ("multi_line_spellups", true)  -- capture subsequent lines
@@ -604,7 +606,7 @@ function spellups_redirect (name, line, wildcards, styles)
       spellup = true,         -- this is a spellup
       skilltype = skilltype,  -- 1 = spell, 2 = skill
   } -- end spells table item
-      
+ 
 end -- function spellups_redirect 
 ]]>
 </script>
@@ -1899,10 +1901,10 @@ function try_to_buff_us (reason)
                     "', skipping it for now.")
       else
         if spells[sn].skilltype == 1 then
-          Send ("cast '" .. spells [sn].name .. "'")
+          SendNoEcho ("cast '" .. spells [sn].name .. "'")
         else
           words = justWords(spells[sn].name)
-          Send (words[1])
+          SendNoEcho (words[1])
         end
         pdebug("changing waiting to ", sn)
         waiting = sn
