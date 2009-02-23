@@ -1486,9 +1486,6 @@ function wanted_spellups (name, line, wildcards)
           elseif not spells [sn].spellup then
             ColourNote ("red", "", "Spell '" .. name .. "' is not a spellup.")
             invalid = true
-          --elseif spells [sn].skilltype ~= 1 then
-          --  ColourNote ("red", "", "Spell '" .. name .. "' is a skill, not a spell.")
-          --  invalid = true
           else
             table.insert (new_wanted_list, sn)
             table.insert (new_place_list, tonumber(place))
