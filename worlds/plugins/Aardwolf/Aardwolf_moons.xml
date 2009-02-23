@@ -82,10 +82,6 @@ moons = {
   white={now=nil,cycle=65,up=17}
 }
 
-function togglewindow()
-  moonwin:togglewindow(moonwin)
-end
-
 -- mousedown
 function mousedown (flags, hotspotid)
   moonwin:mousedown(flags, hotspotid)
