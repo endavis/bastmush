@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: Aardwolf_quest_miniwin.xml 47 2009-02-09 18:00:51Z endavis $ -->
+<!-- $Id$ -->
 <muclient>
 <plugin
    name="xBroadcast_Level"
