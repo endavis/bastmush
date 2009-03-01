@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="miniwin_quest"
+   author="Bast"
+   id="87d9aafda20ae11787c6b438"
+   language="Lua"
+   purpose="Shows quests in a miniwindow"
+   date_written="2008-07-24"
+   requires="4.34"
+   version="1.0"
+   save_state="y"
+   >
+<description trim="y">
+<![CDATA[
+Shows quests in a miniwindow
+]]>
+</description>
+
+</plugin>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+require "commas"
+require 'var'
+require "commas"
+require 'window'
+require 'tprint'
+require 'pluginhelper'
+
+quest_text = {}
+quest_info = {mob=nil, room=nil, area=nil}
+quest_timer = {}
+
+questwin = Window{name="Quest", font="Comic Sans MS", bg_colour=0xE7FFFF, text_colour=0x000000, windowpos=7, header_height=0, width_padding=5, height_padding=3}
+questwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0x82004B), sortlev=1})
+questwin:add_setting("avail_bg_colour", {help="the background colour for when a quest available", type="colour", default=verify_colour("red"), sortlev=1})
+questwin:add_setting("avail_colour", {help="the text colour for hwen a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
+
+questwin:disable()
+
+function build_quest()
+  if (not next(quest_timer)) or (not next(quest_info)) then
+    return
+  end
+
+  quest_text = {}
+  local mobstring = string.format("%-7s: %s", "Mob", quest_info.name)
+  table.insert(quest_text, mobstring)
+  local roomstring = string.format("%-7s: %s", "Room", quest_info.room)
+  table.insert(quest_text, roomstring)
+  local areastring = string.format("%-7s: %s", "Area", quest_info.area)
+  table.insert(quest_text, areastring)
+  
+  local style = {}
+  style.text = string.format ("Time to go: %s", quest_timer.text)
+  style.len = #style.text
+  style.textcolour = 'time_colour'
+  style.style = 0
+  table.insert (quest_text, {style})
+  
+  show_quest ()
+end
+
+function show_quest ()
+  -- do nothing if no quest
+  if #quest_text == 0 then
+    return
+  end -- if
+
+  questwin:enable()
+  questwin:createwin(quest_text)
+end -- show_quest_text
+
+function OnPluginBroadcast (msg, id, name, text)
+  if id == "98c8a9eda20fa11787c6b438" then
+    if msg == 1 then
+      -- quest available
+      quest_info = {}
+      quest_timer = {}
+      quest_text = {}
+      local style = {}
+      style.style = 0  
+      style.text = "You can quest again!"
+      style.backcolour = 'avail_bg_colour'
+      style.len = #style.text
+      style.textcolour = 'avail_colour'
+      table.insert(quest_text, {style})
+      show_quest()    
+    elseif msg == 2 then
+      -- quest mob info
+      quest_timer = {}
+      local pvar = GetPluginVariable(  "98c8a9eda20fa11787c6b438", "mob" )
+
+      -- get the timer
+      loadstring( pvar )()
+      quest_info = mob
+    elseif msg == 3 then
+      -- quest time left
+      local pvar = GetPluginVariable(  "98c8a9eda20fa11787c6b438", "timer" )
+
+      -- get the timer
+      loadstring( pvar )()
+      quest_timer = timer
+      build_quest()
+    elseif msg == 4 then
+      -- quest mob dead
+      quest_text = {"Quest Complete - Hand it in"}
+      show_quest() 
+    elseif msg == 5 then
+      return
+    elseif msg == 6 then
+      return
+    elseif msg == 7 then
+      -- time until next quest
+      local pvar = GetPluginVariable(  "98c8a9eda20fa11787c6b438", "timer" )
+
+      -- get the timer
+      loadstring( pvar )()
+      quest_text = {}
+      local style = {}
+      style.style = 0      
+      style.text=  string.format ("Next quest: %s", timer.text)
+      style.len = #style.text
+      style.textcolour = 'time_colour'
+      table.insert(quest_text, {style})
+      show_quest()       
+    end      
+     
+  end -- stats changed
+end
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  questwin:savestate()
+end -- function OnPluginSaveState
+
+function OnPluginInstall ()
+
+ if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+  
+end -- OnPluginInstall
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  plugin_save_vars(options_table)
+  questwin:savestate() 
+end -- function OnPluginSaveState
+
+options_table  = {
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("steelblue")},
+  shortcmd = {help="the short command for this plugin", type="string", after=set_plugin_alias, default="qw"},
+  longcmd = {help="the long command for this plugin", type="string", after=set_plugin_alias, default="qwin"},
+}
+
+--Request, Info, Quit, Check
+cmds_table = {
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table, questwin)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+
+]]>
+</script>
+
+</muclient>

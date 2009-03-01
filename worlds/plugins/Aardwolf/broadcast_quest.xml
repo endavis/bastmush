@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: Aardwolf_quest_miniwin.xml 47 2009-02-09 18:00:51Z endavis $ -->
+<muclient>
+<plugin
+   name="xBroadcast_Quest"
+   author="Bast"
+   id="98c8a9eda20fa11787c6b438"
+   language="Lua"
+   purpose="Broadcast whenever anything happens with a quest"
+   save_state="n"
+   date_written="2009-02-20 12:31:01"
+   requires="4.34"
+   version="1.0"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+Broadcasts when anything happens in a quest
+Broadcasts
+   1 - can now quest
+   2 - Mob info, get var.mob and unserialize it
+        mob = { name = 'Some name', room = 'Some room', area = 'some area'}
+   3 - time left to finish quest
+        timer = {secs = num, text = 'time in text format' }
+   4 - quest mob killed
+   5 - length of quest, get var.length and loadstring it
+        length = {secs = num, mins = num' }
+   6 - rewards , values will be nil if not applicable
+        rewards = { qp = questpoints, gold = goldamount, tier = tierbonus,
+                    lucky = luckyqp, mccp = mccpqp, trivia = tp, training = trains
+                    practices = pracs }
+   7 - time left until next quest
+        timer = {secs = num, text = 'time in text format' }
+
+       
+Example:
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "98c8a9eda20fa11787c6b438" and msg == 2 then
+      local pvar = GetPluginVariable(  "98c8a9eda20fa11787c6b438" , mob)
+
+      --get the mob info
+      loadstring( pvar )()
+      mob_info = mob
+    end
+  end
+
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Triggers  -->
+
+<triggers>
+  <trigger
+   enabled="y"
+   match="Welcome to Aardwolf. May your adventures be mystical, challenging and rewarding."
+   send_to="12" sequence="100"
+  >
+  <send>
+  Send("quest info")
+  </send>
+  </trigger>
+  
+  <trigger
+   enabled="y"
+   match="############# Reconnecting to Game #############"
+   sequence="100"
+   send_to="12"    
+  >
+  <send>
+  Send("quest info")
+  </send>
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="You ask * for a quest."
+   script="start_questor_stuff"
+   sequence="100"
+  >
+  </trigger>  
+  
+  <trigger
+   enabled="n"
+   regexp="y"
+   match="(.*) tells you 'Seek (.*) out somewhere in the vicinity'$"
+   name="mobName"
+   group="qinfo"
+   script="mobName"
+   sequence="100"
+   text_colour="6"
+  >
+  </trigger>
+  
+  <trigger
+   enabled="n"
+   regexp="y"
+   match="(.*) tells you 'of (.*) which is in the general area'$"
+   name="roomName"
+   group="qinfo"
+   script="roomName"
+   sequence="100"
+   text_colour="6"
+  >
+  </trigger>
+  
+  <trigger
+   enabled="n"
+   regexp="y"
+   match="(.*) tells you 'of (.*).'$"
+   name="areaName"
+   group="qinfo"
+   script="areaName"
+   sequence="100"
+   text_colour="6"
+  >
+  </trigger>
+  
+  <trigger
+   enabled="n"
+   match="@questor tells you 'You have * to complete your quest.'"
+   name="questor_time"
+   script="questor_time"
+   sequence="10"
+   expand_variables="y"
+   group="qinfo"
+  >
+  </trigger>
+  
+ <trigger
+   enabled="n"
+   match="QUEST: You have almost completed your QUEST!"
+   sequence="100"
+   script="quest_done"
+   group="questin"
+  >
+  </trigger>
+
+ <trigger
+   enabled="n"
+   match="You inform * that you have completed your quest."
+   sequence="100"
+   script="quest_handed_in"
+   group="questin"
+  >
+  </trigger>
+  
+ <trigger
+   enabled="y"
+   match="There are * minutes remaining until you can go on another quest."
+   sequence="100"
+   script="quest_time_to_go"
+  >
+  </trigger>
+
+ <trigger
+   enabled="y"
+   match="QUEST: You may now quest again."
+   sequence="100"
+   script="quest_available"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="You do not have to wait to go on another quest."
+   sequence="100"
+   script="quest_available"
+  >
+  </trigger>
+  
+  <!-- quest rewards -->
+  <trigger
+   enabled="n"
+   match=".* tells you 'As a reward, I am giving you (\d*) quest points and (\d*) gold.'"
+   name="qcompletecatcher"
+   regexp="y"
+   script="quest_rewards"
+   sequence="100"
+   group="questrew"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^.* tells you 'I am also giving you (.*) quest points? tier bonus.'$"
+   name="tierqpcatcher"
+   regexp="y"
+   group="questrew"
+   script="quest_rewards"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="You get lucky and gain an extra * quest points."
+   name="luckyqpcatcher"
+   script="quest_rewards"
+   group="questrew"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="You gain an extra * quest points 'MCCP Bonus'."
+   name="mccpqpcatcher"
+   script="quest_rewards"
+   group="questrew"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^\*\* You gain a bonus trivia point! \*\*$"
+   name="qtpcatcher"
+   regexp="y"
+   script="quest_rewards"
+   group="questrew"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^\*\* You gain a bonus (\d?)\s?training sessions? \*\*\s*$"
+   name="qtraincatcher"
+   regexp="y"
+   script="quest_rewards"
+   group="questrew"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^\*\* You gain a bonus (\d?)\s?practices? \*\*\s*$"
+   name="qpraccatcher"
+   regexp="y"
+   script="quest_rewards"
+   group="questrew"
+   sequence="100"
+  >
+  </trigger> 
+  <trigger
+   enabled="n"
+   match="*"
+   name="finishqpcatcher"
+   script="quest_rewards"
+   group="questrew"
+   sequence="101"
+  >
+  </trigger>  
+</triggers>
+
+<!--  Timers  -->
+
+
+<timers>
+  <timer 
+      script="update_timer" 
+      enabled="y" 
+      second="30.00" 
+      name="questtimer"
+      >
+  </timer>
+</timers>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+require "var"
+require "serialize"
+require "commas"
+require 'pluginhelper'
+require "verify"
+
+quest_mob = {}
+rewards = {}
+timer = {}
+qtime = nil
+length = {}
+onquest = false
+
+function quest_handed_in (name, line, wildcards)
+  enabletriggroup("questin", false)
+  local qlength = GetInfo(304)
+  qlength = math.floor( math.abs( qtime - qlength ) )
+  length.mins = math.floor(qlength / 60)
+  length.secs = qlength % 60
+  var.length = serialize.save( "length", length )   
+  broadcast(5, var.length) 
+  when_required = os.time () + (30 * 60)  -- 30 mins to go
+  quest_mob = {}
+  onquest = false
+  update_timer()
+  check(EnableTimer("questtimer", true))
+  enabletriggroup("questrew", true)  
+
+end -- quest_handed_in
+
+function quest_available (name, line, wildcards)
+  check(EnableTimer("questtimer", false))  
+  quest_text = {}
+  broadcast(1)
+end -- quest_available
+
+function quest_done (name, line, wildcards)
+  check(EnableTimer("questtimer", false))   
+  broadcast(4)
+end -- quest_done
+
+function quest_time_to_go (name, line, wildcards)
+  local mins = tonumber (wildcards [1])
+  if mins then
+    when_required = os.time () + mins * 60
+  end -- if
+  update_timer()
+end -- quest_time_to_go
+
+function start_questor_stuff (name, line, wildcards)
+  enabletriggroup("qinfo", true)
+  qtime = GetInfo(304)
+  quest_text = {}
+  quest_info = {}
+  rewards = {}
+  var.questor = wildcards [1]
+end -- start_questor_stuff
+
+function mobName( strTriggerName, trig_line, wildcards )
+  quest_mob.name = wildcards[2]
+end -- mobName
+
+function roomName( strTriggerName, trig_line, wildcards )
+  quest_mob.room = wildcards[2]
+end -- roomName
+
+function areaName( strTriggerName, trig_line, wildcards )
+  quest_mob.area = wildcards[2]
+  var.mob = serialize.save( "mob", quest_mob )  
+  broadcast(2, var.mob)
+end
+
+function questor_time (name, line, wildcards)
+
+  local text = wildcards [1]
+  
+   -- work out when quest ends
+  
+  when_required = os.time ()
+  
+  local days = string.match (text, "(%d+) days?")
+  if days then
+    when_required = when_required + tonumber (days) * 60 * 60 * 24
+  end -- some days left
+  
+  local hours = string.match (text, "(%d+) hours?")  
+  if hours then
+    when_required = when_required + tonumber (hours) * 60 * 60
+  end -- some days left
+
+  local minutes = string.match (text, "(%d+) minutes?")  
+  if minutes then
+    when_required = when_required + tonumber (minutes) * 60
+  end -- some days left
+
+  onquest = true
+  enabletriggroup("qinfo", false)
+  enabletriggroup("questin", true)
+  update_timer()
+  check(EnableTimer("questtimer", true))  
+
+end -- questor_end
+
+function update_timer()
+  -- how long to go
+  if when_required == nil then
+    return
+  end
+  local time_to_go = when_required - os.time ()
+  timer['secs'] = time_to_go
+  timer['text'] = convert_time(time_to_go)
+  var.timer = serialize.save( "timer", timer )
+  if onquest then 
+    broadcast(3, var.timer)
+  else
+    broadcast(7, var.timer)
+  end  
+end
+
+function quest_rewards (name, line, wildcards)
+  if name == 'finishqpcatcher' then
+    if trim(line) == '' then
+      enabletriggroup("questrew", false)
+      var.rewards = serialize.save( "rewards", rewards )
+      broadcast(6, var.rewards)
+    end
+  elseif name == "qcompletecatcher" then
+    rewards['qp'] = wildcards[1]
+    rewards['gold'] = wildcards[2]
+  elseif name == "tierqpcatcher" then
+    rewards['tier'] = wildcards[1]
+  elseif name == "luckyqpcatcher" then
+    rewards['lucky'] = wildcards[1]  
+  elseif name == "mccpqpcatcher" then
+    rewards['mccp'] = wildcards[1]
+  elseif name == "qtpcatcher" then
+    rewards['trivia'] = 1
+  elseif name == "qtraincatcher" then
+    if wildcards[1] == "" then
+      rewards['training'] = 1
+    else
+      rewards['training'] = wildcards[1]
+    end
+  elseif name == "qpraccatcher" then
+    rewards['practices'] = wildcards[1]
+  end
+end
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  plugin_save_vars(options_table)    
+end -- function OnPluginSaveState
+
+function OnPluginInstall ()
+
+ if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+  
+end -- OnPluginInstall
+
+function OnPluginDisable ()
+  BroadcastPlugin(-1)
+end -- OnPluginDisable
+
+
+]]>
+</script>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+<script>
+<![CDATA[
+
+options_table  = {
+  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
+  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="bqu"},
+}
+
+cmds_table = {
+
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+]]>
+</script>
+</muclient>
