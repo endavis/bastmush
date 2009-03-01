@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="miniwin_cp"
+   author="Bast"
+   id="4743a98a021c1bee534ef093"
+   language="Lua"
+   purpose="Shows campaign objectives in a miniwindow"
+   date_written="2008-07-22"
+   requires="4.34"
+   version="1.0"
+   save_state="y"
+   >
+<description trim="y">
+<![CDATA[
+Shows outstanding campaign objectives.
+
+To activate, type: cp check
+
+TODO:
+   add ability to colour mobs in scan
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+require 'var'
+require "commas"
+require 'miniwin'
+require 'tprint'
+require 'pluginhelper'
+
+cpwin = Miniwindow{name="CP", windowpos=7, font_size=7, font="Verdana"}
+cpwin:disable()
+cpwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
+
+
+cpmobs = {}
+cptimer = {}
+
+-- mousedown
+function mousedown (flags, hotspotid)
+  cpwin:mousedown(flags, hotspotid)
+end -- mousedown
+
+
+function show_cp_text ()
+
+  cpwin:enable()
+  local texttable = {}
+
+  local style = {}
+
+  -- do nothing if no campaign
+  if #cpmobs == 0 or not next(cptimer) then
+    return
+  end -- if
+
+  -- heading
+  style = {}
+  style.text = "Current campaign. You need to kill:  "
+  style.len = #style.text
+  style.style = 0
+  table.insert (texttable, {style})
+
+  -- list of mobs
+  for i, v in ipairs (cpmobs) do
+    style = {}
+    style.text = v.name .. " (" .. v.room .. ")"
+    style.len = #style.text
+    style.style = 0
+    table.insert (texttable, {style})
+  end -- for
+  
+  style = {}
+  style.text = string.format ("Time to go: %sd %sh %sm", cptimer.days, cptimer.hours, cptimer.mins)
+  style.len = #style.text
+  style.textcolour = "time_colour"
+  style.style = 0
+  table.insert (texttable, {style})  
+  
+  cpwin:createwin(texttable)
+  
+end -- show_cp_text
+
+
+function OnPluginBroadcast (msg, id, name, text)
+ if id == "4a266f81c50828bbbfda7100" then
+    if msg == 1 then
+      local pvar = GetPluginVariable(  "4a266f81c50828bbbfda7100", "mobs" )
+
+      -- get the mobs
+      loadstring( pvar )()
+      cpmobs = mobs
+      show_cp_text()  
+    elseif msg == 2 then
+      local pvar = GetPluginVariable(  "4a266f81c50828bbbfda7100", "timer" )
+
+      -- get the timer
+      loadstring( pvar )()
+      cptimer = timer
+      show_cp_text()
+    elseif msg == 3 then
+      cptimer = ''
+      mobs = {}
+      cpwin:disable()
+    end      
+     
+  end -- cp broadcast
+end
+
+function OnPluginInstall ()
+
+  if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    cpwin:disable()
+    return
+  end -- they didn't enable us last time
+  
+  OnPluginEnable ()  -- do initialization stuff
+  
+  
+end -- OnPluginInstall
+
+function OnPluginDisable ()
+  cpwin:disable()
+end -- OnPluginDisable
+
+function OnPluginEnable ()
+  --cpwin:enable()
+end -- OnPluginEnable
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  plugin_save_vars(options_table)
+  cpwin:savestate() 
+end -- function OnPluginSaveState
+
+options_table  = {
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("steelblue")},
+  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="cp"},
+}
+
+--Request, Info, Quit, Check
+cmds_table = {
+  toggle   = {func=togglewindow, help="toggle the campaign miniwindow"},   
+  check    = {func=nofunc, help=''}, 
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table, cpwin, true)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+]]>
+
+</script>
+
+</muclient>
