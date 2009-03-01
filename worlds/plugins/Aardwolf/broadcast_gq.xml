@@ -37,7 +37,7 @@ Example
 
       -- get the mobs
       loadstring( pvar )()
-      cp_mobs = mobs
+      gq_mobs = mobs
     end
   end
   
