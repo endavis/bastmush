@@ -201,7 +201,7 @@ end
 function Window:mousedown (flags, hotspotid)
   local f = self.hyperlink_functions[hotspotid]
   if f then
-    f(self)
+    f(self, flags, hotspotid)
   end -- function found
 end -- mousedown
 
