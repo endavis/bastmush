@@ -221,7 +221,7 @@ require "pluginhelper"
 require "verify"
 
 mobs = {}
-rewards = {}
+rewards = {qpmobs = 0}
 enemy = ""
 joined = false
 
@@ -278,8 +278,7 @@ end -- campaign_item
 function gq_mob_dead (name, line, wildcards)
   local tenemy = enemy
   local found = false
-  trew = rewards.mobs or 0
-  rewards.qpmobs = trew + 3
+  rewards.qpmobs = rewards.qpmobs + 3
   for i,v in ipairs(mobs) do
     if v.clean == string.lower(tenemy) then
       found = true
@@ -328,7 +327,7 @@ function gq_none( name, line, wildcards)
   enabletriggroup("gqrew", false)
   enabletriggroup("gqdone", false)
   mobs = {}  
-  rewards = {}
+  rewards = {gqpmobs = 0}
   timer = {}  
   joined = false
 end
