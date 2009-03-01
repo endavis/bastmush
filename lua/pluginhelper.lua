@@ -11,9 +11,8 @@ an option table looks like this
 options_table  = {
   plotlength = {help="set the length of the moon plot", type="number", high=80, low=0, after=styleplotdata, default=66},
   plugin_colour = {help="set the plugin colour", type="colour", default="lime"},
-  tickgag = {help="toggle gagging the tick", type="bool", after=check_tickgag,default=false},
-  shortcmd = {help="the short command for this plugin", type="string", after=set_plugin_alias, default="mb"},
-  longcmd = {help="the long command for this plugin", type="string", after=set_plugin_alias, default="moonbot"},
+  tdebug = {help="toggle this for debugging info", type="bool", default=false},
+  cmd = {help="the command to type for this plugin", type="string", after=set_plugin_alias, default="mb"},
   three_colour = {help="the colour for the when three moons are up", type="colour", default=verify_colour("gold"), sortlev=2}  
 }
 valid values:
@@ -23,7 +22,7 @@ valid values:
   high,low -- valid for numbers only, the lowest and highest values for this option
   after    -- the function to run after this option has been set
   sortlev  -- you can group options by setting this, all options with the same number will be printed together
-NOTE: the plugin_colour, shortcmd, and longcmd options are required!!  
+NOTE: the plugin_colour and cmd options are required!! 
   
 a command table looks like this
 cmds_table = {
@@ -52,13 +51,10 @@ function set_plugin_alias()
     the first word will be the action to take, the rest will be arguments to that action
   --]]
   --match="^(shortcmd|longcmd)(:|\\s+|$)((?<action>[+\\-A-za-z0-9]*)\\s*)?(?<list>[\\+\\-A-Za-z0-9, :_#]+)?$"
-  match="^(shortcmd|longcmd)(:|\\s+|$)((?<action>[+\\-A-za-z0-9]*)\\s*)?(?<list>.+)?$"
-  match, n = string.gsub (match, "shortcmd", var.shortcmd or "")
-  match, n = string.gsub (match, "longcmd", var.longcmd or "")
+  match="^(cmdstring)(:|\\s+|$)((?<action>[+\\-A-za-z0-9]*)\\s*)?(?<list>.+)?$"
+  match, n = string.gsub (match, "cmdstring", var.cmd or "")
   SetAliasOption ("plugin_parse", "match", match)
-  if var.shortcmd and var.longcmd then
-    BroadcastPlugin(1001)  
-  end
+  broadcast(1001)  
 end
 
 function plugin_help_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world)
@@ -69,7 +65,6 @@ function plugin_help_helper(name, line, wildcards, cmds_table, options_table, wi
   ColourNote( RGBColourToName(var.plugin_colour),  "black", GetPluginName() .. " ",
               RGBColourToName(var.plugin_colour),  "black", tostring(GetPluginInfo (GetPluginID(), 19)),
               "white", "black", " Options" )
-  ColourNote( RGBColourToName(var.plugin_colour),  "black", var.longcmd .. " may be abbreviated as " .. var.shortcmd )
   ColourNote("white", "black", "-----------------------------------------------")
              
   for i,v in pairs(cmds_table) do
@@ -338,4 +333,24 @@ end
 
 function nofunc(name, line, wildcards, cmds_table, options_table, window)
   return true
+end
+
+function broadcast(num, data, broadcastdata)
+  if var.tdebug == "true" then
+    print(GetPluginInfo (GetPluginID (), 1), ": Broadcast", num)
+    if data then
+      print(data)  
+    end
+  end
+  BroadcastPlugin(tonumber(num), broadcastdata)
+end
+
+function enabletriggroup(group, flag)
+  if EnableTriggerGroup (group, flag) == 0 then
+    if flag then
+      print("no triggers to enable for group", group)
+    else
+      print("no triggers to disable for group", group)
+    end
+  end
 end
