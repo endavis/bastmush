@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: Aardwolf_quest_miniwin.xml 47 2009-02-09 18:00:51Z endavis $ -->
+<muclient>
+<plugin
+   name="xBroadcast_Level"
+   author="Bast"
+   id="5a00ab9ed92f8fc614664bd1"
+   language="Lua"
+   purpose="broadcast info from leveling"
+   save_state="n"      
+   date_written="2009-02-22 14:20:07"
+   requires="4.38"
+   version="1.0"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+Broadcasts stats when leveling
+Broadcasts
+   1 - level info, get var.levelinfo and loadstring it
+       levelinfo = { type="pup or level", time=how_long, newlevel=newlevel, hp=hpgain, mana=managain,
+                     mov=movegain, trains=trainsgain, pracs=pracsgain, bonustrains=bonustrains, 
+                     bonusstats = {int=1, wis=1, con=1, luc=1, dex=1, str=1 } }
+
+Example
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "5a00ab9ed92f8fc614664bd1" and msg == 2 then
+      local pvar = GetPluginVariable(  "4a266f81c50828bbbfda7100", levelinfo )
+
+      -- get the info
+      loadstring( pvar )()
+      info = levelinfo
+    end
+  end
+
+]]>
+</description>
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+<triggers>
+  <trigger
+   enabled="y"
+   match="Congratulations hero. You have increased your powers!"
+   name="pup"
+   script="level"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="You raise a level! You are now level *."
+   name="level"
+   script="level"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="You gain * hit points, * mana, * moves, * practices and * trains."
+   name="levelgains"
+   script="levelgains"
+   group="linfo"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="You gain * trains."
+   name="pupgains"
+   script="levelgains"
+   group="linfo"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   regexp="y"
+   match="^Lucky! You gain an extra (\d) training sessions?!$"
+   name="bonustrains"
+   script="levbonus"
+   group="linfo"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="You gain a bonus * point!"
+   name="bonusstat"
+   script="levbonus"
+   group="linfo"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="*"
+   name="finishlevel"
+   script="levbonus"
+   group="linfo"
+   sequence="101"
+  >
+  </trigger>
+</triggers>
+
+
+<script>
+<![CDATA[
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "verify"
+
+-- keys - type, time, newlevel, hp, mana, mov, trains, pracs, bonustrains, bonusstats = {}
+-- bonusstats subtable keys are the bonus stat names
+levelinfo = {}
+
+
+function level ( name, line, wildcards )
+  levelinfo = {}
+  levelinfo.type = name
+  levelinfo.bonusstats = {}
+  levelinfo.time = GetInfo(304)  
+  enabletriggroup( "linfo", true )
+end
+
+function levelgains (name, line, wildcards)
+  if name == "pupgains" then
+    levelinfo.trains = wildcards[1]
+  elseif name == "levelgains" then
+    levelinfo.hp = wildcards[1]
+    levelinfo.mana = wildcards[2]
+    levelinfo.mov = wildcards[3]
+    levelinfo.prac = wildcards[4]
+    levelinfo.trains = wildcards[5]
+  end
+end
+
+function levbonus (name, line, wildcards)
+  if name == "bonustrains" then
+    levelinfo.bonustrains = wildcards[1]
+  elseif name == "bonusstat" then
+    levelinfo.bonusstats[string.lower(string.sub(wildcards[1], 1, 3))] = 1
+  elseif name == "finishlevel" then
+    enabletriggroup( "linfo", false )   
+    var.levelinfo = serialize.save( "levelinfo", levelinfo )  
+    broadcast(1, var.levelinfo)
+  end
+end
+
+function OnPluginEnable ()
+
+end
+
+function OnPluginDisable ()
+  BroadcastPlugin(-1)
+end
+
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  plugin_save_vars(options_table)    
+end -- function OnPluginSaveState
+
+function OnPluginInstall ()
+
+ if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+  
+end -- OnPluginInstall
+]]>
+</script>
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+<script>
+<![CDATA[
+
+options_table  = {
+  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
+  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="blev"},
+}
+
+cmds_table = {
+
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+]]>
+</script>
+</muclient>

@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: Aardwolf_quest_miniwin.xml 47 2009-02-09 18:00:51Z endavis $ -->
+<muclient>
+<plugin
+   name="xBroadcast_Kills"
+   author="Bast"
+   id="37a61c4570508448e19c7c14"
+   language="Lua"
+   purpose="broadcast when a mob is killed"
+   save_state="n"
+   date_written="2009-02-22 18:52:27"
+   requires="4.38"
+   version="1.0"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+Broadcasts when a mob is killed
+Broadcasts
+   1 - mob killed
+       kill_info = {mob = mobname, xp = xp, bonusxp = bonusxp, gold = gold
+
+Example
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "37a61c4570508448e19c7c14" and msg == 1 then
+      local pvar = GetPluginVariable(  "37a61c4570508448e19c7c14", "kill_info")
+
+      -- get the mobs
+      loadstring( pvar )()
+      kill = kill_info
+    end
+  end
+    
+]]>
+</description>
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<triggers>
+
+  <trigger
+   enabled="y"
+   match="^You receive (\d+(?:\+\d+)*) experience points?\.$"
+   regexp="y"
+   name="mobxp"
+   script="mobxp"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="You receive * bonus experience points *."
+   name="bonusxp"
+   script="mobxp"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   match="^You get (.+) gold coins (.+) corpse of (.+)\.$"
+   name="mobgold"
+   script="mobgold"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   match="^(\w+) splits? (\d+) gold coins?. Your share is (\d+) gold\.$"
+   name="splitgold"
+   script="mobgold"
+   sequence="100"
+  >
+  </trigger>
+</triggers>
+
+
+<script>
+<![CDATA[
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "verify"
+
+kill_info = {}
+
+function mobxp( name, line, wildcards )
+  if name == 'mobxp' then
+    kill_info.bonusxp = 0
+    kill_info.xp = wildcards[1]
+  elseif name == 'bonusxp' then
+    kill_info.bonusxp = wildcards[1]
+  end
+end
+
+function mobgold( name, line, wildcards )
+  if name == 'mobgold' then
+    kill_info.gold = wildcards[1]
+  elseif name == 'splitgold' then
+    kill_info.gold = wildcards[2]
+  end
+  var.kill_info = serialize.save( "kill_info", kill_info )
+  broadcast(1, var.kill_info)  
+end
+
+function OnPluginBroadcast (msg, id, name, text)
+  if msg == 1 and id == "8a710e0783b431c06d61a54c" then
+  
+    -- get one variable
+    kill_info.mob = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
+     
+  end -- stats changed
+end
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  plugin_save_vars(options_table)    
+end -- function OnPluginSaveState
+
+function OnPluginInstall ()
+
+ if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+  
+end -- OnPluginInstall
+
+function OnPluginEnable ()
+  -- check for stats detector
+  checkplugin ("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
+end
+
+function OnPluginDisable ()
+  BroadcastPlugin(-1)
+end -- OnPluginDisable
+
+
+]]>
+</script>
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+<script>
+<![CDATA[
+
+options_table  = {
+  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
+  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="bkill"},
+}
+
+cmds_table = {
+
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+]]>
+</script>
+</muclient>
