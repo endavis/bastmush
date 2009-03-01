@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
 <!-- $Id$ -->
-<!-- Saved on Saturday, June 30, 2007, 10:48  -->
-<!-- MuClient version 4.13 -->
-
 <muclient>
 <plugin
-   name="Aardwolf_Map_Miniwindow"
-   author="Nick Gammon/Bast"
-   id="86810b755a33169f0f1d9585"
+   name="miniwin_map"
+   author="Bast"
+   id="a6820c766a44169e0f1d9585"
    language="Lua"
-   purpose="Redirects Aardwolf map messages to another pane"
+   purpose="redirect map to miniwin"
    date_written="2008-07-18"
    requires="4.34"
-   version="1.1"
+   version="1.0"
    save_state="y"
    >
 <description trim="y">
@@ -76,38 +73,40 @@ Redirects the map to a mini window.
 
 <!--  Aliases  -->
 
+<!--  Aliases  -->
+
 <aliases>
   <alias
-   script="togglewindow"
-   match="^togglemap$"
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
    enabled="y"
    regexp="y"
-   sequence="100"
    ignore_case="y"
+   sequence="110"
+   expand_variables="y"
   >
-  </alias>
+  </alias>   
 </aliases>
 <!--  Script  -->
 
 
 <script>
 <![CDATA[
-
+require 'var'
+require 'pluginhelper'
 require "checkplugin"
 require "miniwin"
 require "tprint"
-require "stringfuncs"
+require "commas"
+require "serialize"
+
 
 mapwin = Miniwindow{name="Map", header_height=2, width=31, height=19}
 mapwin:disable()
 
 map_lines = {}
 coords = nil
-
--- showhide
-function togglewindow()
-  mapwin:togglewindow()
-end
 
 -- mousedown
 function mousedown (flags, hotspotid)
@@ -166,9 +165,9 @@ function map_redirect (name, line, wildcards, styles)
     EnableTrigger ("multi_line_map", false)  -- no more lines to go
     mapwin:enable()
     if #map_lines > 19 then
-      if strip(map_lines[2][1].text) == "" then
+      if trim(map_lines[2][1].text) == "" then
         table.remove(map_lines, 2)
-      elseif strip(map_lines[3][1].text) == "" then
+      elseif trim(map_lines[3][1].text) == "" then
         table.remove(map_lines, 3)
       end
     end
@@ -235,8 +234,27 @@ end -- OnPluginDisable
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  --mapwin:savestate()
-end -- OnPluginSaveState
+  plugin_save_vars(options_table)
+  mapwin:savestate() 
+end -- function OnPluginSaveState
+
+options_table  = {
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("steelblue")},
+  cmd = {help="the short command for this plugin", type="string", after=set_plugin_alias, default="mw"},
+}
+
+--Request, Info, Quit, Check
+cmds_table = {
+  toggle   = {func=togglewindow, help="toggle the map miniwindow"},   
+  check    = {func=nofunc, help=''}, 
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table, mapwin)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
 
 ]]>
 </script>
