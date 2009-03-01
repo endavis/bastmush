@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: Aardwolf_quest_miniwin.xml 47 2009-02-09 18:00:51Z endavis $ -->
+<muclient>
+<plugin
+   name="xBroadcast_GQ"
+   author="Bast"
+   id="6a277f81c5408278ccda7100"
+   language="Lua"
+   purpose="Broadcasts when anything happens related to a gq"
+   save_state="n"
+   date_written="2009-02-21 1:10:01"
+   requires="4.38"
+   version="1.0"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+Broadcasts when anything happens in a gquest
+Broadcasts
+   1 - gquest available
+   2 - gquest joined
+   3 - Mob list, get var.mobs and unserialize it
+       mobs = { 1 = {name = 'Some name', room = 'Some room', clean = 'A name with some stuff removed', num=number},
+              2 = {name = 'Another name', room = 'Another room', clean = 'Another name with some stuff removed', num=number}, }
+       It will be resent when a mob is killed and will be nil when a gquest is not active        
+   4 - rewards, get var.rewards and unserialize it, this can also be used to check when a gquest is finished
+       rewards = { trivia = num, training = num, gold = num, practice = num, quest = num, mobqp=mobqp }
+   5 - no gquest
+
+Example
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "6a277f81c5408278ccda7100" and msg == 3 then
+      local pvar = GetPluginVariable(  "6a277f81c5408278ccda7100", "mobs" )
+
+      -- get the mobs
+      loadstring( pvar )()
+      cp_mobs = mobs
+    end
+  end
+  
+]]>
+</description>
+
+<!--
+Global Quest: Global quest # 459558 has been declared for levels 141 to 155.
+  
+You have now joined the quest. See 'help gquest' for available commands.
+  
+Global Quest: The global quest for levels 117 to 130 has now started.
+Global Quest: Use 'gquest info' to see the targets.
+
+You still have to kill 2 * some singing mice (Faerie Tales II)
+You still have to kill 1 * Akiya (Masquerade Island)
+You still have to kill 1 * the train conductor (ST:TNG)
+You still have to kill 1 * a slime (Sanctity of Eternal Damnation)
+You still have to kill 2 * a blue and green cockatoo (The Amazon Nation)
+You still have to kill 2 * a chaosian citizen (The Courts of Chaos)
+You still have to kill 1 * a brawling pirate (The Misty Shores of Yarr)
+You still have to kill 2 * a deckscrubber (The Misty Shores of Yarr)
+You still have to kill 1 * a pirate sorting the treasure (The Misty Shores of Yarr)
+You still have to kill 1 * A cleaning maid (Verdure Estate)
+
+
+Congratulations, that was one of the GLOBAL QUEST mobs!
+3 quest points awarded.
+
+CONGRATULATIONS! You were the first to complete this quest!
+Reward of 4 practice sessions added.
+Reward of 12100 gold coins added.
+Reward of 13 quest points added.
+Reward of 1 trivia point added.
+You may win 2 more gquests at this level.
+Global Quest: The global quest has been won by Bast - 13th win.
+
+You are not on a global quest.
+-->
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<triggers>
+
+  <trigger
+   enabled="y"  
+   match="^Global Quest: Global quest \# (.*) has been declared for levels (.*) to (.*)\.$"
+   name="gq_declared"
+   script="gq_declared"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"   
+  >
+  </trigger>
+ 
+ <trigger
+   enabled="n"  
+   match="^You have now joined the quest. See 'help gquest' for available commands.$"
+   name="gq_join"
+   script="gq_join"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"   
+  >
+  </trigger>
+  
+ <trigger
+   enabled="n"  
+   match="^Global Quest: The global quest for levels (.*) to (.*) has now started\.$"
+   name="gq_start"
+   script="gq_start"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"   
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="You are not on a global quest."
+   name="gq_none"
+   script="gq_none"
+   sequence="100"
+   group="gqcheck"
+  >
+  </trigger>  
+  
+  <trigger
+   enabled="n"  
+   match="^You still have to kill (?<num>\d*) \* (?<name>.*) \((?<room>.*)\)\.*$"
+   name="gq_item"
+   script="gq_item"
+   sequence="100"
+   regexp="y"
+   group="gqcheck"
+   omit_from_output="y"   
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="*"
+   name="finishgqcheck"
+   script="gq_item"
+   group="gqcheckfin"
+   sequence="101"
+  >
+  </trigger> 
+  
+  <trigger
+   enabled="n"
+   match="^(\s*)Reward of (?<amount>\d+) (?<type>.+) (.+) added.$"
+   sequence="100"
+   script="gq_reward"
+   group="gqrew"
+   regexp="y"   
+  >
+  </trigger>
+  
+ <trigger
+   enabled="n"
+   match="Congratulations, that was one of the GLOBAL QUEST mobs!"
+   send_to="10"
+   sequence="100"
+   script="gq_mob_dead"
+   group="gqin"
+  >
+  </trigger>  
+  
+ <trigger
+   enabled="n"
+   match="CONGRATULATIONS! You were the first to complete this quest!"
+   sequence="100"
+   script="gq_complete"
+   group="gqin"
+  >
+  </trigger>
+  
+ <trigger
+   enabled="y"
+   match="Global Quest: The global quest has been won by (.*) - (.*) win."
+   sequence="100"
+   script="gq_none"
+   group="gqdone"
+   regexp="y"      
+  >
+  </trigger>
+  
+</triggers>
+
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   name="gq_check"
+   script="gq_check"
+   match="^(gq|gquest) check$"
+   enabled="y"
+   regexp="y"
+   sequence="100"
+  >
+  <send>gq check</send>
+  </alias>
+ 
+</aliases>
+
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+require "var"
+require "serialize"
+require "commas"
+require "check"
+require "pluginhelper"
+require "verify"
+
+mobs = {}
+rewards = {}
+enemy = ""
+joined = false
+
+function cleanname(name)
+  return string.lower(string.gsub(name, ",", ""))
+end
+
+function gq_declared (name, line, wildcards)
+  check( EnableTrigger ("gq_join", true) )
+  enabletriggroup("gqdone", true)
+  broadcast(1)
+end
+
+function gq_join (name, line, wildcards)
+  joined = true
+  check( EnableTrigger ("gq_join", false) )
+  check( EnableTrigger ("gq_start", true) )
+  mobs = {}
+  rewards = {}
+  timer = {}      
+  broadcast(2)
+end
+
+function gq_start (name, line, wildcards)
+  check( EnableTrigger ("gq_start", false) ) 
+  enabletriggroup("gqin", true)
+
+  Execute("gq check")
+end
+
+function gq_item (name, line, wildcards)
+  if name == "finishgqcheck" and trim(line) == "" then
+    enabletriggroup("gqcheck", false)
+    check( EnableTrigger ("finishgqcheck", false) )      
+    var.mobs = serialize.save( "mobs", mobs )  
+    broadcast(3, var.mobs)
+    return
+  elseif name == "finishgqcheck"  then
+    return
+  end
+
+  check( EnableTrigger ("finishgqcheck", true) )  
+  name = wildcards.name
+  room = wildcards.room
+  num = wildcards.num
+  if not name or not room then
+    print("error parsing line: ", line)
+    tprint(wildcards)
+  else
+    table.insert(mobs, {name=name, room=room, clean=cleanname(name), num=num})
+  end
+end -- campaign_item
+
+function gq_mob_dead (name, line, wildcards)
+  local tenemy = enemy
+  local found = false
+  trew = rewards.mobs or 0
+  rewards.qpmobs = trew + 3
+  for i,v in ipairs(mobs) do
+    if v.clean == string.lower(tenemy) then
+      found = true
+      if tonumber(v.num) == 1 then
+        table.remove(mobs, i)
+      else
+        v.num = tonumber(v.num) - 1
+      end
+      break
+    end   
+  end
+  if found then
+    var.mobs = serialize.save( "mobs", mobs )  
+    broadcast(3, var.mobs)
+  else
+    print("GQ: could not find mob", enemy)
+    Execute("gq check")
+  end
+end
+
+function gq_reward (name, line, wildcards)
+  local type = wildcards.type
+  local amount = wildcards.amount
+  rewards[type] = amount
+end
+
+function gq_complete(name, line, wildcards)
+  enabletriggroup("gqrew", true)
+end
+
+function gq_check( name, line, wildcards)
+  mobs = {}
+  enabletriggroup("gqcheck", true)
+end -- cp_check
+
+function gq_none( name, line, wildcards)
+  var.rewards = serialize.save( "rewards", rewards ) 
+  if joined then
+    broadcast(4, var.rewards)
+  end
+  broadcast(5)
+  check( EnableTrigger ("gq_join", false) )
+  check( EnableTrigger ("gq_start", false) )  
+  enabletriggroup("gqcheck", false)
+  enabletriggroup("gqin", false)
+  enabletriggroup("gqrew", false)
+  enabletriggroup("gqdone", false)
+  mobs = {}  
+  rewards = {}
+  timer = {}  
+  joined = false
+end
+
+function OnPluginBroadcast (msg, id, name, text)
+  if msg == 1 and id == "8a710e0783b431c06d61a54c" then
+  
+    -- get one variable
+    enemy = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
+     
+  end -- stats changed
+end
+
+function OnPluginEnable ()
+  -- check for stats detector
+  checkplugin ("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
+end
+
+function OnPluginDisable ()
+  BroadcastPlugin(-1)
+end
+
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  plugin_save_vars(options_table)  
+end -- function OnPluginSaveState
+
+function OnPluginInstall ()
+
+ if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+  
+end -- OnPluginInstall
+]]>
+</script>
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+<script>
+<![CDATA[
+
+options_table  = {
+  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
+  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="bgq"},
+}
+
+cmds_table = {
+
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+]]>
+</script>
+</muclient>
+

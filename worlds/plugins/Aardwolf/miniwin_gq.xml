@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: Aardwolf_quest_miniwin.xml 47 2009-02-09 18:00:51Z endavis $ -->
+<muclient>
+<plugin
+   name="miniwin_gq"
+   author="Bast"
+   id="eee984fd3c00a9e974cd5eb2"
+   language="Lua"
+   purpose="put gquest targets in  a minwin"
+   save_state="y"
+   date_written="2009-02-22 21:20:25"
+   requires="4.38"
+   version="1.0"
+   >
+<description trim="y">
+Redirects the gq to the miniwindow.
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+require 'var'
+require "commas"
+require 'window'
+require 'tprint'
+require 'pluginhelper'
+
+gqwin = Window{name="GQ", windowpos=7, font_size=7, font="Verdana", header_height=0}
+gqwin:disable()
+
+
+gqmobs = {}
+gq_text = {}
+
+-- mousedown
+function mousedown (flags, hotspotid)
+  gqwin:mousedown(flags, hotspotid)
+end -- mousedown
+
+
+function build_gq ()
+
+  local texttable = {}
+
+  local style = {}
+
+  -- do nothing if no gquest
+  if #gqmobs == 0 then
+    return
+  end -- if
+
+  -- heading
+  style = {}
+  style.text = "GQuest: You need to kill:  "
+  style.len = #style.text
+  style.style = 0
+  table.insert (texttable, {style})
+
+  -- list of mobs
+  for i, v in ipairs (gqmobs) do
+    style = {}
+    style.text = v.num .. " : " .. v.name .. " (" .. v.room .. ")"
+    style.len = #style.text
+    style.style = 0
+    table.insert (texttable, {style})
+  end -- for
+  
+  gq_text = texttable
+  gqwin.header_height = 1
+  show_gq()
+  
+end -- build_gq
+
+function show_gq ()
+  -- do nothing if no gq
+  if #gq_text == 0 then
+    return
+  end -- if
+
+  gqwin:enable()
+  gqwin:createwin(gq_text)
+end -- show_quest_text
+
+function OnPluginBroadcast (msg, id, name, text)
+  if id == "6a277f81c5408278ccda7100" then
+    if msg == 1 then
+      -- gquest available
+      gqwin.header_height = 0
+      gq_text = {"GQuest Available"}
+      show_gq()       
+    elseif msg == 2 then
+      print("gquest joined")
+      -- gquest joined
+      gqwin.header_height = 0      
+      gq_text = {"GQuest Joined - Waiting"}
+      show_gq()       
+    elseif msg == 3 then
+      local pvar = GetPluginVariable(  "6a277f81c5408278ccda7100", "mobs" )
+
+      -- get the mobs
+      loadstring( pvar )()
+      gqmobs = mobs
+      build_gq()
+    elseif msg == 4 or msg == 5 then
+      -- reward
+      gqwin:disable()
+    end      
+     
+  end -- gq broadcast
+end
+
+function OnPluginInstall ()
+
+  if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    cpwin:disable()
+    return
+  end -- they didn't enable us last time
+  
+  OnPluginEnable ()  -- do initialization stuff
+  
+  
+end -- OnPluginInstall
+
+function OnPluginDisable ()
+  gqwin:disable()
+end -- OnPluginDisable
+
+function OnPluginEnable ()
+  return
+end -- OnPluginEnable
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  plugin_save_vars(options_table)
+  gqwin:savestate() 
+end -- function OnPluginSaveState
+
+options_table  = {
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("steelblue")},
+  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="gq"},
+}
+
+--Request, Info, Quit, Check
+cmds_table = {
+  check    = {func=nofunc, help=''}, 
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table, gqwin, true)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+]]>
+
+</script>
+
+</muclient>
