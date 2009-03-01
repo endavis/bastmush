@@ -9,7 +9,7 @@
 <plugin
    name="Aardwolf_moonbot"
    author="Balaam/Bast"
-   id="2349913955ee86427355ad5e"
+   id="eee9913955ee86427355ad5e"
    language="Lua"
    purpose="moon phase tracker"
    save_state="y"
