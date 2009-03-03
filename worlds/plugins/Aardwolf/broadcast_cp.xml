@@ -8,7 +8,7 @@
    id="aaa66f81c50828bbbfda7100"
    language="Lua"
    purpose="Broadcasts when anything happens related to a cp"
-   save_state="n"
+   save_state="y"
    date_written="2009-02-18 12:31:01"
    requires="4.38"
    version="1.0"

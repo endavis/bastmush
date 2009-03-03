@@ -8,7 +8,7 @@
    id="aaa61c4570508448e19c7c14"
    language="Lua"
    purpose="broadcast when a mob is killed"
-   save_state="n"
+   save_state="y"
    date_written="2009-02-22 18:52:27"
    requires="4.38"
    version="1.0"

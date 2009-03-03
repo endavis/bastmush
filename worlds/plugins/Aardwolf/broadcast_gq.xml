@@ -8,7 +8,7 @@
    id="aaa77f81c5408278ccda7100"
    language="Lua"
    purpose="Broadcasts when anything happens related to a gq"
-   save_state="n"
+   save_state="y"
    date_written="2009-02-21 1:10:01"
    requires="4.38"
    version="1.0"

@@ -8,7 +8,7 @@
    id="aaa0ab9ed92f8fc614664bd1"
    language="Lua"
    purpose="broadcast info from leveling"
-   save_state="n"      
+   save_state="y"      
    date_written="2009-02-22 14:20:07"
    requires="4.38"
    version="1.0"
