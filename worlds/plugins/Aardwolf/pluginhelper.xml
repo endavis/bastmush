@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+
+<muclient>
+<plugin
+   name="pluginhelper"
+   author="Bast"
+   id="e8520531407cb4281bea544e"
+   language="Lua"
+   purpose="shows plugins that uses the pluginhelper module"
+   save_state="y"
+   date_written="2009-02-28 20:14:46"
+   requires="4.40"
+   version="1.0"
+   >
+
+</plugin>
+
+<timers>
+  <timer 
+      script="add_plugins" 
+      enabled="n" 
+      second="5.00" 
+      name="addtimer"
+      >
+  </timer>
+</timers>
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<script>
+<![CDATA[
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "verify"
+require "tprint"
+
+plugins = {}
+new_plugins = {}
+
+function OnPluginBroadcast (msg, id, name, text)
+  if msg == 1001 then
+    table.insert(new_plugins, id)
+    check(EnableTimer("addtimer", true))  	
+  end --
+end
+
+function add_plugins()
+  for _, id in ipairs(new_plugins) do
+    local pvar = GetPluginVariable(id, 'cmd')
+    plugins[id] = pvar
+  end
+  check(EnableTimer("addtimer", false))  	  
+end
+
+function format_plugin(name, version, cmd, enabled)
+  hname = string.format("%-20s", tostring(name))
+  hver = string.format("%.2f  ", version)
+  hcmd = string.format("%-8s", tostring(cmd))
+  hena = string.format("%-10s", tostring(enabled))
+  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hena)
+end
+
+function format_header()
+  hname = string.format("%-20s", "Name")
+  hver = string.format("%-6s", "Vers" )
+  hcmd = string.format("%-8s", "Cmd")
+  hena = string.format("%-10s", "Enabled")
+  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hena)
+end
+  
+
+function list_plugins(name, line, wildcards)
+  ColourNote("", "", "")
+  ColourNote( RGBColourToName(var.plugin_colour),  "black", GetPluginName() .. " ",
+              RGBColourToName(var.plugin_colour),  "black", "Plugin List")
+  format_header()
+  ColourNote("white", "black", "-----------------------------------------------")
+  for id, cmd in pairs (plugins) do 
+    format_plugin( GetPluginInfo(id, 1),  GetPluginInfo(id, 19), cmd, GetPluginInfo(id, 17))
+  end
+  ColourNote("", "", "")
+end
+
+]]>
+</script>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+<script>
+<![CDATA[
+
+options_table  = {
+  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("red")},
+  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="plugins"},
+}
+
+cmds_table = {
+  list      = {func=list_plugins, help="show help"},
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+]]>
+</script>
+
+</muclient>
