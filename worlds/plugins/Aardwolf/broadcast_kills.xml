@@ -5,7 +5,7 @@
 <plugin
    name="xBroadcast_Kills"
    author="Bast"
-   id="37a61c4570508448e19c7c14"
+   id="aaa61c4570508448e19c7c14"
    language="Lua"
    purpose="broadcast when a mob is killed"
    save_state="n"

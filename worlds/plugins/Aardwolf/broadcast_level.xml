@@ -5,7 +5,7 @@
 <plugin
    name="xBroadcast_Level"
    author="Bast"
-   id="5a00ab9ed92f8fc614664bd1"
+   id="aaa0ab9ed92f8fc614664bd1"
    language="Lua"
    purpose="broadcast info from leveling"
    save_state="n"      

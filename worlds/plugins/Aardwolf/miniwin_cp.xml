@@ -5,7 +5,7 @@
 <plugin
    name="miniwin_cp"
    author="Bast"
-   id="4743a98a021c1bee534ef093"
+   id="eee3a98a021c1bee534ef093"
    language="Lua"
    purpose="Shows campaign objectives in a miniwindow"
    date_written="2008-07-22"
@@ -110,23 +110,23 @@ end -- show_cp_text
 
 
 function OnPluginBroadcast (msg, id, name, text)
- if id == "4a266f81c50828bbbfda7100" then
+ if id == "aaa66f81c50828bbbfda7100" then
     if msg == 1 then
-      local pvar = GetPluginVariable(  "4a266f81c50828bbbfda7100", "mobs" )
+      local pvar = GetPluginVariable(  "aaa66f81c50828bbbfda7100", "mobs" )
 
       -- get the mobs
       loadstring( pvar )()
       cpmobs = mobs
       show_cp_text()  
     elseif msg == 2 then
-      local pvar = GetPluginVariable(  "4a266f81c50828bbbfda7100", "timer" )
+      local pvar = GetPluginVariable(  "aaa66f81c50828bbbfda7100", "timer" )
 
       -- get the timer
       loadstring( pvar )()
       cptimer = timer
       show_cp_text()
     elseif msg == 3 then
-      cptimer = ''
+      cptimer = {}
       mobs = {}
       cpwin:disable()
     end      

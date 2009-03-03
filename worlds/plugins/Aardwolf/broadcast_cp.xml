@@ -5,7 +5,7 @@
 <plugin
    name="xBroadcast_CP"
    author="Bast"
-   id="4a266f81c50828bbbfda7100"
+   id="aaa66f81c50828bbbfda7100"
    language="Lua"
    purpose="Broadcasts when anything happens related to a cp"
    save_state="n"
@@ -31,8 +31,8 @@ Broadcasts
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
-    if id == "4a266f81c50828bbbfda7100" and msg == 1 then
-      local pvar = GetPluginVariable(  "4a266f81c50828bbbfda7100", mobs )
+    if id == "aaa66f81c50828bbbfda7100" and msg == 1 then
+      local pvar = GetPluginVariable(  "aaa66f81c50828bbbfda7100", mobs )
 
       -- get the mobs
       loadstring( pvar )()

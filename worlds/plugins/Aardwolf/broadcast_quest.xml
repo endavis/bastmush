@@ -5,7 +5,7 @@
 <plugin
    name="xBroadcast_Quest"
    author="Bast"
-   id="98c8a9eda20fa11787c6b438"
+   id="aaa8a9eda20fa11787c6b438"
    language="Lua"
    purpose="Broadcast whenever anything happens with a quest"
    save_state="n"
@@ -38,8 +38,8 @@ Broadcasts
        
 Example:
   function OnPluginBroadcast (msg, id, name, text)
-    if id == "98c8a9eda20fa11787c6b438" and msg == 2 then
-      local pvar = GetPluginVariable(  "98c8a9eda20fa11787c6b438" , mob)
+    if id == "aaa8a9eda20fa11787c6b438" and msg == 2 then
+      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438" , mob)
 
       --get the mob info
       loadstring( pvar )()

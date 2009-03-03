@@ -5,7 +5,7 @@
 <plugin
    name="miniwin_quest"
    author="Bast"
-   id="87d9aafda20ae11787c6b438"
+   id="eee9aafda20ae11787c6b438"
    language="Lua"
    purpose="Shows quests in a miniwindow"
    date_written="2008-07-24"
@@ -94,7 +94,7 @@ function show_quest ()
 end -- show_quest_text
 
 function OnPluginBroadcast (msg, id, name, text)
-  if id == "98c8a9eda20fa11787c6b438" then
+  if id == "aaa8a9eda20fa11787c6b438" then
     if msg == 1 then
       -- quest available
       quest_info = {}
@@ -111,14 +111,14 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 2 then
       -- quest mob info
       quest_timer = {}
-      local pvar = GetPluginVariable(  "98c8a9eda20fa11787c6b438", "mob" )
+      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438", "mob" )
 
       -- get the timer
       loadstring( pvar )()
       quest_info = mob
     elseif msg == 3 then
       -- quest time left
-      local pvar = GetPluginVariable(  "98c8a9eda20fa11787c6b438", "timer" )
+      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438", "timer" )
 
       -- get the timer
       loadstring( pvar )()
@@ -134,7 +134,7 @@ function OnPluginBroadcast (msg, id, name, text)
       return
     elseif msg == 7 then
       -- time until next quest
-      local pvar = GetPluginVariable(  "98c8a9eda20fa11787c6b438", "timer" )
+      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438", "timer" )
 
       -- get the timer
       loadstring( pvar )()
@@ -173,9 +173,9 @@ function OnPluginSaveState ()
 end -- function OnPluginSaveState
 
 options_table  = {
+  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
   plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("steelblue")},
-  shortcmd = {help="the short command for this plugin", type="string", after=set_plugin_alias, default="qw"},
-  longcmd = {help="the long command for this plugin", type="string", after=set_plugin_alias, default="qwin"},
+  cmd = {help="the short command for this plugin", type="string", after=set_plugin_alias, default="qw"},
 }
 
 --Request, Info, Quit, Check
@@ -188,7 +188,6 @@ end -- plugin_parse
 
 init_plugin_vars(options_table)
 set_plugin_alias()
-
 ]]>
 </script>
 

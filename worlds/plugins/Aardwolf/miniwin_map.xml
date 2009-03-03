@@ -5,7 +5,7 @@
 <plugin
    name="miniwin_map"
    author="Bast"
-   id="a6820c766a44169e0f1d9585"
+   id="eee20c766a44169e0f1d9585"
    language="Lua"
    purpose="redirect map to miniwin"
    date_written="2008-07-18"

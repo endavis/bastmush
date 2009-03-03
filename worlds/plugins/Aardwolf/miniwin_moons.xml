@@ -7,7 +7,7 @@
 <!-- TODO: Add ability to show window even when moons are not known - show "Unknown" in the plot -->
 <muclient>
 <plugin
-   name="Aardwolf_moonbot"
+   name="miniwin_moonbot"
    author="Balaam/Bast"
    id="eee9913955ee86427355ad5e"
    language="Lua"
