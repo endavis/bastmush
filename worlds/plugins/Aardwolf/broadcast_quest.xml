@@ -21,7 +21,7 @@
 Broadcasts when anything happens in a quest
 Broadcasts
    1 - can now quest
-   2 - Mob info, get var.mob and unserialize it
+   2 - Mob info, get var.mob and loadstring it
         mob = { name = 'Some name', room = 'Some room', area = 'some area'}
    3 - time left to finish quest
         timer = {secs = num, text = 'time in text format' }

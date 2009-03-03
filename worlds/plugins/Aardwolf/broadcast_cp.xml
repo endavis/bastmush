@@ -20,13 +20,13 @@
 
 Broadcasts when anything happens in a campaign
 Broadcasts
-   1 - Mob list, get var.mobs and unserialize it
+   1 - Mob list, get var.mobs and loadstring it
        mobs = { 1 = {name = 'Some name', room = 'Some room', clean = 'A name with some stuff removed'},
               2 = {name = 'Another name', room = 'Another room', clean = 'Another name with some stuff removed'}, }
        It will be resent when a mob is killed and will be nil when a cp is not active        
-   2 - timer, will be updated every 60 seconds, get var.timer and unserialize it
+   2 - timer, will be updated every 60 seconds, get var.timer and loadstring it
         timer = {secs = num, text = 'time in text format', days = days, hours = hours, mins = minutes}
-   3 - rewards, get var.rewards and unserialize it, this can also be used to check when a cp is finished
+   3 - rewards, get var.rewards and loadstring it, this can also be used to check when a cp is finished
        reqards = { trivia = num, training = num, gold = num, practice = num, quest = num}
 
 Example
