@@ -17,15 +17,7 @@
 
 </plugin>
 
-<timers>
-  <timer 
-      script="add_plugins" 
-      enabled="n" 
-      second="5.00" 
-      name="addtimer"
-      >
-  </timer>
-</timers>
+
 <!--  Get our standard constants -->
 
 <include name="constants.lua"/>
@@ -46,16 +38,7 @@ new_plugins = {}
 function OnPluginBroadcast (msg, id, name, text)
   if msg == 1001 then
     plugins[GetPluginInfo(id, 1)] = id
-    --check(EnableTimer("addtimer", true))  	
   end --
-end
-
-function add_plugins()
-  for _, id in ipairs(new_plugins) do
-    local pvar = GetPluginVariable(id, 'cmd')
-    plugins[id] = pvar
-  end
-  check(EnableTimer("addtimer", false))  	  
 end
 
 function format_plugin(name, version, cmd, enabled)
