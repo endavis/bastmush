@@ -5,7 +5,7 @@
 <plugin
    name="xBroadcast_GQ"
    author="Bast"
-   id="6a277f81c5408278ccda7100"
+   id="aaa77f81c5408278ccda7100"
    language="Lua"
    purpose="Broadcasts when anything happens related to a gq"
    save_state="n"
@@ -32,8 +32,8 @@ Broadcasts
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
-    if id == "6a277f81c5408278ccda7100" and msg == 3 then
-      local pvar = GetPluginVariable(  "6a277f81c5408278ccda7100", "mobs" )
+    if id == "aaa77f81c5408278ccda7100" and msg == 3 then
+      local pvar = GetPluginVariable(  "aaa77f81c5408278ccda7100", "mobs" )
 
       -- get the mobs
       loadstring( pvar )()
@@ -224,6 +224,7 @@ mobs = {}
 rewards = {qpmobs = 0}
 enemy = ""
 joined = false
+started = false
 
 function cleanname(name)
   return string.lower(string.gsub(name, ",", ""))
@@ -231,6 +232,7 @@ end
 
 function gq_declared (name, line, wildcards)
   check( EnableTrigger ("gq_join", true) )
+  check( EnableTrigger ("gq_start", true) )
   enabletriggroup("gqdone", true)
   broadcast(1)
 end
@@ -238,18 +240,23 @@ end
 function gq_join (name, line, wildcards)
   joined = true
   check( EnableTrigger ("gq_join", false) )
-  check( EnableTrigger ("gq_start", true) )
   mobs = {}
   rewards = {}
   timer = {}      
   broadcast(2)
+  if started then
+    gq_start()
+  end  
 end
 
 function gq_start (name, line, wildcards)
-  check( EnableTrigger ("gq_start", false) ) 
-  enabletriggroup("gqin", true)
+  check( EnableTrigger ("gq_start", false) )
+  started = true
+  if joined then
+    enabletriggroup("gqin", true)
 
-  Execute("gq check")
+    Execute("gq check")
+  end
 end
 
 function gq_item (name, line, wildcards)
@@ -330,6 +337,7 @@ function gq_none( name, line, wildcards)
   rewards = {gqpmobs = 0}
   timer = {}  
   joined = false
+  started = false
 end
 
 function OnPluginBroadcast (msg, id, name, text)
