@@ -54,7 +54,7 @@ function set_plugin_alias()
   match="^(cmdstring)(:|\\s+|$)((?<action>[+\\-A-za-z0-9]*)\\s*)?(?<list>.+)?$"
   match, n = string.gsub (match, "cmdstring", var.cmd or "")
   SetAliasOption ("plugin_parse", "match", match)
-  broadcast(1001)  
+  DoAfterSpecial (10, 'BroadcastPlugin (1001)', sendto.script)
 end
 
 function plugin_help_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world)
