@@ -38,14 +38,15 @@ require "commas"
 require "pluginhelper"
 require "verify"
 require "tprint"
+require "pairsbykeys"
 
 plugins = {}
 new_plugins = {}
 
 function OnPluginBroadcast (msg, id, name, text)
   if msg == 1001 then
-    table.insert(new_plugins, id)
-    check(EnableTimer("addtimer", true))  	
+    plugins[GetPluginInfo(id, 1)] = id
+    --check(EnableTimer("addtimer", true))  	
   end --
 end
 
@@ -80,7 +81,8 @@ function list_plugins(name, line, wildcards)
               RGBColourToName(var.plugin_colour),  "black", "Plugin List")
   format_header()
   ColourNote("white", "black", "-----------------------------------------------")
-  for id, cmd in pairs (plugins) do 
+  for name, id in pairsByKeys (plugins) do 
+    local cmd = GetPluginVariable(id, 'cmd')
     format_plugin( GetPluginInfo(id, 1),  GetPluginInfo(id, 19), cmd, GetPluginInfo(id, 17))
   end
   ColourNote("", "", "")
