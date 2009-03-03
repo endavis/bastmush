@@ -29,7 +29,6 @@ Redirects chats, tells and channels to the "Chats" world window.
 
 chats echo on   --> also echo in the main window
 chats echo off  --> only show in the other window
-chats echo      --> toggle echoing (switch from on to off or vice-versa)
 
 ]]>
 </description>
@@ -128,7 +127,7 @@ require "getworld"
 require "checkplugin"
 require "utils"
 
-echo = false
+echo = tonumber(GetVariable("echo")) or 1
 
 function hasmore(text)
   _place = string.find(text, '}')
@@ -161,7 +160,7 @@ function chat_redirect (name, line, wildcards, styles)
   end
 
   -- this stuff to echo in this world as well
-  if echo then
+  if echo == 1 then
     for i, v in ipairs (styles) do
       ColourTell (RGBColourToName (v.textcolour), 
                     RGBColourToName (v.backcolour), 
@@ -186,15 +185,13 @@ function channel_redirect (name, line, wildcards, styles)
 end -- function channel_redirect 
 
 function chat_echo (name, line, wildcards)
-  if wildcards [1] == false then
-    echo = not echo
-  elseif wildcards [1]:lower () == " on" then
-    echo = true
+  if wildcards [1]:lower () == " on" then
+    echo = 1
   elseif wildcards [1]:lower () == " off" then
-    echo = false
+    echo = 0
   end -- if
   
-  if echo then
+  if echo == 1 then
     ColourNote ("yellow", "", "Echoing chats in main window enabled.")
   else
     ColourNote ("yellow", "", "Echoing chats in main window DISABLED.")
@@ -223,8 +220,6 @@ function OnPluginConnect ()
   TelnetOptionOn (TELOPT_CHANNELS)
   TelnetOptionOn (TELOPT_TELLS)
   TelnetOptionOn (TELOPT_SAYS)
- 
-  echo = false
             
 end -- function OnPluginConnect
 
@@ -277,6 +272,7 @@ end -- OnPluginDisable
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  SetVariable ("echo", tostring (echo))
 end -- OnPluginSaveState
 
 
