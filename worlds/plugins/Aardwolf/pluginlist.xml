@@ -4,7 +4,7 @@
 
 <muclient>
 <plugin
-   name="pluginhelper"
+   name="pluginlist"
    author="Bast"
    id="e8520531407cb4281bea544e"
    language="Lua"
