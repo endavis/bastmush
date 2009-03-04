@@ -285,6 +285,9 @@ end -- campaign_item
 function gq_mob_dead (name, line, wildcards)
   local tenemy = enemy
   local found = false
+  if not rewards.qpmobs then
+    rewards.qpmobs = 0
+  end
   rewards.qpmobs = rewards.qpmobs + 3
   for i,v in ipairs(mobs) do
     if v.clean == string.lower(tenemy) then
@@ -334,7 +337,7 @@ function gq_none( name, line, wildcards)
   enabletriggroup("gqrew", false)
   enabletriggroup("gqdone", false)
   mobs = {}  
-  rewards = {gqpmobs = 0}
+  rewards = {qpmobs = 0}
   timer = {}  
   joined = false
   started = false
