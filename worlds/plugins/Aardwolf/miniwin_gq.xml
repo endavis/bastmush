@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id$ -->
+<!-- $Id: miniwin_cp.xml 215 2009-03-05 17:39:17Z endavis $ -->
 <muclient>
 <plugin
    name="miniwin_gq"
