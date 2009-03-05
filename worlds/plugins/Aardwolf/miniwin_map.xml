@@ -96,13 +96,13 @@ Redirects the map to a mini window.
 require 'var'
 require 'pluginhelper'
 require "checkplugin"
-require "miniwin"
+require "togglewin"
 require "tprint"
 require "commas"
 require "serialize"
 
 
-mapwin = Miniwindow{name="Map", header_height=2, width=31, height=19}
+mapwin = Togglewin{name="Map", header_height=2, width=31, height=19}
 mapwin:disable()
 
 map_lines = {}

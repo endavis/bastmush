@@ -63,12 +63,12 @@ require "commas"
 require "var"
 require "pluginhelper"
 
--- required for miniwindow functions
-require "miniwin"
+-- required for toggle window functions
+require "togglewin"
 
 require "verify"
 
-moonwin = Miniwindow{name="Moons", windowpos=4, font_size=8, font="DejaVu Sans Mono", text_colour="gold"}
+moonwin = Togglewin{name="Moons", windowpos=4, font_size=8, font="DejaVu Sans Mono", text_colour="gold"}
 moonwin:disable()
 moonwin:add_setting("black_colour", {help="the colour for the black moon", type="colour", default=verify_colour("midnightblue"), sortlev=1})
 moonwin:add_setting("white_colour", {help="the colour for the white moon", type="colour", default=verify_colour("white"), sortlev=1})

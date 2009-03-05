@@ -51,11 +51,11 @@ TODO:
 <![CDATA[
 require 'var'
 require "commas"
-require 'miniwin'
+require 'togglewin'
 require 'tprint'
 require 'pluginhelper'
 
-cpwin = Miniwindow{name="CP", windowpos=7, font_size=7, font="Verdana"}
+cpwin = Togglewin{name="CP", windowpos=7, font_size=7, font="Verdana"}
 cpwin:disable()
 cpwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
 

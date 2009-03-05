@@ -48,11 +48,11 @@ Redirects the gq to the miniwindow.
 <![CDATA[
 require 'var'
 require "commas"
-require 'window'
+require 'miniwin'
 require 'tprint'
 require 'pluginhelper'
 
-gqwin = Window{name="GQ", windowpos=7, font_size=7, font="Verdana", header_height=0}
+gqwin = Miniwin{name="GQ", windowpos=7, font_size=7, font="Verdana", header_height=0}
 gqwin:disable()
 
 
