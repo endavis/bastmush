@@ -3,17 +3,17 @@
 require 'window'
 require 'tprint'
 
-class "Miniwindow"(Window)
+class "Togglewin"(Miniwin)
 
 
-function Miniwindow:initialize(args)
+function Togglewin:initialize(args)
   super(args)   -- notice call to superclass's constructor
   self.ishidden = tonumber (GetVariable ("ishidden"..self.name)) or args.ishidden or 0
   self.show_hyperlinks = tonumber (GetVariable ("show_hyperlink"..self.name)) or args.show_hyperlink or 1  
 end
 
 
-function Miniwindow:show(flag)
+function Togglewin:show(flag)
    if self.disabled == 1 then
      self.winhide:show(false)
      WindowShow(self.win, false)
@@ -27,33 +27,33 @@ function Miniwindow:show(flag)
 end
 
 
-function Miniwindow:savestate()
+function Togglewin:savestate()
   super()
   SetVariable ("ishidden"..self.name, self.ishidden)
 end
 
-function Miniwindow:enable()
+function Togglewin:enable()
   self.disabled = 0
   if not self.winhide then
-     self.winhide = Winshow:new{parent=self,name=self.name.."showwin"}
+     self.winhide = HideToggleWin:new{parent=self,name=self.name.."showwin"}
      self.winhide:createwin({" "})
   end
   self:show()
 end
 
-function Miniwindow:disable()
+function Togglewin:disable()
   self.disabled = 1
   if not self.winhide then
-     self.winhide = Winshow{parent=self,name=self.name.."showwin"}
+     self.winhide = HideToggleWin{parent=self,name=self.name.."showwin"}
      self.winhide:createwin({" "})
   end
   self.winhide:show(false)
   WindowShow(self.win, false)
 end
 
-function Miniwindow:mousedown (flags, hotspotid)
+function Togglewin:mousedown (flags, hotspotid)
   if not self.winhide then
-     self.winhide = Winshow{parent=self,name=self.name.."showwin"}
+     self.winhide = HideToggleWin{parent=self,name=self.name.."showwin"}
      self.winhide:createwin({" "})
   end
   local f = self.hyperlink_functions[hotspotid]
@@ -70,12 +70,12 @@ function Miniwindow:mousedown (flags, hotspotid)
 end -- mousedown
 
 
-function Miniwindow:togglewindow()
+function Togglewin:togglewindow()
   if self.disabled == 1 then
     return
   end
   if not self.winhide then
-     self.winhide = Winshow:new{parent=self,name=self.name.."showwin"}
+     self.winhide = HideToggleWin:new{parent=self,name=self.name.."showwin"}
      self.winhide:createwin({" "})
   end
   if self.text == nil then
@@ -90,14 +90,14 @@ function Miniwindow:togglewindow()
   self:show()
 end
   
-function Miniwindow:set(option, value)
+function Togglewin:set(option, value)
   super(option, value)
   self.winhide:drawwin()
 end
 
-class "Winshow"(Window)
+class "HideToggleWin"(Miniwin)
 
-function Winshow:initialize(args)
+function HideToggleWin:initialize(args)
   super(args)
   self.name = self.parent.name.."showwin"
   self.win = GetPluginID()..self.name
@@ -111,7 +111,7 @@ function Winshow:initialize(args)
   self.default_text = "Show " .. self.parent.name
 end
 
-function Winshow:drawwin()
+function HideToggleWin:drawwin()
   super(false)
   WindowDeleteAllHotspots (self.win)
   
@@ -120,12 +120,12 @@ function Winshow:drawwin()
                  
 end
 
-function Winshow:calc_width(minwidth)
+function HideToggleWin:calc_width(minwidth)
   local mwidth = WindowTextWidth (self.win, self.font_id, self.default_text)  + (self.width_padding * 2)
   
   return super(mwidth)
 end
 
-function Winshow:get_colour(colour, default, return_original)
+function HideToggleWin:get_colour(colour, default, return_original)
   return self.parent:get_colour(colour, default, return_original)
 end

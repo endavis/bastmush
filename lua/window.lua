@@ -25,9 +25,9 @@ require 'tprint'
 require 'verify'
 require 'pluginhelper'
 
-class "Window"
+class "Miniwin"
 
-function Window:initialize(args)
+function Miniwin:initialize(args)
   --[[
     init the class, named arguments only
       the named arguments are 
@@ -87,7 +87,7 @@ function Window:initialize(args)
   
 end
 
-function Window:savestate()
+function Miniwin:savestate()
   for i,v in pairs(self.set_options) do
     SetVariable(i .. self.name, self[i])
   end
@@ -95,18 +95,18 @@ function Window:savestate()
   SetVariable ("header_height"..self.name, self.header_height)
 end
 
-function Window:NotifyChildren()
+function Miniwin:NotifyChildren()
   for i, v in ipairs (self.children) do
     v.UpdatefromParent()
   end
 end
 
 
-function Window:__tostring()
+function Miniwin:__tostring()
   return self.name
 end
 
-function Window:checkfont(font)
+function Miniwin:checkfont(font)
   fonts = WindowFontList(self.win)
   found = false
   for i, v in pairs(fonts) do
@@ -118,7 +118,7 @@ function Window:checkfont(font)
   return found
 end
 
-function Window:getdefaultfont(font)
+function Miniwin:getdefaultfont(font)
   check (WindowCreate (self.win, 
                  0, 0, 1, 1,  
                  6,   -- top right
@@ -136,7 +136,7 @@ function Window:getdefaultfont(font)
 end
 
 
-function Window:changefont(font, from_init)
+function Miniwin:changefont(font, from_init)
   if not font then
     return
   end
@@ -174,12 +174,12 @@ function Window:changefont(font, from_init)
 end
 
 
-function Window:display()
+function Miniwin:display()
   self:show(true)
 end
 
 
-function Window:show(flag)
+function Miniwin:show(flag)
   if self.disabled == 1 then
     WindowShow(self.win, false)
     return
@@ -187,18 +187,18 @@ function Window:show(flag)
   WindowShow(self.win, flag)
 end
 
-function Window:enable()
+function Miniwin:enable()
   self.disabled = 0
   self:show(true)
 end
 
-function Window:disable()
+function Miniwin:disable()
   self.disabled = 1
   WindowShow(self.win, false)
 end
 
 
-function Window:mousedown (flags, hotspotid)
+function Miniwin:mousedown (flags, hotspotid)
   local f = self.hyperlink_functions[hotspotid]
   if f then
     f(self, flags, hotspotid)
@@ -206,17 +206,17 @@ function Window:mousedown (flags, hotspotid)
 end -- mousedown
 
 
-function Window:hyperlink_configure_background ()
+function Miniwin:hyperlink_configure_background ()
   local new_colour = PickColour (self.bg_colour)
   if new_colour ~= -1 then
     self.bg_colour = new_colour
     SetVariable ("bg_colour", self.bg_colour)
   end -- new colour
   self:drawwin()   
-end -- Miniwindow:hyperlink_configure_background
+end -- MiniMiniwin:hyperlink_configure_background
 
 
-function Window:hyperlink_configure_header ()
+function Miniwin:hyperlink_configure_header ()
   local new_colour = PickColour (self.header_bg_colour)
   if new_colour ~= -1 then
     self.header_bg_colour = new_colour
@@ -226,7 +226,7 @@ function Window:hyperlink_configure_header ()
 end -- hyperlink_configure_header
 
 
-function Window:make_hyperlink (text, id, left, top, action, hint)
+function Miniwin:make_hyperlink (text, id, left, top, action, hint)
 
   local right = left + WindowTextWidth (self.win, self.font_id, text)
   local bottom = top + self.font_height
@@ -248,7 +248,7 @@ function Window:make_hyperlink (text, id, left, top, action, hint)
             
 end -- make_hyperlink
 
-function Window:createwin (text)
+function Miniwin:createwin (text)
   if not next(text) then
     return
   end
@@ -256,7 +256,7 @@ function Window:createwin (text)
   self:drawwin()
 end
 
-function Window:get_colour(colour, default, return_original)
+function Miniwin:get_colour(colour, default, return_original)
   local return_orig = return_original or false
   local tcolour = nil
   local i = 0
@@ -295,7 +295,7 @@ function Window:get_colour(colour, default, return_original)
   return default
 end
 
-function Window:get_top_of_line(line)
+function Miniwin:get_top_of_line(line)
   if line > 0 then
     line = line - 1
     if self.header_height == 0  then
@@ -312,7 +312,7 @@ function Window:get_top_of_line(line)
       
 end
 
-function Window:Display_Line (line, styles)
+function Miniwin:Display_Line (line, styles)
   local id = self.font_id
   local colour = self:get_colour("text_colour")
   local bg_colour = self:get_colour("bg_colour")
@@ -351,7 +351,7 @@ function Window:Display_Line (line, styles)
 
 end -- Display_Line
 
-function Window:calc_width(minwidth)
+function Miniwin:calc_width(minwidth)
   minwidth = minwidth or 0
   local mwidth = 0
   if self.width ~= 0 then
@@ -375,7 +375,7 @@ function Window:calc_width(minwidth)
   end
 end
 
-function Window:calc_height()
+function Miniwin:calc_height()
   if self.height == 0 then
      return (#self.text) * self.font_height + (self.height_padding * 2) + self.header_padding
   else
@@ -383,7 +383,7 @@ function Window:calc_height()
   end  
 end
 
-function Window:drawwin(tshow)
+function Miniwin:drawwin(tshow)
   --print("Got past text check")
   tshow = tshow or true
   if not next(self.text) then
@@ -445,7 +445,7 @@ function Window:drawwin(tshow)
 end
 
 
-function Window:set(option, value)
+function Miniwin:set(option, value)
   local function changedsetting(toption, tvarstuff, cvalue)
     if tvarstuff.type == "colour" then
       colourname = RGBColourToName(self:get_colour(cvalue))
@@ -485,7 +485,7 @@ function Window:set(option, value)
 end
 
 
-function Window:print_settings()
+function Miniwin:print_settings()
   for _,v in ipairs(self.skeys) do  
     if self.set_options[v].get then
        value = self.set_options[v].get(i)
@@ -497,7 +497,7 @@ function Window:print_settings()
 end
 
 
-function Window:add_setting(name, setting)
+function Miniwin:add_setting(name, setting)
   local tvalue = (GetVariable (name..self.name)) or setting.default
   self[name] = tvalue
   self.set_options[name] = setting
