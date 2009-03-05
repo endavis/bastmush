@@ -9,7 +9,7 @@
 <muclient>
 <plugin
    name="Aardwolf_Regen"
-   author="Eric Davis"
+   author="Bast"
    id="952f716e12d4fb06621b7b25"
    language="Lua"
    purpose="To do stuff automatically when entering the aard hotel"

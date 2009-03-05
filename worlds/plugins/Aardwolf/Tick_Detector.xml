@@ -4,7 +4,7 @@
 <muclient>
 <plugin
    name="xAardwolf_Tick_Detector"
-   author="Eric Davis"
+   author="Bast"
    id="55567d873405332743347afc"
    language="Lua"
    purpose="Sends updates when the tick comes in from telopts"

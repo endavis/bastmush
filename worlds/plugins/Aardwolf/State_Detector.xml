@@ -4,7 +4,7 @@
 <muclient>
 <plugin
    name="xAardwolf_State_Detector"
-   author="Eric Davis"
+   author="Bast"
    id="3448fed8734053327438a4df"
    language="Lua"
    purpose="Sends updates when the playing state changes"
