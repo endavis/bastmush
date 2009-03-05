@@ -1,6 +1,6 @@
 -- $Id$
 
-require 'window'
+require 'miniwin'
 require 'tprint'
 
 class "Togglewin"(Miniwin)
