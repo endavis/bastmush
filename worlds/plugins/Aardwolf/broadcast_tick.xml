@@ -3,7 +3,7 @@
 <!-- $Id: State_Detector.xml 46 2009-02-09 17:56:12Z endavis $ -->
 <muclient>
 <plugin
-   name="xAardwolf_Tick_Detector"
+   name="xBroadcast_tick"
    author="Bast"
    id="55567d873405332743347afc"
    language="Lua"
