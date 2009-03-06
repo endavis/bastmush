@@ -481,6 +481,7 @@ function Miniwin:set(option, value)
   end
   self:drawwin()
   changedsetting(option, varstuff, tvalue)
+  SaveState()
   return true
 end
 
