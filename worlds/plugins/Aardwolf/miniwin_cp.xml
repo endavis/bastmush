@@ -71,7 +71,7 @@ end -- mousedown
 
 function show_cp_text ()
 
-  cpwin:enable()
+
   local texttable = {}
 
   local style = {}
@@ -80,7 +80,9 @@ function show_cp_text ()
   if #cpmobs == 0 or not next(cptimer) then
     return
   end -- if
-
+  
+  cpwin:enable()
+  
   -- heading
   style = {}
   style.text = "Current campaign. You need to kill:  "
