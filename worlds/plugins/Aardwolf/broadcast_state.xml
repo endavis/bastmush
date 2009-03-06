@@ -3,9 +3,9 @@
 <!-- $Id$ -->
 <muclient>
 <plugin
-   name="xBroadcast_state"
+   name="xBroadcast_State"
    author="Bast"
-   id="3448fed8734053327438a4df"
+   id="aaa79afcb20fa11787c5a327"
    language="Lua"
    purpose="Sends updates when the playing state changes"
    date_written="2009-02-02"
@@ -14,7 +14,7 @@
    >
 
 <description trim="y">
-
+<![CDATA[
 [FOR PLUGIN AUTHORS ONLY]
 
 Detects when there is a change in state
@@ -22,23 +22,23 @@ Detects when there is a change in state
 Example:
 
   function OnPluginBroadcast (msg, id, name, text)
-    if id == "3448fed8734053327438a4df" then
-      state = GetPluginVariable ("3448fed8734053327438a4df", "state")
-      statestring = GetPluginVariable ("3448fed8734053327438a4df", "statestring")
+    if id == "aaa79afcb20fa11787c5a327" then
+      state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
+      statestring = GetPluginVariable ("aaa79afcb20fa11787c5a327", "statestring")
     end -- playing status changed
   end
 
 To test if you are currently playing (after a reinstall):
 
-  state = GetPluginVariable ("3448fed8734053327438a4df", "state")
+  state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
   
 You can also just do:
-  state = GetPluginVariable ("3448fed8734053327438a4df")
+  state = GetPluginVariable ("aaa79afcb20fa11787c5a327")
   
 and then get the values by:
   state.state
   state.statestring
-
+]]>
 </description>
 
 </plugin>
@@ -76,7 +76,7 @@ function OnPluginTelnetOption (option)
 
   var.state = state
   var.statestring = statestrings[state]
-  
+
   BroadcastPlugin(state, "y")
 
 end -- function

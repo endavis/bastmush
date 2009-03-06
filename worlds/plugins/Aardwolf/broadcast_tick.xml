@@ -3,9 +3,9 @@
 <!-- $Id$ -->
 <muclient>
 <plugin
-   name="xBroadcast_tick"
+   name="xBroadcast_Tick"
    author="Bast"
-   id="55567d873405332743347afc"
+   id="aaa70b4680508448e19b8b25"
    language="Lua"
    purpose="Sends updates when the tick comes in from telopts"
    date_written="2009-02-010"
@@ -14,7 +14,7 @@
    >
 
 <description trim="y">
-
+<![CDATA[
 [FOR PLUGIN AUTHORS ONLY]
 
 Detects when a tick is sent through telopts
@@ -22,12 +22,12 @@ Detects when a tick is sent through telopts
 Example:
 
   function OnPluginBroadcast (msg, id, name, text)
-    if id == "55567d873405332743347afc" and msg == 1 then
+    if id == "aaa70b4680508448e19b8b25" and msg == 1 then
       -- do something on tick
     end
   end
 
-
+]]>
 </description>
 
 </plugin>

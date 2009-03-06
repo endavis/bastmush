@@ -313,7 +313,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   checkplugin ("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
-  checkplugin ("3448fed8734053327438a4df", "State_Detector.xml")
+  checkplugin ("aaa79afcb20fa11787c5a327", "broadcast_state.xml")
  
   -- ensure world file exists
   local w = get_a_world (affect_world, folder)
@@ -339,7 +339,7 @@ function OnPluginEnable ()
   end -- if already connected
   
   -- see if we are playing at install time
-  tstatus = GetPluginVariableList("3448fed8734053327438a4df")
+  tstatus = GetPluginVariableList("aaa79afcb20fa11787c5a327")
   status = tstatus or status
   if status.statestring == "active" then
     stats = GetPluginVariableList("8a710e0783b431c06d61a54c")  
@@ -458,8 +458,8 @@ function OnPluginBroadcast (msg, id, name, text)
     end    
     stats = GetPluginVariableList("8a710e0783b431c06d61a54c")    
   -- state change
-  elseif id == "3448fed8734053327438a4df" then
-    status = GetPluginVariableList("3448fed8734053327438a4df")
+  elseif id == "aaa79afcb20fa11787c5a327" then
+    status = GetPluginVariableList("aaa79afcb20fa11787c5a327")
   end -- if
 
   if old_state ~= status.state then

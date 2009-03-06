@@ -306,7 +306,7 @@ function nextunion()
 end -- nextunion()
 
 function OnPluginBroadcast (msg, id, name, text)
-  if id == "55567d873405332743347afc" and msg == 1 then
+  if id == "aaa70b4680508448e19b8b25" and msg == 1 then
     ontick()
   end
 end
@@ -339,6 +339,7 @@ function OnPluginSaveState()
 end
 
 function OnPluginEnable ()
+  checkplugin ("aaa70b4680508448e19b8b25", "broadcast_tick.xml")
   moonbot_reset() 
 end -- OnPluginEnable
 
