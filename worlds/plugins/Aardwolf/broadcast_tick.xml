@@ -8,6 +8,7 @@
    id="aaa70b4680508448e19b8b25"
    language="Lua"
    purpose="Sends updates when the tick comes in from telopts"
+   save_state="y"   
    date_written="2009-02-010"
    requires="4.37"
    version="1.0"
@@ -36,7 +37,9 @@ Example:
 
 <script>
 <![CDATA[
-
+require "var"
+require "pluginhelper"
+require "verify"
 
 function OnPluginTelnetOption (option)
   --- ignore not type 100.
@@ -44,8 +47,13 @@ function OnPluginTelnetOption (option)
   if string.byte(option,1) ~= 101 then return end
 
   itype = tonumber(string.byte(option,2))
-  SendNoEcho("")
-  BroadcastPlugin(itype, "y")
+  
+  broadcast(itype)
+  if var.crontick == "true" then
+    mdebug("Sending", "cr")
+    SendNoEcho("")
+  end
+
 
 end -- function
 
@@ -53,11 +61,16 @@ end -- function
 dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
 
 function OnPluginInstall ()
-
+  if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+  
   -- if we are connected when the plugin loads, it must have been reloaded whilst playing
---  if IsConnected () then
---    TelnetOptionOn (TELOPT_AUTOTICK)  -- get actual status (eg. afk, playing)
---  end -- if already connected
+  if IsConnected () then
+    TelnetOptionOn (TELOPT_AUTOTICK)  -- get actual status (eg. afk, playing)
+  end -- if already connected
  
 end -- function OnPluginInstall
 
@@ -69,7 +82,48 @@ function OnPluginConnect ()
   return
 end -- function OnPluginConnect
 
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  plugin_save_vars(options_table)    
+end -- function OnPluginSaveState
+]]>
+</script>
 
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+<script>
+<![CDATA[
+
+options_table  = {
+  crontick = {help="send a cr to mud on a tick", type="bool", default=verify_bool(false)},
+  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
+  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="btick"},
+}
+
+cmds_table = {
+
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
 ]]>
 </script>
 </muclient>
