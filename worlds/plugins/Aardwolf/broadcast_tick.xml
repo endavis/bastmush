@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: State_Detector.xml 46 2009-02-09 17:56:12Z endavis $ -->
+<!-- $Id$ -->
 <muclient>
 <plugin
    name="xBroadcast_tick"
