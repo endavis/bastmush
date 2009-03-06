@@ -447,6 +447,11 @@ end
 
 function Miniwin:set(option, value)
   local function changedsetting(toption, tvarstuff, cvalue)
+    ColourNote("", "", "")    
+    ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
+             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),19) ,
+             "white", "black", " Settings")    
+    ColourNote("white", "black", "-----------------------------------------------")  
     if tvarstuff.type == "colour" then
       colourname = RGBColourToName(self:get_colour(cvalue))
       ColourNote("orange", "black", toption .. " set to : ",
@@ -456,6 +461,7 @@ function Miniwin:set(option, value)
       ColourNote("orange", "black", toption .. " set to : ",
              colourname, "black", cvalue)    
     end
+    ColourNote("", "", "")      
   end
 
   varstuff = self.set_options[option]
