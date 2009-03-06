@@ -91,8 +91,10 @@ function Togglewin:togglewindow()
 end
   
 function Togglewin:set(option, value)
-  super(option, value)
+  retfunc = super(option, value)
   self.winhide:drawwin()
+  self:show()
+  return retfunc
 end
 
 class "HideToggleWin"(Miniwin)
