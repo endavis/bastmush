@@ -170,7 +170,7 @@ function plugin_set_helper(name, line, wildcards, cmds_table, options_table, win
          return true
       else
          nooption()
-         return false 
+         return false
       end
     end
     f = soption.func
@@ -185,6 +185,7 @@ function plugin_set_helper(name, line, wildcards, cmds_table, options_table, win
     if afterf then
       afterf()
     end
+    SaveState()
     return true
   end
 end
@@ -264,6 +265,11 @@ function set_var(value, option, type, args)
     ColourNote("red", "black", "That is not a valid value.")  
     return nil
   end
+  ColourNote("", "", "")    
+  ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
+             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),19) ,
+             "white", "black", " Settings")    
+  ColourNote("white", "black", "-----------------------------------------------")  
   if type == "colour" then
     colourname = RGBColourToName(tvalue)
     ColourNote("orange", "black", option .. " set to : ",
@@ -273,6 +279,7 @@ function set_var(value, option, type, args)
     ColourNote("orange", "black", option .. " set to : ",
              colourname, "black", tostring(tvalue))
   end
+  ColourNote("", "", "")    
   var[option]= tvalue
 end
 
@@ -341,6 +348,7 @@ function broadcast(num, data, broadcastdata)
     if data then
       print(data)  
     end
+    print("")
   end
   BroadcastPlugin(tonumber(num), broadcastdata)
 end
@@ -352,5 +360,14 @@ function enabletriggroup(group, flag)
     else
       print("no triggers to disable for group", group)
     end
+    print("")
+  end
+end
+
+function mdebug(...)
+  if var.tdebug == "true" then
+    print(GetPluginInfo (GetPluginID (), 1), ": Debug")  
+    print(...)
+    print(" ")
   end
 end
