@@ -206,7 +206,13 @@ end -- campaign_item
 function cp_mob_dead (name, line, wildcards)
   local tenemy = enemy
   local found = false
+  if var.tdebug == "true" then
+    print("Enemy:", string.lower(enemy))
+  end
   for i,v in ipairs(mobs) do
+    if var.tdebug == "true" then
+      print("Clean:", v.clean)
+    end
     if v.clean == string.lower(tenemy) then
       table.remove(mobs, i)
       found = true
