@@ -7,9 +7,9 @@ class "Togglewin"(Miniwin)
 
 
 function Togglewin:initialize(args)
+  args['show_hyperlinks'] = 1
   super(args)   -- notice call to superclass's constructor
   self.ishidden = tonumber (GetVariable ("ishidden"..self.name)) or args.ishidden or 0
-  self.show_hyperlinks = tonumber (GetVariable ("show_hyperlink"..self.name)) or args.show_hyperlink or 1  
 end
 
 
