@@ -132,6 +132,39 @@ function print_settings_helper(ttype, options_table, window)
   ColourNote("", "", "")
 end
 
+function plugin_reset(name, line, wildcards, cmds_table, options_table, window)
+  if not wildcards.list then
+    print_settings_helper("plugin", options_table, window)
+    return
+  end
+  ColourNote("", "", "")    
+  ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
+             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),19))    
+  ColourNote("white", "black", "-----------------------------------------------")    
+  local tvar = utils.split(wildcards.list, " ")
+  local ttype = tvar[1]
+  if ttype == "plugin" or ttype == "all" then
+    for i,v in pairs(options_table) do  
+      test = verify(v.default, v.type, {low=v.low, high=v.high, silent=true})  
+      if test ~= nil then
+        var[i] = test
+        afterf = v.after
+        if afterf then
+          afterf()
+        end
+      end      
+    end
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Plugin options reset ")
+  end
+  if ttype == "window" or ttype == "all" then
+    if window then
+      window:reset()
+    end
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Window options reset ")
+  end
+  ColourNote("", "", "")  
+end
+
 function plugin_set_helper(name, line, wildcards, cmds_table, options_table, window)
   --[[
     this function will attempt to set an item in the options_table table or in a window
@@ -193,6 +226,7 @@ end
 default_cmds_table = {
   help      = {func=plugin_help_helper, help="show help"},
   set       = {func=plugin_set_helper, help="set script and window vars, show plugin vars when called with no arguments, 'window': show window vars, 'all': show all vars"},
+  reset     = {func=plugin_reset, help="reset plugin to default values, 'all': both miniwin and plugin, 'win': just miniwin, 'plugin': just plugin"},
 }
 
 function find_cmd(cmd, cmds_table)
@@ -281,14 +315,20 @@ function set_var(value, option, type, args)
   end
   ColourNote("", "", "")    
   var[option]= tvalue
+  return true
 end
 
-function init_plugin_vars(options_table)
+function init_plugin_vars(options_table, reset)
   --[[
     initialize all variables in the options table, requires "var" module
   --]]
   for i,v in pairs(options_table) do
-    local tvalue = GetVariable(i) or v.default
+    local tvalue = nil
+    if reset then
+      tvalue = v.default
+    else
+      tvalue = GetVariable(i) or v.default
+    end
     tvalue = verify(tvalue, v.type, {low=v.low, high=v.high, silent=true}) 
     var[i] = tvalue
     afterf = v.after
