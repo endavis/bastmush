@@ -60,7 +60,7 @@ function Miniwin:initialize(args)
     hyperlink_colour = {type="colour", help="hyperlink colour for this window", default=0x00FFFF},
     text_colour = {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=40},
     font_size = {type="number", help="font_size for this window", low=2, high=30, default=8, sortlev=43},
-    font = {type="string", help="change the font for this window", default="Dina", sortlev=43},
+    font = {type="string", help="change the font for this window", default="courier new", sortlev=43},
     height_padding = {type="number", help="height padding for this window", low=0, high=30, default=5, sortlev=44},
     width_padding = {type="number", help="width padding for this window", low=0, high=30, default=5, sortlev=44},
     windowpos = {type="number", help="position for this window: see http://www.gammon.com.au/scripts/function.php?name=WindowCreate", low=0, high=13, default=6,sortlev=39},
@@ -72,6 +72,12 @@ function Miniwin:initialize(args)
   }
   
   for i,v in pairs(self.set_options) do
+    if args[i] then
+      local tval = verify(args[i], v.type, {low=v.low, high=v.high, silent=true})
+      if tval then
+        v.default = tval
+      end
+    end
     local tvalue = (GetVariable (i..self.name)) or args[i]
     if tvalue ~= nil then
       tvalue = verify(tvalue, v.type, {low=v.low, high=v.high, silent=true}) 
@@ -85,6 +91,13 @@ function Miniwin:initialize(args)
 
   self:changefont(self.font, true) 
   
+end
+
+function Miniwin:reset()
+  for i,v in pairs(self.set_options) do
+    self[i] = verify(v.default, v.type, {low=v.low, high=v.high, silent=true})
+  end
+  self:drawwin()
 end
 
 function Miniwin:savestate()
