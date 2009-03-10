@@ -134,9 +134,9 @@ function verify_bool(boolval, args)
   
   -- check if we have the string forms
   tvalue = tostring(boolval)
-  if tvalue == "true" then
+  if string.lower(tvalue) == "true" then
     return true
-  elseif tvalue == "false" then
+  elseif string.lower(tvalue) == "false" then
     return false
   end
   
