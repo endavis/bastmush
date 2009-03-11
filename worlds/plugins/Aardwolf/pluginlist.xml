@@ -41,20 +41,22 @@ function OnPluginBroadcast (msg, id, name, text)
   end --
 end
 
-function format_plugin(name, version, cmd, enabled)
+function format_plugin(name, version, cmd, enabled, tdebug)
   hname = string.format("%-20s", tostring(name))
   hver = string.format("%.2f  ", version)
   hcmd = string.format("%-8s", tostring(cmd))
+  hdeb = string.format("%-8s", tostring(tdebug))
   hena = string.format("%-10s", tostring(enabled))
-  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hena)
+  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hdeb .. hena)
 end
 
 function format_header()
   hname = string.format("%-20s", "Name")
   hver = string.format("%-6s", "Vers" )
   hcmd = string.format("%-8s", "Cmd")
+  hdeb = string.format("%-8s", "Debug")
   hena = string.format("%-10s", "Enabled")
-  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hena)
+  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hdeb .. hena)
 end
   
 
@@ -66,8 +68,9 @@ function list_plugins(name, line, wildcards)
   ColourNote("white", "black", "-----------------------------------------------")
   for name, id in pairsByKeys (plugins) do 
     local cmd = GetPluginVariable(id, 'cmd')
+    local tdebug = GetPluginVariable(id, 'tdebug')
     if cmd ~= nil then
-      format_plugin( GetPluginInfo(id, 1),  GetPluginInfo(id, 19), cmd, GetPluginInfo(id, 17))
+      format_plugin( GetPluginInfo(id, 1),  GetPluginInfo(id, 19), cmd, GetPluginInfo(id, 17), tdebug)
     end
   end
   ColourNote("", "", "")
