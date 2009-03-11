@@ -180,7 +180,7 @@ You are not on a global quest.
   </trigger>
   
  <trigger
-   enabled="y"
+   enabled="n"
    match="Global Quest: The global quest has been won by (.*) - (.*) win."
    sequence="100"
    script="gq_none"
