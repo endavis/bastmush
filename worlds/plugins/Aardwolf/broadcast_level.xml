@@ -126,6 +126,9 @@ levelinfo = {}
 function level ( name, line, wildcards )
   levelinfo = {}
   levelinfo.type = name
+  if levelinfo.type == "level" then
+    levelinfo.newlevel = wildcards[1]
+  end
   levelinfo.bonusstats = {}
   levelinfo.time = GetInfo(304)  
   enabletriggroup( "linfo", true )
