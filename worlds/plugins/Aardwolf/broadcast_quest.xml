@@ -34,6 +34,7 @@ Broadcasts
                     practices = pracs }
    7 - time left until next quest
         timer = {secs = num, text = 'time in text format' }
+   8 - failed the quest
 
        
 Example:
@@ -83,7 +84,7 @@ Example:
    script="start_questor_stuff"
    sequence="100"
   >
-  </trigger>  
+  </trigger> 
   
   <trigger
    enabled="n"
@@ -149,6 +150,15 @@ Example:
    group="questin"
   >
   </trigger>
+
+  <trigger
+   enabled="y"
+   match="You hang your head in shame and admit defeat *."
+   script="quest_fail"
+   sequence="100"
+   group="questin"
+  >
+  </trigger>  
   
  <trigger
    enabled="y"
@@ -307,6 +317,15 @@ function quest_available (name, line, wildcards)
   quest_text = {}
   broadcast(1)
 end -- quest_available
+
+function quest_fail(name, line, wildcards)
+  enabletriggroup("questin", false)
+  when_required = os.time () + (15 * 60)  -- 15 mins to go
+  quest_mob = {}
+  onquest = false
+  update_timer()
+  check(EnableTimer("questtimer", true))
+end
 
 function quest_done (name, line, wildcards)
   check(EnableTimer("questtimer", false))   
