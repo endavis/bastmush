@@ -21,7 +21,7 @@
 Broadcasts when a mob is killed
 Broadcasts
    1 - mob killed
-       kill_info = {mob = mobname, xp = xp, bonusxp = bonusxp, gold = gold
+       kill_info = {mob = mobname, xp = xp, bonusxp = bonusxp, gold = gold, trivia = 1}
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
@@ -33,7 +33,7 @@ Example
       kill = kill_info
     end
   end
-    
+You killed a Triv bonus mob!! Triv point added.    
 ]]>
 </description>
 </plugin>
@@ -80,6 +80,14 @@ Example
    sequence="100"
   >
   </trigger>
+  <trigger
+   enabled="y"
+   match="^You killed a Triv bonus mob!! Triv point added.$"
+   name="trivmob"
+   script="trivmob"
+   sequence="100"
+  >
+  </trigger>  
 </triggers>
 
 
@@ -110,6 +118,10 @@ function mobgold( name, line, wildcards )
   end
   var.kill_info = serialize.save( "kill_info", kill_info )
   broadcast(1, var.kill_info)  
+end
+
+function trivmob( name, line, wildcards )
+  kill_info.trivia = 1
 end
 
 function OnPluginBroadcast (msg, id, name, text)
