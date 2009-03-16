@@ -127,7 +127,7 @@ function OnPluginBroadcast (msg, id, name, text)
       loadstring( pvar )()
       cptimer = timer
       show_cp_text()
-    elseif msg == 3 then
+    elseif msg == 3 or msg == 4 then
       cptimer = {}
       mobs = {}
       cpwin:disable()
