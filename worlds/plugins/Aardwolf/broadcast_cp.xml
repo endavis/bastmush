@@ -28,6 +28,7 @@ Broadcasts
         timer = {secs = num, text = 'time in text format', days = days, hours = hours, mins = minutes}
    3 - rewards, get var.rewards and loadstring it, this can also be used to check when a cp is finished
        reqards = { trivia = num, training = num, gold = num, practice = num, quest = num}
+   4 - campaign failed
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
@@ -40,7 +41,7 @@ Example
     end
   end
 
-]]>
+  ]]>
 </description>
 
 </plugin>
@@ -140,6 +141,15 @@ cp check
    group="campaigndone"
   >
   </trigger>
+  
+ <trigger
+   enabled="n"
+   match="Campaign cleared."
+   sequence="100"
+   script="campaign_fail"
+   group="campaignin"
+  >
+  </trigger>  
 </triggers>
 
 
@@ -263,6 +273,11 @@ end -- cp_time
 function campaign_done (name, line, wildcards)
   var.rewards = serialize.save( "rewards", rewards ) 
   broadcast(3, var.rewards)
+  cp_none() 
+end -- campaign_done
+
+function campaign_fail (name, line, wildcards)
+  broadcast(4)
   cp_none() 
 end -- campaign_done
 
