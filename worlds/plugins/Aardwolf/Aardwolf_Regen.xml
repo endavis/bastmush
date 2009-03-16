@@ -24,7 +24,7 @@ This plugin is designed to wear the regen ring at certain times
   sleeping
   when entering aard hotel and other healing rooms
 
-It will reequip the variable rring in your world when
+It will remove the regen ring when
   standing
   when leaving aard hotel and other healing rooms
 Requires swalec's aardwolf exit detector
@@ -59,26 +59,6 @@ Requires swalec's aardwolf exit detector
   >
   </alias>
 </aliases>
-<triggers>
-  <trigger
-   enabled="y"
-   omit_from_output="n"
-   match="^You wear Aardwolf Ring of Regeneration on your (.*) finger.$"
-   script="fregenworn"
-   regexp="y"
-   sequence="100"
-  >
-  </trigger>
-  <trigger
-   enabled="y"
-   omit_from_output="n"
-   match="^You remove Aardwolf Ring of Regeneration from your (.*) finger.$"
-   script="fregenremoved"
-   regexp="y"
-   sequence="100"
-  >
-  </trigger>
-</triggers>
 
 <script>
 <![CDATA[
@@ -86,6 +66,7 @@ Requires swalec's aardwolf exit detector
 require "checkplugin"
 require "verify"
 require "serialize"
+require "tprint"
 
 stats = {}
 oldstats = {}
@@ -96,6 +77,7 @@ trywear = false
 clientAFK = false
 regenworn = verify_bool(GetVariable( "regenworn" )) or false
 inhealing = verify_bool(GetVariable( "inhealing" )) or false
+oldring = GetVariable( "oldring" ) or ""
 healrooms = {}
 
 function OnHelp ()
@@ -106,6 +88,7 @@ function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
   SetVariable ("regenworn", tostring(regenworn))
   SetVariable ("inhealing", tostring(inhealing))
+  SetVariable ("oldring", tostring(oldring))
   SetVariable ("healrooms", 
                "healrooms = " .. serialize.save_simple (healrooms))  
 end -- OnPluginSaveState
@@ -115,7 +98,8 @@ function OnPluginEnable ()
   checkplugin ("18c24130ab326dc05b49420d", "Aardwolf Exits Detector")
   checkplugin ("8a710e0783b431c06d61a54c", "Aardwolf Stats Detector")
   checkplugin ("aaa79afcb20fa11787c5a327", "broadcast_state.xml")
-
+  checkplugin ("aaa6dc9ed92ffc6146964abc", "broadcast_eq.xml")
+  
 end
 
 function OnPluginInstall ()
@@ -155,26 +139,61 @@ function OnPluginBroadcast (msg, id, name, text)
         remove_regen()
       end
     end
-   end -- AFK status changed  
+  elseif id == "aaa6dc9ed92ffc6146964abc" then
+    loadstring(text)()
+    eqitem = item
+    if msg == 1 then
+      if eqitem.place == "lfinger" then
+        if eqitem.item ~= "Aardwolf Ring of Regeneration" then
+          oldring = ""
+          SaveState()
+        elseif eqitem.item == "Aardwolf Ring of Regeneration" then
+          regenworn = true
+          trywear = false
+          SaveState()
+        end
+      end
+    elseif msg == 2 then
+      if eqitem.place == "lfinger" then
+        if eqitem.item ~= "Aardwolf Ring of Regeneration" then
+          oldring = findkeyword(eqitem.item)
+          SaveState()
+        elseif eqitem.item == "Aardwolf Ring of Regeneration" then
+          regenworn = false
+          tryremove = false
+          SaveState()
+        end
+      end      
+    end    
+  end
 end
 
-function fregenworn()
-  regenworn = true
-  trywear = false
-  SaveState()
-end
-
-function fregenremoved()
-  regenworn = false
-  tryremove = false
-  SaveState()
+function findkeyword(item)
+  wlist = utils.split(item, " ")
+  badwords = {
+    ring = 1,
+    aardwolf = 1,
+    of = 1,
+    the = 1,
+    davinci = 1,
+    a = 1
+    an = 1
+  }
+  local name = ""
+  for i,v in ipairs(wlist) do
+    if badwords[string.lower(v)] ~= 1 then
+      name = v
+      break
+    end
+  end
+  return name
 end
 
 function wear_regen()
   if not regenworn then
     trywear = true
     --DoAfterSpecial (3, 'try_wear()', sendto.script)
-    Send("wear regen")
+    Send("wear regen lfinger")
   end
 end
 
@@ -182,13 +201,13 @@ function remove_regen()
   if regenworn or trywear then
     ring = GetPluginVariable ("", "rring")
     tryremove = true
-    Send("wear " .. ring)
+    Send("wear " .. oldring .. " lfinger")
   end
 end
 
 function try_wear()
   if not tryremove then
-    send("wear regen")
+    Send("wear regen lfinger")
   end
 end
 
