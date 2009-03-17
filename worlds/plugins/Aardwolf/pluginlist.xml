@@ -105,7 +105,7 @@ options_table  = {
 }
 
 cmds_table = {
-  list      = {func=list_plugins, help="list plugins that are installed with pluginhelper"},
+  list      = {func=list_plugins, help="list plugins that are installed with pluginhelper", default=true},
 }
   
 function plugin_parse (name, line, wildcards)
