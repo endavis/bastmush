@@ -12,7 +12,7 @@
    author="Bast"
    id="952f716e12d4fb06621b7b25"
    language="Lua"
-   purpose="To do stuff automatically when entering the aard hotel"
+   purpose="wear a ring of regen at certain times"
    save_state="y"
    date_written="2008-12-01 15:06:56"
    requires="4.37"
@@ -20,13 +20,17 @@
    >
 <description trim="y">
 <![CDATA[
-This plugin is designed to wear the regen ring at certain times
+This plugin is designed to wear the regen ring in certain rooms and when sleeping
+
+It will wear the regen ring when
   sleeping
-  when entering aard hotel and other healing rooms
+  when entering a regen room
+    To add a room, go to that room and type "regen add"
 
 It will remove the regen ring when
   standing
-  when leaving aard hotel and other healing rooms
+  when leaving a regen room
+  
 Requires swalec's aardwolf exit detector
 ]]>
 </description>
@@ -41,13 +45,6 @@ Requires swalec's aardwolf exit detector
 <!--  Plugin help  -->
 
 <aliases>
-  <alias
-   script="OnHelp"
-   match="^[Rr]egen:help$"
-   enabled="y"
-   regexp="y"
-  >
-  </alias>
   <alias
    name="sleep"
    script="sleep"
@@ -67,6 +64,9 @@ require "checkplugin"
 require "verify"
 require "serialize"
 require "tprint"
+require "var"
+require "pluginhelper"
+require "commas"
 
 stats = {}
 oldstats = {}
@@ -75,22 +75,13 @@ oldstatus = {}
 tryremove = false
 trywear = false
 clientAFK = false
-regenworn = verify_bool(GetVariable( "regenworn" )) or false
-inhealing = verify_bool(GetVariable( "inhealing" )) or false
-oldring = GetVariable( "oldring" ) or ""
-healrooms = {}
-
-function OnHelp ()
-  world.Note (world.GetPluginInfo (world.GetPluginID (), 3))
-end
+regenrooms = {}
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  SetVariable ("regenworn", tostring(regenworn))
-  SetVariable ("inhealing", tostring(inhealing))
-  SetVariable ("oldring", tostring(oldring))
-  SetVariable ("healrooms", 
-               "healrooms = " .. serialize.save_simple (healrooms))  
+  SetVariable ("regenrooms", 
+               "regenrooms = " .. serialize.save_simple (regenrooms))  
+  plugin_save_vars(options_table)                
 end -- OnPluginSaveState
 
 function OnPluginEnable ()
@@ -103,7 +94,10 @@ function OnPluginEnable ()
 end
 
 function OnPluginInstall ()
-  assert (loadstring (GetVariable ("healrooms") or "")) ()
+  assert (loadstring (GetVariable ("regenrooms") or "")) ()
+  if IsConnected () then
+      current_room = GetPluginVariable("18c24130ab326dc05b49420d", "roomname")
+  end -- if already connected  
 end
 
 function OnPluginBroadcast (msg, id, name, text)
@@ -119,23 +113,34 @@ function OnPluginBroadcast (msg, id, name, text)
        checkstand()
     end
   elseif id == "18c24130ab326dc05b49420d" then
-    if msg == 4 or msg == 8 then
-      inhealing = true
-      wear_regen()
-    elseif msg == 5 or msg == 9 then
-      inhealing = false
-      remove_regen()  
-    end
+    if msg == 2 then
+      current_room = GetPluginVariable("18c24130ab326dc05b49420d", "roomname")
+
+      oldregen  = verify_bool(var.inregen)
+      var.inregen = check_room(current_room)
+
+      if oldregen and verify_bool(var.inregen) then
+        return
+      end
       
-    if not inhealing and status.statestring == 'active' and regenworn and not tryremove then
-      remove_regen()
-    end  
+      if verify_bool(var.inregen) and ((not regenworn) or tryremove) then
+        wear_regen()
+        return
+      end
+    
+      if (not verify_bool(var.inregen)) and (verify_bool(var.regenworn) or trywear) then
+        remove_regen()
+        return
+      end
+      
+    end
+
   elseif id == "0e191dc7829ff2ac2433c2d8" then
     if msg == 1 then
       clientAFK = text == "y"
       if clientAFK and status.statestring == 'active' then
         wear_regen()
-      elseif (not clientAFK) and not inhealing and status.statestring == 'active' then
+      elseif (not clientAFK) and not verify_bool(var.inregen) and status.statestring == 'active' then
         remove_regen()
       end
     end
@@ -145,10 +150,9 @@ function OnPluginBroadcast (msg, id, name, text)
     if msg == 1 then
       if eqitem.place == "lfinger" then
         if eqitem.item ~= "Aardwolf Ring of Regeneration" then
-          oldring = ""
-          SaveState()
+
         elseif eqitem.item == "Aardwolf Ring of Regeneration" then
-          regenworn = true
+          var.regenworn = true
           trywear = false
           SaveState()
         end
@@ -156,16 +160,73 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 2 then
       if eqitem.place == "lfinger" then
         if eqitem.item ~= "Aardwolf Ring of Regeneration" then
-          oldring = findkeyword(eqitem.item)
+          var.oldring = findkeyword(eqitem.item)
+          var.oldringdesc = eqitem.item
           SaveState()
         elseif eqitem.item == "Aardwolf Ring of Regeneration" then
-          regenworn = false
+          var.regenworn = false
           tryremove = false
           SaveState()
         end
       end      
     end    
   end
+end
+
+function check_room(room)
+  room = trim(string.gsub(current_room, "%(G%)", ""))
+  if regenrooms[room] == 1 then
+    return true
+  end
+  return false
+end
+
+function add_room(name, line, wildcards)
+  plugin_header()
+  if current_room == nil then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Could not get current room")
+    ColourNote("", "", "")    
+    return
+  end
+  room = trim(string.gsub(current_room, "%(G%)", ""))
+  if regenrooms[room] == 1 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", room .. " already in regen list")
+    ColourNote("", "", "")
+    return
+  end
+  
+  regenrooms[room] = 1
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "Added Room: " .. room)
+  ColourNote("", "", "")
+  wear_regen()
+end
+
+function remove_room(name, line, wildcards)
+  plugin_header()
+  if current_room == nil then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Could not get current room")
+    ColourNote("", "", "")    
+    return
+  end
+  room = trim(string.gsub(current_room, "%(G%)", ""))
+  if regenrooms[room] == 1 then
+    regenrooms[room] = nil
+    ColourNote(RGBColourToName(var.plugin_colour), "black", room .. " removed")
+    ColourNote("", "", "")
+    remove_regen()    
+    return
+  end
+  
+  ColourNote(RGBColourToName(var.plugin_colour), "black", room .. " not in room list")
+  ColourNote("", "", "")
+end
+
+function show_rooms(name, line, wildcards)
+  plugin_header(" Regen Rooms")
+  for room,_ in pairs(regenrooms) do
+    ColourNote(RGBColourToName(var.plugin_colour), "black", room)
+  end
+  ColourNote("", "", "")
 end
 
 function findkeyword(item)
@@ -176,8 +237,8 @@ function findkeyword(item)
     of = 1,
     the = 1,
     davinci = 1,
-    a = 1
-    an = 1
+    a = 1,
+    an = 1,
   }
   local name = ""
   for i,v in ipairs(wlist) do
@@ -190,7 +251,10 @@ function findkeyword(item)
 end
 
 function wear_regen()
-  if not regenworn then
+  if trywear then
+    return
+  end
+  if not verify_bool(var.regenworn) or tryremove then
     trywear = true
     --DoAfterSpecial (3, 'try_wear()', sendto.script)
     Send("wear regen lfinger")
@@ -198,10 +262,12 @@ function wear_regen()
 end
 
 function remove_regen()
-  if regenworn or trywear then
-    ring = GetPluginVariable ("", "rring")
+  if tryremove then
+    return
+  end
+  if verify_bool(var.regenworn) or trywear then
     tryremove = true
-    Send("wear " .. oldring .. " lfinger")
+    Send("wear " .. var.oldring .. " lfinger")
   end
 end
 
@@ -217,11 +283,54 @@ function sleep(name, line, wildcards)
 end
 
 function checkstand()
-  if oldstatus.statestring == 'sleeping' and not inhealing then
+  if oldstatus.statestring == 'sleeping' and not verify_bool(var.inregen) then
     remove_regen()
   end
 end
 ]]>
 </script> 
 
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+<script>
+<![CDATA[
+
+options_table  = {
+  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
+  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="regen"},
+  inregen = {help="whether you are in a room in the regen room list", type="bool", default=verify_bool(false), readonly=true},
+  regenworn = {help="whether you are wearing a regen ring", type="bool", default=verify_bool(false), readonly=true},
+  oldring = {help="the keyword for the old ring", type="string", default="", readonly=true},
+  oldringdesc = {help="the description for the old ring", type="string", default="", readonly=true},
+}
+
+cmds_table = {
+  add      = {func=add_room, help="add current room as a regen room"},
+  remove   = {func=remove_room, help="remove current room as a regen room"},
+  show     = {func=show_rooms, help="show rooms"},
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+]]>
+</script>
 </muclient>
