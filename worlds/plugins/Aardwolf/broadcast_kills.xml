@@ -98,6 +98,7 @@ require "serialize"
 require "commas"
 require "pluginhelper"
 require "verify"
+require "checkplugin"
 
 kill_info = {}
 

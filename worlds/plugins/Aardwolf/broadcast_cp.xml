@@ -192,6 +192,7 @@ require "pluginhelper"
 require "serialize"
 require "commas"
 require "verify"
+require "checkplugin"
 
 mobs = {}
 rewards = {}

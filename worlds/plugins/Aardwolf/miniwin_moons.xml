@@ -58,6 +58,7 @@ Show the moons in a miniwindow
 <![CDATA[
 require "utils"
 require "commas"
+require "checkplugin"
 
 -- var is required for pluginhelper below
 require "var"
