@@ -57,15 +57,20 @@ function set_plugin_alias()
   DoAfterSpecial (10, 'BroadcastPlugin (1001)', sendto.script)
 end
 
+function plugin_header(header)
+  header = header or ""
+  ColourNote("", "", "")    
+  ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
+             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),19),
+             "white", "black", header)    
+  ColourNote("white", "black", "-----------------------------------------------")   
+end
+
 function plugin_help_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world)
   --[[
     this function prints a help table for cmds_table
   --]]
-  ColourNote("", "", "")
-  ColourNote( RGBColourToName(var.plugin_colour),  "black", GetPluginName() .. " ",
-              RGBColourToName(var.plugin_colour),  "black", tostring(GetPluginInfo (GetPluginID(), 19)),
-              "white", "black", " Options" )
-  ColourNote("white", "black", "-----------------------------------------------")
+  plugin_header(" Commands")
              
   for i,v in pairs(cmds_table) do
     if v.help ~= '' then
@@ -108,11 +113,7 @@ function print_settings_helper(ttype, options_table, window)
   --[[
     this function goes through the setoptions table and the window and prints each setting
   --]]
-  ColourNote("", "", "")    
-  ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
-             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),19) ,
-             "white", "black", " Settings")    
-  ColourNote("white", "black", "-----------------------------------------------")
+  plugin_header(" Settings")
   if ttype == "plugin" or ttype == "all" then
     skeys = sort_settings(options_table)  
     for _,v in ipairs(skeys) do  
@@ -137,10 +138,7 @@ function plugin_reset(name, line, wildcards, cmds_table, options_table, window)
     print_settings_helper("plugin", options_table, window)
     return
   end
-  ColourNote("", "", "")    
-  ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
-             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),19))    
-  ColourNote("white", "black", "-----------------------------------------------")    
+  plugin_header()
   local tvar = utils.split(wildcards.list, " ")
   local ttype = tvar[1]
   if ttype == "plugin" or ttype == "all" then
@@ -198,6 +196,11 @@ function plugin_set_helper(name, line, wildcards, cmds_table, options_table, win
     return false
   else
     local soption = options_table[option]
+    if soption.readonly then
+      plugin_header()
+      print("That is a read-only var")
+      return true
+    end
     if not soption then
       if window and window:set(option, value) then
          return true
@@ -263,30 +266,39 @@ function plugin_parse_helper(name, line, wildcards, cmds_table, options_table, w
     find the command that was specified and pass arguments to it
   --]]
   if wildcards.action == "" then
-    plugin_help_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world) 
-    return true
-  else
-    fullcmd, cmd = find_cmd(wildcards.action, cmds_table)
-    if cmd == nil then
-      if send_to_world then
-        SendNoEcho(line)
-        return false
+    for tcmd,cmditem in pairs(cmds_table) do
+      if cmditem.default then
+        wildcards.action = tcmd
+        break
       end
-      ColourNote("", "", "") 
-      ColourNote("white", "black", "That is not a valid option")
-      plugin_help_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world)
-      return
     end
-
-
-    if not cmd.func then
-      ColourNote("red", "", "The function for command " .. fullcmd .. " is invalid, please check plugin")
+    if wildcards.action == "" then
+      plugin_help_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world) 
+      return true
+    end
+  end
+  
+  fullcmd, cmd = find_cmd(wildcards.action, cmds_table)
+  if cmd == nil then
+    if send_to_world then
+      SendNoEcho(line)
       return false
     end
-    if cmd.func (name, line, wildcards, cmds_table, options_table, window, send_to_world) then
-      return true
-    end -- all done
+    ColourNote("", "", "") 
+    ColourNote("white", "black", "That is not a valid command")
+    plugin_help_helper(name, line, wildcards, cmds_table, options_table, window, send_to_world)
+    return false
   end
+
+
+  if not cmd.func then
+    ColourNote("red", "", "The function for command " .. fullcmd .. " is invalid, please check plugin")
+    return false
+  end
+  if cmd.func (name, line, wildcards, cmds_table, options_table, window, send_to_world) then
+    return true
+  end -- all done
+
   return false
 end
 
@@ -299,11 +311,7 @@ function set_var(value, option, type, args)
     ColourNote("red", "black", "That is not a valid value.")  
     return nil
   end
-  ColourNote("", "", "")    
-  ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
-             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),19) ,
-             "white", "black", " Settings")    
-  ColourNote("white", "black", "-----------------------------------------------")  
+  plugin_header(" Settings") 
   if type == "colour" then
     colourname = RGBColourToName(tvalue)
     ColourNote("orange", "black", option .. " set to : ",
