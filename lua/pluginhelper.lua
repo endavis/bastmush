@@ -36,6 +36,7 @@ valid values -
   func     -- the function to call 
               the arguments are sent in this order (name, line, wildcards, cmds_table, options_table, window)
   help     -- the help for this command
+  default  -- set this true and this will be the default cmd
 
 --]]
 
