@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: Aardwolf_map_miniwin.xml 47 2009-02-09 18:00:51Z endavis $ -->
+<muclient>
+<plugin
+   name="xBroadcast_Spelltags"
+   author="Bast"
+   id="aaa72f3b5453567e2bba9d50"
+   language="Lua"
+   purpose="broadcast spell tags"
+   save_state="y"
+   date_written="2009-02-23 16:17:40"
+   requires="4.38"
+   version="1.0"
+   >
+<description trim="y">
+<![CDATA[
+broadcast spell tags
+TODO:
+  read spellheaders into a sqlite database and add the info to the broadcast
+  if not in the database, then reread slist stuff
+]]>
+</description>
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  {affon}  -->
+<triggers>
+  <trigger
+   name="affon"
+   enabled="y"
+   omit_from_output="y"
+   match="^\{affon\}(?<sn>\d+)\,(?<time>\d+)$"
+   script="spelltag_on"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>
+    
+  <trigger
+   name="affoff"
+   enabled="y"
+   omit_from_output="y"
+   match="^\{affoff\}(?<sn>\d+)$"
+   script="spelltag_off"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>
+
+<!--  {recon}  -->
+ <trigger
+   name="recon"
+   enabled="y"
+   omit_from_output="y"
+   match="^\{recon\}(?<sn>\d+)\,(?<time>\d+)$"
+   script="spelltag_on"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>
+    
+  <trigger
+   name="recoff"  
+   enabled="y"
+   omit_from_output="y"
+   match="^\{recoff\}(?<sn>\d+)$"
+   script="spelltag_off"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>
+  
+  <trigger
+   enabled="y"
+   omit_from_output="y"
+   match="^\{sfail\}(?<sn>\-?\d+)\,(?<target>\d+)\,(?<reason>\d+)\,(?<recovery>\-?\d+)$"
+   script="spell_failure"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>  
+</triggers>
+
+<script>
+<![CDATA[
+require "var"
+require "serialize"
+require "commas"
+
+tdebug = false
+
+function spelltag_on (name, line, wildcards)
+  local spelltag = {}
+  
+  spelltag.sn = tonumber (wildcards.sn)
+  spelltag.time = tonumber (wildcards.time)
+  spelltags = serialize.save( "spelltag", spelltag )  
+  
+  if name == 'affon' then
+    bcastnum = 1
+  elseif name == 'recon' then
+    bcastnum = 3
+  end
+  broadcast(bcastnum, spelltags, spelltags)
+  
+end -- spelltag_on
+
+function spelltag_off (name, line, wildcards)
+  local spelltag = {}
+  
+  spelltag.sn = tonumber (wildcards.sn)
+  spelltags = serialize.save( "spelltag", spelltag )  
+  
+  if name == 'affoff' then
+    bcastnum = 2
+  elseif name == 'recoff' then
+    bcastnum = 4
+  end
+  broadcast(bcastnum, spelltags, spelltags)
+  
+end -- spelltag_off
+
+function spell_failure (name, line, wildcards)
+  local sfail = {}
+  sfail.sn = tonumber (wildcards.sn)
+  sfail.target = tonumber (wildcards.target)
+  sfail.reason = tonumber (wildcards.reason)
+  sfail.recovery = tonumber (wildcards.recovery)
+  
+  sfails = serialize.save( "spelltag", sfail )
+  
+  broadcast(5, sfails, sfails)
+end
+
+function broadcast(num, data, broadcastdata)
+  if tdebug then
+    print(GetPluginInfo (GetPluginID (), 1), ": Broadcast", num)
+    if data then
+      print(data)  
+    end
+  end
+  BroadcastPlugin(tonumber(num), broadcastdata)
+end
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+end -- function OnPluginSaveState
+
+function OnPluginInstall ()
+
+ if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+  
+end -- OnPluginInstall
+
+function OnPluginDisable ()
+  BroadcastPlugin(-1)
+end -- OnPluginDisable
+
+
+]]>
+</script>
+</muclient>
