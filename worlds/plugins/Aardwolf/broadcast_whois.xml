@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: broadcast_level.xml 289 2009-03-16 16:23:51Z endavis $ -->
+<muclient>
+<plugin
+   name="xBroadcast_Whois"
+   author="Bast"
+   id="aaaf9a8dc92f8fc614663ac0"
+   language="Lua"
+   purpose="broadcast info from whois"
+   save_state="y"      
+   date_written="2009-02-22 14:20:07"
+   requires="4.38"
+   version="1.0"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+Broadcasts stats when leveling
+Broadcasts
+   1 - whois info, get var.whoisinfo and loadstring it
+       whoisinfo = { type="pup or level", time=how_long, newlevel=newlevel, hp=hpgain, mana=managain,
+                     mov=movegain, trains=trainsgain, pracs=pracsgain, bonustrains=bonustrains, 
+                     bonusstats = {int=1, wis=1, con=1, luc=1, dex=1, str=1 } }
+
+Example
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "aaaf9a8dc92f8fc614663ac0" and msg == 1 then
+      local pvar = GetPluginVariable(  "aaaf9a8dc92f8fc614663ac0", whoisinfo )
+
+      -- get the info
+      loadstring( pvar )()
+      info = whoisinfo
+    end
+  end
+
+whoi
+--------------------------------------------------------------------------
+[200 T0  Shade MLT] Bast . (Male Ninja)
+
+[Multiclass Player: Thief / Psionicist / Cleric / Paladin ]
+
+Trivia Points    : [    13]  Quest Points : [ 20740]  Qp Earned   : [117701]
+Quests Complete  : [  5411]  Quests Failed: [   127]  Gquests Won : [    24]
+Campaigns Done   : [   716]  Campaigns Fld: [    34] 
+Duels Won        : [     0]  Duels Lost   : [     0]  
+Hours Online     : [  4350]  Birth Date   : [ 15 Jul 2003 ]
+
+Monsters Killed  : [ 27614]  Times Killed       : [  164]
+Combat Maze Kills: [     0]  Combat Maze Deaths : [    0]
+Trained Stats    : [   820]  Powerups           : [   24] [   14] 
+--------------------------------------------------------------------------
+   match="^(?:(.*)\s*:\s*\[([\w\d\s]*)\])*?$"
+   match="^(([\w\s]*)\s*:\s*\[\s*([\w\d\s]*)\s*\]\s*)+([\w\s]*)\s*:\s*\[\s*([\w\d\s]*)\s*\]\s*$"   
+]]>
+</description>
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<triggers>
+  <trigger
+   script="whois_line1"
+   match="^\[(\d+)\s+T(\d)\s+(\w+)\s+(\w+)\]\s+(\w+)\s+(.*)\s+\((\w+)\s+(\w+)\)$"
+   enabled="n"
+   regexp="y"
+   ignore_case="y"
+   sequence="100"
+   group="whois"
+  >
+  </trigger> 
+  <trigger
+   script="whois_line2"
+   match="^\[Multiclass Player: (.*) \]$"
+   enabled="n"
+   regexp="y"
+   ignore_case="y"
+   sequence="100"
+   group="whois"
+  >
+  </trigger>   
+  <trigger
+   script="whois_stats"
+   match="^([\w\s]*)\s*:\s*\[\s*([\w\d\s]*)\s*\]\s*+([\w\s]*)\s*:\s*\[\s*([\w\d\s]*)\s*\]\s*$"
+   enabled="n"
+   regexp="y"
+   ignore_case="y"
+   sequence="101"
+   group="whois"
+  >
+  </trigger>  
+  <trigger
+   name="whois_end"
+   script="whois_end"
+   match="^--------------------------------------------------------------------------$"
+   enabled="n"
+   regexp="y"
+   ignore_case="y"
+   sequence="101"
+  >
+  </trigger>  
+</triggers>
+
+<aliases>
+  <alias
+   name="whois_start"
+   script="whois_start"
+   match="^(whoi|whois)$"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>  
+</aliases>
+
+<script>
+<![CDATA[
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "verify"
+
+-- keys - type, time, newlevel, hp, mana, mov, trains, pracs, bonustrains, bonusstats = {}
+-- bonusstats subtable keys are the bonus stat names
+whoisinfo = {}
+currentlevel = ""
+remorts = ""
+level = ""
+tier = ""
+
+function whois_start(name, line, wildcards)
+  print("whois_start")
+  enabletriggroup("whois", true)
+  Send(line)
+end
+
+function whois_line1(name, line, wildcards)
+  print("whois_line1")
+  tprint(wildcards)
+  rlevel = wildcards[1]
+  tier = wildcards[2]
+  check(EnableTrigger("whois_end", true))    
+end
+
+function whois_line2(name, line, wildcards)
+  print("whois_line2")
+  tlist = utils.split(wildcards[1],"/")
+  tprint(tlist)  
+  remorts = #tlist
+  print(remorts)
+end
+
+function whois_stats(name, line, wildcards)
+  print("whois_stats")
+  tprint(wildcards)
+end
+
+function whois_end(name, line, wildcards)
+  check(EnableTrigger("whois_end", false))  
+  enabletriggroup("whois", false)  
+end
+
+function OnPluginEnable ()
+
+end
+
+function OnPluginDisable ()
+  BroadcastPlugin(-1)
+end
+
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  plugin_save_vars(options_table)    
+end -- function OnPluginSaveState
+
+function OnPluginInstall ()
+
+ if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+  
+end -- OnPluginInstall
+]]>
+</script>
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>   
+</aliases>
+
+<script>
+<![CDATA[
+
+options_table  = {
+  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
+  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
+  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="bwhois"},
+}
+
+cmds_table = {
+
+}
+  
+function plugin_parse (name, line, wildcards)
+  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
+end -- plugin_parse
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+]]>
+</script>
+</muclient>
