@@ -247,7 +247,7 @@ function findkeyword(item)
       break
     end
   end
-  return name
+  return string.lower(name)
 end
 
 function wear_regen()
