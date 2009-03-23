@@ -397,7 +397,7 @@ cmds_table = {
   union     = {func=moonbot_union, help="show next moons union"}, 
   print     = {func=printmoons, help="print the current moon phase #s"},
   toggle    = {func=togglewindow, help="toggle the moons miniwindow"}, 
-  reset     = {func=moonbot_reset, help="reset the moons"},
+  mreset     = {func=moonbot_reset, help="reset the moons"},
 }
   
 function plugin_parse (name, line, wildcards)
