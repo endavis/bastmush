@@ -197,7 +197,7 @@ function plugin_set_helper(name, line, wildcards, cmds_table, options_table, win
     return false
   else
     local soption = options_table[option]
-    if soption.readonly then
+    if soption and soption.readonly then
       plugin_header()
       print("That is a read-only var")
       return true
