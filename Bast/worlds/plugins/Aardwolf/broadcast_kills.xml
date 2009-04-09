@@ -82,7 +82,8 @@ You killed a Triv bonus mob!! Triv point added.
   </trigger>
   <trigger
    enabled="y"
-   match="^You killed a Triv bonus mob!! Triv point added.$"
+   regexp="y"
+   match="^You killed a Triv bonus mob!! Triv point added\.$"
    name="trivmob"
    script="trivmob"
    sequence="100"
@@ -103,12 +104,14 @@ require "checkplugin"
 kill_info = {}
 
 function mobxp( name, line, wildcards )
+  kill_info = {}
   if name == 'mobxp' then
     kill_info.bonusxp = 0
     kill_info.xp = wildcards[1]
   elseif name == 'bonusxp' then
     kill_info.bonusxp = wildcards[1]
   end
+  
 end
 
 function mobgold( name, line, wildcards )
