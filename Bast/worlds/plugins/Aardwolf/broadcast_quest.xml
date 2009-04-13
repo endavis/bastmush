@@ -40,7 +40,7 @@ Broadcasts
 Example:
   function OnPluginBroadcast (msg, id, name, text)
     if id == "aaa8a9eda20fa11787c6b438" and msg == 2 then
-      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438" , mob)
+      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438" , "mob")
 
       --get the mob info
       loadstring( pvar )()
@@ -427,15 +427,15 @@ function quest_rewards (name, line, wildcards)
   elseif name == "mccpqpcatcher" then
     rewards['mccp'] = wildcards[1]
   elseif name == "qtpcatcher" then
-    rewards['trivia'] = 1
+    rewards['tp'] = 1
   elseif name == "qtraincatcher" then
     if wildcards[1] == "" then
-      rewards['training'] = 1
+      rewards['trains'] = 1
     else
-      rewards['training'] = wildcards[1]
+      rewards['trains'] = wildcards[1]
     end
   elseif name == "qpraccatcher" then
-    rewards['practices'] = wildcards[1]
+    rewards['pracs'] = wildcards[1]
   end
 end
 
