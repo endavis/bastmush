@@ -104,7 +104,7 @@ cp check
   </trigger>
   <trigger
    enabled="n"  
-   match="^You still have to kill \* (?<name>.*) \((?<room>.*)\)\.*$"
+   match="^You still have to kill \* (?&lt;name&gt;.*) \((?&lt;room&gt;.*)\)\.*$"
    name="campaign_item"
    script="campaign_item"
    sequence="100"
@@ -135,7 +135,7 @@ cp check
 
   <trigger
    enabled="n"
-   match="^(\s*)Reward of (?<amount>\d+) (?<type>.+) (.+) added.$"
+   match="^(\s*)Reward of (?&lt;amount&gt;\d+) (?&lt;type&gt;.+) (.+) added.$"
    sequence="100"
    script="campaign_reward"
    group="campaignrew"
