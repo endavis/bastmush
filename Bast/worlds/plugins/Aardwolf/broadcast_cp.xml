@@ -40,7 +40,6 @@ Example
       cp_mobs = mobs
     end
   end
-
   ]]>
 </description>
 
@@ -65,6 +64,17 @@ cp check
   <trigger
    enabled="y"
    match="############# Reconnecting to Game #############"
+   sequence="100"
+   send_to="10"   
+  >
+  <send>
+cp check
+  </send>
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="Commander Barcett tells you 'Type 'campaign info' to see what you must kill.'"
    sequence="100"
    send_to="10"   
   >
