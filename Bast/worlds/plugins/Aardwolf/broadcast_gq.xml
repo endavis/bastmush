@@ -130,7 +130,7 @@ You are not on a global quest.
   
   <trigger
    enabled="n"  
-   match="^You still have to kill (?<num>\d*) \* (?<name>.*) \((?<room>.*)\)\.*$"
+   match="^You still have to kill (?&lt;num&gt;\d*) \* (?&lt;name&gt;.*) \((?&lt;room&gt;.*)\)\.*$"
    name="gq_item"
    script="gq_item"
    sequence="100"
@@ -152,7 +152,7 @@ You are not on a global quest.
   
   <trigger
    enabled="n"
-   match="^(\s*)Reward of (?<amount>\d+) (?<type>.+) (.+) added.$"
+   match="^(\s*)Reward of (?&lt;amount&gt;\d+) (?&lt;type&gt;.+) (.+) added.$"
    sequence="100"
    script="gq_reward"
    group="gqrew"
