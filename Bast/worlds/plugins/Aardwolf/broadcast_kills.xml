@@ -21,19 +21,25 @@
 Broadcasts when a mob is killed
 Broadcasts
    1 - mob killed
-       kill_info = {mob = mobname, xp = xp, bonusxp = bonusxp, gold = gold, trivia = 1}
+    kill_info = {}
+        kill_info.tp = 0
+        kill_info.gold = "599"
+        kill_info.time = 1241305477
+        kill_info.bonusxp = 0
+        kill_info.xp = "101"
+        kill_info.mob = "A demon shock trooper"
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
-    if id == "37a61c4570508448e19c7c14" and msg == 1 then
-      local pvar = GetPluginVariable(  "37a61c4570508448e19c7c14", "kill_info")
+    if id == "aaa61c4570508448e19c7c14" and msg == 1 then
+      local pvar = GetPluginVariable(  "aaa61c4570508448e19c7c14", "kill_info")
 
       -- get the mobs
       loadstring( pvar )()
       kill = kill_info
     end
   end
-You killed a Triv bonus mob!! Triv point added.    
+
 ]]>
 </description>
 </plugin>
@@ -102,9 +108,9 @@ require "verify"
 require "checkplugin"
 
 kill_info = {}
+kill_info.tp = 0
 
 function mobxp( name, line, wildcards )
-  kill_info = {}
   if name == 'mobxp' then
     kill_info.bonusxp = 0
     kill_info.xp = wildcards[1]
@@ -120,12 +126,17 @@ function mobgold( name, line, wildcards )
   elseif name == 'splitgold' then
     kill_info.gold = wildcards[2]
   end
+  kill_info.gold = string.gsub(kill_info.gold, ",", "")
+  kill_info.time = GetInfo(304)
   var.kill_info = serialize.save( "kill_info", kill_info )
   broadcast(1, var.kill_info)  
+  kill_info = {}
+  kill_info.tp = 0
+
 end
 
 function trivmob( name, line, wildcards )
-  kill_info.trivia = 1
+  kill_info.tp = 1
 end
 
 function OnPluginBroadcast (msg, id, name, text)
