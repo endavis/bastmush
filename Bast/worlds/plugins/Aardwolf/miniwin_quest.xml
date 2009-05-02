@@ -50,7 +50,7 @@ require 'tprint'
 require 'pluginhelper'
 
 quest_text = {}
-quest_info = {mob=nil, room=nil, area=nil}
+quest_stuff = {mob=nil, room=nil, area=nil}
 quest_timer = {}
 
 questwin = Miniwin{name="Quest", font="Comic Sans MS", bg_colour=0xE7FFFF, text_colour=0x000000, windowpos=7, header_height=0, width_padding=5, height_padding=3}
@@ -61,16 +61,16 @@ questwin:add_setting("avail_colour", {help="the text colour for hwen a quest is 
 questwin:disable()
 
 function build_quest()
-  if (not next(quest_timer)) or (not next(quest_info)) then
+  if (not next(quest_timer)) or (not next(quest_stuff)) then
     return
   end
 
   quest_text = {}
-  local mobstring = string.format("%-7s: %s", "Mob", quest_info.name)
+  local mobstring = string.format("%-7s: %s", "Mob", quest_stuff.mobname)
   table.insert(quest_text, mobstring)
-  local roomstring = string.format("%-7s: %s", "Room", quest_info.room)
+  local roomstring = string.format("%-7s: %s", "Room", quest_stuff.mobroom)
   table.insert(quest_text, roomstring)
-  local areastring = string.format("%-7s: %s", "Area", quest_info.area)
+  local areastring = string.format("%-7s: %s", "Area", quest_stuff.mobarea)
   table.insert(quest_text, areastring)
   
   local style = {}
@@ -97,7 +97,7 @@ function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa8a9eda20fa11787c6b438" then
     if msg == 1 then
       -- quest available
-      quest_info = {}
+      quest_stuff = {}
       quest_timer = {}
       quest_text = {}
       local style = {}
@@ -111,11 +111,11 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 2 then
       -- quest mob info
       quest_timer = {}
-      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438", "mob" )
+      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438", "quest_info" )
 
       -- get the timer
       loadstring( pvar )()
-      quest_info = mob
+      quest_stuff = quest_info
     elseif msg == 3 then
       -- quest time left
       local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438", "timer" )

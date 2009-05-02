@@ -21,21 +21,35 @@
 Broadcasts when anything happens in a quest
 Broadcasts
    1 - can now quest
-   2 - Mob info, get var.mob and loadstring it
-        mob = { name = 'Some name', room = 'Some room', area = 'some area'}
+   2 - Mob info : get var.quest_info and loadstring it
    3 - time left to finish quest
         timer = {secs = num, text = 'time in text format' }
    4 - quest mob killed
-   5 - length of quest, get var.length and loadstring it
-        length = {secs = num, mins = num' }
-   6 - rewards , values will be nil if not applicable
-        rewards = { qp = questpoints, gold = goldamount, tier = tierbonus,
-                    lucky = luckyqp, mccp = mccpqp, trivia = tp, training = trains
-                    practices = pracs }
+   5 - length of quest, get var.quest_info and loadstring it
+   6 - rewards : get var.quest_info and loadstring it, values will be 0 if not applicable
    7 - time left until next quest
         timer = {secs = num, text = 'time in text format' }
    8 - failed the quest
 
+quest_info looks like this:
+quest_info = {}
+  quest_info.lucky = 0
+  quest_info.finishtime = 1241307582
+  quest_info.lengthmins = 1
+  quest_info.tier = 0
+  quest_info.length = 95
+  quest_info.failed = 0
+  quest_info.qp = "21"
+  quest_info.starttime = 1241307487
+  quest_info.tp = 0
+  quest_info.mobarea = "Ultima"
+  quest_info.lengthsecs = 35
+  quest_info.pracs = 0
+  quest_info.mobname = "Lord British"
+  quest_info.gold = "2983"
+  quest_info.trains = 0
+  quest_info.mccp = "2"
+  quest_info.mobroom = "The Throne Room"
        
 Example:
   function OnPluginBroadcast (msg, id, name, text)
@@ -288,23 +302,43 @@ require "commas"
 require 'pluginhelper'
 require "verify"
 
-quest_mob = {}
-rewards = {}
-timer = {}
 qtime = nil
 length = {}
 onquest = false
+quest_info = {}
+timer  ={}
 
+function blankquest ()
+  quest_info = {}
+  quest_info.finishtime = -1
+  quest_info.length = 0
+  quest_info.lengthmins = -1
+  quest_info.lengthsecs = -1
+  quest_info.starttime = -1
+  quest_info.mobname = ''
+  quest_info.mobarea = ''
+  quest_info.mobroom = ''
+  quest_info.qp = 0
+  quest_info.gold = 0
+  quest_info.tier = 0
+  quest_info.mccp = 0
+  quest_info.lucky = 0
+  quest_info.tp = 0
+  quest_info.trains = 0
+  quest_info.pracs = 0
+  quest_info.failed = 0
+end
+     
 function quest_handed_in (name, line, wildcards)
   enabletriggroup("questin", false)
   local qlength = GetInfo(304)
-  qlength = math.floor( math.abs( qtime - qlength ) )
-  length.mins = math.floor(qlength / 60)
-  length.secs = qlength % 60
-  var.length = serialize.save( "length", length )   
-  broadcast(5, var.length) 
+  quest_info['finishtime'] = GetInfo(304)
+  quest_info['length'] = math.floor( math.abs( quest_info['starttime'] - quest_info['finishtime'] ) )
+  quest_info['lengthmins'] = math.floor(quest_info['length'] / 60)
+  quest_info['lengthsecs'] = quest_info['length'] % 60
+  var.quest_info = serialize.save( "quest_info", quest_info )   
+  broadcast(5, var.quest_info) 
   when_required = os.time () + (30 * 60)  -- 30 mins to go
-  quest_mob = {}
   onquest = false
   update_timer()
   check(EnableTimer("questtimer", true))
@@ -314,16 +348,17 @@ end -- quest_handed_in
 
 function quest_available (name, line, wildcards)
   check(EnableTimer("questtimer", false))  
-  quest_text = {}
   broadcast(1)
 end -- quest_available
 
 function quest_fail(name, line, wildcards)
   enabletriggroup("questin", false)
   when_required = os.time () + (15 * 60)  -- 15 mins to go
-  quest_mob = {}
   onquest = false
   update_timer()
+  quest_info.failed = 1
+  var.quest_info = serialize.save( "quest_info", quest_info )   
+  broadcast(8, var.quest_info)   
   check(EnableTimer("questtimer", true))
 end
 
@@ -342,25 +377,23 @@ end -- quest_time_to_go
 
 function start_questor_stuff (name, line, wildcards)
   enabletriggroup("qinfo", true)
-  qtime = GetInfo(304)
-  quest_text = {}
-  quest_info = {}
-  rewards = {}
+  blankquest()
+  quest_info['starttime'] = GetInfo(304)
   var.questor = wildcards [1]
 end -- start_questor_stuff
 
 function mobName( strTriggerName, trig_line, wildcards )
-  quest_mob.name = wildcards[2]
+  quest_info['mobname'] = wildcards[2]
 end -- mobName
 
 function roomName( strTriggerName, trig_line, wildcards )
-  quest_mob.room = wildcards[2]
+  quest_info['mobroom'] = wildcards[2]
 end -- roomName
 
 function areaName( strTriggerName, trig_line, wildcards )
-  quest_mob.area = wildcards[2]
-  var.mob = serialize.save( "mob", quest_mob )  
-  broadcast(2, var.mob)
+  quest_info['mobarea'] = wildcards[2]
+  var.quest_info = serialize.save( "quest_info", quest_info )  
+  broadcast(2, var.quest_info)
 end
 
 function questor_time (name, line, wildcards)
@@ -414,28 +447,32 @@ function quest_rewards (name, line, wildcards)
   if name == 'finishqpcatcher' then
     if trim(line) == '' then
       enabletriggroup("questrew", false)
-      var.rewards = serialize.save( "rewards", rewards )
-      broadcast(6, var.rewards)
+      var.quest_info = serialize.save( "quest_info", quest_info )
+      broadcast(6, var.quest_info)
     end
   elseif name == "qcompletecatcher" then
-    rewards['qp'] = wildcards[1]
-    rewards['gold'] = wildcards[2]
+    quest_info['qp'] = wildcards[1]
+    quest_info['gold'] = wildcards[2]
   elseif name == "tierqpcatcher" then
-    rewards['tier'] = wildcards[1]
+    quest_info['tier'] = wildcards[1]
   elseif name == "luckyqpcatcher" then
-    rewards['lucky'] = wildcards[1]  
+    quest_info['lucky'] = wildcards[1]  
   elseif name == "mccpqpcatcher" then
-    rewards['mccp'] = wildcards[1]
+    quest_info['mccp'] = wildcards[1]
   elseif name == "qtpcatcher" then
-    rewards['tp'] = 1
+    quest_info['tp'] = 1
   elseif name == "qtraincatcher" then
     if wildcards[1] == "" then
-      rewards['trains'] = 1
+      quest_info['trains'] = 1
     else
-      rewards['trains'] = wildcards[1]
+      quest_info['trains'] = wildcards[1]
     end
   elseif name == "qpraccatcher" then
-    rewards['pracs'] = wildcards[1]
+    if wildcards[1] == "" then
+      quest_info['pracs'] = 1
+    else
+      quest_info['pracs'] = wildcards[1]
+    end
   end
 end
 
