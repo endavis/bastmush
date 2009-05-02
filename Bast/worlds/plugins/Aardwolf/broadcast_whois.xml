@@ -21,9 +21,39 @@
 Broadcasts stats when leveling
 Broadcasts
    1 - whois info, get var.whoisinfo and loadstring it
-       whoisinfo = { type="pup or level", time=how_long, newlevel=newlevel, hp=hpgain, mana=managain,
-                     mov=movegain, trains=trainsgain, pracs=pracsgain, bonustrains=bonustrains, 
-                     bonusstats = {int=1, wis=1, con=1, luc=1, dex=1, str=1 } }
+    whoisinfo = {}
+      whoisinfo.powerups = {}
+        whoisinfo.powerups.mort = "15"
+        whoisinfo.powerups.all = "25"
+      whoisinfo["times killed"] = "164"
+      whoisinfo.tiers = "0"
+      whoisinfo["quest points"] = "20833"
+      whoisinfo["campaigns done"] = "716"
+      whoisinfo.race = "shade"
+      whoisinfo["trivia points"] = "13"
+      whoisinfo.level = "200"
+      whoisinfo["quests failed"] = "129"
+      whoisinfo["hours online"] = "4354"
+      whoisinfo["combat maze deaths"] = "0"
+      whoisinfo["qp earned"] = "117794"
+      whoisinfo["trained stats"] = "820"
+      whoisinfo["birth date"] = "15 Jul 2003"
+      whoisinfo["quests complete"] = "5417"
+      whoisinfo["campaigns fld"] = "34"
+      whoisinfo["gquests won"] = "24"
+      whoisinfo["monsters killed"] = "27621"
+      whoisinfo.classes = {}
+        whoisinfo.classes[1] = "thief"
+        whoisinfo.classes[2] = "psionicist"
+        whoisinfo.classes[3] = "cleric"
+        whoisinfo.classes[4] = "paladin"
+      whoisinfo["combat maze kills"] = "0"
+      whoisinfo.name = "Bast"
+      whoisinfo.sex = "male"
+      whoisinfo["duels won"] = "0"
+      whoisinfo["duels lost"] = "0"
+      whoisinfo.subclass = "ninja"
+      whoisinfo.remorts = 4 
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
@@ -35,25 +65,6 @@ Example
       info = whoisinfo
     end
   end
-
-whoi
---------------------------------------------------------------------------
-[200 T0  Shade MLT] Bast . (Male Ninja)
-
-[Multiclass Player: Thief / Psionicist / Cleric / Paladin ]
-
-Trivia Points    : [    13]  Quest Points : [ 20740]  Qp Earned   : [117701]
-Quests Complete  : [  5411]  Quests Failed: [   127]  Gquests Won : [    24]
-Campaigns Done   : [   716]  Campaigns Fld: [    34] 
-Duels Won        : [     0]  Duels Lost   : [     0]  
-Hours Online     : [  4350]  Birth Date   : [ 15 Jul 2003 ]
-
-Monsters Killed  : [ 27614]  Times Killed       : [  164]
-Combat Maze Kills: [     0]  Combat Maze Deaths : [    0]
-Trained Stats    : [   820]  Powerups           : [   24] [   14] 
---------------------------------------------------------------------------
-   match="^(?:(.*)\s*:\s*\[([\w\d\s]*)\])*?$"
-   match="^(([\w\s]*)\s*:\s*\[\s*([\w\d\s]*)\s*\]\s*)+([\w\s]*)\s*:\s*\[\s*([\w\d\s]*)\s*\]\s*$"   
 ]]>
 </description>
 </plugin>
@@ -86,7 +97,7 @@ Trained Stats    : [   820]  Powerups           : [   24] [   14]
   </trigger>   
   <trigger
    script="whois_stats"
-   match="^([\w\s]*)\s*:\s*\[\s*([\w\d\s]*)\s*\]\s*+([\w\s]*)\s*:\s*\[\s*([\w\d\s]*)\s*\]\s*$"
+   match="^(?&lt;name1&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val1&gt;[\w\d\s]*)\s*\]\s*(?&lt;name2&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val2&gt;[\w\d\s]*)\s*\]\s*$"
    enabled="n"
    regexp="y"
    ignore_case="y"
@@ -94,6 +105,37 @@ Trained Stats    : [   820]  Powerups           : [   24] [   14]
    group="whois"
   >
   </trigger>  
+  <trigger
+   script="whois_stats"
+   match="^(?&lt;name1&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val1&gt;[\w\d\s]*)\s*\]\s*(?&lt;name2&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val2&gt;[\w\d\s]*)\s*\]\s*(?&lt;name3&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val3&gt;[\w\d\s]*)\s*\]\s*$"
+   enabled="n"
+   regexp="y"
+   ignore_case="y"
+   sequence="101"
+   group="whois"
+  >
+  </trigger>  
+  <trigger
+   script="whois_stats"
+   match="^(?&lt;name1&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val1&gt;[\w\d\s]*)\s*\]\s*$"
+   enabled="n"
+   regexp="y"
+   ignore_case="y"
+   sequence="101"
+   group="whois"
+  >
+  </trigger>  
+  <trigger
+   name="powerup"
+   script="whois_stats"
+   match="^(?&lt;name1&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val1&gt;[\w\d\s]*)\s*\]\s*([\w\s]*)\s*:\s*\[\s*(?&lt;pval1&gt;[\w\d\s]*)\s*\]\s*\[\s*(?&lt;pval2&gt;[\w\d\s]*)\s*\]\s*$"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="101"
+   group="whois"
+  >
+  </trigger>   
   <trigger
    name="whois_end"
    script="whois_end"
@@ -130,42 +172,65 @@ require "verify"
 
 -- keys - type, time, newlevel, hp, mana, mov, trains, pracs, bonustrains, bonusstats = {}
 -- bonusstats subtable keys are the bonus stat names
-whoisinfo = {}
+
 currentlevel = ""
 remorts = ""
 level = ""
 tier = ""
+whoisinfo = {}
 
 function whois_start(name, line, wildcards)
-  print("whois_start")
+  whoisinfo = {}
   enabletriggroup("whois", true)
   Send(line)
 end
 
 function whois_line1(name, line, wildcards)
-  print("whois_line1")
-  tprint(wildcards)
-  rlevel = wildcards[1]
-  tier = wildcards[2]
+  whoisinfo['level'] = wildcards[1]
+  whoisinfo['tiers'] = wildcards[2]
+  whoisinfo['race'] = string.lower(wildcards[3])
+  whoisinfo['name'] = wildcards[5]
+  whoisinfo['sex'] = string.lower(wildcards[7])
+  whoisinfo['subclass'] = string.lower(wildcards[8])
+  whoisinfo['powerupsall'] = 0
+  whoisinfo['powerupsmort'] = 0
   check(EnableTrigger("whois_end", true))    
 end
 
 function whois_line2(name, line, wildcards)
-  print("whois_line2")
   tlist = utils.split(wildcards[1],"/")
-  tprint(tlist)  
   remorts = #tlist
-  print(remorts)
+  whoisinfo['remorts'] = remorts
+  whoisinfo['classes'] = {}
+  for _,tclass in ipairs(tlist) do
+    tclass = string.gsub (tclass, " ", "")
+    table.insert(whoisinfo['classes'], string.lower(trim(tclass)))
+  end
 end
 
 function whois_stats(name, line, wildcards)
-  print("whois_stats")
-  tprint(wildcards)
+  for i = 1, 3 do
+    local tname = 'name' .. i
+    local tval = 'val' .. i
+    if wildcards[tname] then
+      tclass = string.gsub (wildcards[tname], " ", "")
+      whoisinfo[string.lower(tclass)] = trim(wildcards[tval])
+    end
+  end
+  if name == "powerup" then
+  print("powerup")
+    whoisinfo['powerupsall'] = trim(wildcards['pval1'])
+    whoisinfo['powerupsmort'] = trim(wildcards['pval2'])
+  end
 end
 
 function whois_end(name, line, wildcards)
   check(EnableTrigger("whois_end", false))  
-  enabletriggroup("whois", false)  
+  enabletriggroup("whois", false)
+  whoisinfo['totallevels'] = (whoisinfo.remorts - 1) * 201 + whoisinfo.level
+  whoisinfo['totaltrivia'] = 0
+  var.whoisinfo = serialize.save( "whoisinfo", whoisinfo )  
+  broadcast(1, var.whoisinfo)
 end
 
 function OnPluginEnable ()
