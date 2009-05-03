@@ -31,8 +31,8 @@ verify_number
 verify_bool
   Accepts
     booleans
-    the string true and the number 1 will convert to the boolean true
-    the string false and the number 0 will convert to the boolean false
+    the string true, on and the number 1 will convert to the boolean true
+    the string false, off and the number 0 will convert to the boolean false
     
 --]]
 
@@ -134,9 +134,9 @@ function verify_bool(boolval, args)
   
   -- check if we have the string forms
   tvalue = tostring(boolval)
-  if string.lower(tvalue) == "true" then
+  if string.lower(tvalue) == "true" or string.lower(tvalue) == "on" then
     return true
-  elseif string.lower(tvalue) == "false" then
+  elseif string.lower(tvalue) == "false" or string.lower(tvalue) == "off" then
     return false
   end
   
