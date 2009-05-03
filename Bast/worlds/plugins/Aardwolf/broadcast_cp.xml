@@ -27,9 +27,65 @@ Broadcasts
    2 - timer, will be updated every 60 seconds, get var.timer and loadstring it
         timer = {secs = num, text = 'time in text format', days = days, hours = hours, mins = minutes}
    3 - rewards, get var.rewards and loadstring it, this can also be used to check when a cp is finished
-       reqards = { trivia = num, training = num, gold = num, practice = num, quest = num}
+        see below
    4 - campaign failed
 
+   cp_info = {}
+        cp_info.starttime = 1241305421
+        cp_info.lengthdays = 0
+        cp_info.lengthmins = 23
+        cp_info.lengthhours = 0
+        cp_info.finishtime = 1241306814
+        cp_info.level = "66"
+        cp_info.gold = "13683"
+        cp_info.tp = 0
+        cp_info.pracs = 0
+        cp_info.trains = 0
+        cp_info.mobs = {}
+            cp_info.mobs[1] = {}
+                cp_info.mobs[1].room = "Castle Vlad-Shamir"
+                cp_info.mobs[1].name = "a demon shock trooper"
+                cp_info.mobs[1].clean = "a demon shock trooper"
+            cp_info.mobs[2] = {}
+                cp_info.mobs[2].room = "Diamond Soul Revelation"
+                cp_info.mobs[2].name = "Marie Antoinette"
+                cp_info.mobs[2].clean = "marie antoinette"
+            cp_info.mobs[3] = {}
+                cp_info.mobs[3].room = "Earth Plane 4"
+                cp_info.mobs[3].name = "Sateon"
+                cp_info.mobs[3].clean = "sateon"
+            cp_info.mobs[4] = {}
+                cp_info.mobs[4].room = "Earth Plane 4"
+                cp_info.mobs[4].name = "the dragon"
+                cp_info.mobs[4].clean = "the dragon" 
+            cp_info.mobs[5] = {}
+                cp_info.mobs[5].room = "Realm of Deneria"
+                cp_info.mobs[5].name = "Xorn"
+                cp_info.mobs[5].clean = "xorn"
+            cp_info.mobs[6] = {}
+                cp_info.mobs[6].room = "Realm of Deneria"
+                cp_info.mobs[6].name = "A young priest"
+                cp_info.mobs[6].clean = "a young priest"
+            cp_info.mobs[7] = {}
+                cp_info.mobs[7].room = "Rosewood Castle"
+                cp_info.mobs[7].name = "a tired looking mother"
+                cp_info.mobs[7].clean = "a tired looking mother"
+            cp_info.mobs[8] = {}
+                cp_info.mobs[8].room = "Rosewood Castle"
+                cp_info.mobs[8].name = "a red ball"
+                cp_info.mobs[8].clean = "a red ball"
+            cp_info.mobs[9] = {}
+                cp_info.mobs[9].room = "ST:TNG"
+                cp_info.mobs[9].name = "a brave crew member"
+                cp_info.mobs[9].clean = "a brave crew member"
+            cp_info.mobs[10] = {}
+                cp_info.mobs[10].room = "The Great City of Knossos"
+                cp_info.mobs[10].name = "A wild boar"
+                cp_info.mobs[10].clean = "a wild boar"
+        cp_info.length = 1393
+        cp_info.failed = 0
+        cp_info.qp = "31"
+   
 Example
   function OnPluginBroadcast (msg, id, name, text)
     if id == "aaa66f81c50828bbbfda7100" and msg == 1 then
@@ -56,31 +112,26 @@ Example
    sequence="100"
    send_to="10"   
   >
-  <send>
-cp check
-  </send>
+  <send>cp check</send>
   </trigger>
   
   <trigger
    enabled="y"
    match="############# Reconnecting to Game #############"
    sequence="100"
-   send_to="10"   
+   send_to="10"
   >
-  <send>
-cp check
-  </send>
+  <send>cp check</send>
   </trigger>
 
   <trigger
    enabled="y"
    match="Commander Barcett tells you 'Type 'campaign info' to see what you must kill.'"
    sequence="100"
-   send_to="10"   
+   send_to="10" 
+   script="cp_new"  
   >
-  <send>
-cp check
-  </send>
+  <send>cp check</send>
   </trigger>
   
   <trigger
@@ -92,6 +143,7 @@ cp check
    group="campaigncheck"
   >
   </trigger>
+  
   <trigger
    enabled="n"  
    match="You have * to finish this campaign."
@@ -102,6 +154,7 @@ cp check
    omit_from_output="y"   
   >
   </trigger>
+  
   <trigger
    enabled="n"  
    match="^You still have to kill \* (?&lt;name&gt;.*) \((?&lt;room&gt;.*)\)\.*$"
@@ -176,7 +229,7 @@ cp check
   >
   <send>cp check</send>
   </alias>
- 
+
 </aliases>
 
 
@@ -203,11 +256,21 @@ require "serialize"
 require "commas"
 require "verify"
 require "checkplugin"
+require "copytable"
 
-mobs = {}
-rewards = {}
+rewardtable = {
+  quest = 'qp',
+  training = 'trains',
+  gold = 'gold',
+  trivia = 'tp',
+  practice = 'pracs',
+  }
+
+cp_info = {}
+mobsleft = {}
 timer = {}
 enemy = ""
+curlevel = -1
 
 function cleanname(name)
   return string.lower(string.gsub(name, ",", ""))
@@ -220,7 +283,7 @@ function campaign_item (name, line, wildcards)
     print("error parsing line: ", line)
     tprint(wildcards)
   else
-    table.insert(mobs, {name=name, room=room, clean=cleanname(name)})
+    table.insert(mobsleft, {name=name, room=room, clean=cleanname(name)})
   end
 end -- campaign_item
 
@@ -230,18 +293,18 @@ function cp_mob_dead (name, line, wildcards)
   if var.tdebug == "true" then
     print("Enemy:", string.lower(enemy))
   end
-  for i,v in ipairs(mobs) do
+  for i,v in ipairs(mobsleft) do
     if var.tdebug == "true" then
       print("Clean:", v.clean)
     end
     if v.clean == string.lower(tenemy) then
-      table.remove(mobs, i)
+      table.remove(mobsleft, i)
       found = true
       break
     end   
   end
   if found then
-    var.mobs = serialize.save( "mobs", mobs )  
+    var.mobs = serialize.save( "mobs", mobsleft )  
     broadcast(1, var.mobs)
   else
     print("CP: could not find mob", enemy)
@@ -274,7 +337,11 @@ function cp_time (name, line, wildcards)
   enabletriggroup("campaigncheck", false)
   enabletriggroup("campaignin", true)  
   
-  var.mobs = serialize.save( "mobs", mobs ) 
+  if not next(cp_info['mobs']) then
+    cp_info['mobs'] = copytable.shallow(mobsleft)
+    SaveState()
+  end
+  var.mobs = serialize.save( "mobs", mobsleft ) 
   broadcast(1, var.mobs) 
   update_timer()
   check(EnableTimer("cp_timer", true))  	
@@ -282,25 +349,36 @@ function cp_time (name, line, wildcards)
 end -- cp_time
 
 function campaign_done (name, line, wildcards)
-  var.rewards = serialize.save( "rewards", rewards ) 
-  broadcast(3, var.rewards)
+
+  var.cp_info = serialize.save( "cp_info", cp_info ) 
+  SaveState()
+  broadcast(3, var.cp_info)
   cp_none() 
 end -- campaign_done
 
 function campaign_fail (name, line, wildcards)
-  broadcast(4)
+  cp_info.failed = 1
+  var.cp_info = serialize.save( "cp_info", cp_info )   
+  SaveState()
+  broadcast(4, var.cp_info)
   cp_none() 
 end -- campaign_done
 
 function campaign_reward (name, line, wildcards)
   local type = wildcards.type
   local amount = wildcards.amount
-  rewards[type] = amount
+  cp_info[rewardtable[type]] = amount
   enabletriggroup("campaigndone", true)
 end
 
 function campaign_complete(name, line, wildcards)
   enabletriggroup("campaignrew", true)
+  cp_info['finishtime'] = GetInfo(304)  
+  cp_info['length'] = math.floor( math.abs( cp_info['starttime'] - cp_info['finishtime'] ) )  
+  days, hours, mins = SecondsToDHM(cp_info['length'])
+  cp_info['lengthdays'] = days
+  cp_info['lengthhours'] = hours
+  cp_info['lengthmins'] = mins
 end
 
 function update_timer()
@@ -318,11 +396,29 @@ end
 
 function cp_check( name, line, wildcards)
   enabletriggroup("campaigncheck", true)
-
-  mobs = {}
-  rewards = {}
+  mobsleft = {}
   timer = {}  
 end -- cp_check
+
+
+function cp_new()
+  cp_info = {}
+  cp_info['mobs'] = {}
+  cp_info['trains'] = 0
+  cp_info['pracs'] = 0
+  cp_info['gold'] = 0
+  cp_info['tp'] = 0
+  cp_info['qp'] = 0
+  cp_info['failed'] = 0
+  cp_info['level'] =  curlevel 
+  cp_info['starttime'] = GetInfo(304)  
+  cp_info['finishtime'] = 0
+  cp_info['length'] = 0
+  cp_info['lengthdays'] = 0
+  cp_info['lengthhours'] = 0
+  cp_info['lengthmins'] = 0
+  SaveState()
+end
 
 function cp_none( name, line, wildcards)
   enabletriggroup("campaigncheck", false)
@@ -330,8 +426,6 @@ function cp_none( name, line, wildcards)
   enabletriggroup("campaignrew", false)
   enabletriggroup("campaigndone", false)
   check(EnableTimer("cp_timer", false))    
-  mobs = {}  
-  rewards = {}
   timer = {}  
 end
 
@@ -340,14 +434,13 @@ function OnPluginBroadcast (msg, id, name, text)
   
     -- get one variable
     enemy = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
-     
+    curlevel = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
   end -- stats changed
 end
 
 function SecondsToDHM(sSeconds)
   local nSeconds = tonumber(sSeconds)
   if nSeconds == 0 then
-    --return nil
     return "00:00:00"
   else
     nDays = math.floor(nSeconds/(3600 * 24))
@@ -368,6 +461,7 @@ end
 
 
 function OnPluginSaveState ()
+  var.cp_info = serialize.save( "cp_info", cp_info ) 
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
   plugin_save_vars(options_table)  
 end -- function OnPluginSaveState
@@ -379,7 +473,7 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
-  
+  assert (loadstring (GetVariable ("cp_info") or "")) ()  
 end -- OnPluginInstall
 ]]>
 </script>
