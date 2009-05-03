@@ -21,10 +21,25 @@
 Broadcasts stats when leveling
 Broadcasts
    1 - level info, get var.levelinfo and loadstring it
-       levelinfo = { type="pup or level", time=how_long, newlevel=newlevel, hp=hpgain, mana=managain,
-                     mov=movegain, trains=trainsgain, pracs=pracsgain, bonustrains=bonustrains, 
-                     bonusstats = {int=1, wis=1, con=1, luc=1, dex=1, str=1 } }
-
+    levelinfo = {}
+        levelinfo.luc = 0
+        levelinfo.type = "level"
+        levelinfo.bonusstats = {}
+        levelinfo.pracs = "11"
+        levelinfo.trains = "4"
+        levelinfo.bonustrains = 0
+        levelinfo.hp = "33"
+        levelinfo.wis = 0
+        levelinfo.mv = "30"
+        levelinfo.con = 0
+        levelinfo.int = 0
+        levelinfo.mp = "24"
+        levelinfo.dex = 0
+        levelinfo.time = 1241310623
+        levelinfo.newlevel = "67"
+        levelinfo.str = 0
+  
+  
 Example
   function OnPluginBroadcast (msg, id, name, text)
     if id == "aaa0ab9ed92f8fc614664bd1" and msg == 2 then
@@ -122,9 +137,27 @@ require "verify"
 -- bonusstats subtable keys are the bonus stat names
 levelinfo = {}
 
+function resetinfo()
+  levelinfo = {}
+  levelinfo.type = ""
+  levelinfo.newlevel = -1
+  levelinfo.str = 0
+  levelinfo.int = 0
+  levelinfo.wis = 0
+  levelinfo.dex = 0
+  levelinfo.con = 0
+  levelinfo.luc = 0
+  levelinfo.time = -1
+  levelinfo.hp = 0
+  levelinfo.mp = 0
+  levelinfo.mv = 0
+  levelinfo.pracs = 0
+  levelinfo.trains = 0
+  levelinfo.bonustrains = 0
+end
 
 function level ( name, line, wildcards )
-  levelinfo = {}
+  resetinfo()
   levelinfo.type = name
   if levelinfo.type == "level" then
     levelinfo.newlevel = wildcards[1]
@@ -150,7 +183,7 @@ function levbonus (name, line, wildcards)
   if name == "bonustrains" then
     levelinfo.bonustrains = wildcards[1]
   elseif name == "bonusstat" then
-    levelinfo.bonusstats[string.lower(string.sub(wildcards[1], 1, 3))] = 1
+    levelinfo[string.lower(string.sub(wildcards[1], 1, 3))] = 1
   elseif name == "finishlevel" then
     enabletriggroup( "linfo", false )   
     var.levelinfo = serialize.save( "levelinfo", levelinfo )  
@@ -179,7 +212,7 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
-  
+  assert (loadstring (GetVariable ("levelinfo") or "")) ()    
 end -- OnPluginInstall
 ]]>
 </script>
