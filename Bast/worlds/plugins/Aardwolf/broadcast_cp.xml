@@ -29,8 +29,20 @@ Broadcasts
    3 - rewards, get var.rewards and loadstring it, this can also be used to check when a cp is finished
         see below
    4 - campaign failed
+        see below
 
-   cp_info = {}
+Example
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "aaa66f81c50828bbbfda7100" and msg == 1 then
+      local pvar = GetPluginVariable(  "aaa66f81c50828bbbfda7100", mobs )
+
+      -- get the mobs
+      loadstring( pvar )()
+      cp_mobs = mobs
+    end
+  end
+
+  cp_info = {}
         cp_info.starttime = 1241305421
         cp_info.finishtime = 1241306814
         cp_info.level = "66"
@@ -81,18 +93,7 @@ Broadcasts
                 cp_info.mobs[10].room = "The Great City of Knossos"
                 cp_info.mobs[10].name = "A wild boar"
                 cp_info.mobs[10].clean = "a wild boar"
-
-   
-Example
-  function OnPluginBroadcast (msg, id, name, text)
-    if id == "aaa66f81c50828bbbfda7100" and msg == 1 then
-      local pvar = GetPluginVariable(  "aaa66f81c50828bbbfda7100", mobs )
-
-      -- get the mobs
-      loadstring( pvar )()
-      cp_mobs = mobs
-    end
-  end
+  
   ]]>
 </description>
 
