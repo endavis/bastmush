@@ -420,3 +420,14 @@ function mdebug(...)
     print(" ")
   end
 end
+
+function ldplugin(pluginid, filename)
+  if not IsPluginInstalled(pluginid) then
+    LoadPlugin(filename)
+  end
+  if not IsPluginInstalled(pluginid) then
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+    ColourNote("yellow", "black", GetPluginInfo (GetPluginID (), 1) .. " will not work correctly without " .. filename)
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+  end
+end
