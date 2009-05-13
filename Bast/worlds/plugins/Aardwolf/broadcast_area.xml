@@ -83,7 +83,6 @@ require "pluginhelper"
 require "serialize"
 require "commas"
 require "verify"
-require "checkplugin"
 require "tprint"
 
 function parsearea (name, line, wildcards)

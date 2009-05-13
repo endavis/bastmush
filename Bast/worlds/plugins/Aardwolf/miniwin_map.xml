@@ -95,7 +95,6 @@ Redirects the map to a mini window.
 <![CDATA[
 require 'var'
 require 'pluginhelper'
-require "checkplugin"
 require "togglewin"
 require "tprint"
 require "commas"

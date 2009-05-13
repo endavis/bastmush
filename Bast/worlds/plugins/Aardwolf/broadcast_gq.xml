@@ -277,7 +277,6 @@ require "commas"
 require "check"
 require "pluginhelper"
 require "verify"
-require "checkplugin"
 require "copytable"
 
 rewardtable = {
