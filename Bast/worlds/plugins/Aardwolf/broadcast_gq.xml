@@ -41,6 +41,64 @@ Example
     end
   end
   
+gq_info = {}
+  gq_info.starttime = 1241394128
+  gq_info.mobs = {}
+    gq_info.mobs[1] = {}
+      gq_info.mobs[1].num = "1"
+      gq_info.mobs[1].room = "Castle Vlad-Shamir"
+      gq_info.mobs[1].name = "demon cook"
+      gq_info.mobs[1].clean = "demon cook"
+    gq_info.mobs[2] = {}
+      gq_info.mobs[2].num = "1"
+      gq_info.mobs[2].room = "Castle Vlad-Shamir"
+      gq_info.mobs[2].name = "an insane demon"
+      gq_info.mobs[2].clean = "an insane demon"
+    gq_info.mobs[3] = {}
+      gq_info.mobs[3].num = "1"
+      gq_info.mobs[3].room = "Diamond Soul Revelation"
+      gq_info.mobs[3].name = "Marie Antoinette"
+      gq_info.mobs[3].clean = "marie antoinette"
+    gq_info.mobs[4] = {}
+      gq_info.mobs[4].num = "1"
+      gq_info.mobs[4].room = "Realm of Deneria"
+      gq_info.mobs[4].name = "Zombie"
+      gq_info.mobs[4].clean = "zombie"
+    gq_info.mobs[5] = {}
+      gq_info.mobs[5].num = "1"
+      gq_info.mobs[5].room = "ST:TNG"
+      gq_info.mobs[5].name = "a loose crystal of the entity"
+      gq_info.mobs[5].clean = "a loose crystal of the entity"
+    gq_info.mobs[6] = {}
+      gq_info.mobs[6].num = "1"
+      gq_info.mobs[6].room = "Star Wars"
+      gq_info.mobs[6].name = "a transporter crewman"
+      gq_info.mobs[6].clean = "a transporter crewman"
+    gq_info.mobs[7] = {}
+      gq_info.mobs[7].num = "1"
+      gq_info.mobs[7].room = "The Flying Citadel"
+      gq_info.mobs[7].name = "Blandine, archangel of dreams"
+      gq_info.mobs[7].clean = "blandine archangel of dreams"
+    gq_info.mobs[8] = {}
+      gq_info.mobs[8].num = "1"
+      gq_info.mobs[8].room = "The Goblin Fortress"
+      gq_info.mobs[8].name = "Orchid the pilferer"
+      gq_info.mobs[8].clean = "orchid the pilferer"
+    gq_info.mobs[9] = {}
+      gq_info.mobs[9].num = "1"
+      gq_info.mobs[9].room = "The Imperial City of Reme"
+      gq_info.mobs[9].name = "a leper"
+      gq_info.mobs[9].clean = "a leper"
+  gq_info.qpmobs = 0
+  gq_info.won = 0
+  gq_info.length = 0
+  gq_info.finishtime = 1241394624
+  gq_info.pracs = 0
+  gq_info.gold = 0
+  gq_info.tp = 0
+  gq_info.level = "69"
+  gq_info.trains = 0
+  gq_info.qp = 0  
 ]]>
 </description>
 
@@ -220,9 +278,18 @@ require "check"
 require "pluginhelper"
 require "verify"
 require "checkplugin"
+require "copytable"
 
-mobs = {}
-rewards = {qpmobs = 0}
+rewardtable = {
+  quest = 'qp',
+  training = 'trains',
+  gold = 'gold',
+  trivia = 'tp',
+  practice = 'pracs',
+  }
+
+mobsleft = {}
+gq_info = {}
 enemy = ""
 joined = false
 started = false
@@ -241,9 +308,8 @@ end
 function gq_join (name, line, wildcards)
   joined = true
   check( EnableTrigger ("gq_join", false) )
-  mobs = {}
-  rewards = {}
-  timer = {}      
+  mobsleft = {}
+  gq_new()
   broadcast(2)
   if started then
     gq_start()
@@ -262,9 +328,13 @@ end
 
 function gq_item (name, line, wildcards)
   if name == "finishgqcheck" and trim(line) == "" then
+    if not next(gq_info['mobs']) then
+      gq_info['mobs'] = copytable.shallow(mobsleft)
+      SaveState()
+    end  
     enabletriggroup("gqcheck", false)
     check( EnableTrigger ("finishgqcheck", false) )      
-    var.mobs = serialize.save( "mobs", mobs )  
+    var.mobs = serialize.save( "mobs", mobsleft )  
     broadcast(3, var.mobs)
     return
   elseif name == "finishgqcheck"  then
@@ -279,22 +349,19 @@ function gq_item (name, line, wildcards)
     print("error parsing line: ", line)
     tprint(wildcards)
   else
-    table.insert(mobs, {name=name, room=room, clean=cleanname(name), num=num})
+    table.insert(mobsleft, {name=name, room=room, clean=cleanname(name), num=num})
   end
 end -- campaign_item
 
 function gq_mob_dead (name, line, wildcards)
   local tenemy = enemy
   local found = false
-  if not rewards.qpmobs then
-    rewards.qpmobs = 0
-  end
-  rewards.qpmobs = rewards.qpmobs + 3
-  for i,v in ipairs(mobs) do
+  gq_info.qpmobs = gq_info.qpmobs + 3
+  for i,v in ipairs(mobsleft) do
     if v.clean == string.lower(tenemy) then
       found = true
       if tonumber(v.num) == 1 then
-        table.remove(mobs, i)
+        table.remove(mobsleft, i)
       else
         v.num = tonumber(v.num) - 1
       end
@@ -302,7 +369,7 @@ function gq_mob_dead (name, line, wildcards)
     end   
   end
   if found then
-    var.mobs = serialize.save( "mobs", mobs )  
+    var.mobs = serialize.save( "mobs", mobsleft )  
     broadcast(3, var.mobs)
   else
     print("GQ: could not find mob", enemy)
@@ -313,22 +380,25 @@ end
 function gq_reward (name, line, wildcards)
   local type = wildcards.type
   local amount = wildcards.amount
-  rewards[type] = amount
+  gq_info[rewardtable[type]] = amount
+  gq_info['won'] = 1
 end
 
 function gq_complete(name, line, wildcards)
+  gq_info['won'] = 1
   enabletriggroup("gqrew", true)
 end
 
 function gq_check( name, line, wildcards)
-  mobs = {}
+  mobsleft = {}
   enabletriggroup("gqcheck", true)
 end -- cp_check
 
 function gq_none( name, line, wildcards)
-  var.rewards = serialize.save( "rewards", rewards ) 
+  gq_info['finishtime'] = GetInfo(304)  
+  var.gq_info = serialize.save( "gq_info", gq_info ) 
   if joined then
-    broadcast(4, var.rewards)
+    broadcast(4, var.gq_info)
   end
   broadcast(5)
   check( EnableTrigger ("gq_join", false) )
@@ -337,11 +407,26 @@ function gq_none( name, line, wildcards)
   enabletriggroup("gqin", false)
   enabletriggroup("gqrew", false)
   enabletriggroup("gqdone", false)
-  mobs = {}  
-  rewards = {qpmobs = 0}
-  timer = {}  
   joined = false
   started = false
+end
+
+
+function gq_new()
+  gq_info = {}
+  gq_info['mobs'] = {}
+  gq_info['trains'] = 0
+  gq_info['pracs'] = 0
+  gq_info['gold'] = 0
+  gq_info['tp'] = 0
+  gq_info['qp'] = 0
+  gq_info['qpmobs'] = 0
+  gq_info['level'] =  curlevel 
+  gq_info['starttime'] = GetInfo(304)  
+  gq_info['finishtime'] = 0
+  gq_info['length'] = 0
+  gq_info['won'] = 0
+  SaveState()
 end
 
 function OnPluginBroadcast (msg, id, name, text)
@@ -349,13 +434,12 @@ function OnPluginBroadcast (msg, id, name, text)
   
     -- get one variable
     enemy = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
-     
+    curlevel = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
   end -- stats changed
 end
 
 function OnPluginEnable ()
-  -- check for stats detector
-  checkplugin ("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
+
 end
 
 function OnPluginDisable ()
@@ -375,6 +459,7 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
+  ldplugin("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
   
 end -- OnPluginInstall
 ]]>
