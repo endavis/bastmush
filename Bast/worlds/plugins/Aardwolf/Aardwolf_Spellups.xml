@@ -1254,6 +1254,7 @@ function spellup_refresh (name, line, wildcards)
    ColourNote ("orangered", "", "Cannot refresh if you are not playing.")
   else
    ColourNote ("green", "", "Refreshing affected / learned / spellup list.")
+   current_buffs = {}
    SendNoEcho "slist noprompt"
    SendNoEcho "slist affected noprompt"
    SendNoEcho "slist learned noprompt"
