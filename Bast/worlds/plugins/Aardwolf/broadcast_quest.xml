@@ -311,9 +311,6 @@ timer  ={}
 function blankquest ()
   quest_info = {}
   quest_info.finishtime = -1
-  quest_info.length = 0
-  quest_info.lengthmins = -1
-  quest_info.lengthsecs = -1
   quest_info.starttime = -1
   quest_info.mobname = ''
   quest_info.mobarea = ''
@@ -333,9 +330,6 @@ function quest_handed_in (name, line, wildcards)
   enabletriggroup("questin", false)
   local qlength = GetInfo(304)
   quest_info['finishtime'] = GetInfo(304)
-  quest_info['length'] = math.floor( math.abs( quest_info['starttime'] - quest_info['finishtime'] ) )
-  quest_info['lengthmins'] = math.floor(quest_info['length'] / 60)
-  quest_info['lengthsecs'] = quest_info['length'] % 60
   var.quest_info = serialize.save( "quest_info", quest_info )   
   broadcast(5, var.quest_info) 
   when_required = os.time () + (30 * 60)  -- 30 mins to go
