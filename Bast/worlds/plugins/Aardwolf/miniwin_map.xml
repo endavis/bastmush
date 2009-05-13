@@ -53,7 +53,7 @@ Redirects the map to a mini window.
 
   <trigger
    enabled="y"
-   match="<MAPEND>"
+   match="&lt;MAPEND&gt;"
    script="map_redirect"
    omit_from_output="y"
    name="map_end"
