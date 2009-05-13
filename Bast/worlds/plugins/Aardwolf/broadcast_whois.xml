@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: broadcast_level.xml 289 2009-03-16 16:23:51Z endavis $ -->
+<!-- $Id$ -->
 <muclient>
 <plugin
    name="xBroadcast_Whois"
