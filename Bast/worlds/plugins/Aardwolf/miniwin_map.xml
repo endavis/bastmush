@@ -28,11 +28,12 @@ Redirects the map to a mini window.
       sequence="100"
       script="process_coords"
       omit_from_output="y"
-      />
+  >
+  </trigger>
       
   <trigger
    enabled="y"
-   match="<MAPSTART>"
+   match="&lt;MAPSTART&gt;"
    script="map_redirect"
    omit_from_output="y"
    name="map_start"
