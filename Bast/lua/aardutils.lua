@@ -1,4 +1,4 @@
--- $Id: stringfuncs.lua 328 2009-04-09 18:11:48Z endavis $
+-- $Id$
 --[[
 http://code.google.com/p/bastmush
  - Documentation and examples
