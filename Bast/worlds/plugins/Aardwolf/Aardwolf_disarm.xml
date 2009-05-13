@@ -132,6 +132,22 @@ TODO: automatically rewield primary weapon at end of fight
 
 <script>
 <![CDATA[
+require 'tprint'
+require 'aardutils'
+
+function OnPluginBroadcast (msg, id, name, text)
+  if id == "aaa6dc9ed92ffc6146964abc" then
+    loadstring(text)()
+    local eqitem = item
+    if msg == 1 then
+      if eqitem.place == 'wield' then
+        print("weapon set to", findkeyword(eqitem.item))
+        SetVariable("weapon", findkeyword(eqitem.item))
+      end
+    end  
+  end
+end
+
 function OnPluginInstall()
   OnHelp()
 end
