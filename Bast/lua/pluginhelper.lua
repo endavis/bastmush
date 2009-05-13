@@ -431,3 +431,16 @@ function ldplugin(pluginid, filename)
     ColourNote("yellow", "black", "-----------------------------------------------------------------------")
   end
 end
+
+function SecondsToDHMS(sSeconds)
+  local nSeconds = tonumber(sSeconds)
+  if nSeconds == 0 then
+    return "00:00:00"
+  else
+    nDays = math.floor(nSeconds/(3600 * 24))
+    nHours = math.floor(nSeconds/3600 - (nDays * 24))
+    nMins = math.floor(nSeconds/60 - (nHours * 60) - (nDays * 24 * 60))
+    nSecs = sSeconds % 60
+    return nDays, nHours, nMins, nSecs
+  end
+end
