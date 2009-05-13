@@ -32,15 +32,14 @@ Broadcasts
 
    cp_info = {}
         cp_info.starttime = 1241305421
-        cp_info.lengthdays = 0
-        cp_info.lengthmins = 23
-        cp_info.lengthhours = 0
         cp_info.finishtime = 1241306814
         cp_info.level = "66"
         cp_info.gold = "13683"
         cp_info.tp = 0
         cp_info.pracs = 0
         cp_info.trains = 0
+        cp_info.failed = 0
+        cp_info.qp = "31"        
         cp_info.mobs = {}
             cp_info.mobs[1] = {}
                 cp_info.mobs[1].room = "Castle Vlad-Shamir"
@@ -82,9 +81,7 @@ Broadcasts
                 cp_info.mobs[10].room = "The Great City of Knossos"
                 cp_info.mobs[10].name = "A wild boar"
                 cp_info.mobs[10].clean = "a wild boar"
-        cp_info.length = 1393
-        cp_info.failed = 0
-        cp_info.qp = "31"
+
    
 Example
   function OnPluginBroadcast (msg, id, name, text)
@@ -374,11 +371,6 @@ end
 function campaign_complete(name, line, wildcards)
   enabletriggroup("campaignrew", true)
   cp_info['finishtime'] = GetInfo(304)  
-  cp_info['length'] = math.floor( math.abs( cp_info['starttime'] - cp_info['finishtime'] ) )  
-  days, hours, mins = SecondsToDHM(cp_info['length'])
-  cp_info['lengthdays'] = days
-  cp_info['lengthhours'] = hours
-  cp_info['lengthmins'] = mins
 end
 
 function update_timer()
@@ -413,10 +405,6 @@ function cp_new()
   cp_info['level'] =  curlevel 
   cp_info['starttime'] = GetInfo(304)  
   cp_info['finishtime'] = 0
-  cp_info['length'] = 0
-  cp_info['lengthdays'] = 0
-  cp_info['lengthhours'] = 0
-  cp_info['lengthmins'] = 0
   SaveState()
 end
 
@@ -451,8 +439,7 @@ function SecondsToDHM(sSeconds)
 end
 
 function OnPluginEnable ()
-  -- check for stats detector
-  checkplugin ("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
+
 end
 
 function OnPluginDisable ()
@@ -474,6 +461,8 @@ function OnPluginInstall ()
     return
   end -- they didn't enable us last time
   assert (loadstring (GetVariable ("cp_info") or "")) ()  
+  ldplugin("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
+  
 end -- OnPluginInstall
 ]]>
 </script>
