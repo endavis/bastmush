@@ -26,8 +26,8 @@ Broadcasts
        mobs = { 1 = {name = 'Some name', room = 'Some room', clean = 'A name with some stuff removed', num=number},
               2 = {name = 'Another name', room = 'Another room', clean = 'Another name with some stuff removed', num=number}, }
        It will be resent when a mob is killed and will be nil when a gquest is not active        
-   4 - rewards, get var.rewards and loadstring it
-       rewards = { trivia = num, training = num, gold = num, practice = num, quest = num, mobqp=mobqp }
+   4 - rewards get var.gq_info and loadstring it
+       see below
    5 - gquest over
 
 Example
