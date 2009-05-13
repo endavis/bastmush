@@ -121,6 +121,11 @@ function mobxp( name, line, wildcards )
 end
 
 function mobgold( name, line, wildcards )
+  if kill_info.mob == nil then
+    kill_info = {}
+    kill_info.tp = 0
+    return
+  end
   if name == 'mobgold' then
     kill_info.gold = wildcards[1]
   elseif name == 'splitgold' then
@@ -160,12 +165,13 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
+
+  ldplugin("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
   
 end -- OnPluginInstall
 
 function OnPluginEnable ()
-  -- check for stats detector
-  checkplugin ("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
+
 end
 
 function OnPluginDisable ()
