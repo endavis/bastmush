@@ -144,6 +144,8 @@ function OnPluginInstall ()
     cpwin:disable()
     return
   end -- they didn't enable us last time
+
+  ldplugin("aaa66f81c50828bbbfda7100", "broadcast_cp.xml")  
   
   OnPluginEnable ()  -- do initialization stuff
   
