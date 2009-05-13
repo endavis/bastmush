@@ -164,6 +164,8 @@ function OnPluginInstall ()
     return
   end -- they didn't enable us last time
   
+  ldplugin("aaa8a9eda20fa11787c6b438", "broadcast_quest.xml")    
+  
 end -- OnPluginInstall
 
 function OnPluginSaveState ()
