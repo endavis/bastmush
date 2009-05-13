@@ -22,35 +22,18 @@ Broadcasts when anything happens in a quest
 Broadcasts
    1 - can now quest
    2 - Mob info : get var.quest_info and loadstring it
+        see below
    3 - time left to finish quest
         timer = {secs = num, text = 'time in text format' }
    4 - quest mob killed
    5 - length of quest, get var.quest_info and loadstring it
+        see below
    6 - rewards : get var.quest_info and loadstring it, values will be 0 if not applicable
+        see below
    7 - time left until next quest
         timer = {secs = num, text = 'time in text format' }
    8 - failed the quest
 
-quest_info looks like this:
-quest_info = {}
-  quest_info.lucky = 0
-  quest_info.finishtime = 1241307582
-  quest_info.lengthmins = 1
-  quest_info.tier = 0
-  quest_info.length = 95
-  quest_info.failed = 0
-  quest_info.qp = "21"
-  quest_info.starttime = 1241307487
-  quest_info.tp = 0
-  quest_info.mobarea = "Ultima"
-  quest_info.lengthsecs = 35
-  quest_info.pracs = 0
-  quest_info.mobname = "Lord British"
-  quest_info.gold = "2983"
-  quest_info.trains = 0
-  quest_info.mccp = "2"
-  quest_info.mobroom = "The Throne Room"
-       
 Example:
   function OnPluginBroadcast (msg, id, name, text)
     if id == "aaa8a9eda20fa11787c6b438" and msg == 2 then
@@ -62,6 +45,22 @@ Example:
     end
   end
 
+quest_info looks like this:
+quest_info = {}
+  quest_info.starttime = 1242241160
+  quest_info.lucky = 0
+  quest_info.mobroom = "The Cage of the Oni"
+  quest_info.mobarea = "Anthrox"
+  quest_info.tier = 0
+  quest_info.trains = 0
+  quest_info.tp = 0
+  quest_info.mccp = "2"
+  quest_info.pracs = 0
+  quest_info.gold = "3060"
+  quest_info.finishtime = 1242241200
+  quest_info.mobname = "the oni"
+  quest_info.failed = 0
+  quest_info.qp = "14"
 ]]>
 </description>
 
@@ -302,8 +301,6 @@ require "commas"
 require 'pluginhelper'
 require "verify"
 
-qtime = nil
-length = {}
 onquest = false
 quest_info = {}
 timer  ={}
@@ -328,7 +325,6 @@ end
      
 function quest_handed_in (name, line, wildcards)
   enabletriggroup("questin", false)
-  local qlength = GetInfo(304)
   quest_info['finishtime'] = GetInfo(304)
   var.quest_info = serialize.save( "quest_info", quest_info )   
   broadcast(5, var.quest_info) 
