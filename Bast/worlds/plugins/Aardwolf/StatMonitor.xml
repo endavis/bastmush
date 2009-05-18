@@ -39,8 +39,8 @@
 
 <timers>
   <timer
-   name="HourReport"
-   script="HourReport"
+   name="StatReport"
+   script="StatReport"
    enabled="y"
    minute="2"
    >
@@ -311,7 +311,7 @@ function formattotals(totals)
              )
 end
 
-function HourReport()
+function StatReport()
   local queststats = {}
   local cpstats = {}
   local gqstats = {}
@@ -360,6 +360,10 @@ function HourReport()
   ColourNote("", "", "")
 end
 
+function settimer()
+   SetTimerOption ("StatReport", "minute", var.minutes)
+end
+
 ]]>
 </script>
 
@@ -384,6 +388,7 @@ options_table  = {
   tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
   plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
   cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="statmon"},
+  minutes = {help="the number of minutes between StatMon output", type="number", after=settimer, default=60},
 }
 
 cmds_table = {
