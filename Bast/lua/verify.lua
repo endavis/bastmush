@@ -22,7 +22,7 @@ verify_string
 
 verify_number
   Accepts
-    anything that can be turned into a string
+    anything that can be turned into a number
   stuff to put in args table
     low  - the lowest value the data can be
     high - the highest value the data can be
