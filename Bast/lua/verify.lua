@@ -90,6 +90,7 @@ function verify_string(stringval, args)
 end
 
 function verify_number(numberval, args)
+  args = args or {}
   -- turn it into a number
   tvalue = tonumber(numberval)
   
@@ -119,6 +120,7 @@ function verify_number(numberval, args)
 end
 
 function verify_bool(boolval, args)
+  args = args or {}
   -- check if we already have a boolean
   if type(boolval) == "boolean" then
     return boolval
