@@ -28,7 +28,8 @@ functions in this module
   return string.lower(name)
 end
 
-function getactuallevel(level, remorts, tier=0)
+function getactuallevel(level, remorts, tier)
+  tier = tier or 0
   return (tier * 7 * 201) + (remorts - 1) * 201 + level
 end
 
@@ -39,5 +40,5 @@ classabb = {
   war = 'warrior',
   psi = 'psionicist',
   cle = 'cleric',
-  ran = 'ranger'
+  ran = 'ranger',
 }
