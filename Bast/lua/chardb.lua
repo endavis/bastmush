@@ -32,7 +32,7 @@ end
 function Statdb:getstat(stat)
   self:open()
   local tstat = nil
-  for a in self.db:nrows('SELECT * FROM stats WHERE stat_id = 1') do 
+  for a in self.db:nrows('SELECT * FROM stats WHERE stat_id = 1') do
      tstat = a[stat]
   end
   self:close()
@@ -45,7 +45,7 @@ function Statdb:addtostat(stat, add)
   end
   self:open()
   local tstat = nil
-  for a in self.db:nrows('SELECT * FROM stats WHERE stat_id = 1') do 
+  for a in self.db:nrows('SELECT * FROM stats WHERE stat_id = 1') do
      tstat = a[stat]
   end
   if tstat == nil then
@@ -63,7 +63,7 @@ function Statdb:checkstatstable()
   self:open()
   if not self:checkfortable('stats') then
     self.db:exec([[CREATE TABLE stats(
-      stat_id INTEGER NOT NULL PRIMARY KEY autoincrement,  
+      stat_id INTEGER NOT NULL PRIMARY KEY autoincrement,
       name TEXT NOT NULL,
       level INT default 1,
       totallevels INT default 1,
@@ -100,24 +100,24 @@ function Statdb:savewhois(whoisinfo)
                                                         :qpearned, :questscomplete, :questsfailed, :campaignsdone, :campaignsfld,
                                                         :gquestswon, :duelswon, :duelslost, :timeskilled, :monsterskilled,
                                                         :combatmazekills, :combatmazedeaths, :powerupsall, :totaltrivia) ]]
-                
+
     stmt:bind_names(  whoisinfo  )
     stmt:step()
-    stmt:finalize()  
+    stmt:finalize()
   else
-    local stmt = self.db:prepare[[ UPDATE stats set level = :level, totallevels = :totallevels, remorts = :remorts, tiers = :tiers, 
+    local stmt = self.db:prepare[[ UPDATE stats set level = :level, totallevels = :totallevels, remorts = :remorts, tiers = :tiers,
                                            race = :race, sex = :sex, subclass = :subclass, qpearned = :qpearned,
-                                           questscomplete = :questscomplete, questsfailed = :questsfailed, 
+                                           questscomplete = :questscomplete, questsfailed = :questsfailed,
                                            campaignsdone = :campaignsdone, campaignsfld = :campaignsfld,
-                                           gquestswon = :gquestswon, duelswon = :duelswon, duelslost = :duelslost, 
+                                           gquestswon = :gquestswon, duelswon = :duelswon, duelslost = :duelslost,
                                            timeskilled = :timeskilled, monsterskilled = :monsterskilled,
                                            combatmazekills = :combatmazekills, combatmazedeaths = :combatmazedeaths,
                                            powerupsall = :powerupsall WHERE name = :name;]]
     stmt:bind_names(  whoisinfo  )
     stmt:step()
-    stmt:finalize()      
+    stmt:finalize()
   end
-  self:close()  
+  self:close()
 end
 
 function Statdb:checkquesttable()
@@ -147,7 +147,7 @@ end
 
 function Statdb:savequest( questinfo )
   self:checkquesttable()
-  questinfo['level'] = db:getstat('totallevels') 
+  questinfo['level'] = db:getstat('totallevels')
   totalqp = tonumber(questinfo.qp) + tonumber(questinfo.tier) + tonumber(questinfo.mccp) + tonumber(questinfo.lucky)
   self:addtostat('questpoints', totalqp)
   self:addtostat('qpearned', totalqp)
@@ -159,16 +159,16 @@ function Statdb:savequest( questinfo )
     self:addtostat('questscomplete', 1)
   end
   self:open()
-  local stmt = self.db:prepare[[ INSERT INTO quests VALUES (NULL, :starttime, :finishtime, 
-                                                        :mobname, :mobarea, :mobroom, :qp, :gold, 
-                                                        :tier, :mccp, :lucky, 
+  local stmt = self.db:prepare[[ INSERT INTO quests VALUES (NULL, :starttime, :finishtime,
+                                                        :mobname, :mobarea, :mobroom, :qp, :gold,
+                                                        :tier, :mccp, :lucky,
                                                         :tp, :trains, :pracs, :level, :failed) ]]
   stmt:bind_names(  questinfo  )
   stmt:step()
-  stmt:finalize()  
+  stmt:finalize()
   rowid = self.db:last_insert_rowid()
   mdebug("inserted quest:", rowid)
-  self:close() 
+  self:close()
 end
 
 function Statdb:checkcptable()
@@ -209,32 +209,32 @@ function Statdb:savecp( cpinfo )
   self:addtostat('questpoints', cpinfo.qp)
   self:addtostat('qpearned', cpinfo.qp)
   self:addtostat('triviapoints', cpinfo.tp)
-  self:addtostat('totaltrivia', cpinfo.tp)  
+  self:addtostat('totaltrivia', cpinfo.tp)
   if cpinfo.failed == 1 then
     self:addtostat('campaignsfld', 1)
   else
     self:addtostat('campaignsdone', 1)
-  end  
+  end
   self:open()
-  newlevel = getactuallevel(db:getstat('remorts'), cpinfo.level)
+  newlevel = getactuallevel(cpinfo.level, db:getstat('remorts'), db:getstat('tiers'))
   cpinfo.level = newlevel
-  local stmt = self.db:prepare[[ INSERT INTO campaigns VALUES (NULL, :starttime, :finishtime,  
-                                                        :qp, :gold, :tp, :trains, :pracs, :level, 
+  local stmt = self.db:prepare[[ INSERT INTO campaigns VALUES (NULL, :starttime, :finishtime,
+                                                        :qp, :gold, :tp, :trains, :pracs, :level,
                                                         :failed) ]]
   stmt:bind_names(  cpinfo  )
   stmt:step()
-  stmt:finalize()  
+  stmt:finalize()
   rowid = self.db:last_insert_rowid()
   mdebug("inserted cp:", rowid)
   for i,v in ipairs(cpinfo['mobs']) do
     v['cp_id'] = rowid
-    local stmt2 = self.db:prepare[[ INSERT INTO cpmobs VALUES 
+    local stmt2 = self.db:prepare[[ INSERT INTO cpmobs VALUES
                                     (NULL, :cp_id, :name, :room) ]]
     stmt2:bind_names (v)
     stmt2:step()
     stmt2:finalize()
   end
-  self:close() 
+  self:close()
 end
 
 function Statdb:checklevelstable()
@@ -265,21 +265,21 @@ end
 
 function Statdb:savelevel( levelinfo )
   self:checklevelstable()
-  self:addtostat('totallevels', 1)     
+  self:addtostat('totallevels', 1)
   levelinfo['newlevel'] = tonumber(db:getstat('totallevels'))
   self:open()
-  local stmt = self.db:prepare[[ INSERT INTO levels VALUES (NULL, :type, :newlevel, :str, 
+  local stmt = self.db:prepare[[ INSERT INTO levels VALUES (NULL, :type, :newlevel, :str,
                                                         :int, :wis, :dex, :con,  :luc,
-                                                        :time, -1, :hp, :mp, :mv, :pracs, :trains, 
+                                                        :time, -1, :hp, :mp, :mv, :pracs, :trains,
                                                         :bonustrains) ]]
   stmt:bind_names(  levelinfo  )
   stmt:step()
-  stmt:finalize()  
+  stmt:finalize()
   rowid = self.db:last_insert_rowid()
-  mdebug("inserted level:", rowid)  
+  mdebug("inserted level:", rowid)
   stmt2 = self.db:exec(string.format("UPDATE levels SET finishtime = %d WHERE level_id = %d;" , levelinfo.time, rowid - 1))
   rowid = self.db:last_insert_rowid()
-  self:close() 
+  self:close()
 end
 
 function Statdb:checkmobkillstable()
@@ -300,18 +300,18 @@ function Statdb:checkmobkillstable()
 end
 
 function Statdb:savemobkill( killinfo )
-  self:checkmobkillstable()  
-  self:addtostat('totaltrivia', killinfo.tp)  
+  self:checkmobkillstable()
+  self:addtostat('totaltrivia', killinfo.tp)
   killinfo['level'] = tonumber(db:getstat('totallevels'))
-  self:open()  
-  local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (NULL, :mob, :xp, :bonusxp, 
+  self:open()
+  local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (NULL, :mob, :xp, :bonusxp,
                                                         :gold, :tp, :time, :level) ]]
   stmt:bind_names(  killinfo  )
   stmt:step()
-  stmt:finalize() 
+  stmt:finalize()
   rowid = self.db:last_insert_rowid()
-  mdebug("inserted mobkill:", rowid)  
-  self:close()        
+  mdebug("inserted mobkill:", rowid)
+  self:close()
 end
 
 function Statdb:checkgqtable()
@@ -354,28 +354,28 @@ function Statdb:savegq( gqinfo )
   self:addtostat('questpoints', gqinfo.qp)
   self:addtostat('qpearned', gqinfo.qp)
   self:addtostat('triviapoints', gqinfo.tp)
-  self:addtostat('totaltrivia', gqinfo.tp)  
+  self:addtostat('totaltrivia', gqinfo.tp)
   if gqinfo.won == 1 then
     self:addtostat('gquestswon', 1)
-  end  
+  end
   self:open()
-  newlevel = getactuallevel(db:getstat('remorts'), gqinfo.level)
+  newlevel = getactuallevel(gqinfo.level, db:getstat('remorts'), db:getstat('tiers'))
   gqinfo.level = newlevel
-  local stmt = self.db:prepare[[ INSERT INTO gquests VALUES (NULL, :starttime, :finishtime,  
-                                                        :qp, :qpmobs, :gold, :tp, :trains, :pracs, :level, 
+  local stmt = self.db:prepare[[ INSERT INTO gquests VALUES (NULL, :starttime, :finishtime,
+                                                        :qp, :qpmobs, :gold, :tp, :trains, :pracs, :level,
                                                         :won) ]]
   stmt:bind_names(  gqinfo  )
   stmt:step()
-  stmt:finalize()  
+  stmt:finalize()
   rowid = self.db:last_insert_rowid()
   mdebug("inserted gq:", rowid)
   for i,v in ipairs(gqinfo['mobs']) do
     v['gq_id'] = rowid
-    local stmt2 = self.db:prepare[[ INSERT INTO gqmobs VALUES 
+    local stmt2 = self.db:prepare[[ INSERT INTO gqmobs VALUES
                                     (NULL, :gq_id, :num, :name, :room) ]]
     stmt2:bind_names (v)
     stmt2:step()
     stmt2:finalize()
   end
-  self:close() 
+  self:close()
 end
