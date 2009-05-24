@@ -2,10 +2,10 @@
 --[[
 http://code.google.com/p/bastmush
  - Documentation and examples
- 
+
 functions in this module
 --]]
- 
+
  function findkeyword(item)
   wlist = utils.split(item, " ")
   badwords = {
@@ -28,6 +28,16 @@ functions in this module
   return string.lower(name)
 end
 
-function getactuallevel(remorts, level)
-  return (remorts - 1) * 201 + level
+function getactuallevel(level, remorts, tier=0)
+  return (tier * 7 * 201) + (remorts - 1) * 201 + level
 end
+
+classabb = {
+  mag = 'mage',
+  thi = 'thief',
+  pal = 'paladin',
+  war = 'warrior',
+  psi = 'psionicist',
+  cle = 'cleric',
+  ran = 'ranger'
+}
