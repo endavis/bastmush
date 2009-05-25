@@ -27,8 +27,8 @@ end
 
 function Sqlitedb:close()
   self.conns = self.conns - 1
-  if self.conns < 1 then
-    print("BUG: conns < 1 for db", self.dbname)
+  if self.conns < 0 then
+    print("BUG: conns < 0 for db", self.dbname)
   end
   --mdebug('close - conns:', self.conns)
   if self.db ~= nil and self.conns == 0 then
