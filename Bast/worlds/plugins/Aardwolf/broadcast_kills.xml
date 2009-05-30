@@ -40,6 +40,7 @@ Example
     end
   end
 
+TODO: when corpse doesn't give gold, kill is not inserted into the database
 ]]>
 </description>
 </plugin>
@@ -94,7 +95,7 @@ Example
    script="trivmob"
    sequence="100"
   >
-  </trigger>  
+  </trigger>
 </triggers>
 
 
@@ -116,7 +117,7 @@ function mobxp( name, line, wildcards )
   elseif name == 'bonusxp' then
     kill_info.bonusxp = wildcards[1]
   end
-  
+
 end
 
 function mobgold( name, line, wildcards )
@@ -133,7 +134,7 @@ function mobgold( name, line, wildcards )
   kill_info.gold = string.gsub(kill_info.gold, ",", "")
   kill_info.time = GetInfo(304)
   var.kill_info = serialize.save( "kill_info", kill_info )
-  broadcast(1, var.kill_info)  
+  broadcast(1, var.kill_info)
   kill_info = {}
   kill_info.tp = 0
 
@@ -145,16 +146,16 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   if msg == 1 and id == "8a710e0783b431c06d61a54c" then
-  
+
     -- get one variable
     kill_info.mob = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
-     
+
   end -- stats changed
 end
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)    
+  plugin_save_vars(options_table)
 end -- function OnPluginSaveState
 
 function OnPluginInstall ()
@@ -166,7 +167,7 @@ function OnPluginInstall ()
   end -- they didn't enable us last time
 
   ldplugin("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
-  
+
 end -- OnPluginInstall
 
 function OnPluginEnable ()
@@ -184,7 +185,7 @@ end -- OnPluginDisable
 <aliases>
   <alias
    name="plugin_parse"
-   script="plugin_parse"
+   script="plugin_parse_helper"
    match="nothing"
    enabled="y"
    regexp="y"
@@ -192,27 +193,16 @@ end -- OnPluginDisable
    sequence="110"
    expand_variables="y"
   >
-  </alias>   
+  </alias>
 </aliases>
 
 <script>
 <![CDATA[
 
-options_table  = {
-  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="bkill"},
-}
+option_set_default('cmd', 'bkill')
+option_set_default('plugin_colour', 'orange')
 
-cmds_table = {
-
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
-end -- plugin_parse
-
-init_plugin_vars(options_table)
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 </script>
