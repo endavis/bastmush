@@ -42,13 +42,13 @@ THE SOFTWARE.
 <description trim="y">
 
 An autohunt plugin for aardwolf. It opens doors where appropriate, and should
-detect edge conditions including locked doors and other problems. 
+detect edge conditions including locked doors and other problems.
 
 
 autohunt mobname    --> autohunt the mob with name mobname
 autohunt hunt       --> this text
 autohunt (stop|off) --> stop autohunt
-autohunt            --> restart the hunt of the last mob you hunted 
+autohunt            --> restart the hunt of the last mob you hunted
                         or autohunted
 
 Normal usage for a new area will be to do
@@ -56,22 +56,22 @@ Normal usage for a new area will be to do
 hunt 1.guard
 hunt 2.guard
 
-till you find the right one and then 
+till you find the right one and then
 
 autohunt
 
 In general, autohunting will abort when it reaches a condition which seems
 wrong. Some conditions are missing at the moment -- more to follow. A simple
 
-autohunt 
+autohunt
 
-will continue. 
+will continue.
 
 
 Acknowledgement:
 
 Although the code is independent, this was original inspired Onoitsu2's
-autohunt plugin. 
+autohunt plugin.
 
 License:
 
@@ -118,7 +118,7 @@ This plugin is released under the MIT license.
     script = "autohunt_mob"
     >
   </alias>
-  
+
 
 </aliases>
 
@@ -140,7 +140,7 @@ This plugin is released under the MIT license.
       regexp= "y"
     >
   </trigger>
-  
+
   <trigger
     enabled = "n"
     match = "^You are confident that (.*?) passed through here, heading (.*?)\.$"
@@ -150,24 +150,24 @@ This plugin is released under the MIT license.
     >
   </trigger>
 
-  <trigger 
-      group="swalec.autohunt" 
-      make_underline="y" 
-      match="^(.*?) is here\!$" 
-      regexp="y" 
-      script="autohunt_complete" 
-      send_to="12" 
+  <trigger
+      group="swalec.autohunt"
+      make_underline="y"
+      match="^(.*?) is here\!$"
+      regexp="y"
+      script="autohunt_complete"
+      send_to="12"
       sequence="100">
   </trigger>
 
-  <trigger 
-      enabled="n" 
-      group="swalec.autohunt" 
-      make_underline="y" 
-      match="^You couldn\'t find a path to (.*?) from here\.$" 
-      regexp="y" 
-      script="autohunt_complete" 
-      send_to="12" 
+  <trigger
+      enabled="n"
+      group="swalec.autohunt"
+      make_underline="y"
+      match="^You couldn\'t find a path to (.*?) from here\.$"
+      regexp="y"
+      script="autohunt_complete"
+      send_to="12"
       sequence="100">
   </trigger>
 
@@ -192,7 +192,7 @@ function OnHelp ()
   world.Note (world.GetPluginInfo (world.GetPluginID (), 3))
 end
 ]]>
-</script> 
+</script>
 
 
 
@@ -219,9 +219,9 @@ local lasthuntorautohunt = ""
 
 local huntmob = ""
 local current_exits = {}
+local waiting = false
 
-
--- 
+--
 -- autohunt initiate
 --
 function hunt( name, line, wildcards )
@@ -230,6 +230,7 @@ function hunt( name, line, wildcards )
 end
 
 function autohunt_empty( name, line, wildcards )
+   waiting = false
    if ( lasthuntorautohunt ~= "") then
       autohunt_init( lasthuntorautohunt )
    else
@@ -239,13 +240,14 @@ end
 
 
 function autohunt_mob( name, line, wildcards )
+   waiting = false
    if( wildcards[ 1 ] == "stop" or
        wildcards[ 1 ] == "off" )
    then
       autohunt_complete()
    elseif ( wildcards[ 1 ] == "help" ) then
       OnHelp()
-   else   
+   else
       lasthuntorautohunt = wildcards[ 1 ]
       autohunt_init( wildcards[ 1 ] )
    end
@@ -257,20 +259,22 @@ function autohunt_init ( mobname )
    autohunt = true
    sameroomname = 0
    lastroom = ""
-   
+
    world.EnableTriggerGroup( "swalec.autohunt", 1 )
-   
+
    ColourNote( "white", "green", "Autohunt ON" )
-         
+
    autohunt_iterate()
 end
 
 function autohunt_iterate()
-   
-   ColourNote( "white", "green", "Autohunting " .. huntmob )
-   if( autohunt and
-       (sameroomname < 10) ) then
-      Send( "hunt " .. huntmob )
+   if not waiting then
+     ColourNote( "white", "green", "Autohunting " .. huntmob )
+     if( autohunt and
+         (sameroomname < 10) ) then
+        waiting = true
+        Send( "hunt " .. huntmob )
+     end
    end
    if( sameroomname >= 10 ) then
       autohunt_complete()
@@ -278,24 +282,25 @@ function autohunt_iterate()
 end
 
 function autohunt_complete( name, line, wildcards, styles )
-   
+
    ColourNote( "white", "green", "Autohunt Stopped" )
    autohunt = false
    world.EnableTriggerGroup ( "swalec.autohunt", 0 )
-   
+
 end
 
--- 
+--
 -- autohunt response
--- 
+--
 
 function hunt_response_trigger( name, line, wildcards, styles )
    direction = wildcards[ 2 ]
-     
+
    if( current_exits[ direction ] == 2) then
       Send( "open " .. direction )
    end
-   
+
+   waiting = false
    Send( direction )
 end
 
@@ -304,8 +309,8 @@ end
 
 function room_change()
    local var = GetPluginVariableList(  "18c24130ab326dc05b49420d" )
-   
-   -- how many times have we been in the same room. 
+
+   -- how many times have we been in the same room.
    if( var.roomname == lastroom ) then
       sameroomname = sameroomname + 1
       if( autohunt ) then
@@ -314,25 +319,25 @@ function room_change()
    else
       sameroomname = 0
    end
-   lastroom = var.roomname      
-   
+   lastroom = var.roomname
+
 end
 
 -- we have a new set of exits -- therefore harvest directions and send hunt
 function exits_change()
    local var = GetPluginVariableList(  "18c24130ab326dc05b49420d" )
-   -- var is serialised, so load it (which returns a function) and 
+   -- var is serialised, so load it (which returns a function) and
    -- run the function
-   
+
    loadstring( var.exits )()
    current_exits = exits
-   
+
    -- if we are autohunting, we need to iterate
-   
+
    if( autohunt ) then
-      autohunt_iterate() 
+      autohunt_iterate()
    end
-   
+
 end
 
 function OnPluginBroadcast( msg, id, name, text )
@@ -343,31 +348,31 @@ function OnPluginBroadcast( msg, id, name, text )
       if ( msg == 1 ) then
          room_change()
       end
-      
+
       -- Can't move
       if ( msg == 3 ) then
          autohunt_complete()
       end
    end
-   
-   
+
+
    -- fighting
    if ( id == "8a710e0783b431c06d61a54c" ) then
       local stats =  GetPluginVariableList ("8a710e0783b431c06d61a54c")
       if( stats.fighting == "y" ) then
-         if ( autohunt ) then 
+         if ( autohunt ) then
             autohunt_complete()
          end
       end
    end
 
-   
+
 end
 
 function OnPluginInstall()
    checkplugin( "18c24130ab326dc05b49420d", "Aardwolf_exits_detector.xml" )
    checkplugin( "8a710e0783b431c06d61a54c", "Stats_Detector.xml" )
-   
+
    OnHelp()
 end -- OnPLuginInstall
 
