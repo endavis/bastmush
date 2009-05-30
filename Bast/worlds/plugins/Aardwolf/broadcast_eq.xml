@@ -8,7 +8,7 @@
    id="aaa6dc9ed92ffc6146964abc"
    language="Lua"
    purpose="broadcast wearing or removing of eq"
-   save_state="y"      
+   save_state="y"
    date_written="2009-02-22 14:20:07"
    requires="4.38"
    version="1.0"
@@ -49,7 +49,7 @@ Example
    script="removeeq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
   </trigger>
   <trigger
@@ -59,9 +59,9 @@ Example
    script="removeeq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>  
+  </trigger>
   <trigger
    enabled="y"
    match="^You remove your (?<item>.*).$"
@@ -69,9 +69,9 @@ Example
    script="removeeq"
    sequence="101"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>    
+  </trigger>
   <trigger
    enabled="y"
    match="^You stop holding (?<item>.*).$"
@@ -79,9 +79,9 @@ Example
    script="removeeq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>   
+  </trigger>
   <trigger
    enabled="y"
    match="^(?<item>.*) stops floating (?<place>.*) you.$"
@@ -89,7 +89,7 @@ Example
    script="removeeq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
   </trigger>
   <trigger
@@ -99,9 +99,9 @@ Example
    script="removeeq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>  
+  </trigger>
   <trigger
    enabled="y"
    match="^You stop wielding (?<item>.*) in your off-hand.$"
@@ -109,7 +109,7 @@ Example
    script="removeeq"
    sequence="99"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
   </trigger>
   <trigger
@@ -119,9 +119,9 @@ Example
    script="removeeq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>  
+  </trigger>
   <trigger
    enabled="y"
    match="^You wear (?<item>.*) (around|on) your (?<place>.*).$"
@@ -129,9 +129,9 @@ Example
    script="weareq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>  
+  </trigger>
   <trigger
    enabled="y"
    match="^You (equip|wear) (?<item>.*) as a (?<place>.*).$"
@@ -139,7 +139,7 @@ Example
    script="weareq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
   </trigger>
   <trigger
@@ -149,9 +149,9 @@ Example
    script="weareq"
    sequence="101"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>  
+  </trigger>
   <trigger
    enabled="y"
    match="^You hold (?<item>.*) in your hand.$"
@@ -159,9 +159,9 @@ Example
    script="weareq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>   
+  </trigger>
   <trigger
    enabled="y"
    match="^(?<item>.*) begins floating (?<place>.*) you.$"
@@ -169,9 +169,9 @@ Example
    script="weareq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>  
+  </trigger>
   <trigger
    enabled="y"
    match="You light (?<item>.*) and hold it.$"
@@ -179,9 +179,9 @@ Example
    script="weareq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>   
+  </trigger>
   <trigger
    enabled="y"
    match="^You proudly pin (?<item>.*) to your (?<place>.*).$"
@@ -189,7 +189,7 @@ Example
    script="weareq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
   </trigger>
   <trigger
@@ -199,7 +199,7 @@ Example
    script="weareq"
    sequence="99"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
   </trigger>
   <trigger
@@ -209,9 +209,9 @@ Example
    script="weareq"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>  
+  </trigger>
   <trigger
    enabled="n"
    match="^You are not wearing that item.$"
@@ -219,7 +219,7 @@ Example
    script="removeeq"
    sequence="100"
    regexp="n"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
   </trigger>
   <trigger
@@ -229,9 +229,9 @@ Example
    script="weareq"
    sequence="100"
    regexp="n"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
-  </trigger>    
+  </trigger>
 </triggers>
 
 
@@ -263,7 +263,7 @@ function removeeq ( name, line, wildcards )
   elseif name == "removelight" then
     wildcards.place = "light"
   elseif name == "removehold" then
-    wildcards.place = "hold"    
+    wildcards.place = "hold"
   end
   if wildcards.place then
     temp = wear_table[wildcards.place]
@@ -272,10 +272,10 @@ function removeeq ( name, line, wildcards )
     else
       place = wildcards.place
     end
-  end  
+  end
   local item = {place = place, item = wildcards.item}
-  local titem = serialize.save( "item", item )   
-  broadcast(2, titem, titem) 
+  local titem = serialize.save( "item", item )
+  broadcast(2, titem, titem)
 end
 
 function weareq ( name, line, wildcards )
@@ -285,9 +285,9 @@ function weareq ( name, line, wildcards )
   elseif name == "wieldoff" then
     wildcards.place = "off-hand"
   elseif name == "wearlight" then
-    wildcards.place = "light"   
+    wildcards.place = "light"
   elseif name == "wearhold" then
-    wildcards.place = "hold"  
+    wildcards.place = "hold"
   end
   if wildcards.place then
     local temp = wear_table[wildcards.place]
@@ -296,9 +296,9 @@ function weareq ( name, line, wildcards )
     else
       place = wildcards.place
     end
-  end  
+  end
   local item = {place = place, item = wildcards.item}
-  local titem = serialize.save( "item", item )   
+  local titem = serialize.save( "item", item )
   broadcast(1, titem, titem)
 end
 
@@ -313,7 +313,7 @@ end
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)    
+  plugin_save_vars(options_table)
 end -- function OnPluginSaveState
 
 function OnPluginInstall ()
@@ -323,7 +323,7 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
-  
+
 end -- OnPluginInstall
 ]]>
 </script>
@@ -331,7 +331,7 @@ end -- OnPluginInstall
 <aliases>
   <alias
    name="plugin_parse"
-   script="plugin_parse"
+   script="plugin_parse_helper"
    match="nothing"
    enabled="y"
    regexp="y"
@@ -339,27 +339,16 @@ end -- OnPluginInstall
    sequence="110"
    expand_variables="y"
   >
-  </alias>   
+  </alias>
 </aliases>
 
 <script>
 <![CDATA[
 
-options_table  = {
-  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="beq"},
-}
+option_set_default('cmd', 'beq')
+option_set_default('plugin_colour', 'orange')
 
-cmds_table = {
-
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
-end -- plugin_parse
-
-init_plugin_vars(options_table)
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 </script>
