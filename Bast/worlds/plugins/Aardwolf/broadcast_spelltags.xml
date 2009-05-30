@@ -34,18 +34,18 @@ TODO:
    name="affon"
    enabled="y"
    omit_from_output="y"
-   match="^\{affon\}(?<sn>\d+)\,(?<time>\d+)$"
+   match="^\{affon\}(?&lt;sn&gt;\d+)\,(?&lt;time&gt;\d+)$"
    script="spelltag_on"
    regexp="y"
    sequence="100"
   >
   </trigger>
-    
+
   <trigger
    name="affoff"
    enabled="y"
    omit_from_output="y"
-   match="^\{affoff\}(?<sn>\d+)$"
+   match="^\{affoff\}(?&lt;sn&gt;\d+)$"
    script="spelltag_off"
    regexp="y"
    sequence="100"
@@ -57,33 +57,33 @@ TODO:
    name="recon"
    enabled="y"
    omit_from_output="y"
-   match="^\{recon\}(?<sn>\d+)\,(?<time>\d+)$"
+   match="^\{recon\}(?&lt;sn&gt;\d+)\,(?&lt;time&gt;\d+)$"
    script="spelltag_on"
    regexp="y"
    sequence="100"
   >
   </trigger>
-    
+
   <trigger
-   name="recoff"  
+   name="recoff"
    enabled="y"
    omit_from_output="y"
-   match="^\{recoff\}(?<sn>\d+)$"
+   match="^\{recoff\}(?&lt;sn&gt;\d+)$"
    script="spelltag_off"
    regexp="y"
    sequence="100"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    omit_from_output="y"
-   match="^\{sfail\}(?<sn>\-?\d+)\,(?<target>\d+)\,(?<reason>\d+)\,(?<recovery>\-?\d+)$"
+   match="^\{sfail\}(?&lt;sn&gt;\-?\d+)\,(?&lt;target&gt;\d+)\,(?&lt;reason&gt;\d+)\,(?&lt;recovery&gt;\-?\d+)$"
    script="spell_failure"
    regexp="y"
    sequence="100"
   >
-  </trigger>  
+  </trigger>
 </triggers>
 
 <script>
@@ -96,33 +96,33 @@ tdebug = false
 
 function spelltag_on (name, line, wildcards)
   local spelltag = {}
-  
+
   spelltag.sn = tonumber (wildcards.sn)
   spelltag.time = tonumber (wildcards.time)
-  spelltags = serialize.save( "spelltag", spelltag )  
-  
+  spelltags = serialize.save( "spelltag", spelltag )
+
   if name == 'affon' then
     bcastnum = 1
   elseif name == 'recon' then
     bcastnum = 3
   end
   broadcast(bcastnum, spelltags, spelltags)
-  
+
 end -- spelltag_on
 
 function spelltag_off (name, line, wildcards)
   local spelltag = {}
-  
+
   spelltag.sn = tonumber (wildcards.sn)
-  spelltags = serialize.save( "spelltag", spelltag )  
-  
+  spelltags = serialize.save( "spelltag", spelltag )
+
   if name == 'affoff' then
     bcastnum = 2
   elseif name == 'recoff' then
     bcastnum = 4
   end
   broadcast(bcastnum, spelltags, spelltags)
-  
+
 end -- spelltag_off
 
 function spell_failure (name, line, wildcards)
@@ -131,9 +131,9 @@ function spell_failure (name, line, wildcards)
   sfail.target = tonumber (wildcards.target)
   sfail.reason = tonumber (wildcards.reason)
   sfail.recovery = tonumber (wildcards.recovery)
-  
+
   sfails = serialize.save( "spelltag", sfail )
-  
+
   broadcast(5, sfails, sfails)
 end
 
@@ -141,7 +141,7 @@ function broadcast(num, data, broadcastdata)
   if tdebug then
     print(GetPluginInfo (GetPluginID (), 1), ": Broadcast", num)
     if data then
-      print(data)  
+      print(data)
     end
   end
   BroadcastPlugin(tonumber(num), broadcastdata)
@@ -158,7 +158,7 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
-  
+
 end -- OnPluginInstall
 
 function OnPluginDisable ()
