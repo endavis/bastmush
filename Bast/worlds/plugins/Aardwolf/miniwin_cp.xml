@@ -27,23 +27,6 @@ TODO:
 </plugin>
 
 
-<!--  Aliases  -->
-
-<aliases>
-  <alias
-   name="plugin_parse"
-   script="plugin_parse"
-   match="nothing"
-   enabled="y"
-   regexp="y"
-   ignore_case="y"
-   sequence="110"
-   expand_variables="y"
-  >
-  </alias>   
-</aliases>
-
-
 <!--  Script  -->
 
 
@@ -80,9 +63,9 @@ function show_cp_text ()
   if #cpmobs == 0 or not next(cptimer) then
     return
   end -- if
-  
+
   cpwin:enable()
-  
+
   -- heading
   style = {}
   style.text = "Current campaign. You need to kill:  "
@@ -98,16 +81,16 @@ function show_cp_text ()
     style.style = 0
     table.insert (texttable, {style})
   end -- for
-  
+
   style = {}
   style.text = string.format ("Time to go: %sd %sh %sm", cptimer.days, cptimer.hours, cptimer.mins)
   style.len = #style.text
   style.textcolour = "time_colour"
   style.style = 0
-  table.insert (texttable, {style})  
-  
+  table.insert (texttable, {style})
+
   cpwin:createwin(texttable)
-  
+
 end -- show_cp_text
 
 
@@ -119,7 +102,7 @@ function OnPluginBroadcast (msg, id, name, text)
       -- get the mobs
       loadstring( pvar )()
       cpmobs = mobs
-      show_cp_text()  
+      show_cp_text()
     elseif msg == 2 then
       local pvar = GetPluginVariable(  "aaa66f81c50828bbbfda7100", "timer" )
 
@@ -131,8 +114,8 @@ function OnPluginBroadcast (msg, id, name, text)
       cptimer = {}
       mobs = {}
       cpwin:disable()
-    end      
-     
+    end
+
   end -- cp broadcast
 end
 
@@ -145,11 +128,11 @@ function OnPluginInstall ()
     return
   end -- they didn't enable us last time
 
-  ldplugin("aaa66f81c50828bbbfda7100", "broadcast_cp.xml")  
-  
+  ldplugin("aaa66f81c50828bbbfda7100", "broadcast_cp.xml")
+
   OnPluginEnable ()  -- do initialization stuff
-  
-  
+
+
 end -- OnPluginInstall
 
 function OnPluginDisable ()
@@ -163,25 +146,42 @@ end -- OnPluginEnable
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
   plugin_save_vars(options_table)
-  cpwin:savestate() 
+  cpwin:savestate()
 end -- function OnPluginSaveState
 
-options_table  = {
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("steelblue")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="cp"},
-}
+]]>
+</script>
 
---Request, Info, Quit, Check
-cmds_table = {
-  toggle   = {func=togglewindow, help="toggle the campaign miniwindow"},   
-  check    = {func=nofunc, help=''}, 
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table, cpwin, true)
-end -- plugin_parse
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
 
-init_plugin_vars(options_table)
+<script>
+<![CDATA[
+
+option_set_default('cmd', 'cp')
+option_set_default('plugin_colour', 'steelblue')
+
+cmd_update('help', 'send_to_world', true)
+
+add_cmd('toggle', {func=togglewindow, help="toggle the campaign miniwindow"})
+add_cmd('check', {func=nofunc, help="", send_to_world=false})
+
+set_send_to_world(true)
+
+window_set(cpwin)
+
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 
