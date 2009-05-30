@@ -8,7 +8,7 @@
    id="aaaf9a8dc92f8fc614663ac0"
    language="Lua"
    purpose="broadcast info from whois"
-   save_state="y"      
+   save_state="y"
    date_written="2009-02-22 14:20:07"
    requires="4.38"
    version="1.0"
@@ -79,14 +79,14 @@ Example
 <triggers>
   <trigger
    script="whois_line1"
-   match="^\[(\d+)\s+T(\d)\s+(\w+)\s+(\w+)\]\s+(\w+)\s+(.*)\s+\((\w+)\s+(\w+)\)$"
+   match="^\[\s*(\d+)\s+T(\d)\s+(\w+)\s+(\w+)\]\s+(\w+)\s+(.*)\s+\((\w+)\s+(\w+)\)$"
    enabled="n"
    regexp="y"
    ignore_case="y"
    sequence="100"
    group="whois"
   >
-  </trigger> 
+  </trigger>
   <trigger
    script="whois_line2"
    match="^\[Multiclass Player: (.*) \]$"
@@ -96,7 +96,7 @@ Example
    sequence="100"
    group="whois"
   >
-  </trigger>   
+  </trigger>
   <trigger
    script="whois_stats"
    match="^(?&lt;name1&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val1&gt;[\w\d\s]*)\s*\]\s*(?&lt;name2&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val2&gt;[\w\d\s]*)\s*\]\s*$"
@@ -106,7 +106,7 @@ Example
    sequence="101"
    group="whois"
   >
-  </trigger>  
+  </trigger>
   <trigger
    script="whois_stats"
    match="^(?&lt;name1&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val1&gt;[\w\d\s]*)\s*\]\s*(?&lt;name2&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val2&gt;[\w\d\s]*)\s*\]\s*(?&lt;name3&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val3&gt;[\w\d\s]*)\s*\]\s*$"
@@ -116,7 +116,7 @@ Example
    sequence="101"
    group="whois"
   >
-  </trigger>  
+  </trigger>
   <trigger
    script="whois_stats"
    match="^(?&lt;name1&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val1&gt;[\w\d\s]*)\s*\]\s*$"
@@ -126,7 +126,7 @@ Example
    sequence="101"
    group="whois"
   >
-  </trigger>  
+  </trigger>
   <trigger
    name="powerup"
    script="whois_stats"
@@ -137,7 +137,7 @@ Example
    sequence="101"
    group="whois"
   >
-  </trigger>   
+  </trigger>
   <trigger
    name="whois_end"
    script="whois_end"
@@ -147,7 +147,7 @@ Example
    ignore_case="y"
    sequence="101"
   >
-  </trigger>  
+  </trigger>
 </triggers>
 
 <aliases>
@@ -161,7 +161,7 @@ Example
    sequence="110"
    expand_variables="y"
   >
-  </alias>  
+  </alias>
 </aliases>
 
 <script>
@@ -171,6 +171,7 @@ require "serialize"
 require "commas"
 require "pluginhelper"
 require "verify"
+require "aardutils"
 
 -- keys - type, time, newlevel, hp, mana, mov, trains, pracs, bonustrains, bonusstats = {}
 -- bonusstats subtable keys are the bonus stat names
@@ -184,6 +185,7 @@ whoisinfo = {}
 function whois_start(name, line, wildcards)
   whoisinfo = {}
   enabletriggroup("whois", true)
+  --SendNoEcho('nopretitle')
   Send(line)
 end
 
@@ -196,7 +198,12 @@ function whois_line1(name, line, wildcards)
   whoisinfo['subclass'] = string.lower(wildcards[8])
   whoisinfo['powerupsall'] = 0
   whoisinfo['powerupsmort'] = 0
-  check(EnableTrigger("whois_end", true))    
+  if wildcards[4] ~= "MLT" then
+    whoisinfo['remorts'] = 1
+    whoisinfo['classes'] = {}
+    table.insert(whoisinfo['classes'], classabb[string.lower(wildcards[4])])
+  end
+  check(EnableTrigger("whois_end", true))
 end
 
 function whois_line2(name, line, wildcards)
@@ -220,18 +227,19 @@ function whois_stats(name, line, wildcards)
     end
   end
   if name == "powerup" then
-  print("powerup")
+    print("powerup")
     whoisinfo['powerupsall'] = trim(wildcards['pval1'])
     whoisinfo['powerupsmort'] = trim(wildcards['pval2'])
   end
 end
 
 function whois_end(name, line, wildcards)
-  check(EnableTrigger("whois_end", false))  
+  check(EnableTrigger("whois_end", false))
   enabletriggroup("whois", false)
+  --SendNoEcho('nopretitle')
   whoisinfo['totallevels'] = (whoisinfo.remorts - 1) * 201 + whoisinfo.level
   whoisinfo['totaltrivia'] = 0
-  var.whoisinfo = serialize.save( "whoisinfo", whoisinfo )  
+  var.whoisinfo = serialize.save( "whoisinfo", whoisinfo )
   broadcast(1, var.whoisinfo)
 end
 
@@ -246,7 +254,7 @@ end
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)    
+  plugin_save_vars(options_table)
 end -- function OnPluginSaveState
 
 function OnPluginInstall ()
@@ -256,7 +264,7 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
-  
+
 end -- OnPluginInstall
 ]]>
 </script>
@@ -264,7 +272,7 @@ end -- OnPluginInstall
 <aliases>
   <alias
    name="plugin_parse"
-   script="plugin_parse"
+   script="plugin_parse_helper"
    match="nothing"
    enabled="y"
    regexp="y"
@@ -272,27 +280,16 @@ end -- OnPluginInstall
    sequence="110"
    expand_variables="y"
   >
-  </alias>   
+  </alias>
 </aliases>
 
 <script>
 <![CDATA[
 
-options_table  = {
-  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="bwhois"},
-}
+option_set_default('cmd', 'bwhois')
+option_set_default('plugin_colour', 'orange')
 
-cmds_table = {
-
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
-end -- plugin_parse
-
-init_plugin_vars(options_table)
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 </script>
