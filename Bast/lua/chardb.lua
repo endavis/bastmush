@@ -32,7 +32,7 @@ end
 function Statdb:getstat(stat)
   local tstat = nil
   if self:open() then
-    for a in self.db:nrows('SELECT * FROM stats WHERE stat_id = 1') do
+    for a in self.db:nrows('SELECT * FROM stats WHERE milestone = "current"') do
       tstat = a[stat]
     end
     self:close()
@@ -46,7 +46,7 @@ function Statdb:addtostat(stat, add)
   end
   if self:open() then
     local tstat = nil
-    for a in self.db:nrows('SELECT * FROM stats WHERE stat_id = 1') do
+    for a in self.db:nrows('SELECT * FROM stats WHERE milestone = "current"') do
       tstat = a[stat]
     end
     if tstat == nil then
@@ -54,7 +54,7 @@ function Statdb:addtostat(stat, add)
       return false
     else
       tstat = tonumber(tstat) + tonumber(add)
-      self.db:exec(string.format("update stats set %s=%s where stat_id = 1", stat, tstat))
+      self.db:exec(string.format('update stats set %s=%s where milestone = "current"', stat, tstat))
       self:close()
       return true
     end
@@ -89,7 +89,9 @@ function Statdb:checkstatstable()
         combatmazekills INT default 0,
         combatmazedeaths INT default 0,
         powerupsall INT default 0,
-        totaltrivia INT default 0
+        totaltrivia INT default 0,
+        time INT default 0,
+        milestone TEXT
       )]])
     end
     self:close()
@@ -99,31 +101,83 @@ end
 function Statdb:savewhois(whoisinfo)
   self:checkstatstable()
   local name = self:getstat('name')
+  local oldtlevel = self:getstat('totallevels')
+  local oldlevel = self:getstat('level')
   if self:open() then
     if name == nil then
-      local stmt = self.db:prepare[[ INSERT INTO stats VALUES (NULL, :name, :level, :totallevels, :remorts, :tiers, :race, :sex, :subclass,
-                                                          :qpearned, :questscomplete, :questsfailed, :campaignsdone, :campaignsfld,
-                                                          :gquestswon, :duelswon, :duelslost, :timeskilled, :monsterskilled,
-                                                          :combatmazekills, :combatmazedeaths, :powerupsall, :totaltrivia) ]]
+    local stmt = self.db:prepare[[ INSERT INTO stats VALUES (NULL, :name, :level, :totallevels,
+                                                          :remorts, :tiers,:race, :sex,
+                                                          :subclass, :qpearned, :questscomplete,
+                                                          :questsfailed, :campaignsdone, :campaignsfld,
+                                                          :gquestswon, :duelswon, :duelslost,
+                                                          :timeskilled, :monsterskilled,
+                                                          :combatmazekills, :combatmazedeaths,
+                                                          :powerupsall, :totaltrivia, 0, 'current') ]]
 
       stmt:bind_names(  whoisinfo  )
       stmt:step()
       stmt:finalize()
+      self:addmilestone('start')
+      mdebug("no previous stats, created new")
     else
-      local stmt = self.db:prepare[[ UPDATE stats set level = :level, totallevels = :totallevels, remorts = :remorts, tiers = :tiers,
-                                            race = :race, sex = :sex, subclass = :subclass, qpearned = :qpearned,
-                                            questscomplete = :questscomplete, questsfailed = :questsfailed,
-                                            campaignsdone = :campaignsdone, campaignsfld = :campaignsfld,
-                                            gquestswon = :gquestswon, duelswon = :duelswon, duelslost = :duelslost,
-                                            timeskilled = :timeskilled, monsterskilled = :monsterskilled,
-                                            combatmazekills = :combatmazekills, combatmazedeaths = :combatmazedeaths,
-                                            powerupsall = :powerupsall WHERE name = :name;]]
+      local stmt = self.db:prepare[[ UPDATE stats set level = :level, totallevels = :totallevels,
+                                            remorts = :remorts, tiers = :tiers, race = :race,
+                                            sex = :sex, subclass = :subclass, qpearned = :qpearned,
+                                            questscomplete = :questscomplete,
+                                            questsfailed = :questsfailed,
+                                            campaignsdone = :campaignsdone,
+                                            campaignsfld = :campaignsfld,
+                                            gquestswon = :gquestswon, duelswon = :duelswon,
+                                            duelslost = :duelslost, timeskilled = :timeskilled,
+                                            monsterskilled = :monsterskilled,
+                                            combatmazekills = :combatmazekills,
+                                            combatmazedeaths = :combatmazedeaths,
+                                            powerupsall = :powerupsall WHERE milestone = 'current';]]
+
       stmt:bind_names(  whoisinfo  )
       stmt:step()
       stmt:finalize()
+      mdebug("updated stats")
     end
     self:close()
   end
+end
+
+function Statdb:addmilestone(milestone)
+  self:checkstatstable()
+  if self:open() then
+    local found = false
+    for a in self.db:nrows('SELECT * FROM stats WHERE milestone = "' .. milestone .. '"') do
+      found = true
+    end
+    if found then
+      print("Milestone", milestone, "already exists!")
+      return -1
+    end
+    local stats = {}
+    for a in self.db:nrows('SELECT * FROM stats WHERE milestone = "current"') do
+      stats = a
+    end
+    stats['milestone'] = milestone
+    stats['time'] = GetInfo(304)
+    local stmt = self.db:prepare[[ INSERT INTO stats VALUES (NULL, :name, :level, :totallevels,
+                                                          :remorts, :tiers,:race, :sex,
+                                                          :subclass, :qpearned, :questscomplete,
+                                                          :questsfailed, :campaignsdone, :campaignsfld,
+                                                          :gquestswon, :duelswon, :duelslost,
+                                                          :timeskilled, :monsterskilled,
+                                                          :combatmazekills, :combatmazedeaths,
+                                                          :powerupsall, :totaltrivia, :time, :milestone) ]]
+
+    stmt:bind_names(  stats  )
+    stmt:step()
+    stmt:finalize()
+    rowid = self.db:last_insert_rowid()
+    mdebug("inserted milestone:", milestone, "with rowid:", rowid)
+    self:close()
+    return rowid
+  end
+  return -1
 end
 
 function Statdb:checkquesttable()
@@ -177,7 +231,9 @@ function Statdb:savequest( questinfo )
     rowid = self.db:last_insert_rowid()
     mdebug("inserted quest:", rowid)
     self:close()
+    return rowid
   end
+  return -1
 end
 
 function Statdb:checkcptable()
@@ -247,7 +303,9 @@ function Statdb:savecp( cpinfo )
       stmt2:finalize()
     end
     self:close()
+    return rowid
   end
+  return -1
 end
 
 function Statdb:checklevelstable()
@@ -280,7 +338,9 @@ end
 function Statdb:savelevel( levelinfo )
   self:checklevelstable()
   if self:open() then
-    self:addtostat('totallevels', 1)
+    if levelinfo['type'] == 'level' then
+      self:addtostat('totallevels', 1)
+    end
     levelinfo['newlevel'] = tonumber(db:getstat('totallevels'))
     local stmt = self.db:prepare[[ INSERT INTO levels VALUES (NULL, :type, :newlevel, :str,
                                                           :int, :wis, :dex, :con,  :luc,
@@ -290,11 +350,14 @@ function Statdb:savelevel( levelinfo )
     stmt:step()
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
-    mdebug("inserted level:", rowid)
-    stmt2 = self.db:exec(string.format("UPDATE levels SET finishtime = %d WHERE level_id = %d;" , levelinfo.time, rowid - 1))
+    mdebug("inserted", levelinfo['type'], ":", rowid)
+    stmt2 = self.db:exec(string.format("UPDATE levels SET finishtime = %d WHERE level_id = %d;" ,
+                                          levelinfo.time, rowid - 1))
     rowid = self.db:last_insert_rowid()
     self:close()
+    return rowid
   end
+  return -1
 end
 
 function Statdb:checkmobkillstable()
@@ -397,5 +460,7 @@ function Statdb:savegq( gqinfo )
       stmt2:finalize()
     end
     self:close()
+    return rowid
   end
+  return -1
 end
