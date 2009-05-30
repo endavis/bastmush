@@ -44,7 +44,7 @@ Example
 <triggers>
   <trigger
    enabled="y"
-   match="^You remove (?<item>.*) from (around )*your (?<place>.*).$"
+   match="^You remove (?&lt;item&gt;.*) from (around )*your (?&lt;place&gt;.*).$"
    name="remove1"
    script="removeeq"
    sequence="100"
@@ -54,7 +54,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You stop using (?<item>.*) as a (?<place>.*).$"
+   match="^You stop using (?&lt;item&gt;.*) as a (?&lt;place&gt;.*).$"
    name="remove2"
    script="removeeq"
    sequence="100"
@@ -64,7 +64,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You remove your (?<item>.*).$"
+   match="^You remove your (?&lt;item&gt;.*).$"
    name="removecatchall"
    script="removeeq"
    sequence="101"
@@ -74,7 +74,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You stop holding (?<item>.*).$"
+   match="^You stop holding (?&lt;item&gt;.*).$"
    name="removehold"
    script="removeeq"
    sequence="100"
@@ -84,7 +84,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^(?<item>.*) stops floating (?<place>.*) you.$"
+   match="^(?&lt;item&gt;.*) stops floating (?&lt;place&gt;.*) you.$"
    name="remfloat"
    script="removeeq"
    sequence="100"
@@ -94,7 +94,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="You remove (?<item>.*), making the room a little darker.$"
+   match="You remove (?&lt;item>.*), making the room a little darker.$"
    name="removelight"
    script="removeeq"
    sequence="100"
@@ -104,7 +104,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You stop wielding (?<item>.*) in your off-hand.$"
+   match="^You stop wielding (?&lt;item&gt;.*) in your off-hand.$"
    name="removeoff"
    script="removeeq"
    sequence="99"
@@ -114,7 +114,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You stop wielding (?<item>.*) in your primary hand.$"
+   match="^You stop wielding (?&lt;item&gt;.*) in your primary hand.$"
    name="removewield"
    script="removeeq"
    sequence="100"
@@ -124,7 +124,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You wear (?<item>.*) (around|on) your (?<place>.*).$"
+   match="^You wear (?&lt;item&gt;.*) (around|on) your (?&lt;place&gt;.*).$"
    name="wear1"
    script="weareq"
    sequence="100"
@@ -134,7 +134,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You (equip|wear) (?<item>.*) as a (?<place>.*).$"
+   match="^You (equip|wear) (?&lt;item&gt;.*) as a (?&lt;place&gt;.*).$"
    name="wear2"
    script="weareq"
    sequence="100"
@@ -144,7 +144,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You equip your (?<item>.*)\. (.*)\.$"
+   match="^You equip your (?&lt;item&gt;.*)\. (.*)\.$"
    name="wearcatchall"
    script="weareq"
    sequence="101"
@@ -154,7 +154,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You hold (?<item>.*) in your hand.$"
+   match="^You hold (?&lt;item&gt;.*) in your hand.$"
    name="wearhold"
    script="weareq"
    sequence="100"
@@ -164,7 +164,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^(?<item>.*) begins floating (?<place>.*) you.$"
+   match="^(?&lt;item&gt;.*) begins floating (?&lt;place&gt;.*) you.$"
    name="wearfloat"
    script="weareq"
    sequence="100"
@@ -174,7 +174,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="You light (?<item>.*) and hold it.$"
+   match="You light (?&lt;item&gt;.*) and hold it.$"
    name="wearlight"
    script="weareq"
    sequence="100"
@@ -184,7 +184,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You proudly pin (?<item>.*) to your (?<place>.*).$"
+   match="^You proudly pin (?&lt;item&gt;.*) to your (?&lt;place&gt;.*).$"
    name="wearpin"
    script="weareq"
    sequence="100"
@@ -194,7 +194,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You wield (?<item>.*) in your off-hand.$"
+   match="^You wield (?&lt;item&gt;.*) in your off-hand.$"
    name="wieldoff"
    script="weareq"
    sequence="99"
@@ -204,7 +204,7 @@ Example
   </trigger>
   <trigger
    enabled="y"
-   match="^You wield (?<item>.*).$"
+   match="^You wield (?&lt;item&gt;.*).$"
    name="wield"
    script="weareq"
    sequence="100"
