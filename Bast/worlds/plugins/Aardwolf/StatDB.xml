@@ -11,7 +11,7 @@
    author="Bast"
    id="a749d26f1cb3e00282727e55"
    language="Lua"
-   purpose="Save stats to a sqlite3 db"
+   purpose="Save char info to a sqlite3 db"
    save_state="y"
    date_written="2009-05-01 21:24:06"
    requires="4.40"
@@ -32,7 +32,8 @@ require "serialize"
 require "commas"
 require "pluginhelper"
 require "verify"
-require "statsdb"
+require "chardb"
+require "tprint"
 
 db = Statdb{}
 
@@ -41,8 +42,8 @@ function savelevel()
 
   --get the mob info
   loadstring( pvar )()
-  levelgains = levelinfo  
-  db:savelevel(levelgains)      
+  levelgains = levelinfo
+  db:savelevel(levelgains)
 end
 
 function savequest()
@@ -79,7 +80,9 @@ function savemobkill()
 
   -- get the kill
   loadstring( pvar )()
-  db:savemobkill( kill_info )
+  if tonumber(kill_info.xp) > 0 then
+    db:savemobkill( kill_info )
+  end
 end
 
 function savegq()
@@ -92,19 +95,163 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
-    savequest()        
+    savequest()
   elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
     savelevel()
   elseif id == "aaaf9a8dc92f8fc614663ac0" and msg == 1 then
     savewhois()
   elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
-    savecp()  
+    savecp()
   elseif id == "aaa61c4570508448e19c7c14" and msg == 1 then
-    savemobkill()  
+    savemobkill()
   elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
-    savegq()  
+    savegq()
   end
 end -- OnPluginBroadcast
+
+function OnPluginEnable ()
+
+end
+
+function OnPluginDisable ()
+  BroadcastPlugin(-1)
+end
+
+function AddMilestone(name, line, wildcards)
+  if wildcards.list then
+    if db:addmilestone(wildcards.list) > 0 then
+      plugin_header("")
+      ColourNote(RGBColourToName(var.plugin_colour), "black", "added milestone " .. wildcards.list)
+      ColourNote( "", "", "")
+    end
+  end
+end
+
+fieldstocomp = {
+ 'totallevels',
+ 'qpearned',
+ 'questscomplete',
+ 'questsfailed',
+ 'campaignsdone',
+ 'campaignsfld',
+ 'gquestswon',
+ 'duelswon',
+ 'duelslost',
+ 'timeskilled',
+ 'monsterskilled',
+ 'combatmazekills',
+ 'combatmazedeaths',
+ 'powerupsall',
+ 'totaltrivia',
+}
+
+function formatheader(name1, name2)
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s" , "Item"),
+             RGBColourToName(var.plugin_colour), "black", string.format("%-10s" , name1),
+             RGBColourToName(var.plugin_colour), "black", string.format("%-10s", name2),
+             RGBColourToName(var.plugin_colour), "black", string.format("%-10s", "Difference"))
+ ColourNote(RGBColourToName(var.plugin_colour), "black",   "____________________________________________________")
+end
+
+function formatitem(itemname, value1, value2)
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s" , itemname),
+             RGBColourToName(var.plugin_colour), "black", string.format("%-10d" , value1),
+             RGBColourToName(var.plugin_colour), "black", string.format("%-10d", value2),
+             RGBColourToName(var.plugin_colour), "black", string.format("%-10d", math.abs(value1 - value2)))
+end
+
+function formatCompMile(milestone1, milestone2)
+  plugin_header("Comparing " .. milestone1.milestone .. " to " .. milestone2.milestone)
+  formatheader(milestone1.milestone, milestone2.milestone)
+  for h,item in pairs(fieldstocomp) do
+    formatitem(item, milestone1[item], milestone2[item])
+  end
+  ColourNote( "", "", "")
+end
+
+function CompareMilestones(name, line, wildcards)
+  tprint(wildcards)
+  if wildcards.list then
+    local milestone1 = {}
+    local milestone2 = {}
+    milestones = utils.split(wildcards.list, " ")
+    if #milestones == 1 then
+      sql1 = "SELECT * FROM stats WHERE milestone = 'current'"
+      sql2 = "SELECT * FROM stats WHERE milestone = '" .. milestones[1] .. "'"
+    elseif #milestones > 1 then
+      sql1 = "SELECT * FROM stats WHERE milestone = '" .. milestones[1] .. "'"
+      sql2 = "SELECT * FROM stats WHERE milestone = '" .. milestones[2] .. "'"
+    end
+    if db:open() then
+      for a in db.db:nrows(sql1) do
+        milestone1 = a
+      end
+      for a in db.db:nrows(sql2) do
+        milestone2 = a
+      end
+      db:close()
+    end
+    if not next(milestone1) or not next(milestone2) then
+      plugin_header("")
+      ColourNote(RGBColourToName(var.plugin_colour), "black", "one of the milestones does not exist")
+      ColourNote( "", "", "")
+      return
+    end
+    formatCompMile(milestone1, milestone2)
+  end
+end
+
+function ListMilestones(name, line, wildcards)
+  if wildcards.list then
+    findstr, n = string.gsub(wildcards.list, "*", "%%")
+    findstr, n = string.gsub(findstr, "?", "_")
+    sql = "SELECT milestone FROM stats WHERE milestone like '" .. findstr .. "'"
+  else
+    sql = "SELECT milestone FROM stats"
+  end
+  if db:open() then
+    if db:checkfortable('stats') then
+      plugin_header("Milestones")
+      for a in db.db:nrows(sql) do
+        ColourNote(RGBColourToName(var.plugin_colour), "black", a['milestone'])
+      end
+      ColourNote( "", "", "")
+    end
+    db:close()
+  end
+end
+
+
+function OnPluginSaveState ()
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  plugin_save_vars(options_table)
+end -- function OnPluginSaveState
+
+function OnPluginConnect()
+  dbloc = GetPluginVariable ("", "dblocation")
+
+  if (dbloc == nil or db.dbloc == './') and verify_bool(var.warned) ~= true then
+      var.warned = true
+      SaveState()
+      ColourNote("red", "black", "---------------------- " .. GetPluginInfo (GetPluginID (), 1) .. " ----------------------")
+      ColourNote("red", "black", " please set the dblocation variable in the world")
+      ColourNote("red", "black", " to the directory that you would like the db to be saved")
+      ColourNote("red", "black", " If this is not changed, then the db will be saved in the")
+      ColourNote("red", "black", " same directory as the preferences db")
+      ColourNote("red", "black", " You will only see this message once")
+      ColourNote("red", "black", "---------------------- " .. GetPluginInfo (GetPluginID (), 1) .. " ----------------------")
+  end
+end
+
+function OnPluginInstall ()
+
+ if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+
+end -- OnPluginInstall
 
 ]]>
 </script>
@@ -112,7 +259,7 @@ end -- OnPluginBroadcast
 <aliases>
   <alias
    name="plugin_parse"
-   script="plugin_parse"
+   script="plugin_parse_helper"
    match="nothing"
    enabled="y"
    regexp="y"
@@ -120,27 +267,20 @@ end -- OnPluginBroadcast
    sequence="110"
    expand_variables="y"
   >
-  </alias>   
+  </alias>
 </aliases>
 
 <script>
 <![CDATA[
 
-options_table  = {
-  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="statsave"},
-}
+add_cmd('addmilestone', {func=AddMilestone, help="add a milestone"})
+add_cmd('comparemilstone', {func=CompareMilestones, help="compare two milestones"})
+add_cmd('listmilestones', {func=ListMilestones, help="list all milestones"})
 
-cmds_table = {
+option_set_default('cmd', 'statdb')
+option_set_default('plugin_colour', 'orange')
 
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
-end -- plugin_parse
-
-init_plugin_vars(options_table)
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 </script>
