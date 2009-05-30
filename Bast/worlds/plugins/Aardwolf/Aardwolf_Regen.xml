@@ -30,7 +30,7 @@ It will wear the regen ring when
 It will remove the regen ring when
   standing
   when leaving a regen room
-  
+
 Requires swalec's aardwolf exit detector
 ]]>
 </description>
@@ -79,32 +79,33 @@ regenrooms = {}
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  SetVariable ("regenrooms", 
-               "regenrooms = " .. serialize.save_simple (regenrooms))  
-  plugin_save_vars(options_table)                
+  SetVariable ("regenrooms",
+               "regenrooms = " .. serialize.save_simple (regenrooms))
+  plugin_save_vars(options_table)
 end -- OnPluginSaveState
 
 function OnPluginEnable ()
-  
+
   checkplugin ("18c24130ab326dc05b49420d", "Aardwolf Exits Detector")
   checkplugin ("8a710e0783b431c06d61a54c", "Aardwolf Stats Detector")
   checkplugin ("aaa79afcb20fa11787c5a327", "broadcast_state.xml")
   checkplugin ("aaa6dc9ed92ffc6146964abc", "broadcast_eq.xml")
-  
+
 end
 
 function OnPluginInstall ()
   assert (loadstring (GetVariable ("regenrooms") or "")) ()
   if IsConnected () then
       current_room = GetPluginVariable("18c24130ab326dc05b49420d", "roomname")
-  end -- if already connected  
+  end -- if already connected
 end
 
 function OnPluginBroadcast (msg, id, name, text)
+
   -- stats change
   if id == "8a710e0783b431c06d61a54c" then
     oldstats = stats
-    stats = GetPluginVariableList("8a710e0783b431c06d61a54c")    
+    stats = GetPluginVariableList("8a710e0783b431c06d61a54c")
   -- state change
   elseif id == "aaa79afcb20fa11787c5a327" then
     oldstatus = status
@@ -122,17 +123,17 @@ function OnPluginBroadcast (msg, id, name, text)
       if oldregen and verify_bool(var.inregen) then
         return
       end
-      
+
       if verify_bool(var.inregen) and ((not regenworn) or tryremove) then
         wear_regen()
         return
       end
-    
+
       if (not verify_bool(var.inregen)) and (verify_bool(var.regenworn) or trywear) then
         remove_regen()
         return
       end
-      
+
     end
 
   elseif id == "0e191dc7829ff2ac2433c2d8" then
@@ -168,8 +169,8 @@ function OnPluginBroadcast (msg, id, name, text)
           tryremove = false
           SaveState()
         end
-      end      
-    end    
+      end
+    end
   end
 end
 
@@ -185,7 +186,7 @@ function add_room(name, line, wildcards)
   plugin_header()
   if current_room == nil then
     ColourNote(RGBColourToName(var.plugin_colour), "black", "Could not get current room")
-    ColourNote("", "", "")    
+    ColourNote("", "", "")
     return
   end
   room = trim(string.gsub(current_room, "%(G%)", ""))
@@ -194,7 +195,7 @@ function add_room(name, line, wildcards)
     ColourNote("", "", "")
     return
   end
-  
+
   regenrooms[room] = 1
   ColourNote(RGBColourToName(var.plugin_colour), "black", "Added Room: " .. room)
   ColourNote("", "", "")
@@ -205,7 +206,7 @@ function remove_room(name, line, wildcards)
   plugin_header()
   if current_room == nil then
     ColourNote(RGBColourToName(var.plugin_colour), "black", "Could not get current room")
-    ColourNote("", "", "")    
+    ColourNote("", "", "")
     return
   end
   room = trim(string.gsub(current_room, "%(G%)", ""))
@@ -213,10 +214,10 @@ function remove_room(name, line, wildcards)
     regenrooms[room] = nil
     ColourNote(RGBColourToName(var.plugin_colour), "black", room .. " removed")
     ColourNote("", "", "")
-    remove_regen()    
+    remove_regen()
     return
   end
-  
+
   ColourNote(RGBColourToName(var.plugin_colour), "black", room .. " not in room list")
   ColourNote("", "", "")
 end
@@ -251,6 +252,9 @@ function findkeyword(item)
 end
 
 function wear_regen()
+  if verify_bool(var.off) == true then
+    return
+  end
   if trywear then
     return
   end
@@ -288,14 +292,14 @@ function checkstand()
   end
 end
 ]]>
-</script> 
+</script>
 
 <!--  Aliases  -->
 
 <aliases>
   <alias
    name="plugin_parse"
-   script="plugin_parse"
+   script="plugin_parse_helper"
    match="nothing"
    enabled="y"
    regexp="y"
@@ -303,33 +307,26 @@ end
    sequence="110"
    expand_variables="y"
   >
-  </alias>   
+  </alias>
 </aliases>
 
 <script>
 <![CDATA[
 
-options_table  = {
-  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="regen"},
-  inregen = {help="whether you are in a room in the regen room list", type="bool", default=verify_bool(false), readonly=true},
-  regenworn = {help="whether you are wearing a regen ring", type="bool", default=verify_bool(false), readonly=true},
-  oldring = {help="the keyword for the old ring", type="string", default="", readonly=true},
-  oldringdesc = {help="the description for the old ring", type="string", default="", readonly=true},
-}
+add_option('inregen', {help="whether you are in a room in the regen room list", type="bool", default=verify_bool(false), readonly=true})
+add_option('regenworn', {help="whether you are wearing a regen ring", type="bool", default=verify_bool(false), readonly=true})
+add_option('oldring', {help="the keyword for the old ring", type="string", default="", readonly=true})
+add_option('oldringdesc', {help="the description for the old ring", type="string", default="", readonly=true})
+add_option('off', {help="turn off wearing ring", type="bool", default=verify_bool(true)})
 
-cmds_table = {
-  add      = {func=add_room, help="add current room as a regen room"},
-  remove   = {func=remove_room, help="remove current room as a regen room"},
-  show     = {func=show_rooms, help="show rooms"},
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
-end -- plugin_parse
+option_set_default('cmd', 'regen')
+option_set_default('plugin_colour', 'orange')
 
-init_plugin_vars(options_table)
+add_cmd('add', {func=add_room, help="add current room as a regen room"})
+add_cmd('remove', {func=remove_room, help="remove current room as a regen room"})
+add_cmd('show', {func=show_rooms, help="show rooms"})
+
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 </script>
