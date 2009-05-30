@@ -55,7 +55,7 @@ require "serialize"
 require "commas"
 require "pluginhelper"
 require "verify"
-require "statsdb"
+require "chardb"
 require "aardutils"
 require "tprint"
 
@@ -72,7 +72,7 @@ colourcodes = { ["@r"]=RGBColourToName( GetNormalColour( 2 ) ), ["@g"]=RGBColour
                 ["@Y"]=RGBColourToName( GetBoldColour( 4 ) ),   ["@B"]=RGBColourToName( GetBoldColour( 5 ) ),
 		["@M"]=RGBColourToName( GetBoldColour( 6 ) ),   ["@C"]=RGBColourToName( GetBoldColour( 7 ) ),
 		["@W"]=RGBColourToName( GetBoldColour( 8 ) ) }
-        
+
 colours = { [1] = GetVariable( "col1" ) or "@W",
             [2] = GetVariable( "col2" ) or "@G" }
 
@@ -80,7 +80,7 @@ function DisplayInfo( info )
   for k,v in ipairs( info ) do
     ColourTell( colourcodes[ colours[ ( k % 2 + 1 ) or 1 ] ], "", v )
   end
-  Note( "" )  
+  Note( "" )
 end
 
 function formatlevel()
@@ -92,22 +92,10 @@ function formatlevel()
 
   --get the mob info
   loadstring( pvar )()
-  levelgains = levelinfo  
-  
+  levelgains = levelinfo
+
   level = db:getstat('totallevels')
-  oldlevel = level - 1
-  db:open()
-  for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level = %d;", oldlevel)) do 
-    starttime = a[1]
-    finishtime = a[2]
-  end  
-  for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where level = %s and xp > 0", oldlevel)) do
-    mobskilled = a[1]
-    mobsavexp = a[2]
-  end  
-  db:close()
-  length = finishtime - starttime      
-  days, hours, mins, secs = SecondsToDHMS(length)
+
   if levelgains.bonustrains and tonumber(levelgains.bonustrains) > 0 then
     trains = levelgains.trains .. '+' .. levelgains.bonustrains
   else
@@ -138,18 +126,38 @@ function formatlevel()
   if levelstats ~= "" then
     table.insert( tmsg, levelstats )
     table.insert( tmsg, "bonus " )
-  end    
-  table.insert( tmsg, string.format( "%02d", days ) )
-  table.insert( tmsg, "d:" )
-  table.insert( tmsg, string.format( "%02d", hours) )
-  table.insert( tmsg, "h:" )
-  table.insert( tmsg, string.format( "%02d", mins ) )
-  table.insert( tmsg, "m " )    
-  table.insert( tmsg, mobskilled )
-  table.insert( tmsg, " mobs killed (" )
-  table.insert( tmsg, string.format( "%02.02f", mobsavexp ) )
-  table.insert( tmsg, "xp/mob)" )  
-  DisplayInfo( tmsg )    
+  end
+  oldlevel = level - 1
+  if db:open() then
+    if db:checkfortable('levels') and level % 201 > 2 then
+      for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level = %d;", oldlevel)) do
+        starttime = a[1]
+        finishtime = a[2]
+      end
+      if starttime > 0 and finishtime > 0 then
+        length = finishtime - starttime
+        days, hours, mins, secs = SecondsToDHMS(length)
+        table.insert( tmsg, string.format( "%02d", days ) )
+        table.insert( tmsg, "d:" )
+        table.insert( tmsg, string.format( "%02d", hours) )
+        table.insert( tmsg, "h:" )
+        table.insert( tmsg, string.format( "%02d", mins ) )
+        table.insert( tmsg, "m " )
+      end
+    end
+    if db:checkfortable('mobkills') then
+      for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where level = %s and xp > 0", oldlevel)) do
+        mobskilled = a[1]
+        mobsavexp = a[2]
+      end
+      table.insert( tmsg, mobskilled )
+      table.insert( tmsg, " mobs killed (" )
+      table.insert( tmsg, string.format( "%02.02f", mobsavexp ) )
+      table.insert( tmsg, "xp/mob)" )
+    end
+    db:close()
+  end
+  DisplayInfo( tmsg )
 end
 
 function formatquest()
@@ -162,26 +170,20 @@ function formatquest()
   loadstring( pvar )()
   quest_stuff = quest_info
 
-  db:open()
-  for a in db.db:rows("SELECT COUNT(*), AVG(qp + mccp + lucky + tier), AVG(finishtime - starttime) FROM quests;") do 
-    quest_total = a[1]
-    quest_avg = a[2]
-    quest_tavg = a[3]
-  end      
-  db:close()
-  length = quest_stuff.finishtime - quest_stuff.starttime      
-  days, hours, mins, secs = SecondsToDHMS(length)      
+
+  length = quest_stuff.finishtime - quest_stuff.starttime
+  days, hours, mins, secs = SecondsToDHMS(length)
   questgains = tostring(quest_stuff.qp)
   if quest_stuff.lucky and tonumber(quest_stuff.lucky) > 0 then
     questgains = questgains .. '+' .. tostring(quest_stuff.lucky)
   end
   if quest_stuff.mccp and tonumber(quest_stuff.mccp) > 0 then
-    questgains = questgains .. '+' .. tostring(quest_stuff.mccp) 
+    questgains = questgains .. '+' .. tostring(quest_stuff.mccp)
   end
   if quest_stuff.tier and tonumber(quest_stuff.tier) > 0 then
     questgains = questgains .. '+' .. tostring(quest_stuff.tier)
   end
-    
+
   local tmsg = { "Quest finished for ", questgains, "qp" }
   if quest_stuff.tp and tonumber(quest_stuff.tp) > 0 then
     table.insert( tmsg, " "..quest_stuff.tp )
@@ -199,12 +201,24 @@ function formatquest()
   table.insert( tmsg, string.format( "%02d", mins ) )
   table.insert( tmsg, "m:" )
   table.insert( tmsg, string.format( "%02d", secs ) )
-  table.insert( tmsg, "s.  Avg:" )
-  table.insert( tmsg, string.format( "%02.2f", quest_avg ) )
-  table.insert( tmsg, " qp/quest" )
-  table.insert( tmsg, " over " )
-  table.insert( tmsg, string.format( "%0d", quest_total ) )
-  table.insert( tmsg, " quests." )
+  table.insert( tmsg, "s." )
+  if db:open() then
+    if db:checkfortable('quests') then
+      for a in db.db:rows("SELECT COUNT(*), AVG(qp + mccp + lucky + tier), AVG(finishtime - starttime) FROM quests;") do
+        quest_total = a[1]
+        quest_avg = a[2]
+        quest_tavg = a[3]
+      end
+      if quest_total > 1 then
+        table.insert( tmsg, string.format( "  Avg: %02.2f", quest_avg ) )
+        table.insert( tmsg, " qp/quest" )
+        table.insert( tmsg, " over " )
+        table.insert( tmsg, string.format( "%0d", quest_total ) )
+        table.insert( tmsg, " quests." )
+      end
+    end
+    db:close()
+  end
   DisplayInfo( tmsg )
 end
 
@@ -214,8 +228,8 @@ function formatcp()
   loadstring( pvar )()
   cp_stuff = cp_info
   cpgains = tostring(cp_stuff.qp)
-  length = cp_stuff.finishtime - cp_stuff.starttime      
-  days, hours, mins, secs = SecondsToDHMS(length)        
+  length = cp_stuff.finishtime - cp_stuff.starttime
+  days, hours, mins, secs = SecondsToDHMS(length)
   local tmsg = { "CP finished for ", cpgains, "qp" }
   if cp_stuff.tp and tonumber(cp_stuff.tp) > 0 then
     table.insert( tmsg, " "..cp_stuff.tp )
@@ -246,8 +260,8 @@ function formatgq()
   loadstring( pvar )()
   gqgains = tostring(gq_info.qp)
   if gq_info.qpmobs and tonumber(gq_info.qpmobs) > 0 then
-    gqgains = gqgains .. '+' .. tostring(gq_info.qpmobs) 
-  end      
+    gqgains = gqgains .. '+' .. tostring(gq_info.qpmobs)
+  end
   local tmsg = { "GQ finished for ", gqgains, "qp" }
   if gq_info.tp and tonumber(gq_info.tp) > 0 then
     table.insert( tmsg, " "..gq_info.tp )
@@ -267,23 +281,23 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
-    DoAfterSpecial(.1 , 'formatquest()', 12)        
+    DoAfterSpecial(.1 , 'formatquest()', 12)
   elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
-    DoAfterSpecial(.1, 'formatlevel()', 12)        
+    DoAfterSpecial(.1, 'formatlevel()', 12)
   elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
-    DoAfterSpecial(.1, 'formatcp()', 12)   
+    DoAfterSpecial(.1, 'formatcp()', 12)
   elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
-    DoAfterSpecial(.1, 'formatgq()', 12)  
+    DoAfterSpecial(.1, 'formatgq()', 12)
   end
 end -- OnPluginBroadcast
 
 function formathour(type, stats)
-  ColourNote("lime", "black", string.format("%-10s -" , type),
-             "lime", "black", string.format("%5d", stats.total or 0),
-             "lime", "black", string.format("%5d", stats.xp or 0),
-             "lime", "black", string.format("%5d", stats.qp or 0),
-             "lime", "black", string.format("%5d", stats.tp or 0),
-             "lime", "black", string.format("%7d", stats.gold or 0)
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-10s -" , type),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5d", stats.total or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5d", stats.xp or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5d", stats.qp or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5d", stats.tp or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%7d", stats.gold or 0)
              )
   hourtotals.qp = hourtotals.qp + (stats.qp or 0)
   hourtotals.gold = hourtotals.gold + (stats.gold or 0)
@@ -291,23 +305,30 @@ function formathour(type, stats)
   hourtotals.tp = hourtotals.tp + (stats.tp or 0)
 end
 
+function formatnodata(type)
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-10s -" , type),
+             RGBColourToName(var.plugin_colour), "black", ' No Data'
+            )
+end
+
+
 function formathourcol()
-  ColourNote("lime", "black", string.format("%-10s -" , "Type"),
-             "lime", "black", string.format("%5s", "Tot"),
-             "lime", "black", string.format("%5s", "XP"),
-             "lime", "black", string.format("%5s", "QP"),
-             "lime", "black", string.format("%5s", "Tp"),
-             "lime", "black", string.format("%7s", "Gold")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-10s -" , "Type"),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5s", "Tot"),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5s", "XP"),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5s", "QP"),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5s", "Tp"),
+             RGBColourToName(var.plugin_colour), "black", string.format("%7s", "Gold")
             )
 end
 
 function formattotals(totals)
-  ColourNote("lime", "black", string.format("%-10s -" , "Totals"),
-             "lime", "black", string.format("%5s", " "),
-             "lime", "black", string.format("%5d", totals.xp or 0),
-             "lime", "black", string.format("%5d", totals.qp or 0),
-             "lime", "black", string.format("%5d", totals.tp or 0),
-             "lime", "black", string.format("%7d", totals.gold or 0)
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-10s -" , "Totals"),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5s", " "),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5d", totals.xp or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5d", totals.qp or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%5d", totals.tp or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%7d", totals.gold or 0)
              )
 end
 
@@ -320,42 +341,67 @@ function StatReport()
   hourtotals.gold = 0
   hourtotals.xp = 0
   hourtotals.tp = 0
-  finishtime = GetInfo(304)  
+  finishtime = GetInfo(304)
   starttime = finishtime - (60 * 60)
-  db:open()
-  for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp + mccp + lucky + tier), SUM(gold), SUM(tp) FROM quests where finishtime > %d;", starttime)) do 
-    queststats.total = a[1] or 0
-    queststats.qp = a[2] or 0
-    queststats.gold = a[3]  or 0
-    queststats.tp = a[4] or 0
-  end      
-  for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp + qpmobs), SUM(gold), SUM(tp) FROM gquests where finishtime > %d;", starttime)) do 
-    gqstats.total = a[1]
-    gqstats.qp = a[2]
-    gqstats.gold = a[3]
-    gqstats.tp = a[4]
-  end     
-  for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp), SUM(gold), SUM(tp) FROM campaigns where finishtime > %d and failed = 0;", starttime)) do 
-    cpstats.total = a[1]
-    cpstats.qp = a[2]
-    cpstats.gold = a[3]
-    cpstats.tp = a[4]
-  end    
-   for a in db.db:rows(string.format("SELECT COUNT(*), SUM(xp + bonusxp), SUM(gold), SUM(tp) FROM mobkills where time > %d;", starttime)) do 
-    mobstats.total = a[1]
-    mobstats.xp = a[2]
-    mobstats.gold = a[3]
-    mobstats.tp = a[4]
-  end    
-  db:close()  
-  ColourNote("lime", "black", "Stats for the Last Hour")  
-  formathourcol()  
-  ColourNote("lime", "black",   "---------------------------------------")  
-  formathour("Quests", queststats)
-  formathour("CPs", cpstats)
-  formathour("GQs", gqstats)
-  formathour("Mobs", mobstats)
-  ColourNote("lime", "black",   "---------------------------------------")  
+  if db:open() then
+    if db:checkfortable('quests') then
+      for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp + mccp + lucky + tier), SUM(gold), SUM(tp) FROM quests where finishtime > %d;", starttime)) do
+        queststats.total = a[1] or 0
+        queststats.qp = a[2] or 0
+        queststats.gold = a[3]  or 0
+        queststats.tp = a[4] or 0
+      end
+    end
+    if db:checkfortable('gquests') then
+      for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp + qpmobs), SUM(gold), SUM(tp) FROM gquests where finishtime > %d;", starttime)) do
+        gqstats.total = a[1]
+        gqstats.qp = a[2]
+        gqstats.gold = a[3]
+        gqstats.tp = a[4]
+      end
+    end
+    if db:checkfortable('campaigns') then
+      for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp), SUM(gold), SUM(tp) FROM campaigns where finishtime > %d and failed = 0;", starttime)) do
+        cpstats.total = a[1]
+        cpstats.qp = a[2]
+        cpstats.gold = a[3]
+        cpstats.tp = a[4]
+      end
+    end
+    if db:checkfortable('mobkills') then
+      for a in db.db:rows(string.format("SELECT COUNT(*), SUM(xp + bonusxp), SUM(gold), SUM(tp) FROM mobkills where time > %d;", starttime)) do
+        mobstats.total = a[1]
+        mobstats.xp = a[2]
+        mobstats.gold = a[3]
+        mobstats.tp = a[4]
+      end
+    end
+    db:close()
+  end
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "Stats for the Last Hour")
+  formathourcol()
+  ColourNote(RGBColourToName(var.plugin_colour), "black",   "---------------------------------------")
+  if queststats.total == nil then
+    formatnodata("Quests")
+  else
+    formathour("Quests", queststats)
+  end
+  if cpstats.total == nil then
+
+  else
+    formathour("CPs", cpstats)
+  end
+  if gqstats.total == nil then
+
+  else
+    formathour("GQs", gqstats)
+  end
+  if mobstats.total == nil then
+    formatnodata("Mobs")
+  else
+    formathour("Mobs", mobstats)
+  end
+  ColourNote(RGBColourToName(var.plugin_colour), "black",   "---------------------------------------")
   formattotals(hourtotals)
   ColourNote("", "", "")
 end
@@ -370,7 +416,7 @@ end
 <aliases>
   <alias
    name="plugin_parse"
-   script="plugin_parse"
+   script="plugin_parse_helper"
    match="nothing"
    enabled="y"
    regexp="y"
@@ -378,28 +424,18 @@ end
    sequence="110"
    expand_variables="y"
   >
-  </alias>   
+  </alias>
 </aliases>
 
 <script>
 <![CDATA[
 
-options_table  = {
-  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="statmon"},
-  minutes = {help="the number of minutes between StatMon output", type="number", after=settimer, default=60},
-}
+add_option('minutes', {help="the number of minutes between StatMon output", type="number", after=settimer, default=60})
 
-cmds_table = {
+option_set_default('cmd', 'statmon')
+option_set_default('plugin_colour', 'orange')
 
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
-end -- plugin_parse
-
-init_plugin_vars(options_table)
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 </script>
