@@ -24,26 +24,7 @@ Redirects the gq to the miniwindow.
 
 <include name="constants.lua"/>
 
-<!--  Aliases  -->
-
-<aliases>
-  <alias
-   name="plugin_parse"
-   script="plugin_parse"
-   match="nothing"
-   enabled="y"
-   regexp="y"
-   ignore_case="y"
-   sequence="110"
-   expand_variables="y"
-  >
-  </alias>   
-</aliases>
-
-
 <!--  Script  -->
-
-
 <script>
 <![CDATA[
 require 'var'
@@ -91,11 +72,11 @@ function build_gq ()
     style.style = 0
     table.insert (texttable, {style})
   end -- for
-  
+
   gq_text = texttable
   gqwin.header_height = 1
   show_gq()
-  
+
 end -- build_gq
 
 function show_gq ()
@@ -114,13 +95,13 @@ function OnPluginBroadcast (msg, id, name, text)
       -- gquest available
       gqwin.header_height = 0
       gq_text = {"GQuest Available"}
-      show_gq()       
+      show_gq()
     elseif msg == 2 then
       print("gquest joined")
       -- gquest joined
-      gqwin.header_height = 0      
+      gqwin.header_height = 0
       gq_text = {"GQuest Joined - Waiting"}
-      show_gq()       
+      show_gq()
     elseif msg == 3 then
       local pvar = GetPluginVariable(  "aaa77f81c5408278ccda7100", "mobs" )
 
@@ -131,8 +112,8 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 4 or msg == 5 then
       -- reward
       gqwin:disable()
-    end      
-     
+    end
+
   end -- gq broadcast
 end
 
@@ -141,15 +122,15 @@ function OnPluginInstall ()
   if GetVariable ("enabled") == "false" then
     ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
     check (EnablePlugin(GetPluginID (), false))
-    cpwin:disable()
+    gqwin:disable()
     return
   end -- they didn't enable us last time
-  
-  ldplugin("aaa77f81c5408278ccda7100", "broadcast_gq.xml" )    
-  
+
+  ldplugin("aaa77f81c5408278ccda7100", "broadcast_gq.xml" )
+
   OnPluginEnable ()  -- do initialization stuff
-  
-  
+
+
 end -- OnPluginInstall
 
 function OnPluginDisable ()
@@ -163,24 +144,40 @@ end -- OnPluginEnable
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
   plugin_save_vars(options_table)
-  gqwin:savestate() 
+  gqwin:savestate()
 end -- function OnPluginSaveState
 
-options_table  = {
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("steelblue")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="gq"},
-}
+]]>
+</script>
 
---Request, Info, Quit, Check
-cmds_table = {
-  check    = {func=nofunc, help=''}, 
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table, gqwin, true)
-end -- plugin_parse
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
 
-init_plugin_vars(options_table)
+<script>
+<![CDATA[
+
+option_set_default('cmd', 'gq')
+option_set_default('plugin_colour', 'steelblue')
+
+set_send_to_world(true)
+
+cmd_update('help', 'send_to_world', true)
+add_cmd('check', {func=nofunc, help="", send_to_world=false})
+
+window_set(gqwin)
+
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 

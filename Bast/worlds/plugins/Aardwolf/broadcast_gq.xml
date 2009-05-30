@@ -25,7 +25,7 @@ Broadcasts
    3 - Mob list, get var.mobs and loadstring it
        mobs = { 1 = {name = 'Some name', room = 'Some room', clean = 'A name with some stuff removed', num=number},
               2 = {name = 'Another name', room = 'Another room', clean = 'Another name with some stuff removed', num=number}, }
-       It will be resent when a mob is killed and will be nil when a gquest is not active        
+       It will be resent when a mob is killed and will be nil when a gquest is not active
    4 - rewards get var.gq_info and loadstring it
        see below
    5 - gquest over
@@ -40,7 +40,7 @@ Example
       gq_mobs = mobs
     end
   end
-  
+
 gq_info = {}
   gq_info.starttime = 1241394128
   gq_info.mobs = {}
@@ -98,15 +98,15 @@ gq_info = {}
   gq_info.tp = 0
   gq_info.level = "69"
   gq_info.trains = 0
-  gq_info.qp = 0  
+  gq_info.qp = 0
 ]]>
 </description>
 
 <!--
 Global Quest: Global quest # 459558 has been declared for levels 141 to 155.
-  
+
 You have now joined the quest. See 'help gquest' for available commands.
-  
+
 Global Quest: The global quest for levels 117 to 130 has now started.
 Global Quest: Use 'gquest info' to see the targets.
 
@@ -144,35 +144,35 @@ You are not on a global quest.
 <triggers>
 
   <trigger
-   enabled="y"  
+   enabled="y"
    match="^Global Quest: Global quest \# (.*) has been declared for levels (.*) to (.*)\.$"
    name="gq_declared"
    script="gq_declared"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
   </trigger>
- 
+
  <trigger
-   enabled="n"  
+   enabled="n"
    match="^You have now joined the quest. See 'help gquest' for available commands.$"
    name="gq_join"
    script="gq_join"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
   </trigger>
-  
+
  <trigger
-   enabled="n"  
+   enabled="n"
    match="^Global Quest: The global quest for levels (.*) to (.*) has now started\.$"
    name="gq_start"
    script="gq_start"
    sequence="100"
    regexp="y"
-   omit_from_output="n"   
+   omit_from_output="n"
   >
   </trigger>
 
@@ -184,17 +184,17 @@ You are not on a global quest.
    sequence="100"
    group="gqcheck"
   >
-  </trigger>  
-  
+  </trigger>
+
   <trigger
-   enabled="n"  
+   enabled="n"
    match="^You still have to kill (?&lt;num&gt;\d*) \* (?&lt;name&gt;.*) \((?&lt;room&gt;.*)\)\.*$"
    name="gq_item"
    script="gq_item"
    sequence="100"
    regexp="y"
    group="gqcheck"
-   omit_from_output="y"   
+   omit_from_output="y"
   >
   </trigger>
 
@@ -206,18 +206,18 @@ You are not on a global quest.
    group="gqcheckfin"
    sequence="101"
   >
-  </trigger> 
-  
+  </trigger>
+
   <trigger
    enabled="n"
    match="^(\s*)Reward of (?&lt;amount&gt;\d+) (?&lt;type&gt;.+) (.+) added.$"
    sequence="100"
    script="gq_reward"
    group="gqrew"
-   regexp="y"   
+   regexp="y"
   >
   </trigger>
-  
+
  <trigger
    enabled="n"
    match="Congratulations, that was one of the GLOBAL QUEST mobs!"
@@ -226,8 +226,8 @@ You are not on a global quest.
    script="gq_mob_dead"
    group="gqin"
   >
-  </trigger>  
-  
+  </trigger>
+
  <trigger
    enabled="n"
    match="CONGRATULATIONS! You were the first to complete this quest!"
@@ -236,17 +236,17 @@ You are not on a global quest.
    group="gqin"
   >
   </trigger>
-  
+
  <trigger
    enabled="n"
    match="Global Quest: The global quest has been won by (.*) - (.*) win."
    sequence="100"
    script="gq_none"
    group="gqdone"
-   regexp="y"      
+   regexp="y"
   >
   </trigger>
-  
+
 </triggers>
 
 
@@ -263,7 +263,7 @@ You are not on a global quest.
   >
   <send>gq check</send>
   </alias>
- 
+
 </aliases>
 
 
@@ -312,7 +312,7 @@ function gq_join (name, line, wildcards)
   broadcast(2)
   if started then
     gq_start()
-  end  
+  end
 end
 
 function gq_start (name, line, wildcards)
@@ -330,17 +330,17 @@ function gq_item (name, line, wildcards)
     if not next(gq_info['mobs']) then
       gq_info['mobs'] = copytable.shallow(mobsleft)
       SaveState()
-    end  
+    end
     enabletriggroup("gqcheck", false)
-    check( EnableTrigger ("finishgqcheck", false) )      
-    var.mobs = serialize.save( "mobs", mobsleft )  
+    check( EnableTrigger ("finishgqcheck", false) )
+    var.mobs = serialize.save( "mobs", mobsleft )
     broadcast(3, var.mobs)
     return
   elseif name == "finishgqcheck"  then
     return
   end
 
-  check( EnableTrigger ("finishgqcheck", true) )  
+  check( EnableTrigger ("finishgqcheck", true) )
   name = wildcards.name
   room = wildcards.room
   num = wildcards.num
@@ -365,10 +365,10 @@ function gq_mob_dead (name, line, wildcards)
         v.num = tonumber(v.num) - 1
       end
       break
-    end   
+    end
   end
   if found then
-    var.mobs = serialize.save( "mobs", mobsleft )  
+    var.mobs = serialize.save( "mobs", mobsleft )
     broadcast(3, var.mobs)
   else
     print("GQ: could not find mob", enemy)
@@ -394,14 +394,14 @@ function gq_check( name, line, wildcards)
 end -- cp_check
 
 function gq_none( name, line, wildcards)
-  gq_info['finishtime'] = GetInfo(304)  
-  var.gq_info = serialize.save( "gq_info", gq_info ) 
+  gq_info['finishtime'] = GetInfo(304)
+  var.gq_info = serialize.save( "gq_info", gq_info )
   if joined then
     broadcast(4, var.gq_info)
   end
   broadcast(5)
   check( EnableTrigger ("gq_join", false) )
-  check( EnableTrigger ("gq_start", false) )  
+  check( EnableTrigger ("gq_start", false) )
   enabletriggroup("gqcheck", false)
   enabletriggroup("gqin", false)
   enabletriggroup("gqrew", false)
@@ -420,8 +420,8 @@ function gq_new()
   gq_info['tp'] = 0
   gq_info['qp'] = 0
   gq_info['qpmobs'] = 0
-  gq_info['level'] =  curlevel 
-  gq_info['starttime'] = GetInfo(304)  
+  gq_info['level'] =  curlevel
+  gq_info['starttime'] = GetInfo(304)
   gq_info['finishtime'] = 0
   gq_info['length'] = 0
   gq_info['won'] = 0
@@ -430,7 +430,7 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   if msg == 1 and id == "8a710e0783b431c06d61a54c" then
-  
+
     -- get one variable
     enemy = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
     curlevel = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
@@ -448,7 +448,7 @@ end
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)  
+  plugin_save_vars(options_table)
 end -- function OnPluginSaveState
 
 function OnPluginInstall ()
@@ -459,7 +459,7 @@ function OnPluginInstall ()
     return
   end -- they didn't enable us last time
   ldplugin("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
-  
+
 end -- OnPluginInstall
 ]]>
 </script>
@@ -467,7 +467,7 @@ end -- OnPluginInstall
 <aliases>
   <alias
    name="plugin_parse"
-   script="plugin_parse"
+   script="plugin_parse_helper"
    match="nothing"
    enabled="y"
    regexp="y"
@@ -475,27 +475,16 @@ end -- OnPluginInstall
    sequence="110"
    expand_variables="y"
   >
-  </alias>   
+  </alias>
 </aliases>
 
 <script>
 <![CDATA[
 
-options_table  = {
-  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="bgq"},
-}
+option_set_default('cmd', 'bgq')
+option_set_default('plugin_colour', 'orange')
 
-cmds_table = {
-
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
-end -- plugin_parse
-
-init_plugin_vars(options_table)
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 </script>
