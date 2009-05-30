@@ -30,7 +30,7 @@ Redirects the map to a mini window.
       omit_from_output="y"
   >
   </trigger>
-      
+
   <trigger
    enabled="y"
    match="&lt;MAPSTART&gt;"
@@ -40,7 +40,7 @@ Redirects the map to a mini window.
    sequence="100"
   >
   </trigger>
-  
+
   <trigger
    enabled="n"
    match="*"
@@ -60,7 +60,7 @@ Redirects the map to a mini window.
    sequence="5"
   >
   </trigger>
-    
+
   <trigger
    enabled="y"
    match="You can now sense anger in your immediate area."
@@ -69,28 +69,11 @@ Redirects the map to a mini window.
   >
   <send>SendNoEcho ("map")</send>
   </trigger>
-    
+
 </triggers>
 
-<!--  Aliases  -->
 
-<!--  Aliases  -->
-
-<aliases>
-  <alias
-   name="plugin_parse"
-   script="plugin_parse"
-   match="nothing"
-   enabled="y"
-   regexp="y"
-   ignore_case="y"
-   sequence="110"
-   expand_variables="y"
-  >
-  </alias>   
-</aliases>
 <!--  Script  -->
-
 
 <script>
 <![CDATA[
@@ -126,29 +109,29 @@ function process_coords ( name, line, wildcards, styles )
   style.backcolour = mapwin.bg_colour
   style.textcolour = 0x00D600
   style.style = 0
-  table.insert (tstyle, style)    
+  table.insert (tstyle, style)
   style = {}
   style.text = " Coords: "
   style.len = #style.text
   style.backcolour = mapwin.bg_colour
   style.textcolour = 0xF0FFFF
   style.style = 0
-  table.insert (tstyle, style)    
+  table.insert (tstyle, style)
   style = {}
   style.text = tcoords
   style.len = #style.text
   style.backcolour = mapwin.bg_colour
   style.textcolour = 0x00D600
   style.style = 0
-  table.insert (tstyle, style)    
+  table.insert (tstyle, style)
   style = {}
   style.text = "]"
   style.len = #style.text
   style.backcolour = mapwin.bg_colour
   style.textcolour = 0x00D600
   style.style = 0
-  table.insert (tstyle, style)   
-  
+  table.insert (tstyle, style)
+
   coords = tstyle
 end
 
@@ -179,7 +162,7 @@ function map_redirect (name, line, wildcards, styles)
     table.insert (map_lines, styles)
   end -- if
 
-end -- function map_redirect 
+end -- function map_redirect
 
 function OnPluginInstall ()
 
@@ -189,14 +172,14 @@ function OnPluginInstall ()
     mapwin:disable()
     return
   end -- they didn't enable us last time
-  
+
   OnPluginEnable ()  -- do initialization stuff
-  
+
 end -- OnPluginInstall
 
 -- pull in telnet option handling
 dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
-  
+
 function OnPluginConnect ()
   TelnetOptionOn (TELOPT_AUTOMAP)
   TelnetOptionOff (TELOPT_SHORTMAP)
@@ -215,45 +198,57 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
- 
+
   -- if we are connected when the plugin loads, it must have been reloaded whilst playing
   if IsConnected () then
     OnPluginConnect ()
   end -- if already connected
   mapwin:enable()
-  
+
 end -- OnPluginEnable
 
 function OnPluginDisable ()
   TelnetOptionOff (TELOPT_MAP)
   TelnetOptionOff (TELOPT_ROOM_NAMES)
   TelnetOptionOff (TELOPT_EXIT_NAMES)
-  
-  mapwin:disable()  
+
+  mapwin:disable()
 end -- OnPluginDisable
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
   plugin_save_vars(options_table)
-  mapwin:savestate() 
+  mapwin:savestate()
 end -- function OnPluginSaveState
 
-options_table  = {
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("steelblue")},
-  cmd = {help="the short command for this plugin", type="string", after=set_plugin_alias, default="mw"},
-}
+]]>
+</script>
 
---Request, Info, Quit, Check
-cmds_table = {
-  toggle   = {func=togglewindow, help="toggle the map miniwindow"},   
-  check    = {func=nofunc, help=''}, 
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table, mapwin)
-end -- plugin_parse
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
 
-init_plugin_vars(options_table)
+<script>
+<![CDATA[
+
+option_set_default('cmd', 'mw')
+option_set_default('plugin_colour', 'steelblue')
+
+add_cmd('toggle', {func=togglewindow, help="toggle the campaign miniwindow"})
+
+window_set(mapwin)
+
+init_plugin_vars()
 set_plugin_alias()
 
 ]]>
