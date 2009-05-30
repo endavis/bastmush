@@ -21,22 +21,6 @@ Shows quests in a miniwindow
 
 </plugin>
 
-<!--  Aliases  -->
-
-<aliases>
-  <alias
-   name="plugin_parse"
-   script="plugin_parse"
-   match="nothing"
-   enabled="y"
-   regexp="y"
-   ignore_case="y"
-   sequence="110"
-   expand_variables="y"
-  >
-  </alias>   
-</aliases>
-
 <!--  Script  -->
 
 
@@ -56,7 +40,7 @@ quest_timer = {}
 questwin = Miniwin{name="Quest", font="Comic Sans MS", bg_colour=0xE7FFFF, text_colour=0x000000, windowpos=7, header_height=0, width_padding=5, height_padding=3}
 questwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0x82004B), sortlev=1})
 questwin:add_setting("avail_bg_colour", {help="the background colour for when a quest available", type="colour", default=verify_colour("red"), sortlev=1})
-questwin:add_setting("avail_colour", {help="the text colour for hwen a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
+questwin:add_setting("avail_colour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
 
 questwin:disable()
 
@@ -72,14 +56,14 @@ function build_quest()
   table.insert(quest_text, roomstring)
   local areastring = string.format("%-7s: %s", "Area", quest_stuff.mobarea)
   table.insert(quest_text, areastring)
-  
+
   local style = {}
   style.text = string.format ("Time to go: %s", quest_timer.text)
   style.len = #style.text
   style.textcolour = 'time_colour'
   style.style = 0
   table.insert (quest_text, {style})
-  
+
   show_quest ()
 end
 
@@ -101,13 +85,13 @@ function OnPluginBroadcast (msg, id, name, text)
       quest_timer = {}
       quest_text = {}
       local style = {}
-      style.style = 0  
+      style.style = 0
       style.text = "You can quest again!"
       style.backcolour = 'avail_bg_colour'
       style.len = #style.text
       style.textcolour = 'avail_colour'
       table.insert(quest_text, {style})
-      show_quest()    
+      show_quest()
     elseif msg == 2 then
       -- quest mob info
       quest_timer = {}
@@ -127,7 +111,7 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 4 then
       -- quest mob dead
       quest_text = {"Quest Complete - Hand it in"}
-      show_quest() 
+      show_quest()
     elseif msg == 5 then
       return
     elseif msg == 6 then
@@ -140,14 +124,14 @@ function OnPluginBroadcast (msg, id, name, text)
       loadstring( pvar )()
       quest_text = {}
       local style = {}
-      style.style = 0      
+      style.style = 0
       style.text=  string.format ("Next quest: %s", timer.text)
       style.len = #style.text
       style.textcolour = 'time_colour'
       table.insert(quest_text, {style})
-      show_quest()       
-    end      
-     
+      show_quest()
+    end
+
   end -- stats changed
 end
 
@@ -163,32 +147,42 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
-  
-  ldplugin("aaa8a9eda20fa11787c6b438", "broadcast_quest.xml")    
-  
+
+  ldplugin("aaa8a9eda20fa11787c6b438", "broadcast_quest.xml")
+
 end -- OnPluginInstall
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
   plugin_save_vars(options_table)
-  questwin:savestate() 
+  questwin:savestate()
 end -- function OnPluginSaveState
+]]>
+</script>
 
-options_table  = {
-  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("steelblue")},
-  cmd = {help="the short command for this plugin", type="string", after=set_plugin_alias, default="qw"},
-}
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
 
---Request, Info, Quit, Check
-cmds_table = {
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table, questwin)
-end -- plugin_parse
+<script>
+<![CDATA[
 
-init_plugin_vars(options_table)
+option_set_default('cmd', 'gw')
+option_set_default('plugin_colour', 'steelblue')
+
+window_set(questwin)
+
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 </script>

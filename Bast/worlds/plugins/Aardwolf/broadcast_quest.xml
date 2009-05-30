@@ -61,6 +61,7 @@ quest_info = {}
   quest_info.mobname = "the oni"
   quest_info.failed = 0
   quest_info.qp = "14"
+
 ]]>
 </description>
 
@@ -79,12 +80,12 @@ quest_info = {}
   Send("quest info")
   </send>
   </trigger>
-  
+
   <trigger
    enabled="y"
    match="############# Reconnecting to Game #############"
    sequence="100"
-   send_to="12"    
+   send_to="12"
   >
   <send>
   Send("quest info")
@@ -93,16 +94,17 @@ quest_info = {}
 
   <trigger
    enabled="y"
-   match="You ask * for a quest."
+   regexp="y"
+   match="^You ask .* for a quest.$"
    script="start_questor_stuff"
    sequence="100"
   >
-  </trigger> 
-  
+  </trigger>
+
   <trigger
    enabled="n"
    regexp="y"
-   match="(.*) tells you 'Seek (.*) out somewhere in the vicinity'$"
+   match="^.* tells you 'Seek (.*) out somewhere in the vicinity'$"
    name="mobName"
    group="qinfo"
    script="mobName"
@@ -110,11 +112,11 @@ quest_info = {}
    text_colour="6"
   >
   </trigger>
-  
+
   <trigger
    enabled="n"
    regexp="y"
-   match="(.*) tells you 'of (.*) which is in the general area'$"
+   match="^.* tells you 'of (.*) which is in the general area'$"
    name="roomName"
    group="qinfo"
    script="roomName"
@@ -122,11 +124,11 @@ quest_info = {}
    text_colour="6"
   >
   </trigger>
-  
+
   <trigger
    enabled="n"
    regexp="y"
-   match="(.*) tells you 'of (.*).'$"
+   match="^.* tells you 'of (.*).'$"
    name="areaName"
    group="qinfo"
    script="areaName"
@@ -134,21 +136,22 @@ quest_info = {}
    text_colour="6"
   >
   </trigger>
-  
+
   <trigger
    enabled="n"
-   match="@questor tells you 'You have * to complete your quest.'"
+   regexp="y"
+   match="^.* tells you 'You have (.*) to complete your quest.'$"
    name="questor_time"
    script="questor_time"
    sequence="10"
-   expand_variables="y"
    group="qinfo"
   >
   </trigger>
-  
+
  <trigger
    enabled="n"
-   match="QUEST: You have almost completed your QUEST!"
+   regexp="y"
+   match="^QUEST: You have almost completed your QUEST!$"
    sequence="100"
    script="quest_done"
    group="questin"
@@ -157,7 +160,8 @@ quest_info = {}
 
  <trigger
    enabled="n"
-   match="You inform * that you have completed your quest."
+   regexp="y"
+   match="^(.*) tells you 'Congratulations (.*) on completing your quest!'$"
    sequence="100"
    script="quest_handed_in"
    group="questin"
@@ -166,16 +170,18 @@ quest_info = {}
 
   <trigger
    enabled="y"
-   match="You hang your head in shame and admit defeat *."
+   regexp="y"
+   match="^You hang your head in shame and admit defeat (.*).$"
    script="quest_fail"
    sequence="100"
    group="questin"
   >
-  </trigger>  
-  
+  </trigger>
+
  <trigger
    enabled="y"
-   match="There are * minutes remaining until you can go on another quest."
+   regexp="y"
+   match="^There are (.*) minutes remaining until you can go on another quest.$"
    sequence="100"
    script="quest_time_to_go"
   >
@@ -183,7 +189,8 @@ quest_info = {}
 
  <trigger
    enabled="y"
-   match="QUEST: You may now quest again."
+   regexp="y"
+   match="^QUEST: You may now quest again.$"
    sequence="100"
    script="quest_available"
   >
@@ -191,16 +198,17 @@ quest_info = {}
 
   <trigger
    enabled="y"
-   match="You do not have to wait to go on another quest."
+   regexp="y"
+   match="^You do not have to wait to go on another quest.$"
    sequence="100"
    script="quest_available"
   >
   </trigger>
-  
+
   <!-- quest rewards -->
   <trigger
    enabled="n"
-   match=".* tells you 'As a reward, I am giving you (\d*) quest points and (\d*) gold.'"
+   match="^.* tells you 'As a reward, I am giving you (\d*) quest points and (\d*) gold.'$"
    name="qcompletecatcher"
    regexp="y"
    script="quest_rewards"
@@ -220,7 +228,8 @@ quest_info = {}
   </trigger>
   <trigger
    enabled="n"
-   match="You get lucky and gain an extra * quest points."
+   regexp="y"
+   match="^You get lucky and gain an extra * quest points.$"
    name="luckyqpcatcher"
    script="quest_rewards"
    group="questrew"
@@ -265,7 +274,7 @@ quest_info = {}
    group="questrew"
    sequence="100"
   >
-  </trigger> 
+  </trigger>
   <trigger
    enabled="n"
    match="*"
@@ -274,17 +283,17 @@ quest_info = {}
    group="questrew"
    sequence="101"
   >
-  </trigger>  
+  </trigger>
 </triggers>
 
 <!--  Timers  -->
 
 
 <timers>
-  <timer 
-      script="update_timer" 
-      enabled="y" 
-      second="30.00" 
+  <timer
+      script="update_timer"
+      enabled="y"
+      second="30.00"
       name="questtimer"
       >
   </timer>
@@ -322,22 +331,22 @@ function blankquest ()
   quest_info.pracs = 0
   quest_info.failed = 0
 end
-     
+
 function quest_handed_in (name, line, wildcards)
   enabletriggroup("questin", false)
   quest_info['finishtime'] = GetInfo(304)
-  var.quest_info = serialize.save( "quest_info", quest_info )   
-  broadcast(5, var.quest_info) 
+  var.quest_info = serialize.save( "quest_info", quest_info )
+  broadcast(5, var.quest_info)
   when_required = os.time () + (30 * 60)  -- 30 mins to go
   onquest = false
   update_timer()
   check(EnableTimer("questtimer", true))
-  enabletriggroup("questrew", true)  
+  enabletriggroup("questrew", true)
 
 end -- quest_handed_in
 
 function quest_available (name, line, wildcards)
-  check(EnableTimer("questtimer", false))  
+  check(EnableTimer("questtimer", false))
   broadcast(1)
 end -- quest_available
 
@@ -347,13 +356,13 @@ function quest_fail(name, line, wildcards)
   onquest = false
   update_timer()
   quest_info.failed = 1
-  var.quest_info = serialize.save( "quest_info", quest_info )   
-  broadcast(8, var.quest_info)   
+  var.quest_info = serialize.save( "quest_info", quest_info )
+  broadcast(8, var.quest_info)
   check(EnableTimer("questtimer", true))
 end
 
 function quest_done (name, line, wildcards)
-  check(EnableTimer("questtimer", false))   
+  check(EnableTimer("questtimer", false))
   broadcast(4)
 end -- quest_done
 
@@ -369,42 +378,41 @@ function start_questor_stuff (name, line, wildcards)
   enabletriggroup("qinfo", true)
   blankquest()
   quest_info['starttime'] = GetInfo(304)
-  var.questor = wildcards [1]
 end -- start_questor_stuff
 
 function mobName( strTriggerName, trig_line, wildcards )
-  quest_info['mobname'] = wildcards[2]
+  quest_info['mobname'] = wildcards[1]
 end -- mobName
 
 function roomName( strTriggerName, trig_line, wildcards )
-  quest_info['mobroom'] = wildcards[2]
+  quest_info['mobroom'] = wildcards[1]
 end -- roomName
 
 function areaName( strTriggerName, trig_line, wildcards )
-  quest_info['mobarea'] = wildcards[2]
-  var.quest_info = serialize.save( "quest_info", quest_info )  
+  quest_info['mobarea'] = wildcards[1]
+  var.quest_info = serialize.save( "quest_info", quest_info )
   broadcast(2, var.quest_info)
 end
 
 function questor_time (name, line, wildcards)
 
   local text = wildcards [1]
-  
+
    -- work out when quest ends
-  
+
   when_required = os.time ()
-  
+
   local days = string.match (text, "(%d+) days?")
   if days then
     when_required = when_required + tonumber (days) * 60 * 60 * 24
   end -- some days left
-  
-  local hours = string.match (text, "(%d+) hours?")  
+
+  local hours = string.match (text, "(%d+) hours?")
   if hours then
     when_required = when_required + tonumber (hours) * 60 * 60
   end -- some days left
 
-  local minutes = string.match (text, "(%d+) minutes?")  
+  local minutes = string.match (text, "(%d+) minutes?")
   if minutes then
     when_required = when_required + tonumber (minutes) * 60
   end -- some days left
@@ -413,7 +421,7 @@ function questor_time (name, line, wildcards)
   enabletriggroup("qinfo", false)
   enabletriggroup("questin", true)
   update_timer()
-  check(EnableTimer("questtimer", true))  
+  check(EnableTimer("questtimer", true))
 
 end -- questor_end
 
@@ -426,11 +434,11 @@ function update_timer()
   timer['secs'] = time_to_go
   timer['text'] = convert_time(time_to_go)
   var.timer = serialize.save( "timer", timer )
-  if onquest then 
+  if onquest then
     broadcast(3, var.timer)
   else
     broadcast(7, var.timer)
-  end  
+  end
 end
 
 function quest_rewards (name, line, wildcards)
@@ -446,7 +454,7 @@ function quest_rewards (name, line, wildcards)
   elseif name == "tierqpcatcher" then
     quest_info['tier'] = wildcards[1]
   elseif name == "luckyqpcatcher" then
-    quest_info['lucky'] = wildcards[1]  
+    quest_info['lucky'] = wildcards[1]
   elseif name == "mccpqpcatcher" then
     quest_info['mccp'] = wildcards[1]
   elseif name == "qtpcatcher" then
@@ -468,7 +476,7 @@ end
 
 function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)    
+  plugin_save_vars(options_table)
 end -- function OnPluginSaveState
 
 function OnPluginInstall ()
@@ -478,7 +486,7 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
-  
+
 end -- OnPluginInstall
 
 function OnPluginDisable ()
@@ -494,7 +502,7 @@ end -- OnPluginDisable
 <aliases>
   <alias
    name="plugin_parse"
-   script="plugin_parse"
+   script="plugin_parse_helper"
    match="nothing"
    enabled="y"
    regexp="y"
@@ -502,27 +510,17 @@ end -- OnPluginDisable
    sequence="110"
    expand_variables="y"
   >
-  </alias>   
+  </alias>
 </aliases>
 
 <script>
 <![CDATA[
 
-options_table  = {
-  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("orange")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="bqu"},
-}
 
-cmds_table = {
+option_set_default('cmd', 'bqu')
+option_set_default('plugin_colour', 'orange')
 
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
-end -- plugin_parse
-
-init_plugin_vars(options_table)
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 </script>
