@@ -58,7 +58,7 @@ function format_header()
   hena = string.format("%-10s", "Enabled")
   ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hdeb .. hena)
 end
-  
+
 
 function list_plugins(name, line, wildcards)
   ColourNote("", "", "")
@@ -66,7 +66,7 @@ function list_plugins(name, line, wildcards)
               RGBColourToName(var.plugin_colour),  "black", "Plugin List")
   format_header()
   ColourNote("white", "black", "-----------------------------------------------")
-  for name, id in pairsByKeys (plugins) do 
+  for name, id in pairsByKeys (plugins) do
     local cmd = GetPluginVariable(id, 'cmd')
     local tdebug = GetPluginVariable(id, 'tdebug')
     if cmd ~= nil then
@@ -84,7 +84,7 @@ end
 <aliases>
   <alias
    name="plugin_parse"
-   script="plugin_parse"
+   script="plugin_parse_helper"
    match="nothing"
    enabled="y"
    regexp="y"
@@ -92,27 +92,18 @@ end
    sequence="110"
    expand_variables="y"
   >
-  </alias>   
+  </alias>
 </aliases>
 
 <script>
 <![CDATA[
 
-options_table  = {
-  tdebug = {help="set this for debugging information", type="bool", default=verify_bool(false)},
-  plugin_colour = {help="set the plugin colour", type="colour", default=verify_colour("red")},
-  cmd = {help="the command for this plugin", type="string", after=set_plugin_alias, default="plugins"},
-}
+option_set_default('cmd', 'plugins')
+option_set_default('plugin_colour', 'red')
 
-cmds_table = {
-  list      = {func=list_plugins, help="list plugins that are installed with pluginhelper", default=true},
-}
-  
-function plugin_parse (name, line, wildcards)
-  plugin_parse_helper(name, line, wildcards, cmds_table, options_table)
-end -- plugin_parse
+add_cmd('list', {func=list_plugins, help="list plugins that are installed with pluginhelper", default=true})
 
-init_plugin_vars(options_table)
+init_plugin_vars()
 set_plugin_alias()
 ]]>
 </script>
