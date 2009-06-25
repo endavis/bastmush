@@ -79,7 +79,7 @@ Example
 <triggers>
   <trigger
    script="whois_line1"
-   match="^\[\s*(\d+)\s+T(\d)\s+(\w+)\s+(\w+)\]\s+(\w+)\s+(.*)\s+\((\w+)\s+(\w+)\)$"
+   match="^\[\s*(\d+)\s+T(\d)\s+([-\w]+)\s+(\w+)\]\s+(\w+)\s+(.*)\s+\((\w+)\s+(\w+)\)$"
    enabled="n"
    regexp="y"
    ignore_case="y"
@@ -131,7 +131,7 @@ Example
    name="powerup"
    script="whois_stats"
    match="^(?&lt;name1&gt;[\w\s]*)\s*:\s*\[\s*(?&lt;val1&gt;[\w\d\s]*)\s*\]\s*([\w\s]*)\s*:\s*\[\s*(?&lt;pval1&gt;[\w\d\s]*)\s*\]\s*\[\s*(?&lt;pval2&gt;[\w\d\s]*)\s*\]\s*$"
-   enabled="y"
+   enabled="n"
    regexp="y"
    ignore_case="y"
    sequence="101"
