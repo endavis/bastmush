@@ -33,6 +33,24 @@ function getactuallevel(level, remorts, tier)
   return (tier * 7 * 201) + (remorts - 1) * 201 + level
 end
 
+function convertlevel(level)
+  if level < 1 then
+    return -1, -1, -1
+  end
+  if level % (7 * 201) == 0 then
+    tier = math.floor(level / (7 * 201)) - 1
+  else
+    tier = math.floor(level / (7 * 201))
+  end
+  remort = math.floor((level - (tier * 7 * 201)) / 202) + 1
+  if level % 201 == 0 then
+    alevel = 201
+  else
+    alevel = level % 201
+  end
+  return tier, remort, alevel
+end
+
 classabb = {
   mag = 'mage',
   thi = 'thief',
