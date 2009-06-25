@@ -229,7 +229,7 @@ quest_info = {}
   <trigger
    enabled="n"
    regexp="y"
-   match="^You get lucky and gain an extra * quest points.$"
+   match="^You get lucky and gain an extra (.*) quest points.$"
    name="luckyqpcatcher"
    script="quest_rewards"
    group="questrew"
@@ -238,7 +238,8 @@ quest_info = {}
   </trigger>
   <trigger
    enabled="n"
-   match="You gain an extra * quest points 'MCCP Bonus'."
+   regexp="y"
+   match="^You gain an extra (.*) quest points 'MCCP Bonus'.$"
    name="mccpqpcatcher"
    script="quest_rewards"
    group="questrew"
