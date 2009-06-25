@@ -238,7 +238,7 @@ function levbonus (name, line, wildcards)
 end
 
 function OnPluginEnable ()
-  ldplugin("aaa79afcb20fa11787c5a327", "broadcast_state.xml")
+  ldplugin("broadcast_state")
 end
 
 function OnPluginDisable ()

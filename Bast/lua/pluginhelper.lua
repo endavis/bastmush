@@ -44,6 +44,7 @@ commands already included (these do not need to be manually added)
   help
   set
   reset
+  debug
 
 --]]
 
@@ -156,6 +157,16 @@ function plugin_reset(name, line, wildcards)
   ColourNote("", "", "")
 end
 
+
+function plugin_toggle_debug(name, line, wildcards)
+  toption = options_table["tdebug"]
+  if var.tdebug == "true" then
+    set_var("false", "tdebug", toption.type, {low=toption.low, high=toption.high})
+  else
+    set_var("true", "tdebug", toption.type, {low=toption.low, high=toption.high})
+  end
+end
+
 function plugin_set_helper(name, line, wildcards)
   --[[
     this function will attempt to set an item in the options_table table or in a window
@@ -221,6 +232,7 @@ end
 
 cmds_table = {
   help      = {func=plugin_help_helper, help="show help"},
+  debug      = {func=plugin_toggle_debug, help="toggle debugging"},
   set       = {func=plugin_set_helper, help="set script and window vars, show plugin vars when called with no arguments, 'window': show window vars, 'all': show all vars"},
   reset     = {func=plugin_reset, help="reset plugin to default values, 'all': both miniwin and plugin, 'win': just miniwin, 'plugin': just plugin"},
 }
@@ -440,13 +452,27 @@ function mdebug(...)
   end
 end
 
-function ldplugin(pluginid, filename)
-  if not IsPluginInstalled(pluginid) then
-    LoadPlugin(filename)
+plugins = {
+  stats_detector = {id = "8a710e0783b431c06d61a54c", file="Stats_Detector.xml"},
+  broadcast_state = {id = "aaa79afcb20fa11787c5a327", file="broadcast_state.xml"},
+  broadcast_cp = {id = "aaa66f81c50828bbbfda7100", file="broadcast_cp.xml"},
+  broadcast_gq = {id = "aaa77f81c5408278ccda7100", file="broadcast_gq.xml"},
+  broadcast_tick = {id = "aaa70b4680508448e19b8b25", file="broadcast_tick.xml"},
+  broadcast_quest = {id = "aaa8a9eda20fa11787c6b438", file="broadcast_quest.xml"},
+}
+
+function ldplugin(plugin)
+  plugind = plugins[string.lower(plugin)]
+  if plugind == nil then
+    print("plugin:", plugin, "not found")
+    return
   end
-  if not IsPluginInstalled(pluginid) then
+  if not IsPluginInstalled(plugind.id) then
+    LoadPlugin(plugind.file)
+  end
+  if not IsPluginInstalled(plugind.id) then
     ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-    ColourNote("yellow", "black", GetPluginInfo (GetPluginID (), 1) .. " will not work correctly without " .. filename)
+    ColourNote("yellow", "black", GetPluginInfo (GetPluginID (), 1) .. " will not work correctly without " .. plugind.file)
     ColourNote("yellow", "black", "-----------------------------------------------------------------------")
   end
 end

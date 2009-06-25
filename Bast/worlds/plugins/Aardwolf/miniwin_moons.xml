@@ -339,7 +339,7 @@ function OnPluginSaveState()
 end
 
 function OnPluginEnable ()
-  ldplugin("aaa70b4680508448e19b8b25", "broadcast_tick.xml")
+  ldplugin("broadcast_tick")
   moonbot_reset()
 end -- OnPluginEnable
 

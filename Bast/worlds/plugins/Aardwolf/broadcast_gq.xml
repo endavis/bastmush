@@ -458,7 +458,7 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
-  ldplugin("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
+  ldplugin("Stats_Detector")
 
 end -- OnPluginInstall
 ]]>

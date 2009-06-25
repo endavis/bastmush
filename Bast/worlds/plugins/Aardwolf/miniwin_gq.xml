@@ -126,7 +126,7 @@ function OnPluginInstall ()
     return
   end -- they didn't enable us last time
 
-  ldplugin("aaa77f81c5408278ccda7100", "broadcast_gq.xml" )
+  ldplugin("broadcast_gq")
 
   OnPluginEnable ()  -- do initialization stuff
 

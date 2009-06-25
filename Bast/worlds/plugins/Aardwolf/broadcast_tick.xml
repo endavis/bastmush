@@ -71,7 +71,7 @@ function OnPluginInstall ()
     return
   end -- they didn't enable us last time
 
-  ldplugin("aaa79afcb20fa11787c5a327", "broadcast_state.xml")
+  ldplugin("broadcast_state")
 
 end -- function OnPluginInstall
 
