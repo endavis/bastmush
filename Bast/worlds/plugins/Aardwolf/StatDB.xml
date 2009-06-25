@@ -80,9 +80,7 @@ function savemobkill()
 
   -- get the kill
   loadstring( pvar )()
-  if tonumber(kill_info.xp) > 0 then
-    db:savemobkill( kill_info )
-  end
+  db:savemobkill( kill_info )
 end
 
 function savegq()
@@ -110,6 +108,10 @@ function OnPluginBroadcast (msg, id, name, text)
 end -- OnPluginBroadcast
 
 function OnPluginEnable ()
+
+end
+
+function OnPluginInstall ()
 
 end
 
@@ -170,7 +172,6 @@ function formatCompMile(milestone1, milestone2)
 end
 
 function CompareMilestones(name, line, wildcards)
-  tprint(wildcards)
   if wildcards.list then
     local milestone1 = {}
     local milestone2 = {}
