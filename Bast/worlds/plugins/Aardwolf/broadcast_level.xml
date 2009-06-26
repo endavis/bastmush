@@ -147,7 +147,7 @@ Example
   <trigger
    enabled="y"
    regexp="y"
-   match="^\* Remort transformation complete!$"
+   match="^\* Remort transformation complete\!$"
    name="remort"
    script="remort"
    sequence="100"
