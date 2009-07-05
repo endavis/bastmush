@@ -286,6 +286,7 @@ end -- OnPluginInstall
 
 function OnPluginDisconnect ()
   disconnected = true
+  current_buffs = {}
   EnableTimer("display_timer", false)
   coroutine.resume (thread, "disconnect")
 end -- OnPluginDisconnect
