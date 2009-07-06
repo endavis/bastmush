@@ -139,6 +139,7 @@ function Statdb:savewhois(whoisinfo)
       stmt:finalize()
       mdebug("updated stats")
     end
+    self:addclasses(whoisinfo['classes'])
     self:close()
   end
 end
@@ -294,14 +295,15 @@ function Statdb:savecp( cpinfo )
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
     mdebug("inserted cp:", rowid)
+    local stmt2 = self.db:prepare[[ INSERT INTO cpmobs VALUES
+                                      (NULL, :cp_id, :name, :room) ]]
     for i,v in ipairs(cpinfo['mobs']) do
       v['cp_id'] = rowid
-      local stmt2 = self.db:prepare[[ INSERT INTO cpmobs VALUES
-                                      (NULL, :cp_id, :name, :room) ]]
       stmt2:bind_names (v)
       stmt2:step()
-      stmt2:finalize()
+      stmt2:reset()
     end
+    stmt2:finalize()
     self:close()
     return rowid
   end
@@ -451,16 +453,97 @@ function Statdb:savegq( gqinfo )
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
     mdebug("inserted gq:", rowid)
+    local stmt2 = self.db:prepare[[ INSERT INTO gqmobs VALUES
+                                      (NULL, :gq_id, :num, :name, :room) ]]
+    tprint(gqinfo['mobs'])
     for i,v in ipairs(gqinfo['mobs']) do
       v['gq_id'] = rowid
-      local stmt2 = self.db:prepare[[ INSERT INTO gqmobs VALUES
-                                      (NULL, :gq_id, :num, :name, :room) ]]
       stmt2:bind_names (v)
       stmt2:step()
-      stmt2:finalize()
+      stmt2:reset()
     end
+    stmt2:finalize()
     self:close()
     return rowid
   end
   return -1
 end
+
+function Statdb:checkclassestable()
+  if self:open() then
+    if not self:checkfortable('classes') then
+      self.db:exec([[CREATE TABLE classes(
+        class TEXT NOT NULL PRIMARY KEY,
+        remort INTEGER
+      )]])
+      self:resetclasses()
+    end
+    self:close()
+  end
+end
+
+function Statdb:resetclasses()
+  local stmt2 = nil
+  if self:open() then
+    stmt2 = self.db:prepare("INSERT INTO classes VALUES (:name, -1)")
+    for i,v in pairs(classabb) do
+      stmt2:bind_names ({name = i})
+      stmt2:step()
+      stmt2:reset()
+    end
+    stmt2:finalize()
+    self:close()
+  end
+end
+
+function Statdb:hasclass(class)
+  local remortn = -1
+  class = string.sub(class, 0, 3)
+  if self:open() then
+    for a in self.db:nrows('SELECT * FROM classes WHERE class = "' .. class .. '"') do
+      remortn = a['remort']
+    end
+    self:close()
+  end
+  return remortn
+end
+
+function Statdb:getprimaryclass()
+  local remortn = -1
+  if self:open() then
+    for a in self.db:nrows('SELECT * FROM classes WHERE remort = 1') do
+      remortn = a['class']
+    end
+    self:close()
+  end
+  return remortn
+end
+
+function Statdb:getclasses()
+  local classes = {}
+  if self:open() then
+    for a in self.db:nrows('SELECT * FROM classes') do
+      if a['remort'] ~= -1 then
+        table.insert(classes, a['class'])
+      end
+    end
+    self:close()
+  end
+  return classes
+end
+
+function Statdb:addclasses(classes)
+  self:checkclassestable()
+  if self:open() then
+    local stmt2 = self.db:prepare[[ UPDATE classes SET remort = :remort
+                                            WHERE class = :class ]]
+    for i,v in ipairs(classes) do
+      stmt2:bind_names ({remort = i, class = string.sub(v, 0, 3)})
+      stmt2:step()
+      stmt2:reset()
+    end
+    stmt2:finalize()
+    self:close()
+  end
+end
+
