@@ -278,6 +278,7 @@ require "check"
 require "pluginhelper"
 require "verify"
 require "copytable"
+require "ldplugin"
 
 rewardtable = {
   quest = 'qp',
@@ -328,7 +329,7 @@ end
 function gq_item (name, line, wildcards)
   if name == "finishgqcheck" and trim(line) == "" then
     if not next(gq_info['mobs']) then
-      gq_info['mobs'] = copytable.shallow(mobsleft)
+      gq_info['mobs'] = copytable.deep(mobsleft)
       SaveState()
     end
     enabletriggroup("gqcheck", false)
@@ -396,6 +397,7 @@ end -- cp_check
 function gq_none( name, line, wildcards)
   gq_info['finishtime'] = GetInfo(304)
   var.gq_info = serialize.save( "gq_info", gq_info )
+  SaveState()
   if joined then
     broadcast(4, var.gq_info)
   end
