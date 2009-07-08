@@ -37,6 +37,7 @@ require "commas"
 require 'togglewin'
 require 'tprint'
 require 'pluginhelper'
+require 'ldplugin'
 
 cpwin = Togglewin{name="CP", windowpos=7, font_size=7, font="Verdana"}
 cpwin:disable()

@@ -106,6 +106,7 @@ require "serialize"
 require "commas"
 require "pluginhelper"
 require "verify"
+require "ldplugin"
 
 kill_info = {}
 kill_info.tp = 0

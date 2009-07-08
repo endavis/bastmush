@@ -254,6 +254,7 @@ require "serialize"
 require "commas"
 require "verify"
 require "copytable"
+require "ldplugin"
 
 rewardtable = {
   quest = 'qp',

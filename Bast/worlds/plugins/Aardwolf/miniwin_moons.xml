@@ -65,7 +65,7 @@ require "pluginhelper"
 
 -- required for toggle window functions
 require "togglewin"
-
+require "ldplugin"
 require "verify"
 
 moonwin = Togglewin{name="Moons", windowpos=4, font_size=8, font="DejaVu Sans Mono", text_colour="gold"}

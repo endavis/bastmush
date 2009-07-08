@@ -163,6 +163,7 @@ require "serialize"
 require "commas"
 require "pluginhelper"
 require "verify"
+require "ldplugin"
 
 -- keys - type, time, newlevel, hp, mana, mov, trains, pracs, bonustrains, bonusstats = {}
 -- bonusstats subtable keys are the bonus stat names
