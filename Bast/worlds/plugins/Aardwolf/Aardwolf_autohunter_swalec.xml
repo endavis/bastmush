@@ -151,6 +151,15 @@ This plugin is released under the MIT license.
   </trigger>
 
   <trigger
+    enabled = "n"
+    match = "^You are certain that (.*?) is (.*?) from here\.$"
+    script= "hunt_response_trigger"
+    group = "swalec.autohunt"
+    regexp= "y"
+    >
+  </trigger>
+
+  <trigger
       group="swalec.autohunt"
       make_underline="y"
       match="^(.*?) is here\!$"
