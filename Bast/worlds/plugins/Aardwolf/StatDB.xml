@@ -34,6 +34,7 @@ require "pluginhelper"
 require "verify"
 require "chardb"
 require "tprint"
+require "aardutils"
 
 db = Statdb{}
 
@@ -96,6 +97,8 @@ function OnPluginBroadcast (msg, id, name, text)
     savequest()
   elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
     savelevel()
+  elseif id == "aaa0ab9ed92f8fc614664bd1" and (msg == 3 or msg == 4 or msg == 5 or msg == 6) then
+    createmilestone()
   elseif id == "aaaf9a8dc92f8fc614663ac0" and msg == 1 then
     savewhois()
   elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
@@ -107,16 +110,13 @@ function OnPluginBroadcast (msg, id, name, text)
   end
 end -- OnPluginBroadcast
 
-function OnPluginEnable ()
 
-end
-
-function OnPluginInstall ()
-
-end
-
-function OnPluginDisable ()
-  BroadcastPlugin(-1)
+function createmilestone()
+  level = db:getstat('totallevels')
+  tlist = convertlevel(level)
+  milestone = string.format("t%sr%sl%s", tlist.tier, tlist.remort, tlist.level)
+  Execute("whois")
+  DoAfterSpecial(3, string.format('db:addmilestone("%s")', milestone), 12)
 end
 
 function AddMilestone(name, line, wildcards)
@@ -228,24 +228,14 @@ function OnPluginSaveState ()
   plugin_save_vars(options_table)
 end -- function OnPluginSaveState
 
-function OnPluginConnect()
-  dbloc = GetPluginVariable ("", "dblocation")
 
-  if (dbloc == nil or db.dbloc == './') and verify_bool(var.warned) ~= true then
-      var.warned = true
-      SaveState()
-      ColourNote("red", "black", "---------------------- " .. GetPluginInfo (GetPluginID (), 1) .. " ----------------------")
-      ColourNote("red", "black", " please set the dblocation variable in the world")
-      ColourNote("red", "black", " to the directory that you would like the db to be saved")
-      ColourNote("red", "black", " If this is not changed, then the db will be saved in the")
-      ColourNote("red", "black", " same directory as the preferences db")
-      ColourNote("red", "black", " You will only see this message once")
-      ColourNote("red", "black", "---------------------- " .. GetPluginInfo (GetPluginID (), 1) .. " ----------------------")
-  end
+function OnPluginConnect()
+
 end
 
 function OnPluginInstall ()
 
+ db:checkdir()
  if GetVariable ("enabled") == "false" then
     ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
     check (EnablePlugin(GetPluginID (), false))
@@ -253,6 +243,14 @@ function OnPluginInstall ()
   end -- they didn't enable us last time
 
 end -- OnPluginInstall
+
+function OnPluginEnable ()
+
+end
+
+function OnPluginDisable ()
+  BroadcastPlugin(-1)
+end
 
 ]]>
 </script>
