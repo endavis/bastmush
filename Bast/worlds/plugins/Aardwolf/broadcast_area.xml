@@ -9,7 +9,7 @@
 <plugin
    name="xBroadcast_Area"
    author="Bast"
-   id="63800b38e8d6db72f5ba5a6e"
+   id="aaa2beeda10fa11787c6b438"
    language="Lua"
    purpose="To get info from the areas command"
    save_state="y"
