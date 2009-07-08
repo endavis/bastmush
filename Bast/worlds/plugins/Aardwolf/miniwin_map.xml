@@ -91,11 +91,6 @@ mapwin:disable()
 map_lines = {}
 coords = nil
 
--- mousedown
-function mousedown (flags, hotspotid)
-  mapwin:mousedown(flags, hotspotid)
-end -- mousedown
-
 function process_coords ( name, line, wildcards, styles )
   local tcoords = wildcards[1]
   if tcoords == "-1" then

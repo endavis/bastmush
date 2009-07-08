@@ -86,11 +86,6 @@ moons = {
   white={now=nil,cycle=65,up=17}
 }
 
--- mousedown
-function mousedown (flags, hotspotid)
-  moonwin:mousedown(flags, hotspotid)
-end -- mousedown
-
 function styleplotdata()
   local texttable = {}
   local max_width = 0

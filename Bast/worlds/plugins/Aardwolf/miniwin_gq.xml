@@ -41,11 +41,6 @@ gqwin:disable()
 gqmobs = {}
 gq_text = {}
 
--- mousedown
-function mousedown (flags, hotspotid)
-  gqwin:mousedown(flags, hotspotid)
-end -- mousedown
-
 
 function build_gq ()
 

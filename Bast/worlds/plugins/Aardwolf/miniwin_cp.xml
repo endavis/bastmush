@@ -47,12 +47,6 @@ cpwin:add_setting("time_colour", {help="the colour for the time", type="colour",
 cpmobs = {}
 cptimer = {}
 
--- mousedown
-function mousedown (flags, hotspotid)
-  cpwin:mousedown(flags, hotspotid)
-end -- mousedown
-
-
 function show_cp_text ()
 
 
