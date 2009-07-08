@@ -48,7 +48,7 @@ function convertlevel(level)
   else
     alevel = level % 201
   end
-  return tier, remort, alevel
+  return {tier = tier, remort = remort, level = alevel}
 end
 
 classabb = {
