@@ -214,6 +214,9 @@ function plugin_set_helper(name, line, wildcards)
          return false
       end
     end
+    if value == 'default' then
+      value = soption.default
+    end
     f = soption.func
     if not f then
       f = set_var
@@ -494,3 +497,16 @@ end
 function set_send_to_world(tf)
   send_to_world = tf
 end
+
+function mousedown(flags, hotspotid)
+  window:mousedown(flags, hotspotid)
+end
+
+function dragmove(flags, hotspot_id)
+  window:dragmove(flags, hotspot_id)
+end -- dragmove
+
+function dragrelease(flags, hotspot_id)
+  window:dragrelease(flags, hotspot_id)
+end
+

@@ -18,7 +18,7 @@ TODO: add footer
 TODO: add ability to load multiple fonts
 TODO: fix setting header as a static line or though the style passed in
 TODO: change the way show_hyperlink works to do like drawwin and use display_line
-TODO: make all windows draggable
+TODO: change check_font to use utils.getfontfamilies
 --]]
 
 require 'class'
@@ -48,6 +48,12 @@ function Miniwin:initialize(args)
   self.font_width = 0
   self.font_id = self.name.."_font"
   self.font_id_bold = self.name.."_font_bold"
+  self.startx = 0
+  self.starty = 0
+  self.origx = 0
+  self.origy = 0
+  self.drag_hotspot = self.name .. "_drag_hotspot"
+
 
   -- below are things that can be kept as settings
   self.disabled = tonumber (GetVariable ("disabled"..self.name)) or args.disabled or 0
@@ -70,6 +76,8 @@ function Miniwin:initialize(args)
     footer_text_colour = {type="colour", help="footer text colour for this window", default=0x00FF00, sortlev=42},
     width = {type="number", help="width of this window, 0 = auto", low=0, high=100, default=0, sortlev=44},
     height = {type="number", help="height of this window, 0 = auto", low=0, high=140, default=0, sortlev=44},
+    x = {type="number", help="x location of this window, -1 = auto", default=-1, sortlev=39},
+    y = {type="number", help="y location of this window, -1 = auto", default=-1, sortlev=39},
   }
 
   for i,v in pairs(self.set_options) do
@@ -213,10 +221,22 @@ end
 
 
 function Miniwin:mousedown (flags, hotspotid)
+
+  if hotspotid == self.drag_hotspot then
+    -- find where mouse is so we can adjust window relative to mouse
+    self.startx, self.starty = WindowInfo (self.win, 14), WindowInfo (self.win, 15)
+
+    -- find where window is in case we drag it offscreen
+    self.origx, self.origy = WindowInfo (self.win, 10), WindowInfo (self.win, 11)
+  end -- if
+
   local f = self.hyperlink_functions[hotspotid]
   if f then
     f(self, flags, hotspotid)
+    return true
   end -- function found
+
+  return false
 end -- mousedown
 
 
@@ -239,11 +259,14 @@ function Miniwin:hyperlink_configure_header ()
   self:drawwin()
 end -- hyperlink_configure_header
 
+function Miniwin:make_hyperlink (text, id, left, top, right, bottom, action, hint, cursor)
 
-function Miniwin:make_hyperlink (text, id, left, top, action, hint)
-
-  local right = left + WindowTextWidth (self.win, self.font_id, text)
-  local bottom = top + self.font_height
+  if right == nil then
+    right = left + WindowTextWidth (self.win, self.font_id, text)
+  end
+  if bottom == nil then
+    bottom = top + self.font_height
+  end
 
   WindowAddHotspot(self.win, id,
                     left, top, right, bottom,
@@ -253,7 +276,7 @@ function Miniwin:make_hyperlink (text, id, left, top, action, hint)
                    "", -- cancelmousedown
                    "", -- mouseup
                    hint,
-                   1, 0)
+                   cursor or 1, 0)
 
   local retval = WindowText (self.win, self.font_id, text, left, top, right, bottom, self.hyperlink_colour)
   self.hyperlink_functions [id] = action
@@ -407,13 +430,23 @@ function Miniwin:drawwin(tshow)
   local width = self:calc_width()
 
   -- recreate the window the correct size
-  check (WindowCreate (self.win,
+  if self.x ~= -1 and self.y ~= -1 then
+    check (WindowCreate (self.win,
+                 self.x, self.y,   -- left, top (auto-positions)
+                 width,     -- width
+                 height,  -- height
+                 self.windowpos,
+                 0,  -- flags
+                 self:get_colour("bg_colour")) )
+  else
+    check (WindowCreate (self.win,
                  0, 0,   -- left, top (auto-positions)
                  width,     -- width
                  height,  -- height
                  self.windowpos,
                  0,  -- flags
                  self:get_colour("bg_colour")) )
+  end
 
   -- DrawEdge rectangle
   check (WindowRectOp (self.win, 5, 0, 0, 0, 0, 10, 15))
@@ -438,20 +471,24 @@ function Miniwin:drawwin(tshow)
   end -- for
 
   if self.show_hyperlinks == 1 then
-    self:make_hyperlink ("?", "bg_colour", width - (2 * self.font_width), self:get_top_of_line(-1),
+    self:make_hyperlink ("?", "bg_colour", width - (2 * self.font_width), self:get_top_of_line(-1), nil, nil,
                     self.hyperlink_configure_background, "Choose background colour")
 
     if self.header_height > 0 then
-      self:make_hyperlink ("?", "header_bg_colour", width - (2 * self.font_width), self:get_top_of_line(self.header_height),
+      self:make_hyperlink ("?", "header_bg_colour", width - (2 * self.font_width), self:get_top_of_line(self.header_height), nil, nil,
                     self.hyperlink_configure_header, "Choose header background colour")
 
-      self:make_hyperlink ('-', "hidewin", width - (3 * self.font_width), self:get_top_of_line(self.header_height),
+      self:make_hyperlink ('-', "hidewin", width - (3 * self.font_width), self:get_top_of_line(self.header_height), nil, nil,
                     self.togglewindow, 'Hide Window')
     else
-      self:make_hyperlink ('-', "hidewin", width - (3 * self.font_width), self:get_top_of_line(-1),
+      self:make_hyperlink ('-', "hidewin", width - (3 * self.font_width), self:get_top_of_line(-1), nil, nil,
                     self.togglewindow, 'Hide Window')
     end
   end
+
+  self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, self.font_height * self.header_height, empty, "Drag to move", 10)
+  WindowDragHandler(self.win, self.drag_hotspot, "dragmove", "dragrelease", 0)
+
 
   if tshow then
     self:show(true)
@@ -482,6 +519,9 @@ function Miniwin:set(option, value)
   if not varstuff then
     return false
   end
+  if value == 'default' then
+    value = varstuff.default
+  end
   tvalue = verify(value, varstuff.type, {low=varstuff.low, high=varstuff.high, window=self})
   if tvalue == nil then
     ColourNote("red", "", "That is not a valid value for " .. option)
@@ -498,6 +538,10 @@ function Miniwin:set(option, value)
     self:changefont(self.font)
   else
     self[option] = tvalue
+  end
+  if option == "windowpos" then
+    self.x = -1
+    self.y = -1
   end
   self:drawwin()
   changedsetting(option, varstuff, tvalue)
@@ -524,3 +568,45 @@ function Miniwin:add_setting(name, setting)
   self.set_options[name] = setting
   self.skeys = sort_settings(self.set_options)
 end
+
+function Miniwin:dragmove(flags, hotspot_id)
+
+  -- find where it is now
+  local posx, posy = WindowInfo (self.win, 17),
+                     WindowInfo (self.win, 18)
+
+  self.x = posx - self.startx
+  self.y = posy - self.starty
+  -- move the window to the new location
+  WindowPosition(self.win, self.x, self.y, 0, 2);
+
+  -- change the mouse cursor shape appropriately
+  if posx < 0 or posx > GetInfo (281) or
+     posy < 0 or posy > GetInfo (280) then
+    check (SetCursor ( 11))   -- X cursor
+  else
+    check (SetCursor ( 1))   -- hand cursor
+  end -- if
+
+end -- dragmove
+
+function Miniwin:dragrelease(flags, hotspot_id)
+  local newx, newy = WindowInfo (self.win, 17), WindowInfo (self.win, 18)
+
+  -- don't let them drag it out of view
+  if newx < 0 or newx > GetInfo (281) or
+     newy < 0 or newy > GetInfo (280) then
+     -- put it back
+    if self.x ~= -1 and self.y ~= -1 then
+      WindowPosition(self.win, self.origx, self.origy, 0, 2)
+    else
+      WindowPosition(self.win, 0, 0, self.windowpos, 0)
+    end
+  end -- if out of bounds
+
+end -- dragrelease
+
+function empty(flags, hotspot_id)
+
+end
+

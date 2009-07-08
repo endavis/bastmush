@@ -56,17 +56,23 @@ function Togglewin:mousedown (flags, hotspotid)
      self.winhide = HideToggleWin{parent=self,name=self.name.."showwin"}
      self.winhide:createwin({" "})
   end
-  local f = self.hyperlink_functions[hotspotid]
-  if f then
-    f(self)
-  else
+
+  found = super(flags, hotspotid)
+  if found then
+    return true
+  end
+
+  if not found then
     f = self.winhide.hyperlink_functions[hotspotid]
     if f then
       f(self)
-    else
-      print("could not find hotspot id: "..hotspotid)
+      return true
     end
   end -- function found
+
+  print("could not find hotspot id: "..hotspotid)
+  return false
+
 end -- mousedown
 
 
@@ -89,7 +95,7 @@ function Togglewin:togglewindow()
   end
   self:show()
 end
-  
+
 function Togglewin:set(option, value)
   retfunc = super(option, value)
   self.winhide:drawwin()
@@ -116,15 +122,15 @@ end
 function HideToggleWin:drawwin()
   super(false)
   WindowDeleteAllHotspots (self.win)
-  
-  self:make_hyperlink (self.default_text, "showwin", self.width_padding, self:get_top_of_line(1), 
+
+  self:make_hyperlink (self.default_text, "showwin", self.width_padding, self:get_top_of_line(1), nil, nil,
                     self.parent.togglewindow, self.default_text)
-                 
+
 end
 
 function HideToggleWin:calc_width(minwidth)
   local mwidth = WindowTextWidth (self.win, self.font_id, self.default_text)  + (self.width_padding * 2)
-  
+
   return super(mwidth)
 end
 
