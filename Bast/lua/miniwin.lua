@@ -435,8 +435,8 @@ function Miniwin:drawwin(tshow)
                  self.x, self.y,   -- left, top (auto-positions)
                  width,     -- width
                  height,  -- height
-                 self.windowpos,
-                 0,  -- flags
+                 0,
+                 2,  -- flags
                  self:get_colour("bg_colour")) )
   else
     check (WindowCreate (self.win,
