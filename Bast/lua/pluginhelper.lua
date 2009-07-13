@@ -108,7 +108,7 @@ function print_setting_helper(setting, value, help, ttype)
     end
   end
   ColourNote( "white", "black", string.format("%-20s : ", setting),
-              RGBColourToName(colour), "black", string.format("%-20s", value),
+              RGBColourToName(colour), "black", string.format("%-20s", tostring(value)),
               "white", "black", " - " .. help)
 end
 
@@ -207,7 +207,7 @@ function plugin_set_helper(name, line, wildcards)
       return true
     end
     if not soption then
-      if window and window:set(option, value) then
+      if window and window:set(option, value, false) then
          return true
       else
          nooption()
@@ -430,7 +430,7 @@ end
 
 function togglewindow(name, line, wildcards)
   if window ~= nil then
-    window:togglewindow(window)
+    window:toggle(window)
   end
 end
 
@@ -484,6 +484,7 @@ end
 
 function window_set(twindow)
   window = twindow
+  add_cmd('toggle', {func=togglewindow, help="toggle the miniwindow"})
 end
 
 function option_set_default(opname, opdef)
