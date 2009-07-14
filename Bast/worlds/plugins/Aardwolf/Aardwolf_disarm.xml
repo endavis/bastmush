@@ -53,6 +53,8 @@ w0                    (REMOVES Weapon!)
 
 TODO: automatically rewield primary weapon at end of fight
       use it for dual also
+      change to pluginhelp and have an unlimited number of weapons
+      weapons[#] = {name = name, sn = sn, level = level, damtype = damtype}
 ]]>
 </description>
 
@@ -135,16 +137,23 @@ TODO: automatically rewield primary weapon at end of fight
 require 'tprint'
 require 'aardutils'
 
+fromscript = false
+
 function OnPluginBroadcast (msg, id, name, text)
-  if id == "aaa6dc9ed92ffc6146964abc" then
+  if id == "aaa7dc9ed92ffc6146964abc" then
+    if fromscript then
+      fromscript = false
+      return
+    end
     loadstring(text)()
     local eqitem = item
-    if msg == 1 then
-      if eqitem.place == 'wield' then
-        print("weapon set to", findkeyword(eqitem.item))
-        SetVariable("weapon", findkeyword(eqitem.item))
+    if msg == 2 then
+      if eqitem.place == 'wielded' then
+        print("weapon1 set to", eqitem.itemsn)
+        SetVariable("weapon1", eqitem.itemsn)
+        SetVariable("weapon", eqitem.itemsn)
       end
-    end  
+    end
   end
 end
 
@@ -157,14 +166,15 @@ function OnPluginConnect()
 end
 
 function disarmed(name, line, wildcards, styles)
-
   Note("DISARMED - Attempting to ReArm!")
-  local cweap = world.GetVariable("weapon")
+  local cweap = world.GetVariable("weapon1")
   if cweap == nil then
     Send("get all")
+    fromscript = true
     Send("wield all")
   else
     Send("get " .. cweap)
+    fromscript = true
     Send("wield " .. cweap)
   end
 end
@@ -172,10 +182,12 @@ end
 function disarmed_aard(name, line, wildcards, styles)
 
   Note("DISARMED - Attempting to ReArm!")
-  local cweap = world.GetVariable("weapon")
+  local cweap = world.GetVariable("weapon1")
   if cweap == nil then
+    fromscript = true
     Send("wield all")
   else
+    fromscript = true
     Send("wield " .. cweap)
   end
 end
@@ -259,6 +271,7 @@ function ChooseWeapon(sName, sLine, wildcards)
     else
       Send("get " .. cweap .. " " .. cbag)
     end
+    fromscript = true
     Send("wear " .. cweap)
   end
   SaveState()
@@ -333,6 +346,6 @@ function OnHelp()
   world.Note(GetPluginInfo (GetPluginID(), 3))
 end
 ]]>
-</script> 
+</script>
 
 </muclient>
