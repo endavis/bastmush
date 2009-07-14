@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: broadcast_eq.xml 405 2009-05-30 20:55:20Z endavis $ -->
+<muclient>
+<plugin
+   name="xBroadcast_Invmon"
+   author="Bast"
+   id="aaa7dc9ed92ffc6146964abc"
+   language="Lua"
+   purpose="broadcast invmon"
+   save_state="y"
+   date_written="2009-02-22 14:20:07"
+   requires="4.38"
+   version="1.0"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+Broadcasts when items are worn or removed through invmon
+Broadcasts
+   1 - eq removed, item is passed as text
+       item = { sn = itemsn, place = place}
+   2 - eq worn, item is passed as text
+       item = { sn = itemsn, place = place}
+
+Example
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "aaa7dc9ed92ffc6146964abc" and msg == 1 then
+      -- eq removed
+      loadstring( text )()
+      eqinfo = item
+    end
+  end
+
+]]>
+</description>
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<triggers>
+  <trigger
+   enabled="y"
+   match="^{invmon}(?&lt;action&gt;.*),(?&lt;itemsn&gt;.*),(?&lt;container&gt;.*),(?&lt;location&gt;.*)$"
+   name="invmon"
+   script="broadcast_invmon"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="############# Reconnecting to Game #############"
+   sequence="100"
+   script="check_invmon"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="Welcome to Aardwolf. May your adventures be mystical, challenging and rewarding."
+   sequence="100"
+   script="check_invmon"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   name="invmonon"
+   match="^You will now see inventory update tags.$"
+   sequence="100"
+   script="invmon"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   name="invmonoff"
+   match="^You will no longer see inventory update tags.$"
+   sequence="100"
+   script="invmon"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You remove (?&lt;item&gt;.*) from (around )*your (?&lt;place&gt;.*).$"
+   name="remove1"
+   script="removeeq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You stop using (?&lt;item&gt;.*) as a (?&lt;place&gt;.*).$"
+   name="remove2"
+   script="removeeq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You remove your (?&lt;item&gt;.*).$"
+   name="removecatchall"
+   script="removeeq"
+   sequence="101"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You stop holding (?&lt;item&gt;.*).$"
+   name="removehold"
+   script="removeeq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^(?&lt;item&gt;.*) stops floating (?&lt;place&gt;.*) you.$"
+   name="remfloat"
+   script="removeeq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="You remove (?&lt;item>.*), making the room a little darker.$"
+   name="removelight"
+   script="removeeq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You stop wielding (?&lt;item&gt;.*) in your off-hand.$"
+   name="removeoff"
+   script="removeeq"
+   sequence="99"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You stop wielding (?&lt;item&gt;.*) in your primary hand.$"
+   name="removewield"
+   script="removeeq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You wear (?&lt;item&gt;.*) (around|on) your (?&lt;place&gt;.*).$"
+   name="wear1"
+   script="weareq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You (equip|wear) (?&lt;item&gt;.*) as a (?&lt;place&gt;.*).$"
+   name="wear2"
+   script="weareq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You equip your (?&lt;item&gt;.*)\. (.*)\.$"
+   name="wearcatchall"
+   script="weareq"
+   sequence="101"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You hold (?&lt;item&gt;.*) in your hand.$"
+   name="wearhold"
+   script="weareq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^(?&lt;item&gt;.*) begins floating (?&lt;place&gt;.*) you.$"
+   name="wearfloat"
+   script="weareq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="You light (?&lt;item&gt;.*) and hold it.$"
+   name="wearlight"
+   script="weareq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You proudly pin (?&lt;item&gt;.*) to your (?&lt;place&gt;.*).$"
+   name="wearpin"
+   script="weareq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You wield (?&lt;item&gt;.*) in your off-hand.$"
+   name="wieldoff"
+   script="weareq"
+   sequence="99"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   match="^You wield (?&lt;item&gt;.*).$"
+   name="wield"
+   script="weareq"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^You are not wearing that item.$"
+   name="removefail"
+   script="removeeq"
+   sequence="100"
+   regexp="n"
+   omit_from_output="n"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^You do not have that item.$"
+   name="wearfail"
+   script="weareq"
+   sequence="100"
+   regexp="n"
+   omit_from_output="n"
+  >
+  </trigger>
+</triggers>
+
+
+
+<script>
+<![CDATA[
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "verify"
+require "aardutils"
+
+item = {}
+item_name = ''
+
+function check_invmon()
+  if not verify_bool(var.isinvmonon) then
+    SendNoEcho('invmon on')
+  end
+end
+
+function invmon ( name, line, wildcards )
+  if name == "invmonon" then
+    var.isinvmonon = true
+  elseif name == "invmonoff" then
+    var.isinvmonon = false
+  end
+end
+
+
+function builditem(wildcards)
+  item = {}
+  item.place = wearlocs[tonumber(wildcards.location) + 1] or -1
+  item.itemsn = wildcards.itemsn
+  item.container = wildcards.container
+  item.name = item_name
+end
+
+function broadcast_invmon ( name, line, wildcards )
+  if tonumber(wildcards.action) ~= 1 then
+    builditem(wildcards)
+    local items = serialize.save( "item", item )
+    broadcast(wildcards.action, items, items)
+    name = ''
+  else
+    builditem(wildcards)
+  end
+end
+
+function removeeq ( name, line, wildcards )
+  item.name = wildcards.item
+  local items = serialize.save( "item", titem )
+  broadcast(1, items, items)
+  name = ''
+end
+
+function weareq ( name, line, wildcards )
+  item_name = wildcards.item
+end
+
+function OnPluginEnable ()
+  -- if we are connected when the plugin loads, it must have been reloaded whilst playing
+  if IsConnected () then
+    check_invmon()
+  end -- if already connected
+end
+
+function OnPluginDisable ()
+  BroadcastPlugin(-1)
+end
+
+
+function OnPluginSaveState ()
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
+function OnPluginInstall ()
+
+ if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+
+  -- if we are connected when the plugin loads, it must have been reloaded whilst playing
+  if IsConnected () then
+    check_invmon()
+  end -- if already connected
+
+end -- OnPluginInstall
+]]>
+</script>
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+add_option('isinvmonon', {help="is the invmon command on", type="bool", readonly=true, verify_bool(false)})
+
+option_set_default('cmd', 'bimon')
+option_set_default('plugin_colour', 'orange')
+
+init_plugin_vars()
+set_plugin_alias()
+]]>
+</script>
+</muclient>
