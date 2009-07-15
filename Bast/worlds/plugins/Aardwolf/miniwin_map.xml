@@ -79,14 +79,14 @@ Redirects the map to a mini window.
 <![CDATA[
 require 'var'
 require 'pluginhelper'
-require "togglewin"
+require "miniwin"
 require "tprint"
 require "commas"
 require "serialize"
 
 
-mapwin = Togglewin{name="Map", header_height=2, width=31, height=19}
-mapwin:disable()
+mapwin = Miniwin{name="Map"}
+mapwin:set('header_height', 2)
 
 map_lines = {}
 coords = nil
@@ -141,7 +141,6 @@ function map_redirect (name, line, wildcards, styles)
       map_lines[#map_lines - 1] = coords
     end
     EnableTrigger ("multi_line_map", false)  -- no more lines to go
-    mapwin:enable()
     if #map_lines > 19 then
       if trim(map_lines[2][1].text) == "" then
         table.remove(map_lines, 2)
@@ -149,6 +148,7 @@ function map_redirect (name, line, wildcards, styles)
         table.remove(map_lines, 3)
       end
     end
+    mapwin:enable()
     mapwin:createwin(map_lines)
   else
     for i,v in ipairs(styles) do
@@ -158,30 +158,22 @@ function map_redirect (name, line, wildcards, styles)
   end -- if
 
 end -- function map_redirect
+]]>
+</script>
 
-function OnPluginInstall ()
-
-  if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    mapwin:disable()
-    return
-  end -- they didn't enable us last time
-
-  OnPluginEnable ()  -- do initialization stuff
-
-end -- OnPluginInstall
-
+<script>
+<![CDATA[
 -- pull in telnet option handling
 dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
 
-function OnPluginConnect ()
-  TelnetOptionOn (TELOPT_AUTOMAP)
-  TelnetOptionOff (TELOPT_SHORTMAP)
-  TelnetOptionOn (TELOPT_MAP)
-  TelnetOptionOn (TELOPT_ROOM_NAMES)
-  TelnetOptionOn (TELOPT_EXIT_NAMES)
-end -- function OnPluginConnect
+function OnPluginBroadcast (msg, id, name, text)
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
 
 function OnPluginClose ()
   -- if enabled
@@ -190,16 +182,13 @@ function OnPluginClose ()
     TelnetOptionOff (TELOPT_ROOM_NAMES)
     TelnetOptionOff (TELOPT_EXIT_NAMES)
   end -- if was enabled
+
+  PluginhelperOnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
 
-  -- if we are connected when the plugin loads, it must have been reloaded whilst playing
-  if IsConnected () then
-    OnPluginConnect ()
-  end -- if already connected
-  mapwin:enable()
-
+  PluginhelperOnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
@@ -207,13 +196,22 @@ function OnPluginDisable ()
   TelnetOptionOff (TELOPT_ROOM_NAMES)
   TelnetOptionOff (TELOPT_EXIT_NAMES)
 
-  mapwin:disable()
+  PluginhelperOnPluginDisable()
 end -- OnPluginDisable
 
+function OnPluginConnect ()
+  TelnetOptionOn (TELOPT_AUTOMAP)
+  TelnetOptionOff (TELOPT_SHORTMAP)
+  TelnetOptionOn (TELOPT_MAP)
+  TelnetOptionOn (TELOPT_ROOM_NAMES)
+  TelnetOptionOn (TELOPT_EXIT_NAMES)
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
 function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)
-  mapwin:savestate()
+
+  PluginhelperOnPluginSaveState(options_table)
 end -- function OnPluginSaveState
 
 ]]>
@@ -238,8 +236,6 @@ end -- function OnPluginSaveState
 
 option_set_default('cmd', 'mw')
 option_set_default('plugin_colour', 'steelblue')
-
-add_cmd('toggle', {func=togglewindow, help="toggle the campaign miniwindow"})
 
 window_set(mapwin)
 
