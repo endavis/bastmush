@@ -62,20 +62,21 @@ require "commas"
 -- var is required for pluginhelper below
 require "var"
 require "pluginhelper"
-
--- required for toggle window functions
-require "togglewin"
+require "miniwin"
 require "ldplugin"
 require "verify"
 
-moonwin = Togglewin{name="Moons", windowpos=4, font_size=8, font="DejaVu Sans Mono", text_colour="gold"}
-moonwin:disable()
+moonwin = Miniwin{name="Moons"}
+moonwin:set('windowpos', 4)
+moonwin:set('font_size', 8)
+moonwin:set('font', 'DejaVu Sans Mono')
+moonwin:set('text_colour', 'gold')
 moonwin:add_setting("black_colour", {help="the colour for the black moon", type="colour", default=verify_colour("midnightblue"), sortlev=1})
 moonwin:add_setting("white_colour", {help="the colour for the white moon", type="colour", default=verify_colour("white"), sortlev=1})
 moonwin:add_setting("grey_colour", {help="the colour for the grey moon", type="colour", default=verify_colour("dimgray"), sortlev=1})
 moonwin:add_setting("three_colour", {help="the colour for the when three moons are up", type="colour", default=verify_colour("lime"), sortlev=2})
-moonwin:add_setting("three_bg_colour", {help="the colour for the background when the three moons are up", type="colour", default=verify_colour("bg_colour", {window = moonwin}), sortlev=2})
-
+moonwin:add_setting("three_bg_colour", {help="the colour for the background when the three moons are up", type="colour", default="bg_colour", sortlev=2})
+moonwin:disable()
 
 countdown = nil
 countdowndur = nil
@@ -95,7 +96,6 @@ function styleplotdata()
   if (moons.black.now == nil ) or
      (moons.grey.now == nil ) or
      (moons.white.now == nil ) then
-     moonwin:disable()
      return
   end
 
@@ -158,14 +158,22 @@ function styleplotdata()
     mstyle.len = #mstyle.text
     mstyle.start = "mid"
     mstyle.textcolour = 'three_colour'
-    moonwin.winhide:createwin({"", {mstyle}})
+    if moonwin.usetab then
+
+    else
+      --moonwin.winhide:createwin({"", {mstyle}})
+    end
   else
     style.text = "Next Union in " .. tostring(offset) .. " ticks for " .. tostring(duration) .. " ticks."
     local mstyle = {}
     mstyle.text = tostring(offset) .. ":" .. tostring(duration)
     mstyle.len = #mstyle.text
     mstyle.start = "mid"
-    moonwin.winhide:createwin({"", {mstyle}})
+    if moonwin.usetab then
+
+    else
+      --moonwin.winhide:createwin({"", {mstyle}})
+    end
   end
   max_width = math.max (max_width, #style.text)
   style.len = #style.text
@@ -300,64 +308,50 @@ function nextunion()
   end
 end -- nextunion()
 
+]]>
+</script>
+
+<script>
+<![CDATA[
 function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa70b4680508448e19b8b25" and msg == 1 then
     ontick()
   end
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall()
-  if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    moonwin:disable()
-    return
-  end -- they didn't enable us last time
-  OnPluginEnable ()  -- do initialization stuff
-  plugin_help_helper("", "", "", cmds_table)
+
+  PluginhelperOnPluginInstall ()  -- do initialization stuff
 end -- OnPluginInstall
 
 function OnPluginClose()
-  ColourNote( "white", "black", "Plugin ",
-              RGBColourToName(var.plugin_colour),  "black",  GetPluginName(),
-          "white", "black", " closed." )
-  moonwin:disable()
+
+  PluginhelperOnPluginClose()
 end -- OnPluginClose
 
-function OnPluginDisable ()
-  moonwin:disable()
-end -- OnPluginDisable
-
-function OnPluginSaveState()
-  plugin_save_vars(options_table)
-  moonwin:savestate()
-end
-
 function OnPluginEnable ()
+
   ldplugin("broadcast_tick")
-  moonbot_reset()
+  PluginhelperOnPluginEnable()
 end -- OnPluginEnable
 
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
 function OnPluginConnect ()
+
   moonbot_reset()
+  PluginhelperOnPluginConnect()
 end -- OnPluginConnect
 
-function moonbot_union(name, line, wildcards)
-  print(nextunion())
-  return true
-end -- moonbot_union
+function OnPluginSaveState()
 
-function moonbot_reset()
-  for i,v in pairs(moons) do
-    moons[i].now = nil
-  end
-  countdown = nil
-  countdowndur = nil
-  moonwin:disable()
-  ColourNote("", "", "")
-  ColourNote( "orange",  "black", "Moonbot reset" )
-  ColourNote("", "", "")
-end -- moonbot_reset
+  PluginhelperOnPluginSaveState()
+end
+
 ]]>
 </script>
 
@@ -380,6 +374,23 @@ end -- moonbot_reset
 <script>
 <![CDATA[
 
+function moonbot_union(name, line, wildcards)
+  print(nextunion())
+  return true
+end -- moonbot_union
+
+function moonbot_reset()
+  for i,v in pairs(moons) do
+    moons[i].now = nil
+  end
+  countdown = nil
+  countdowndur = nil
+  moonwin:disable()
+  ColourNote("", "", "")
+  ColourNote( "orange",  "black", "Moonbot reset" )
+  ColourNote("", "", "")
+end -- moonbot_reset
+
 add_option('plotlength', {help="set the length of the moon plot", type="number", high=80, low=0, after=styleplotdata, default=66})
 
 option_set_default('cmd', 'mb')
@@ -388,7 +399,6 @@ option_set_default('plugin_colour', 'lime')
 add_cmd('plot', {func=plotdata, help="plot moons"})
 add_cmd('union', {func=moonbot_union, help="show next moons union"})
 add_cmd('print', {func=printmoons, help="print the current moon phase #s"})
-add_cmd('toggle', {func=togglewindow, help="toggle the moons miniwindow"})
 add_cmd('mreset', {func=moonbot_reset, help="reset the moons"})
 
 window_set(moonwin)
