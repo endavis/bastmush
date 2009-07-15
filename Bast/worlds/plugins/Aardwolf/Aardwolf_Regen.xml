@@ -20,15 +20,18 @@
 <description trim="y">
 <![CDATA[
 This plugin is designed to wear the regen ring in certain rooms and when sleeping
+The regen ring must be in your inventory and not in a container
 
 It will wear the regen ring when
   sleeping
   when entering a regen room
     To add a room, go to that room and type "regen add"
+  when idling
 
 It will remove the regen ring when
   standing
   when leaving a regen room
+  when you stop idling
 
 Requires swalec's aardwolf exit detector
 ]]>
@@ -80,14 +83,14 @@ function OnPluginSaveState ()
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
   SetVariable ("regenrooms",
                "regenrooms = " .. serialize.save_simple (regenrooms))
-  plugin_save_vars(options_table)
+  PluginhelperOnPluginSaveState()
 end -- OnPluginSaveState
 
 function OnPluginEnable ()
 
   ldplugin ("Aardwolf_Exits_Detector")
   ldplugin ("broadcast_state")
-  ldplugin ("broadcast_eq")
+  ldplugin ("broadcast_invmon")
 
 end
 
@@ -118,7 +121,7 @@ function OnPluginBroadcast (msg, id, name, text)
         return
       end
 
-      if verify_bool(var.inregen) and ((not regenworn) or tryremove) then
+      if verify_bool(var.inregen) and ((not verify_bool(var.regenworn)) or tryremove) then
         wear_regen()
         return
       end
@@ -139,26 +142,25 @@ function OnPluginBroadcast (msg, id, name, text)
         remove_regen()
       end
     end
-  elseif id == "aaa6dc9ed92ffc6146964abc" then
+  elseif id == "aaa7dc9ed92ffc6146964abc" then
     loadstring(text)()
     eqitem = item
-    if msg == 1 then
+    if msg == 2 then
       if eqitem.place == "lfinger" then
-        if eqitem.item ~= "Aardwolf Ring of Regeneration" then
-
-        elseif eqitem.item == "Aardwolf Ring of Regeneration" then
+        if eqitem.name == "Aardwolf Ring of Regeneration" then
           var.regenworn = true
+          var.regensn = eqitem.itemsn
           trywear = false
           SaveState()
         end
       end
-    elseif msg == 2 then
+    elseif msg == 1 then
       if eqitem.place == "lfinger" then
-        if eqitem.item ~= "Aardwolf Ring of Regeneration" then
-          var.oldring = findkeyword(eqitem.item)
-          var.oldringdesc = eqitem.item
+        if eqitem.name ~= "Aardwolf Ring of Regeneration" then
+          var.oldringsn = eqitem.itemsn
+          var.oldringdesc = eqitem.name
           SaveState()
-        elseif eqitem.item == "Aardwolf Ring of Regeneration" then
+        elseif eqitem.name == "Aardwolf Ring of Regeneration" then
           var.regenworn = false
           tryremove = false
           SaveState()
@@ -169,6 +171,9 @@ function OnPluginBroadcast (msg, id, name, text)
 end
 
 function check_room(room)
+  if not room or not current_room then
+    return false
+  end
   room = trim(string.gsub(current_room, "%(G%)", ""))
   if regenrooms[room] == 1 then
     return true
@@ -224,27 +229,6 @@ function show_rooms(name, line, wildcards)
   ColourNote("", "", "")
 end
 
-function findkeyword(item)
-  wlist = utils.split(item, " ")
-  badwords = {
-    ring = 1,
-    aardwolf = 1,
-    of = 1,
-    the = 1,
-    davinci = 1,
-    a = 1,
-    an = 1,
-  }
-  local name = ""
-  for i,v in ipairs(wlist) do
-    if badwords[string.lower(v)] ~= 1 then
-      name = v
-      break
-    end
-  end
-  return string.lower(name)
-end
-
 function wear_regen()
   if verify_bool(var.off) == true then
     return
@@ -255,7 +239,11 @@ function wear_regen()
   if not verify_bool(var.regenworn) or tryremove then
     trywear = true
     --DoAfterSpecial (3, 'try_wear()', sendto.script)
-    Send("wear regen lfinger")
+    if var.regensn then
+      Send("wear " .. var.regensn .. " lfinger")
+    else
+      Send("wear regen lfinger")
+    end
   end
 end
 
@@ -265,7 +253,7 @@ function remove_regen()
   end
   if verify_bool(var.regenworn) or trywear then
     tryremove = true
-    Send("wear " .. var.oldring .. " lfinger")
+    Send("wear " .. var.oldringsn .. " lfinger")
   end
 end
 
@@ -309,7 +297,8 @@ end
 
 add_option('inregen', {help="whether you are in a room in the regen room list", type="bool", default=verify_bool(false), readonly=true})
 add_option('regenworn', {help="whether you are wearing a regen ring", type="bool", default=verify_bool(false), readonly=true})
-add_option('oldring', {help="the keyword for the old ring", type="string", default="", readonly=true})
+add_option('regensn', {help="the sn for the regen ring", type="string", default="", readonly=true})
+add_option('oldringsn', {help="the sn for the old ring", type="string", default="", readonly=true})
 add_option('oldringdesc', {help="the description for the old ring", type="string", default="", readonly=true})
 add_option('off', {help="turn off wearing ring", type="bool", default=verify_bool(true)})
 
