@@ -96,6 +96,24 @@ function Togglewin:togglewindow()
   self:show()
 end
 
+function Togglewin:drawwin()
+  super()
+  if self.show_hyperlinks == 1 then
+    if self.header_height > 0 then
+      self:make_hyperlink ('X', "hidewin", WindowInfo(self.win,3) - (3 * self.font_width), self:get_top_of_line(self.header_height), nil, nil,
+                    self.togglewindow, 'Hide Window')
+    else
+      self:make_hyperlink ('X', "hidewin", WindowInfo(self.win,3) - (3 * self.font_width), self:get_top_of_line(-1), nil, nil,
+                    self.togglewindow, 'Hide Window')
+    end
+  end
+  if self.parent.x ~= -1 and self.parent.y ~= -1 then
+    WindowPosition(self.win, self.parent.x, self.parent.y, 0, 2)
+  else
+    WindowPosition(self.win, 0, 0, self.parent.windowpos, 0)
+  end
+end
+
 function Togglewin:set(option, value)
   retfunc = super(option, value)
   self.winhide:drawwin()
