@@ -34,9 +34,12 @@ require 'tprint'
 require 'pluginhelper'
 require 'ldplugin'
 
-gqwin = Miniwin{name="GQ", windowpos=7, font_size=7, font="Verdana", header_height=0}
+gqwin = Miniwin{name="GQ"}
+gqwin:set('windowpos', 7)
+gqwin:set('font_size', 7)
+gqwin:set('font', 'Verdana')
+gqwin:set('header_height', 0)
 gqwin:disable()
-
 
 gqmobs = {}
 gq_text = {}
@@ -84,7 +87,11 @@ function show_gq ()
   gqwin:enable()
   gqwin:createwin(gq_text)
 end -- show_quest_text
+]]>
+</script>
 
+<script>
+<![CDATA[
 function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa77f81c5408278ccda7100" then
     if msg == 1 then
@@ -111,36 +118,38 @@ function OnPluginBroadcast (msg, id, name, text)
     end
 
   end -- gq broadcast
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
 
-  if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    gqwin:disable()
-    return
-  end -- they didn't enable us last time
-
   ldplugin("broadcast_gq")
-
-  OnPluginEnable ()  -- do initialization stuff
-
-
+  PluginhelperOnPluginInstall()
 end -- OnPluginInstall
 
-function OnPluginDisable ()
-  gqwin:disable()
-end -- OnPluginDisable
+function OnPluginClose()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
 
 function OnPluginEnable ()
-  return
+
+  PluginhelperOnPluginEnable()
 end -- OnPluginEnable
 
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- OnPluginConnect
+
 function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)
-  gqwin:savestate()
+
+  PluginhelperOnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
