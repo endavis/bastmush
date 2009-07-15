@@ -34,15 +34,17 @@ TODO:
 <![CDATA[
 require 'var'
 require "commas"
-require 'togglewin'
+require 'miniwin'
 require 'tprint'
 require 'pluginhelper'
 require 'ldplugin'
 
-cpwin = Togglewin{name="CP", windowpos=7, font_size=7, font="Verdana"}
-cpwin:disable()
+cpwin = Miniwin{name="CP"}
+cpwin:set('windowpos', 7)
+cpwin:set('font_size', 7)
+cpwin:set('font', 'Verdana')
 cpwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
-
+cpwin:disable()
 
 cpmobs = {}
 cptimer = {}
@@ -58,8 +60,6 @@ function show_cp_text ()
   if #cpmobs == 0 or not next(cptimer) then
     return
   end -- if
-
-  cpwin:enable()
 
   -- heading
   style = {}
@@ -84,11 +84,16 @@ function show_cp_text ()
   style.style = 0
   table.insert (texttable, {style})
 
+  cpwin:enable()
   cpwin:createwin(texttable)
 
 end -- show_cp_text
 
+]]>
+</script>
 
+<script>
+<![CDATA[
 function OnPluginBroadcast (msg, id, name, text)
  if id == "aaa66f81c50828bbbfda7100" then
     if msg == 1 then
@@ -112,38 +117,39 @@ function OnPluginBroadcast (msg, id, name, text)
     end
 
   end -- cp broadcast
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
 
-  if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    cpwin:disable()
-    return
-  end -- they didn't enable us last time
-
   ldplugin("broadcast_cp")
-
-  OnPluginEnable ()  -- do initialization stuff
-
-
+  PluginhelperOnPluginInstall()
 end -- OnPluginInstall
 
-function OnPluginDisable ()
-  cpwin:disable()
-end -- OnPluginDisable
+function OnPluginClose()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
 
 function OnPluginEnable ()
-  --cpwin:enable()
+
+  PluginhelperOnPluginEnable()
 end -- OnPluginEnable
 
-function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)
-  cpwin:savestate()
-end -- function OnPluginSaveState
+function OnPluginDisable ()
 
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
 ]]>
 </script>
 
@@ -169,7 +175,6 @@ option_set_default('plugin_colour', 'steelblue')
 
 cmd_update('help', 'send_to_world', true)
 
-add_cmd('toggle', {func=togglewindow, help="toggle the campaign miniwindow"})
 add_cmd('check', {func=nofunc, help="", send_to_world=false})
 
 set_send_to_world(true)
