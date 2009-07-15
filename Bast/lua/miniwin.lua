@@ -25,6 +25,7 @@ require 'class'
 require 'tprint'
 require 'verify'
 require 'pluginhelper'
+require 'serialize'
 
 class "Miniwin"
 
@@ -37,6 +38,7 @@ function Miniwin:initialize(args)
       header_height, header_text_colour,
       text_colour, ishidden
   --]]
+  self.set_options = {}
   self.name = args.name or "Default"
   self.win = GetPluginID()..self.name
   self.parent = args.parent or nil
@@ -52,51 +54,39 @@ function Miniwin:initialize(args)
   self.starty = 0
   self.origx = 0
   self.origy = 0
+  self.firstdrawn = true
   self.drag_hotspot = self.name .. "_drag_hotspot"
 
 
   -- below are things that can be kept as settings
-  self.disabled = tonumber (GetVariable ("disabled"..self.name)) or args.disabled or 0
-  self.header_height = tonumber (GetVariable ("header_height"..self.name)) or args.header_height or 1
   self.header_padding = 2
+  self.shutdownf = false
+  self.plugininit = false
+  self.classinit = true
+  self:add_setting( 'disabled', {type="bool", help="is this window disabled", default=verify_bool(false), sortlev=38, readonly=true})
+  self:add_setting( 'windowpos', {type="number", help="position for this window: see http://www.gammon.com.au/scripts/function.php?name=WindowCreate", low=0, high=13, default=6,sortlev=38})
+  self:add_setting( 'x', {type="number", help="x location of this window, -1 = auto", default=-1, sortlev=39})
+  self:add_setting( 'y', {type="number", help="y location of this window, -1 = auto", default=-1, sortlev=39})
+  self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x00220E, sortlev=40})
+  self:add_setting( 'text_colour', {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=40})
+  self:add_setting( 'header_bg_colour', {type="colour", help="header colour for this window", default=0x696969, sortlev=41})
+  self:add_setting( 'header_text_colour', {type="colour", help="header text colour for this window", default=0x00FF00, sortlev=41})
+  self:add_setting( 'header_height', {type="number", help="the header height", default=1, low=0, high=10, sortlev=41})
+  self:add_setting( 'footer_bg_colour', {type="colour", help="footer colour for this window", default=0x696969, sortlev=42})
+  self:add_setting( 'footer_text_colour', {type="colour", help="footer text colour for this window", default=0x00FF00, sortlev=42})
+  self:add_setting( 'font_size', {type="number", help="font_size for this window", low=2, high=30, default=8, sortlev=43})
+  self:add_setting( 'font', {type="string", help="change the font for this window", default="courier new", sortlev=43})
+  self:add_setting( 'width', {type="number", help="width of this window, 0 = auto", low=0, high=100, default=0, sortlev=44})
+  self:add_setting( 'height', {type="number", help="height of this window, 0 = auto", low=0, high=140, default=0, sortlev=44})
+  self:add_setting( 'height_padding', {type="number", help="height padding for this window", low=0, high=30, default=5, sortlev=44})
+  self:add_setting( 'width_padding', {type="number", help="width padding for this window", low=0, high=30, default=5, sortlev=44})
+  self.classinit = false
 
-  self.set_options = {
-    bg_colour = {type="colour", help="background colour for this window", default=0x00220E, sortlev=40},
-    header_bg_colour = {type="colour", help="header colour for this window", default=0x696969, sortlev=41},
-    header_text_colour = {type="colour", help="header text colour for this window", default=0x00FF00, sortlev=41},
-    hyperlink_colour = {type="colour", help="hyperlink colour for this window", default=0x00FFFF},
-    text_colour = {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=40},
-    font_size = {type="number", help="font_size for this window", low=2, high=30, default=8, sortlev=43},
-    font = {type="string", help="change the font for this window", default="courier new", sortlev=43},
-    height_padding = {type="number", help="height padding for this window", low=0, high=30, default=5, sortlev=44},
-    width_padding = {type="number", help="width padding for this window", low=0, high=30, default=5, sortlev=44},
-    windowpos = {type="number", help="position for this window: see http://www.gammon.com.au/scripts/function.php?name=WindowCreate", low=0, high=13, default=6,sortlev=39},
-    show_hyperlinks = {type="number", help="show the default hyperlinks", low=0, high=1, default=0},
-    footer_bg_colour = {type="colour", help="footer colour for this window", default=0x696969, sortlev=42},
-    footer_text_colour = {type="colour", help="footer text colour for this window", default=0x00FF00, sortlev=42},
-    width = {type="number", help="width of this window, 0 = auto", low=0, high=100, default=0, sortlev=44},
-    height = {type="number", help="height of this window, 0 = auto", low=0, high=140, default=0, sortlev=44},
-    x = {type="number", help="x location of this window, -1 = auto", default=-1, sortlev=39},
-    y = {type="number", help="y location of this window, -1 = auto", default=-1, sortlev=39},
-  }
-
-  for i,v in pairs(self.set_options) do
-    if args[i] then
-      local tval = verify(args[i], v.type, {low=v.low, high=v.high, silent=true})
-      if tval then
-        v.default = tval
-      end
-    end
-    local tvalue = (GetVariable (i..self.name)) or args[i]
-    if tvalue ~= nil then
-      tvalue = verify(tvalue, v.type, {low=v.low, high=v.high, silent=true})
-    end
-    self[i] = tvalue or v.default
-  end
+  self:add_setting( 'hyperlink_colour', {type="colour", help="hyperlink colour for this window", default=0x00FFFF})
+  self:add_setting( 'show_hyperlinks', {type="number", help="show the default hyperlinks", low=0, high=1, default=0})
 
   self.default_font = nil
   self:getdefaultfont()
-  self.skeys = sort_settings(self.set_options)
 
   self:changefont(self.font, true)
 
@@ -110,11 +100,15 @@ function Miniwin:reset()
 end
 
 function Miniwin:savestate()
+  mdebug(self.name, 'savestate')
   for i,v in pairs(self.set_options) do
-    SetVariable(i .. self.name, self[i])
+    SetVariable(i .. self.name, tostring(self[i]))
   end
-  SetVariable ("disabled"..self.name, self.disabled)
-  SetVariable ("header_height"..self.name, self.header_height)
+  tshownf = tostring(WindowInfo(self.win, 5))
+  if not self.shutdownf and not self.plugininitf then
+    mdebug("saving shown as", tshownf)
+    SetVariable ("shown"..self.name, tshownf)
+  end
 end
 
 function Miniwin:NotifyChildren()
@@ -196,29 +190,76 @@ function Miniwin:changefont(font, from_init)
 end
 
 
-function Miniwin:display()
-  self:show(true)
+function Miniwin:createwin (text)
+  mdebug('createwin')
+  if not next(text) then
+    return
+  end
+  self.text = text
+  tshow = WindowInfo(self.win, 5)
+  if tshow == nil then
+    tshow = false
+  end
+  self:drawwin()
+  if self.firstdrawn then
+    flag = verify_bool(GetVariable ("shown"..self.name))
+    mdebug('shown', flag)
+    mdebug('firstdrawn', self.firstdrawn)
+    self.firstdrawn = false
+    if flag == nil then
+      flag = false
+    end
+    WindowShow(self.win, flag)
+  else
+    self:show(tshow)
+  end
 end
 
-
 function Miniwin:show(flag)
-  if self.disabled == 1 then
+  if flag == nil then
+    flag = false
+  end
+  if self.disabled then
     WindowShow(self.win, false)
     return
   end
   WindowShow(self.win, flag)
 end
 
+function Miniwin:shutdown()
+  self.shutdownf = true
+end
+
+function Miniwin:init()
+  self.plugininitf = true
+end
+
 function Miniwin:enable()
-  self.disabled = 0
-  self:show(true)
+  mdebug("enable", self.name)
+  self.shutdownf = false
+  if self.plugininitf then
+    self.plugininitf = false
+    self:tabbroadcast(true)
+  end
+  if self.disabled then
+    self.disabled = false
+    self:tabbroadcast(true)
+  end
 end
 
 function Miniwin:disable()
-  self.disabled = 1
+  mdebug("disable", self.name)
+  self.disabled = true
+  self.firstdrawn = true
   WindowShow(self.win, false)
+  self:tabbroadcast(false)
+  self:savestate()
 end
 
+function Miniwin:toggle()
+  WindowShow(self.win, not WindowInfo(self.win, 5))
+  self:savestate()
+end
 
 function Miniwin:mousedown (flags, hotspotid)
 
@@ -285,13 +326,52 @@ function Miniwin:make_hyperlink (text, id, left, top, right, bottom, action, hin
 
 end -- make_hyperlink
 
-function Miniwin:createwin (text)
-  if not next(text) then
+function Miniwin:make_hyperlink_from_text (text, id, line, left, action, hint, cursor, absolute)
+--[[
+  local style = {}
+  style.text = string.format ("Time to go: %s", quest_timer.text)
+  style.len = #style.text
+  style.textcolour = 'time_colour'
+  style.style = 0
+--]]
+
+  if text ~= nil and text ~= '' then
+    if type(text) ~= "table" then
+      local style = {}
+      style.text = text
+      style.len = #style.text
+      style.textcolour = self.hyperlink_colour
+      style.start = left
+      text = style
+    end
+  else
+    print("No text for make_hyperlink_from_text")
     return
   end
-  self.text = text
-  self:drawwin()
-end
+  top = self:get_top_of_line(line)
+  bottom = top + self.font_height
+
+  --local retval = WindowText (self.win, self.font_id, text, left, top, right, bottom, self.hyperlink_colour)
+  if text then
+    start, right = self:Display_Line(line, {text}, absolute)
+  end
+
+  --mdebug("Hotspot left", start, "right", right, "top", top, "bottom", bottom)
+  WindowAddHotspot(self.win, id,
+                    start, top, right, bottom,
+                   "", -- mouseover
+                   "", -- cancelmouseover
+                   "mousedown",
+                   "", -- cancelmousedown
+                   "", -- mouseup
+                   hint,
+                   cursor or 1, 0)
+
+  self.hyperlink_functions [id] = action
+
+  return right
+
+end -- make_hyperlink
 
 function Miniwin:get_colour(colour, default, return_original)
   local return_orig = return_original or false
@@ -349,23 +429,27 @@ function Miniwin:get_top_of_line(line)
 
 end
 
-function Miniwin:Display_Line (line, styles)
+function Miniwin:Display_Line (line, styles, absolute)
   local id = self.font_id
   local colour = self:get_colour("text_colour")
   local bg_colour = self:get_colour("bg_colour")
   local left = self.width_padding
+  if absolute then
+    left = 0
+  end
+  local start = -1
   local top = self:get_top_of_line(line)
-  if line <= self.header_height then
+  if line <= self.header_height and line > 0 then
     id = self.font_id_bold
     colour = self:get_colour("header_text_colour")
     bg_colour = self:get_colour("header_bg_colour")
   end
-
+  --tprint(styles)
   if type(styles) == "table" then
     for _, v in ipairs (styles) do
+      local tlength = WindowTextWidth (self.win, self.font_id, v.text)
       if v.start then
         if v.start == "mid" then
-          local tlength = WindowTextWidth (self.win, self.font_id, v.text)
           local mid = (self.current_width / 2)  - (tlength / 2) - self.width_padding
           left = left + mid
         else
@@ -376,17 +460,38 @@ function Miniwin:Display_Line (line, styles)
       if v.backcolour and not (v.backcolour == 'bg_colour') then
         -- draw background rectangle
         local bcolour = self:get_colour(v.backcolour, bg_colour)
-        local tlength = WindowTextWidth (self.win, self.font_id, v.text)
         WindowRectOp (self.win, 2, left, top, left + tlength, top + self.font_height, bcolour)
       end
-      left = left +  WindowText (self.win, id, v.text,
-                             left, top, 0, 0, tcolour)
+      if start == -1 then
+         start = left
+      end
+      local tstart = left
+      local textlen = WindowText (self.win, id, v.text,
+                      left, top, 0, 0, tcolour)
+      left = left + textlen
+      --mdebug("Style Text", v.text, "left", tstart, "right", left, "top", top, "bottom", top + self.font_height)
     end -- for each style run
   else
-    WindowText (self.win, id, styles, left, top, 0, 0, colour)
+    local tstart = left
+    local textlen = WindowText (self.win, id, styles, left, top, 0, 0, colour)
+    left = left + textlen
+    --mdebug("Text", styles, "left", tstart, "right", left, "top", top, "bottom", top + self.font_height)
   end
+  return start, left
 
 end -- Display_Line
+
+function Miniwin:calc_text_width(text)
+  length = 0
+  if type(text) == "table" then
+    for _, v in ipairs (text) do
+      length = length + WindowTextWidth(self.win, self.font_id, v.text)
+    end
+  else
+    length = length + WindowTextWidth (self.win, self.font_id, text)
+  end
+  return length
+end
 
 function Miniwin:calc_width(minwidth)
   minwidth = minwidth or 0
@@ -413,16 +518,15 @@ function Miniwin:calc_width(minwidth)
 end
 
 function Miniwin:calc_height()
-  if self.height == 0 then
+  if self.height == 0 or self.height == nil then
      return (#self.text) * self.font_height + (self.height_padding * 2) + self.header_padding
   else
      return self.height * self.font_height + (self.height_padding * 2) + self.header_padding
   end
 end
 
-function Miniwin:drawwin(tshow)
+function Miniwin:drawwin()
   --print("Got past text check")
-  tshow = tshow or true
   if not next(self.text) then
     return
   end
@@ -471,52 +575,52 @@ function Miniwin:drawwin(tshow)
   end -- for
 
   if self.show_hyperlinks == 1 then
-    self:make_hyperlink ("?", "bg_colour", width - (2 * self.font_width), self:get_top_of_line(-1), nil, nil,
-                    self.hyperlink_configure_background, "Choose background colour")
+    self:make_hyperlink_from_text ("?", "bg_colour", -1, width - (2 * self.font_width),
+                    self.hyperlink_configure_background, "Choose background colour", nil, true)
 
     if self.header_height > 0 then
-      self:make_hyperlink ("?", "header_bg_colour", width - (2 * self.font_width), self:get_top_of_line(self.header_height), nil, nil,
-                    self.hyperlink_configure_header, "Choose header background colour")
-
-      self:make_hyperlink ('-', "hidewin", width - (3 * self.font_width), self:get_top_of_line(self.header_height), nil, nil,
-                    self.togglewindow, 'Hide Window')
-    else
-      self:make_hyperlink ('-', "hidewin", width - (3 * self.font_width), self:get_top_of_line(-1), nil, nil,
-                    self.togglewindow, 'Hide Window')
+      self:make_hyperlink_from_text ("?", "header_bg_colour", self.header_height, width - (2 * self.font_width),
+                    self.hyperlink_configure_header, "Choose header background colour", nil, true)
     end
   end
 
   self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, self.font_height * self.header_height, empty, "Drag to move", 10)
   WindowDragHandler(self.win, self.drag_hotspot, "dragmove", "dragrelease", 0)
 
-
-  if tshow then
-    self:show(true)
-  end
 end
 
 
-function Miniwin:set(option, value)
-  local function changedsetting(toption, tvarstuff, cvalue)
-    ColourNote("", "", "")
-    ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
-             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),19) ,
-             "white", "black", " Settings")
-    ColourNote("white", "black", "-----------------------------------------------")
-    if tvarstuff.type == "colour" then
-      colourname = RGBColourToName(self:get_colour(cvalue))
-      ColourNote("orange", "black", toption .. " set to : ",
-             colourname, "black", colourname)
-    else
-      colourname = RGBColourToName(var.plugin_colour)
-      ColourNote("orange", "black", toption .. " set to : ",
-             colourname, "black", cvalue)
+function Miniwin:set(option, value, silent)
+  local changedsetting = nil
+  if silent == nil or silent then
+    function changedsetting(toption, tvarstuff, cvalue)
+
     end
-    ColourNote("", "", "")
+  else
+    function changedsetting(toption, tvarstuff, cvalue)
+      plugin_header()
+      if tvarstuff.type == "colour" then
+        colourname = RGBColourToName(self:get_colour(cvalue))
+        ColourNote("orange", "black", toption .. " set to : ",
+              colourname, "black", colourname)
+      else
+        colourname = RGBColourToName(var.plugin_colour)
+        ColourNote("orange", "black", toption .. " set to : ",
+              colourname, "black", tostring(cvalue))
+      end
+      ColourNote("", "", "")
+    end
   end
 
   varstuff = self.set_options[option]
+  if varstuff.readonly and not self.classinit then
+    plugin_header()
+    ColourNote(RGBColourToName(var.plugin_colour), "", "That is a read-only var")
+    ColourNote("", "", "")
+    return true
+  end
   if not varstuff then
+    ColourNote("red", "", "Option" .. option .. "does not exist.")
     return false
   end
   if value == 'default' then
@@ -527,7 +631,7 @@ function Miniwin:set(option, value)
     ColourNote("red", "", "That is not a valid value for " .. option)
     return true
   end
-  if option == "font" then
+  if option == "font" and not self.classinit then
     if not self:changefont(tvalue) then
       ColourNote("red", "", "Could not find font " .. tvalue)
       self:drawwin()
@@ -535,7 +639,9 @@ function Miniwin:set(option, value)
     end
   elseif string.find(option, "font") then
     self[option] = tvalue
-    self:changefont(self.font)
+    if not self.classinit then
+      self:changefont(self.font)
+    end
   else
     self[option] = tvalue
   end
@@ -543,7 +649,12 @@ function Miniwin:set(option, value)
     self.x = -1
     self.y = -1
   end
-  self:drawwin()
+  if not self.classinit then
+    --self:tabbroadcast()
+    local sflag = WindowInfo(self.win, 5)
+    self:drawwin()
+    WindowShow(self.win, sflag)
+  end
   changedsetting(option, varstuff, tvalue)
   SaveState()
   return true
@@ -557,16 +668,19 @@ function Miniwin:print_settings()
     else
        value = self[v]
     end
-    print_setting_helper(v, value, self.set_options[v].help, self.set_options[v].type)
+    if self.set_options[v].type == "colour" then
+      value = verify_colour(value, {window = self})
+    end
+    print_setting_helper(v, value, self.set_options[v].help, self.set_options[v].type, self.set_options[v].readonly)
   end
 end
 
 
 function Miniwin:add_setting(name, setting)
-  local tvalue = (GetVariable (name..self.name)) or setting.default
-  self[name] = tvalue
   self.set_options[name] = setting
   self.skeys = sort_settings(self.set_options)
+
+  self:set(name, verify(GetVariable(name..self.name) or setting.default, setting.type, {window = self}), true)
 end
 
 function Miniwin:dragmove(flags, hotspot_id)
@@ -605,6 +719,28 @@ function Miniwin:dragrelease(flags, hotspot_id)
   end -- if out of bounds
 
 end -- dragrelease
+
+function Miniwin:tabbroadcast(flag)
+  mdebug('tabbroadcast - self.disabled', self.disabled)
+  local td = {}
+  td.id = GetPluginID()
+  if not text then
+    td.text = self.name
+  else
+    td.text = text
+  end
+  td.name = self.name
+  td.win = self.win
+  local wins = serialize.save( "windowstuff", td )
+  if flag then
+    if not self.disabled then
+      broadcast(5000, wins, wins)
+    end
+  else
+    broadcast(5001, wins, wins)
+  end
+end
+
 
 function empty(flags, hotspot_id)
 
