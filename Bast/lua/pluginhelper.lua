@@ -94,7 +94,7 @@ function plugin_help_helper(name, line, wildcards)
 
 end
 
-function print_setting_helper(setting, value, help, ttype)
+function print_setting_helper(setting, value, help, ttype, readonly)
   --[[
     this function prints a setting a standard format
      if the setting is a colour, then it will print the value in that colour
@@ -106,6 +106,9 @@ function print_setting_helper(setting, value, help, ttype)
      colour = tcolour
      value = RGBColourToName(colour)
     end
+  end
+  if readonly then
+    help = help .. ' (readonly)'
   end
   ColourNote( "white", "black", string.format("%-20s : ", setting),
               RGBColourToName(colour), "black", string.format("%-20s", tostring(value)),
@@ -126,7 +129,7 @@ function print_settings_helper(ttype)
       else
         value = var[v]
       end
-      print_setting_helper(v, value, soption.help, soption.type)
+      print_setting_helper(v, value, soption.help, soption.type, soption.readonly)
     end
   end
   if ttype == "window" or ttype == "all" then
@@ -203,7 +206,7 @@ function plugin_set_helper(name, line, wildcards)
     local soption = find_option(option)
     if soption and soption.readonly then
       plugin_header()
-      print("That is a read-only var")
+      ColourNote(RGBColourToName(var.plugin_colour), "", "That is a read-only var")
       return true
     end
     if not soption then
@@ -234,30 +237,6 @@ function plugin_set_helper(name, line, wildcards)
   end
 end
 
-function plugin_savestate(name, line, wildcards)
-  --[[
-    this function will attempt to set an item in the options_table table or in a window
-  --]]
-  SaveState()
-  plugin_header("Save")
-  ColourNote(RGBColourToName(var.plugin_colour), "black", "Plugin variables saved.")
-  ColourNote("", "", "")
-  return true
-end
-
-cmds_table = {
-  help      = {func=plugin_help_helper, help="show help"},
-  debug      = {func=plugin_toggle_debug, help="toggle debugging"},
-  set       = {func=plugin_set_helper, help="set script and window vars, show plugin vars when called with no arguments, 'window': show window vars, 'all': show all vars"},
-  reset     = {func=plugin_reset, help="reset plugin to default values, 'all': both miniwin and plugin, 'win': just miniwin, 'plugin': just plugin"},
-  save     = {func=plugin_savestate, help="save plugin variables"},
-}
-
-options_table = {
-  plugin_colour = {help="set the plugin colour", type="colour", default="lime"},
-  tdebug = {help="toggle this for debugging info", type="bool", default=false},
-  cmd = {help="the command to type for this plugin", type="string", after=set_plugin_alias, default="mb"},
-}
 
 function find_option(option)
   soption = options_table[option]
@@ -392,15 +371,6 @@ function init_plugin_vars(reset)
   end
 end
 
-function plugin_save_vars()
-  --[[
-     save all the vars in the options table, requires the "var" module
-  --]]
-  for i,v in pairs(options_table) do
-    SetVariable (i, tostring(var[i]))
-  end
-end
-
 function sort_settings(toptions_table)
   --[[
      sort the keys of the options table
@@ -463,7 +433,22 @@ end
 function mdebug(...)
   if var.tdebug == "true" then
     print(GetPluginInfo (GetPluginID (), 1), ": Debug")
-    print(...)
+    local tstring = {}
+    for n=1,select('#',...) do
+      local e = select(n,...)
+      if type(e) == 'table' then
+        if #tstring > 0 then
+          print(unpack(tstring))
+          tstring = nil
+        end
+        tprint(e)
+      else
+        table.insert(tstring, e)
+      end
+    end
+    if #tstring > 0 then
+      print(unpack(tstring))
+    end
     print(" ")
   end
 end
@@ -510,4 +495,88 @@ end -- dragmove
 function dragrelease(flags, hotspot_id)
   window:dragrelease(flags, hotspot_id)
 end
+
+function PluginhelperOnPluginBroadcast(msg, id, name, text)
+--  mdebug('OnPluginBroadcast')
+  if id == "eee96e233d11e6910f1d9e8e" and msg == -2 then
+    if window then
+      window:tabbroadcast(true)
+    end
+  end
+end
+
+function PluginhelperOnPluginInstall()
+  mdebug('OnPluginInstall')
+  if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    if window then
+      window:init()
+    end
+    return
+  end -- they didn't enable us last time
+
+  OnPluginEnable ()  -- do initialization stuff
+end
+
+function PluginhelperOnPluginClose()
+  mdebug('OnPluginClose')
+  broadcast(-1)
+  if window then
+    window:shutdown()
+  end
+end
+
+function PluginhelperOnPluginEnable()
+  mdebug('OnPluginEnable')
+  -- if we are connected when the plugin loads, it must have been reloaded whilst playing
+  if IsConnected () then
+    OnPluginConnect ()
+  end -- if already connected
+  if window then
+    window:init()
+  end
+  broadcast(-2)
+end
+
+function PluginhelperOnPluginDisable()
+  mdebug('OnPluginDisable')
+  broadcast(-1)
+  if window then
+    window:shutdown()
+  end
+end
+
+function PluginhelperOnPluginConnect()
+  mdebug('OnPluginConnect')
+
+end
+
+function PluginhelperOnPluginSaveState()
+  mdebug('OnPluginSaveState')
+  --[[
+     save all the vars in the options table, requires the "var" module
+  --]]
+  for i,v in pairs(options_table) do
+    SetVariable (i, tostring(var[i]))
+  end
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  if window then
+    window:savestate()
+  end
+end
+
+cmds_table = {
+  help      = {func=plugin_help_helper, help="show help"},
+  debug      = {func=plugin_toggle_debug, help="toggle debugging"},
+  set       = {func=plugin_set_helper, help="set script and window vars, show plugin vars when called with no arguments, 'window': show window vars, 'all': show all vars"},
+  reset     = {func=plugin_reset, help="reset plugin to default values, 'all': both miniwin and plugin, 'win': just miniwin, 'plugin': just plugin"},
+  save     = {func=PluginhelperOnPluginSaveState, help="save plugin variables"},
+}
+
+options_table = {
+  plugin_colour = {help="set the plugin colour", type="colour", default="lime"},
+  tdebug = {help="toggle this for debugging info", type="bool", default=false},
+  cmd = {help="the command to type for this plugin", type="string", after=set_plugin_alias, default="mb"},
+}
 
