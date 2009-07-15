@@ -38,11 +38,17 @@ quest_text = {}
 quest_stuff = {mob=nil, room=nil, area=nil}
 quest_timer = {}
 
-questwin = Miniwin{name="Quest", font="Comic Sans MS", bg_colour=0xE7FFFF, text_colour=0x000000, windowpos=7, header_height=0, width_padding=5, height_padding=3}
+questwin = Miniwin{name="Quest"}
+questwin:set('font', 'Comic Sans MS')
+questwin:set('bg_colour', 0xE7FFFF)
+questwin:set('text_colour', 0x000000)
+questwin:set('windowpos', 7)
+questwin:set('header_height', 0)
+questwin:set('width_padding', 5)
+questwin:set('height_padding', 3)
 questwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0x82004B), sortlev=1})
 questwin:add_setting("avail_bg_colour", {help="the background colour for when a quest available", type="colour", default=verify_colour("red"), sortlev=1})
 questwin:add_setting("avail_colour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
-
 questwin:disable()
 
 function build_quest()
@@ -77,7 +83,11 @@ function show_quest ()
   questwin:enable()
   questwin:createwin(quest_text)
 end -- show_quest_text
+]]>
+</script>
 
+<script>
+<![CDATA[
 function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa8a9eda20fa11787c6b438" then
     if msg == 1 then
@@ -134,29 +144,39 @@ function OnPluginBroadcast (msg, id, name, text)
     end
 
   end -- stats changed
-end
 
-function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  questwin:savestate()
-end -- function OnPluginSaveState
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
 
 function OnPluginInstall ()
 
- if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    return
-  end -- they didn't enable us last time
-
   ldplugin("broadcast_quest")
-
+  PluginhelperOnPluginInstall()
 end -- OnPluginInstall
 
+function OnPluginClose()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- OnPluginConnect
+
 function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)
-  questwin:savestate()
+  PluginhelperOnPluginSaveState()
 end -- function OnPluginSaveState
 ]]>
 </script>
