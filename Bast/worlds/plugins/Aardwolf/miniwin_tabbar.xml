@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- MuClient version 4.37 -->
+
+<muclient>
+<plugin
+   name="miniwin_tabwin"
+   author="Bast"
+   id="eee96e233d11e6910f1d9e8e"
+   language="Lua"
+   purpose="tab window"
+   save_state="y"
+   date_written="2009-02-13 09:28:14"
+   requires="4.37"
+   version="1"
+   >
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+-- var is required for pluginhelper below
+require "var"
+require "pluginhelper"
+require "mastertab"
+
+plugins = {}
+
+tabwin = Mastertabwin{name="tabwin"}
+tabwin:set('windowpos', 4)
+tabwin:set('font_size', 8)
+tabwin:set('font', 'Courier New')
+tabwin:set('text_colour', 'gold')
+tabwin:enable()
+tabwin:show(false)
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  if id == GetPluginID() then
+    return
+  end
+  if msg == 5000 then
+    loadstring( text )()
+    winstuff = windowstuff
+    tabwin:addtab(winstuff)
+  elseif msg == 5001 then
+    loadstring( text )()
+    winstuff = windowstuff
+    tabwin:removetab(winstuff)
+  end
+end
+
+function OnPluginInstall()
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState()
+
+  PluginhelperOnPluginSaveState(options_table)
+end
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+option_set_default('cmd', 'tb')
+
+window_set(tabwin)
+
+init_plugin_vars(options_table)
+set_plugin_alias()
+
+]]>
+</script>
+</muclient>
