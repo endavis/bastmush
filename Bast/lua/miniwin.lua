@@ -228,10 +228,12 @@ end
 
 function Miniwin:shutdown()
   self.shutdownf = true
+  self:disable()
 end
 
 function Miniwin:init()
   self.plugininitf = true
+  self:disable()
 end
 
 function Miniwin:enable()
@@ -249,7 +251,9 @@ end
 
 function Miniwin:disable()
   mdebug("disable", self.name)
-  self.disabled = true
+  if not self.plugininitf then
+    self.disabled = true
+  end
   self.firstdrawn = true
   WindowShow(self.win, false)
   self:tabbroadcast(false)
