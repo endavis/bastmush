@@ -109,10 +109,6 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  -- if we are connected when the plugin loads, it must have been reloaded whilst playing
-  if IsConnected () then
-    TelnetOptionOn (TELOPT_REQUEST_STATUS)  -- get actual status (eg. afk, playing)
-  end -- if already connected
 
   PluginhelperOnPluginEnable()
 end -- OnPluginEnable
@@ -123,6 +119,7 @@ function OnPluginDisable ()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
+  TelnetOptionOn (TELOPT_REQUEST_STATUS)  -- get actual status (eg. afk, playing)
 
   PluginhelperOnPluginConnect()
 end -- function OnPluginConnect

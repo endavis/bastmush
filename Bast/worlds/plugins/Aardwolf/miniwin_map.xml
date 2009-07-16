@@ -185,9 +185,6 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  if IsConnected() then
-     OnPluginConnect()
-  end
 
   PluginhelperOnPluginEnable()
 end -- OnPluginEnable
