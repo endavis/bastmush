@@ -77,6 +77,7 @@ Redirects the map to a mini window.
 
 <script>
 <![CDATA[
+
 require 'var'
 require 'pluginhelper'
 require "miniwin"
@@ -84,6 +85,8 @@ require "tprint"
 require "commas"
 require "serialize"
 
+-- pull in telnet option handling
+dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
 
 mapwin = Miniwin{name="Map"}
 mapwin:set('header_height', 2)
@@ -158,43 +161,43 @@ function map_redirect (name, line, wildcards, styles)
   end -- if
 
 end -- function map_redirect
+
 ]]>
 </script>
 
 <script>
 <![CDATA[
--- pull in telnet option handling
-dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
 
 function OnPluginBroadcast (msg, id, name, text)
   PluginhelperOnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
 
   PluginhelperOnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
-  -- if enabled
-  if GetPluginInfo (GetPluginID (), 17) then
-    TelnetOptionOff (TELOPT_MAP)
-    TelnetOptionOff (TELOPT_ROOM_NAMES)
-    TelnetOptionOff (TELOPT_EXIT_NAMES)
-  end -- if was enabled
+  --OnPluginDisable is automatically called by pluginhelper
 
   PluginhelperOnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  if IsConnected() then
+     OnPluginConnect()
+  end
 
   PluginhelperOnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
-  TelnetOptionOff (TELOPT_MAP)
-  TelnetOptionOff (TELOPT_ROOM_NAMES)
-  TelnetOptionOff (TELOPT_EXIT_NAMES)
+  if GetPluginInfo(GetPluginID (), 17) and IsConnected() then
+    TelnetOptionOff (TELOPT_MAP)
+    TelnetOptionOff (TELOPT_ROOM_NAMES)
+    TelnetOptionOff (TELOPT_EXIT_NAMES)
+  end
 
   PluginhelperOnPluginDisable()
 end -- OnPluginDisable
@@ -209,9 +212,14 @@ function OnPluginConnect ()
   PluginhelperOnPluginConnect()
 end -- function OnPluginConnect
 
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
+
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState(options_table)
+  PluginhelperOnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>

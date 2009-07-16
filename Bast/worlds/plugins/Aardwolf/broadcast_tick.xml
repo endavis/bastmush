@@ -37,6 +37,7 @@ Example:
 
 <script>
 <![CDATA[
+
 require "var"
 require "pluginhelper"
 require "verify"
@@ -59,42 +60,59 @@ function OnPluginTelnetOption (option)
     SendNoEcho("")
   end
 
-
 end -- function
 
--- pull in telnet option handling
-dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+]]>
+</script>
 
-function OnPluginInstall ()
-  if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    return
-  end -- they didn't enable us last time
-
-  ldplugin("broadcast_state")
-
-end -- function OnPluginInstall
+<script>
+<![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  -- state change
   if id == "aaa79afcb20fa11787c5a327" then
     status = GetPluginVariableList("aaa79afcb20fa11787c5a327")
   end -- if
- end
 
-function OnPluginDisconnect ()
-  return
-end -- function OnPluginInstall
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin("broadcast_state")
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
 
 function OnPluginConnect ()
-  return
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)
+
+  PluginhelperOnPluginSaveState()
 end -- function OnPluginSaveState
+
 ]]>
 </script>
 
@@ -123,6 +141,7 @@ option_set_default('plugin_colour', 'orange')
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 </script>
 </muclient>

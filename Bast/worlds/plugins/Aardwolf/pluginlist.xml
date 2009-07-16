@@ -24,6 +24,7 @@
 
 <script>
 <![CDATA[
+
 require "var"
 require "serialize"
 require "commas"
@@ -34,12 +35,6 @@ require "pairsbykeys"
 require "ldplugin"
 
 phelpplugins = {}
-
-function OnPluginBroadcast (msg, id, name, text)
-  if msg == 1001 then
-    phelpplugins[id] = {name = GetPluginInfo(id, 1)}
-  end --
-end
 
 function format_plugin(plugin)
   hname = string.format("%-30s", tostring(plugin.name))
@@ -237,6 +232,57 @@ end
 
 ]]>
 </script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  if msg == 1001 then
+    phelpplugins[id] = {name = GetPluginInfo(id, 1)}
+  end --
+
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
 
 <!--  Aliases  -->
 

@@ -32,6 +32,7 @@ TODO:
 
 <script>
 <![CDATA[
+
 require 'var'
 require "commas"
 require 'miniwin'
@@ -44,13 +45,11 @@ cpwin:set('windowpos', 7)
 cpwin:set('font_size', 7)
 cpwin:set('font', 'Verdana')
 cpwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
-cpwin:disable()
 
 cpmobs = {}
 cptimer = {}
 
 function show_cp_text ()
-
 
   local texttable = {}
 
@@ -94,6 +93,7 @@ end -- show_cp_text
 
 <script>
 <![CDATA[
+
 function OnPluginBroadcast (msg, id, name, text)
  if id == "aaa66f81c50828bbbfda7100" then
     if msg == 1 then
@@ -121,8 +121,8 @@ function OnPluginBroadcast (msg, id, name, text)
 end
 
 function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
 
-  ldplugin("broadcast_cp")
   PluginhelperOnPluginInstall()
 end -- OnPluginInstall
 
@@ -132,6 +132,7 @@ function OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  ldplugin("broadcast_cp")
 
   PluginhelperOnPluginEnable()
 end -- OnPluginEnable
@@ -146,10 +147,16 @@ function OnPluginConnect ()
   PluginhelperOnPluginConnect()
 end -- OnPluginConnect
 
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
+
 function OnPluginSaveState ()
 
   PluginhelperOnPluginSaveState()
 end -- function OnPluginSaveState
+
 ]]>
 </script>
 
@@ -183,6 +190,7 @@ window_set(cpwin)
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 
 </script>

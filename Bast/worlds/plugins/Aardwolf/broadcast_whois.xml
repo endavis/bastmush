@@ -166,6 +166,7 @@ Example
 
 <script>
 <![CDATA[
+
 require "var"
 require "serialize"
 require "commas"
@@ -243,31 +244,55 @@ function whois_end(name, line, wildcards)
   broadcast(1, var.whoisinfo)
 end
 
-function OnPluginEnable ()
-
-end
-
-function OnPluginDisable ()
-  BroadcastPlugin(-1)
-end
-
-
-function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)
-end -- function OnPluginSaveState
-
-function OnPluginInstall ()
-
- if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    return
-  end -- they didn't enable us last time
-
-end -- OnPluginInstall
 ]]>
 </script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
 
 <aliases>
   <alias
@@ -291,6 +316,7 @@ option_set_default('plugin_colour', 'orange')
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 </script>
 </muclient>

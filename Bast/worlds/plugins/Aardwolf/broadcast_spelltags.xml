@@ -88,6 +88,7 @@ TODO:
 
 <script>
 <![CDATA[
+
 require "var"
 require "serialize"
 require "commas"
@@ -148,7 +149,8 @@ function broadcast(num, data, broadcastdata)
 end
 
 function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+
+  --PluginhelperOnPluginSaveState()
 end -- function OnPluginSaveState
 
 function OnPluginInstall ()

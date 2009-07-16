@@ -20,24 +20,9 @@
 
 <include name="constants.lua"/>
 
-<!--  Aliases  -->
-
-<aliases>
-  <alias
-   name="plugin_parse"
-   script="plugin_parse_helper"
-   match="nothing"
-   enabled="y"
-   regexp="y"
-   ignore_case="y"
-   sequence="110"
-   expand_variables="y"
-  >
-  </alias>
-</aliases>
-
 <script>
 <![CDATA[
+
 -- var is required for pluginhelper below
 require "var"
 require "pluginhelper"
@@ -50,7 +35,7 @@ tabwin:set('windowpos', 4)
 tabwin:set('font_size', 8)
 tabwin:set('font', 'Courier New')
 tabwin:set('text_colour', 'gold')
-tabwin:enable()
+--tabwin:disab()
 tabwin:show(false)
 
 ]]>
@@ -67,6 +52,7 @@ function OnPluginBroadcast (msg, id, name, text)
     loadstring( text )()
     winstuff = windowstuff
     tabwin:addtab(winstuff)
+    tabwin:enable()
   elseif msg == 5001 then
     loadstring( text )()
     winstuff = windowstuff
@@ -99,6 +85,11 @@ function OnPluginConnect ()
   PluginhelperOnPluginConnect()
 end -- function OnPluginConnect
 
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
+
 function OnPluginSaveState()
 
   PluginhelperOnPluginSaveState(options_table)
@@ -106,6 +97,22 @@ end
 
 ]]>
 </script>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
 
 <script>
 <![CDATA[

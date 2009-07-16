@@ -56,6 +56,7 @@ Show the moons in a miniwindow
 <!--  Script  -->
 <script>
 <![CDATA[
+
 require "utils"
 require "commas"
 
@@ -76,7 +77,6 @@ moonwin:add_setting("white_colour", {help="the colour for the white moon", type=
 moonwin:add_setting("grey_colour", {help="the colour for the grey moon", type="colour", default=verify_colour("dimgray"), sortlev=1})
 moonwin:add_setting("three_colour", {help="the colour for the when three moons are up", type="colour", default=verify_colour("lime"), sortlev=2})
 moonwin:add_setting("three_bg_colour", {help="the colour for the background when the three moons are up", type="colour", default="bg_colour", sortlev=2})
-moonwin:disable()
 
 countdown = nil
 countdowndur = nil
@@ -185,7 +185,6 @@ function styleplotdata()
 
 end -- plotdatastyle
 
-
 function plotdata()
   if (moons.black.now == nil ) or
      (moons.grey.now == nil ) or
@@ -207,7 +206,6 @@ function plotdata()
   end
 end
 
-
 function buildplotdata(length)
   local tplotdata={white={},grey={},black={}}
   for i = 0,length do
@@ -217,7 +215,6 @@ function buildplotdata(length)
   end
   return tplotdata
 end
-
 
 function moonsetting( tname, tstr, wildcards )
   local moon = wildcards[1]
@@ -235,7 +232,6 @@ function moonsetting( tname, tstr, wildcards )
     styleplotdata()
   end
 end-- moonsetting
-
 
 function moonrising( tname, tstr, wildcards)
   local moon = wildcards[1]
@@ -308,11 +304,29 @@ function nextunion()
   end
 end -- nextunion()
 
+function moonbot_union(name, line, wildcards)
+  print(nextunion())
+  return true
+end -- moonbot_union
+
+function moonbot_reset()
+  for i,v in pairs(moons) do
+    moons[i].now = nil
+  end
+  countdown = nil
+  countdowndur = nil
+  moonwin:disable()
+  ColourNote("", "", "")
+  ColourNote( "orange",  "black", "Moonbot reset" )
+  ColourNote("", "", "")
+end -- moonbot_reset
+
 ]]>
 </script>
 
 <script>
 <![CDATA[
+
 function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa70b4680508448e19b8b25" and msg == 1 then
     ontick()
@@ -331,8 +345,8 @@ function OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-
   ldplugin("broadcast_tick")
+
   PluginhelperOnPluginEnable()
 end -- OnPluginEnable
 
@@ -346,6 +360,11 @@ function OnPluginConnect ()
   moonbot_reset()
   PluginhelperOnPluginConnect()
 end -- OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
 
 function OnPluginSaveState()
 
@@ -374,23 +393,6 @@ end
 <script>
 <![CDATA[
 
-function moonbot_union(name, line, wildcards)
-  print(nextunion())
-  return true
-end -- moonbot_union
-
-function moonbot_reset()
-  for i,v in pairs(moons) do
-    moons[i].now = nil
-  end
-  countdown = nil
-  countdowndur = nil
-  moonwin:disable()
-  ColourNote("", "", "")
-  ColourNote( "orange",  "black", "Moonbot reset" )
-  ColourNote("", "", "")
-end -- moonbot_reset
-
 add_option('plotlength', {help="set the length of the moon plot", type="number", high=80, low=0, after=styleplotdata, default=66})
 
 option_set_default('cmd', 'mb')
@@ -405,6 +407,7 @@ window_set(moonwin)
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 </script>
 

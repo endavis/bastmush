@@ -271,6 +271,7 @@ You are not on a global quest.
 
 <script>
 <![CDATA[
+
 require "var"
 require "serialize"
 require "commas"
@@ -430,6 +431,12 @@ function gq_new()
   SaveState()
 end
 
+]]>
+</script>
+
+<script>
+<![CDATA[
+
 function OnPluginBroadcast (msg, id, name, text)
   if msg == 1 and id == "8a710e0783b431c06d61a54c" then
 
@@ -437,35 +444,48 @@ function OnPluginBroadcast (msg, id, name, text)
     enemy = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
     curlevel = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
   end -- stats changed
+
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
 end
-
-function OnPluginEnable ()
-
-end
-
-function OnPluginDisable ()
-  BroadcastPlugin(-1)
-end
-
-
-function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)
-end -- function OnPluginSaveState
 
 function OnPluginInstall ()
 
- if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    return
-  end -- they didn't enable us last time
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
   ldplugin("Stats_Detector")
 
-end -- OnPluginInstall
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
 ]]>
 </script>
-
 <aliases>
   <alias
    name="plugin_parse"
@@ -488,6 +508,7 @@ option_set_default('plugin_colour', 'orange')
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 </script>
 </muclient>

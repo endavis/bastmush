@@ -50,6 +50,7 @@
 
 <script>
 <![CDATA[
+
 require "var"
 require "serialize"
 require "commas"
@@ -80,7 +81,7 @@ function DisplayInfo( info )
   for k,v in ipairs( info ) do
     ColourTell( colourcodes[ colours[ ( k % 2 + 1 ) or 1 ] ], "", v )
   end
-  Note( "" )
+  ColourNote( "", "", "" )
 end
 
 function formatlevel()
@@ -279,18 +280,6 @@ function formatgq()
   DisplayInfo( tmsg )
 end
 
-function OnPluginBroadcast (msg, id, name, text)
-  if id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
-    DoAfterSpecial(.1 , 'formatquest()', 12)
-  elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
-    DoAfterSpecial(.1, 'formatlevel()', 12)
-  elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
-    DoAfterSpecial(.1, 'formatcp()', 12)
-  elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
-    DoAfterSpecial(.1, 'formatgq()', 12)
-  end
-end -- OnPluginBroadcast
-
 function formathour(type, stats)
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-10s -" , type),
              RGBColourToName(var.plugin_colour), "black", string.format("%5d", stats.total or 0),
@@ -413,6 +402,62 @@ end
 ]]>
 </script>
 
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  if id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
+    DoAfterSpecial(.1 , 'formatquest()', 12)
+  elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
+    DoAfterSpecial(.1, 'formatlevel()', 12)
+  elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
+    DoAfterSpecial(.1, 'formatcp()', 12)
+  elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
+    DoAfterSpecial(.1, 'formatgq()', 12)
+  end
+
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
 <aliases>
   <alias
    name="plugin_parse"
@@ -437,6 +482,7 @@ option_set_default('plugin_colour', 'orange')
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 </script>
 </muclient>

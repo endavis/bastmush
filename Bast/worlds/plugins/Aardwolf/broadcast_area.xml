@@ -29,33 +29,33 @@
 
 <triggers>
   <trigger
-   enabled="n"  
+   enabled="n"
    match="^\s*(?&lt;from&gt;\d+)\s+(?&lt;to&gt;\d+)\s+(?&lt;lock&gt;\d+)\s+(?&lt;author&gt;.+?)(  )+?(?&lt;name&gt;.+?)\s*$"
    sequence="100"
    script="parsearea"
    regexp="y"
-   group="areareg" 
+   group="areareg"
   >
   </trigger>
   <trigger
-   enabled="n"  
+   enabled="n"
    match="^\s*(?&lt;from&gt;\d+)\s+(?&lt;to&gt;\d+)\s+(?&lt;author&gt;.+?)(  )+?(?&lt;name&gt;.+?)\s*$"
    sequence="101"
    script="parsearea"
-   regexp="y"     
-   name="nolock" 
-   group="areareg" 
+   regexp="y"
+   name="nolock"
+   group="areareg"
   >
-  </trigger>  
+  </trigger>
   <trigger
-   enabled="n"  
+   enabled="n"
    match="^---------------------------------------------------------------$"
    sequence="101"
    script="areas_done"
-   regexp="y"     
-   group="area" 
+   regexp="y"
+   group="area"
   >
-  </trigger>   
+  </trigger>
 </triggers>
 
 <!--  Aliases  -->
@@ -69,7 +69,7 @@
    regexp="y"
    sequence="100"
   >
-  <send>areas</send>  
+  <send>areas</send>
   </alias>
 
 </aliases>
@@ -78,6 +78,7 @@
 
 <script>
 <![CDATA[
+
 require "var"
 require "pluginhelper"
 require "serialize"
@@ -98,7 +99,7 @@ function parsearea (name, line, wildcards)
   else
     area.lock = wildcards.lock
   end
-  areainfo = serialize.save( "area", area )    
+  areainfo = serialize.save( "area", area )
   broadcast(1, areainfo, areainfo)
 end
 
@@ -112,6 +113,80 @@ function areas_done(name, line, wildcards)
   enabletriggroup("area", false)
   broadcast(2)
 end
+
 ]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+
+option_set_default('cmd', 'areac')
+option_set_default('plugin_colour', 'cyan')
+
+init_plugin_vars()
+set_plugin_alias()
+
+]]>
+
 </script>
 </muclient>

@@ -305,6 +305,7 @@ quest_info = {}
 
 <script>
 <![CDATA[
+
 require "var"
 require "serialize"
 require "commas"
@@ -475,28 +476,55 @@ function quest_rewards (name, line, wildcards)
   end
 end
 
-function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)
-end -- function OnPluginSaveState
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
 
 function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
 
- if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    return
-  end -- they didn't enable us last time
-
+  PluginhelperOnPluginInstall()
 end -- OnPluginInstall
 
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
 function OnPluginDisable ()
-  BroadcastPlugin(-1)
+
+  PluginhelperOnPluginDisable()
 end -- OnPluginDisable
 
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
 
 ]]>
 </script>
+
 
 <!--  Aliases  -->
 
@@ -517,12 +545,12 @@ end -- OnPluginDisable
 <script>
 <![CDATA[
 
-
 option_set_default('cmd', 'bqu')
 option_set_default('plugin_colour', 'orange')
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 </script>
 </muclient>

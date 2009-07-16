@@ -27,6 +27,7 @@
 
 <script>
 <![CDATA[
+
 require "var"
 require "serialize"
 require "commas"
@@ -91,25 +92,6 @@ function savegq()
   loadstring( pvar )()
   db:savegq( gq_info )
 end
-
-function OnPluginBroadcast (msg, id, name, text)
-  if id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
-    savequest()
-  elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
-    savelevel()
-  elseif id == "aaa0ab9ed92f8fc614664bd1" and (msg == 3 or msg == 4 or msg == 5 or msg == 6) then
-    createmilestone()
-  elseif id == "aaaf9a8dc92f8fc614663ac0" and msg == 1 then
-    savewhois()
-  elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
-    savecp()
-  elseif id == "aaa61c4570508448e19c7c14" and msg == 1 then
-    savemobkill()
-  elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
-    savegq()
-  end
-end -- OnPluginBroadcast
-
 
 function createmilestone()
   level = db:getstat('totallevels')
@@ -222,38 +204,72 @@ function ListMilestones(name, line, wildcards)
   end
 end
 
+]]>
+</script>
 
-function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)
-end -- function OnPluginSaveState
+<script>
+<![CDATA[
 
+function OnPluginBroadcast (msg, id, name, text)
+  if id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
+    savequest()
+  elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
+    savelevel()
+  elseif id == "aaa0ab9ed92f8fc614664bd1" and (msg == 3 or msg == 4 or msg == 5 or msg == 6) then
+    createmilestone()
+  elseif id == "aaaf9a8dc92f8fc614663ac0" and msg == 1 then
+    savewhois()
+  elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
+    savecp()
+  elseif id == "aaa61c4570508448e19c7c14" and msg == 1 then
+    savemobkill()
+  elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
+    savegq()
+  end
 
-function OnPluginConnect()
-
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
 
- db:checkdir()
- if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    return
-  end -- they didn't enable us last time
-
+  PluginhelperOnPluginInstall()
 end -- OnPluginInstall
 
-function OnPluginEnable ()
+function OnPluginClose ()
 
-end
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  db:checkdir()
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
 
 function OnPluginDisable ()
-  BroadcastPlugin(-1)
-end
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
 
 ]]>
 </script>
+
 
 <aliases>
   <alias
@@ -281,6 +297,7 @@ option_set_default('plugin_colour', 'orange')
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 </script>
 </muclient>

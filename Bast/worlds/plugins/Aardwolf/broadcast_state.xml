@@ -53,6 +53,9 @@ require "var"
 require "pluginhelper"
 require "verify"
 
+-- pull in telnet option handling
+dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+
 statestrings = {
   [1] = 'login',
   [2] = 'motd',
@@ -84,37 +87,59 @@ function OnPluginTelnetOption (option)
 
 end -- function
 
--- pull in telnet option handling
-dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
 
 function OnPluginInstall ()
-  if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    return
-  end -- they didn't enable us last time
+  --OnPluginEnable is automatically called by pluginhelper
 
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
   -- if we are connected when the plugin loads, it must have been reloaded whilst playing
   if IsConnected () then
     TelnetOptionOn (TELOPT_REQUEST_STATUS)  -- get actual status (eg. afk, playing)
   end -- if already connected
 
-end -- function OnPluginInstall
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
 
-function OnPluginDisconnect ()
-  return
-end -- function OnPluginInstall
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
 
 function OnPluginConnect ()
-  return
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  plugin_save_vars(options_table)
+
+  PluginhelperOnPluginSaveState()
 end -- function OnPluginSaveState
+
 ]]>
 </script>
+
 
 <aliases>
   <alias
@@ -138,6 +163,7 @@ option_set_default('plugin_colour', 'orange')
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 </script>
 </muclient>

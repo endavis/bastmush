@@ -26,6 +26,7 @@ Shows quests in a miniwindow
 
 <script>
 <![CDATA[
+
 require "commas"
 require 'var'
 require "commas"
@@ -49,7 +50,7 @@ questwin:set('height_padding', 3)
 questwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0x82004B), sortlev=1})
 questwin:add_setting("avail_bg_colour", {help="the background colour for when a quest available", type="colour", default=verify_colour("red"), sortlev=1})
 questwin:add_setting("avail_colour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
-questwin:disable()
+
 
 function build_quest()
   if (not next(quest_timer)) or (not next(quest_stuff)) then
@@ -83,11 +84,13 @@ function show_quest ()
   questwin:enable()
   questwin:createwin(quest_text)
 end -- show_quest_text
+
 ]]>
 </script>
 
 <script>
 <![CDATA[
+
 function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa8a9eda20fa11787c6b438" then
     if msg == 1 then
@@ -149,21 +152,21 @@ function OnPluginBroadcast (msg, id, name, text)
 end
 
 function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
 
-  ldplugin("broadcast_quest")
   PluginhelperOnPluginInstall()
 end -- OnPluginInstall
 
-function OnPluginClose()
+function OnPluginClose ()
 
   PluginhelperOnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  ldplugin("broadcast_quest")
 
   PluginhelperOnPluginEnable()
 end -- OnPluginEnable
-
 
 function OnPluginDisable ()
 
@@ -173,11 +176,18 @@ end -- OnPluginDisable
 function OnPluginConnect ()
 
   PluginhelperOnPluginConnect()
-end -- OnPluginConnect
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
 
 function OnPluginSaveState ()
+
   PluginhelperOnPluginSaveState()
 end -- function OnPluginSaveState
+
 ]]>
 </script>
 
@@ -205,6 +215,7 @@ window_set(questwin)
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 </script>
 

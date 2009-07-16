@@ -27,6 +27,7 @@ Redirects the gq to the miniwindow.
 <!--  Script  -->
 <script>
 <![CDATA[
+
 require 'var'
 require "commas"
 require 'miniwin'
@@ -39,11 +40,9 @@ gqwin:set('windowpos', 7)
 gqwin:set('font_size', 7)
 gqwin:set('font', 'Verdana')
 gqwin:set('header_height', 0)
-gqwin:disable()
 
 gqmobs = {}
 gq_text = {}
-
 
 function build_gq ()
 
@@ -86,12 +85,15 @@ function show_gq ()
 
   gqwin:enable()
   gqwin:createwin(gq_text)
+  gqwin:show(true)
 end -- show_quest_text
+
 ]]>
 </script>
 
 <script>
 <![CDATA[
+
 function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa77f81c5408278ccda7100" then
     if msg == 1 then
@@ -122,8 +124,8 @@ function OnPluginBroadcast (msg, id, name, text)
 end
 
 function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
 
-  ldplugin("broadcast_gq")
   PluginhelperOnPluginInstall()
 end -- OnPluginInstall
 
@@ -133,6 +135,7 @@ function OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  ldplugin("broadcast_gq")
 
   PluginhelperOnPluginEnable()
 end -- OnPluginEnable
@@ -146,6 +149,11 @@ function OnPluginConnect ()
 
   PluginhelperOnPluginConnect()
 end -- OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisonnect()
+end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
@@ -184,6 +192,7 @@ window_set(gqwin)
 
 init_plugin_vars()
 set_plugin_alias()
+
 ]]>
 
 </script>
