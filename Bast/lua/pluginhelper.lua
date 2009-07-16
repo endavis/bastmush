@@ -510,9 +510,6 @@ function PluginhelperOnPluginInstall()
   if GetVariable ("enabled") == "false" then
     ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
     check (EnablePlugin(GetPluginID (), false))
-    if window then
-      window:init()
-    end
     return
   end -- they didn't enable us last time
 
@@ -521,10 +518,8 @@ end
 
 function PluginhelperOnPluginClose()
   mdebug('OnPluginClose')
-  broadcast(-1)
-  if window then
-    window:shutdown()
-  end
+
+  OnPluginDisable()
 end
 
 function PluginhelperOnPluginEnable()
@@ -541,14 +536,22 @@ end
 
 function PluginhelperOnPluginDisable()
   mdebug('OnPluginDisable')
-  broadcast(-1)
+  if IsConnected() then
+    OnPluginDisconnect()
+  end
   if window then
     window:shutdown()
   end
+  broadcast(-1)
 end
 
 function PluginhelperOnPluginConnect()
   mdebug('OnPluginConnect')
+
+end
+
+function PluginhelperOnPluginDisconnect()
+  mdebug('OnPluginDisConnect')
 
 end
 
