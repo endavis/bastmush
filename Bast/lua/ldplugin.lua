@@ -122,6 +122,10 @@ function ldplugin_helper(plugin, silent)
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     end
   end
+  penable = GetPluginInfo(loaded, 17)
+  if not penable then
+    EnablePlugin(loaded, true)
+  end
   return loaded
 end
 
