@@ -40,10 +40,10 @@ require 'tprint'
 require 'pluginhelper'
 require 'ldplugin'
 
-cpwin = Miniwin{name="CP"}
-cpwin:set('windowpos', 7)
-cpwin:set('font_size', 7)
-cpwin:set('font', 'Verdana')
+cpwin = Miniwin:new{name="CP"}
+cpwin:set('windowpos', 7, {default = true})
+cpwin:set('font_size', 7, {default = true})
+cpwin:set('font', 'Verdana', {default = true})
 cpwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
 
 cpmobs = {}
@@ -149,7 +149,7 @@ end -- OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisonnect()
+  PluginhelperOnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
