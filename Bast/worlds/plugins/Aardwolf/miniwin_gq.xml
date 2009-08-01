@@ -35,10 +35,10 @@ require 'tprint'
 require 'pluginhelper'
 require 'ldplugin'
 
-gqwin = Miniwin{name="GQ"}
-gqwin:set('windowpos', 7)
-gqwin:set('font_size', 7)
-gqwin:set('font', 'Verdana')
+gqwin = Miniwin:new{name="GQ"}
+gqwin:set('windowpos', 7, {default = true})
+gqwin:set('font_size', 7, {default = true})
+gqwin:set('font', 'Verdana', {default = true})
 gqwin:set('header_height', 0)
 
 gqmobs = {}
@@ -152,7 +152,7 @@ end -- OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisonnect()
+  PluginhelperOnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
