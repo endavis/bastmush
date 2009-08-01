@@ -67,11 +67,11 @@ require "miniwin"
 require "ldplugin"
 require "verify"
 
-moonwin = Miniwin{name="Moons"}
-moonwin:set('windowpos', 4)
-moonwin:set('font_size', 8)
-moonwin:set('font', 'DejaVu Sans Mono')
-moonwin:set('text_colour', 'gold')
+moonwin = Miniwin:new{name="Moons"}
+moonwin:set('windowpos', 4, {default = true})
+moonwin:set('font_size', 8, {default = true})
+moonwin:set('font', 'DejaVu Sans Mono', {default = true})
+moonwin:set('text_colour', 'gold', {default = true})
 moonwin:add_setting("black_colour", {help="the colour for the black moon", type="colour", default=verify_colour("midnightblue"), sortlev=1})
 moonwin:add_setting("white_colour", {help="the colour for the white moon", type="colour", default=verify_colour("white"), sortlev=1})
 moonwin:add_setting("grey_colour", {help="the colour for the grey moon", type="colour", default=verify_colour("dimgray"), sortlev=1})
@@ -363,7 +363,7 @@ end -- OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisonnect()
+  PluginhelperOnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState()
