@@ -29,12 +29,12 @@ require "pluginhelper"
 require "mastertab"
 
 plugins = {}
-
-tabwin = Mastertabwin{name="tabwin"}
-tabwin:set('windowpos', 4)
-tabwin:set('font_size', 8)
-tabwin:set('font', 'Courier New')
-tabwin:set('text_colour', 'gold')
+tabwin = Mastertabwin:new{name="tabwin"}
+tabwin:set('windowpos', 4, {default = true})
+tabwin:set('font_size', 8, {default = true})
+tabwin:set('font', 'Courier New', {default = true})
+tabwin:set('text_colour', 'gold', {default = true})
+tabwin:set('header_height', 0, {default = true})
 --tabwin:disab()
 tabwin:show(false)
 
@@ -58,6 +58,7 @@ function OnPluginBroadcast (msg, id, name, text)
     winstuff = windowstuff
     tabwin:removetab(winstuff)
   end
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall()
@@ -87,7 +88,7 @@ end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisonnect()
+  PluginhelperOnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState()
