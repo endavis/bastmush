@@ -1,5 +1,10 @@
-function tableSort(ttable, sortkey, default)
-  --[[
+-- tablesort.lua
+-- $Id$
+-- iterator for sorting tables by keys or internel keys
+
+-- Author: Eric Davis - 1st August 2009
+
+--[[
      sort the table by the keys or an internal key to each table, will sort string or integer keys
 
   > test = {}
@@ -25,7 +30,9 @@ function tableSort(ttable, sortkey, default)
    b
    a
 
-  --]]
+--]]
+
+function tableSort(ttable, sortkey, default)
   local function sortfunc (a, b)
     if sortkey then
       local akey = ttable[a][sortkey] or default

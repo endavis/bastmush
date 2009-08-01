@@ -1,4 +1,9 @@
--- $Id: pluginhelper.lua 418 2009-06-25 17:53:00Z endavis $
+-- ldplugin.lua
+-- $Id$
+-- this will manipulate mushclient plugins
+
+-- Author: Eric Davis - 1st July 2009
+
 --[[
 http://code.google.com/p/bastmush
  - Documentation and examples

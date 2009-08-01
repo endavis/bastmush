@@ -1,11 +1,10 @@
--- miniw.lua
--- $Id: miniwin.lua 454 2009-07-16 15:15:40Z endavis $
--- class for creating windows miniwindows
+-- phelpobject.lua
+-- $Id$
+-- base class for using pluginhelper
 
--- Author: Eric Davis - 28th September 2008
+-- Author: Eric Davis - 24th July 2009
 
 --[[
-
 
 --]]
 
