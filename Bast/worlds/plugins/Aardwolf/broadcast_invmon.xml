@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: broadcast_eq.xml 405 2009-05-30 20:55:20Z endavis $ -->
+<!-- $Id$ -->
 <muclient>
 <plugin
    name="xBroadcast_Invmon"
@@ -380,7 +380,7 @@ end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisonnect()
+  PluginhelperOnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
