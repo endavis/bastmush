@@ -35,7 +35,6 @@ tabwin:set('font_size', 8, {default = true})
 tabwin:set('font', 'Courier New', {default = true})
 tabwin:set('text_colour', 'gold', {default = true})
 tabwin:set('header_height', 0, {default = true})
---tabwin:disab()
 tabwin:show(false)
 
 ]]>
