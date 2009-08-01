@@ -53,6 +53,7 @@ require "tprint"
 require "commas"
 require "verify"
 require "utils"
+require "tablesort"
 
 window = nil
 send_to_world = false
@@ -121,15 +122,13 @@ function print_settings_helper(ttype)
   --]]
   plugin_header("Settings")
   if ttype == "plugin" or ttype == "all" then
-    skeys = sort_settings(options_table)
-    for _,v in ipairs(skeys) do
-      local soption = find_option(v)
-      if soption.get then
-        value = soption.get(v)
+    for v,t in tableSort(options_table, 'sortlev', 50) do
+      if t.get then
+        value = t.get(v)
       else
         value = var[v]
       end
-      print_setting_helper(v, value, soption.help, soption.type, soption.readonly)
+      print_setting_helper(v, value, t.help, t.type, t.readonly)
     end
   end
   if ttype == "window" or ttype == "all" then
@@ -371,28 +370,6 @@ function init_plugin_vars(reset)
   end
 end
 
-function sort_settings(toptions_table)
-  --[[
-     sort the keys of the options table
-  --]]
-  local function sortfunc (a, b)
-    asortlev = toptions_table[a].sortlev or 50
-    bsortlev = toptions_table[b].sortlev or 50
-    return (asortlev < bsortlev)
-  end
-
-
-  local t2 = {}
-  if toptions_table then
-    for i,v in pairs(toptions_table) do
-      table.insert(t2, i)
-    end
-  end
-  table.sort(t2, sortfunc)
-
-  return t2
-
-end
 
 function send_cmd_world(name, line, wildcards)
    SendNoEcho(line)
@@ -439,7 +416,7 @@ function mdebug(...)
       if type(e) == 'table' then
         if #tstring > 0 then
           print(unpack(tstring))
-          tstring = nil
+          tstring = {}
         end
         tprint(e)
       else
@@ -488,6 +465,22 @@ function mousedown(flags, hotspotid)
   window:mousedown(flags, hotspotid)
 end
 
+function cancelmousedown(flags, hotspotid)
+  window:cancelmousedown(flags, hotspotid)
+end
+
+function mouseover(flags, hotspotid)
+  window:mouseover(flags, hotspotid)
+end
+
+function cancelmouseover(flags, hotspotid)
+  window:cancelmouseover(flags, hotspotid)
+end
+
+function mouseup(flags, hotspotid)
+  window:mouseup(flags, hotspotid)
+end
+
 function dragmove(flags, hotspot_id)
   window:dragmove(flags, hotspot_id)
 end -- dragmove
@@ -499,7 +492,7 @@ end
 function PluginhelperOnPluginBroadcast(msg, id, name, text)
 --  mdebug('OnPluginBroadcast')
   if id == "eee96e233d11e6910f1d9e8e" and msg == -2 then
-    if window then
+    if window and not window.disabled then
       window:tabbroadcast(true)
     end
   end
