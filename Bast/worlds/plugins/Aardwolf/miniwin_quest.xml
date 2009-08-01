@@ -39,14 +39,14 @@ quest_text = {}
 quest_stuff = {mob=nil, room=nil, area=nil}
 quest_timer = {}
 
-questwin = Miniwin{name="Quest"}
-questwin:set('font', 'Comic Sans MS')
-questwin:set('bg_colour', 0xE7FFFF)
-questwin:set('text_colour', 0x000000)
-questwin:set('windowpos', 7)
-questwin:set('header_height', 0)
-questwin:set('width_padding', 5)
-questwin:set('height_padding', 3)
+questwin = Miniwin:new{name="Quest"}
+questwin:set('font', 'Comic Sans MS', {default = true})
+questwin:set('bg_colour', 0xE7FFFF, {default = true})
+questwin:set('text_colour', 0x000000, {default = true})
+questwin:set('windowpos', 7, {default = true})
+questwin:set('header_height', 0, {default = true})
+questwin:set('width_padding', 5, {default = true})
+questwin:set('height_padding', 3, {default = true})
 questwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0x82004B), sortlev=1})
 questwin:add_setting("avail_bg_colour", {help="the background colour for when a quest available", type="colour", default=verify_colour("red"), sortlev=1})
 questwin:add_setting("avail_colour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
@@ -180,7 +180,7 @@ end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisonnect()
+  PluginhelperOnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
