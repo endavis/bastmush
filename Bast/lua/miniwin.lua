@@ -18,7 +18,7 @@ styles can have the following
   style.textcolour
   style.backcolour
   style.start - absolute position to start
-TODO:  style.hjust - can be set to center to put text in the center of the window on that line
+TODO:  style.hjust - can be set to center to put text in the center of the window on that line (default is top)
 TODO:  style.vjust - can be set to vertically adjust text (comes into play when a line has several sizes of text)
   style.font_name
   style.font_size
@@ -191,7 +191,7 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
   if strikeout == nil then
     strikeout = false
   end
-  size = size or 8
+  size = size or self.font_size
   local fontid = self:buildfontid(font, size, bold, italic, underline, strikeout)
   if self:checkfontid(fontid) then
     return fontid
@@ -205,7 +205,7 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
                  0,
                  self.bg_colour) )
 
-  check (WindowFont (self.win, fontid, font, self.font_size, bold, italic, underline, strikeout, 0, 49))
+  check (WindowFont (self.win, fontid, font, size, bold, italic, underline, strikeout, 0, 49))
 
   if not self:isfontinstalled(fontid, font) then
     return -1
@@ -601,7 +601,7 @@ function Miniwin:convert_line(line, styles)
       linet.text[i].backcolour = style.backcolour
       linet.text[i].hfunction = style.hfunction
       linet.text[i].hjust = style.hjust
-      linet.text[i].wjust = style.wjust
+      linet.text[i].vjust = style.vjust
       linet.text[i].hotspot_id = style.hotspot_id
       linet.text[i].mousedown = style.mousedown
       linet.text[i].cancelmousedown = style.cancelmousedown
@@ -805,6 +805,17 @@ function Miniwin:drawwin()
   end
 
   WindowDragHandler(self.win, self.drag_hotspot, "dragmove", "dragrelease", 0)
+
+
+
+-- show all fonts
+fonts = WindowFontList(self.win)
+
+if fonts then
+  for _, v in ipairs (fonts) do
+    print (v, WindowFontInfo(self.win, v, 21), WindowFontInfo(self.win, v, 19),WindowFontInfo(self.win, v, 8), WindowFontInfo(self.win, v, 1))
+  end
+end -- if any
 
   mdebug('new - height', height, 'width', width)
 end
