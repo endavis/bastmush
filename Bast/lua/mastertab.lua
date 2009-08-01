@@ -9,7 +9,6 @@ Mastertabwin = Miniwin:subclass()
 
 function Mastertabwin:initialize(args)
   self.classinit = true
-  print('init tabwin')
   super(self, args)   -- notice call to superclass's constructor
   self.tabs = {}
   self.tab_padding = 10
@@ -57,8 +56,6 @@ end
 
 function Mastertabwin:addtab(args)
   self.tabs[args.win] = args
-  print('tabs')
-  tprint(self.tabs)
   self:drawtabs()
 end
 
@@ -67,7 +64,7 @@ function Mastertabwin:removetab(args)
   self:drawtabs()
 end
 
-function Mastertabwin:createtabstyle(key, start, i)
+function Mastertabwin:createtabstyle(key, start)
   local tstyle = {}
   tstyle.text = self.tabs[key].text
   tstyle.mousedown = self.tabs[key].func or self.toggletab
@@ -87,11 +84,10 @@ function Mastertabwin:drawtabs()
   start = 0
   for i,v in tableSort(self.tabs, 'name', 'Default') do
     start = start + self.tab_padding / 2
-    style = self:createtabstyle(v, start, i)
+    style = self:createtabstyle(i, start)
     table.insert(ttext, style)
     start = start + WindowTextWidth (self.win, self.default_font_id, style.text) + self.tab_padding / 2
   end
-  tprint(ttext)
   self:createwin({ttext})
 end
 
