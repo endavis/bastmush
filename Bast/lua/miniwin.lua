@@ -19,7 +19,7 @@ styles can have the following
   style.backcolour
   style.start - absolute position to start
 TODO:  style.hjust - can be set to center to put text in the center of the window on that line (default is top)
-TODO:  style.vjust - can be set to vertically adjust text (comes into play when a line has several sizes of text)
+  style.vjust - can be set to vertically adjust text (comes into play when a line has several sizes of text)
   style.font_name
   style.font_size
   style.bold
@@ -52,10 +52,8 @@ function Miniwin:initialize(args)
   --[[
 
   --]]
-  mdebug('init miniwin')
   super(self, args)
   self.win = GetPluginID()..self.cname
-  mdebug('self.win', self.win)
   self.parent = args.parent or nil
   self.header = args.header or "None"
   self.text = {}
@@ -80,7 +78,6 @@ function Miniwin:initialize(args)
   self.shutdownf = false
   self.plugininitf = false
 
-  mdebug('miniwin settings')
   self:add_setting( 'disabled', {type="bool", help="is this window disabled", default=verify_bool(false), sortlev=38, readonly=true})
   self:add_setting( 'windowpos', {type="number", help="position for this window: see http://www.gammon.com.au/scripts/function.php?name=WindowCreate", low=0, high=13, default=6,sortlev=38})
   self:add_setting( 'x', {type="number", help="x location of this window, -1 = auto", default=-1, sortlev=39})
@@ -106,11 +103,7 @@ function Miniwin:initialize(args)
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
   self.window_data = {}
-  mdebug("self.font", self.font)
   self:setdefaultfont(self:addfont(self.font, self.font_size, false, false, false, false, true))
-  mdebug(self.default_font_id)
-  mdebug(self.default_font_id_bold)
-  mdebug(self.fonts)
 
 end
 
@@ -119,23 +112,14 @@ function Miniwin:savestate()
   super(self)
   tshownf = tostring(WindowInfo(self.win, 5))
   if not self.shutdownf and not self.plugininitf then
-    mdebug("saving shown as", tshownf)
     SetVariable ("shown"..self.cname, tshownf)
   end
 end
 
 function Miniwin:isfontinstalled(fontid, font_name)
-  mdebug('isfontinstalled', fontid, font_name)
-  mdebug(WindowFontInfo (self.win, fontid, 21))
-  mdebug('')
-  mdebug('WindowFontList')
-  mdebug(WindowFontList (self.win))
-  mdebug('')
   if string.lower(WindowFontInfo (self.win, fontid, 21)) == string.lower(font_name) then
-    mdebug('isfontinstalled', true)
     return true
   end
-  mdebug('isfontinstalled', false)
   return false
 
 end
@@ -177,7 +161,6 @@ function Miniwin:setdefaultfont(fontid)
 end
 
 function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
-  mdebug('addfont', font, size, bold, italic, underline, strikeout)
   local fontt = {}
   if bold == nil then
     bold = false
@@ -234,21 +217,17 @@ function Miniwin:getdefaultfont()
 
   check (WindowFont (self.win, "--NoFont--", "--NoFont--", 8, false, false, false, false, 0, 49))  -- normal
 
-  mdebug(string.lower(WindowFontInfo (self.win, "--NoFont--", 21)))
   return string.lower(WindowFontInfo (self.win, "--NoFont--", 21))
 
 end
 
 function Miniwin:createwin (text)
-  mdebug('createwin')
   if not next(text) then
     return
   end
   self.text = text
   self.window_data = {}
   self:calc_window_data()
-  mdebug('window_data')
-  mdebug(self.window_data)
   tshow = WindowInfo(self.win, 5)
   if tshow == nil then
     tshow = false
@@ -256,8 +235,6 @@ function Miniwin:createwin (text)
   self:drawwin()
   if self.firstdrawn then
     flag = verify_bool(GetVariable ("shown"..self.cname))
-    mdebug('shown', flag)
-    mdebug('firstdrawn', self.firstdrawn)
     self.firstdrawn = false
     if flag == nil then
       flag = false
@@ -285,13 +262,12 @@ function Miniwin:shutdown()
 end
 
 function Miniwin:init()
-  print("initialize miniwin")
+  --print("initialize miniwin")
   self.plugininitf = true
   self:disable()
 end
 
 function Miniwin:enable()
-  mdebug("enable", self.cname)
   self.shutdownf = false
   if self.plugininitf then
     self.plugininitf = false
@@ -304,7 +280,6 @@ function Miniwin:enable()
 end
 
 function Miniwin:disable()
-  mdebug("disable", self.cname)
   if not self.plugininitf then
     self.disabled = true
   end
@@ -440,6 +415,7 @@ function Miniwin:make_hyperlink_text (text, id, line, left, action, hint, cursor
       style.textcolour = self.hyperlink_colour
       style.start = left
       style.mousedown = action
+      style.vjust = 'center'
       style.hint = hint
       style.cursor = cursor
       style.hotspot_id = id
@@ -451,26 +427,12 @@ function Miniwin:make_hyperlink_text (text, id, line, left, action, hint, cursor
   end
 
   ttext = self:convert_line(line, {text})
-  mdebug("make_hyperlink_text", ttext)
 
 --  tprint(ttext)
   --local retval = WindowText (self.win, self.font_id, text, left, top, right, bottom, self.hyperlink_colour)
   if text then
     left, top, right, bottom = self:Display_Line(line, ttext.text)
   end
-  mdebug(self.cname, "make_hyperlink_text", left, top, right, bottom)
---  mdebug("Hotspot left", start, "right", right, "top", top, "bottom", bottom)
---  WindowAddHotspot(self.win, id,
---                     left, top, right, bottom,
---                    "", -- mouseover
---                    "", -- cancelmouseover
---                    "mousedown",
---                    "", -- cancelmousedown
---                    "", -- mouseup
---                    hint,
---                    cursor or 1, 0)
---
---  self.hyperlink_functions['mousedown'] [id] = action
 
   return right
 
@@ -549,7 +511,6 @@ function Miniwin:get_top_of_line(line)
 end
 
 function Miniwin:get_bottom_of_line(line)
-  mdebug('bottom_of_line', line, 'value', self:get_line_position(line, 'bottom'))
   return self:get_line_position(line, 'bottom')
 end
 
@@ -625,8 +586,6 @@ function Miniwin:convert_line(line, styles)
 end
 
 function Miniwin:calc_window_data()
-  mdebug('calc_window_data: self.text')
-  mdebug(self.text)
   local height = 0
   if type(self.text) == 'table' then
     local maxwidth = 0
@@ -670,7 +629,6 @@ function Miniwin:buildhotspot(style, left, top, right, bottom)
    self.hyperlink_functions['cancelmouseover'] [id] = style.cancelmouseover
    cancelmouseover = "cancelmouseover"
   end
-  mdebug('created hotspot', id, left, top, right, bottom)
   WindowAddHotspot(self.win, id,
                 left, top, right, bottom,
                 mouseover, -- mouseover
@@ -689,37 +647,47 @@ function Miniwin:Display_Line (line, styles)
   local left = self.width_padding
   local start = left
   local largestwidth = 0
-  local top = self:get_top_of_line(line)
   local bottom = self:get_bottom_of_line(line)
+  local top = self:get_top_of_line(line)
   if line <= self.header_height and line > 0 then
     def_font_id = self.default_font_id .. '_bold'
     def_colour = self:get_colour("header_text_colour")
     def_bg_colour = self:get_colour("header_bg_colour")
   end
   for i,v in ipairs (styles) do
+    local ttop = top
     if i == 1 then
-      mdebug('setting start', v.start)
       start = v.start
+    end
+    if v.vjust ~= nil then
+--      print('line', line, 'v.vjust is set to', v.vjust)
+      if v.vjust == 'center' then
+        theight = self:get_line_data(line, 'height')
+        fheight = WindowFontInfo(self.win, v.font_id, 1)
+        diff = (theight - fheight) / 2
+        ttop = ttop + diff
+      elseif v.vjust == 'bottom' then
+        theight = self:get_line_data(line, 'height')
+        fheight = WindowFontInfo(self.win, v.font_id, 1)
+        ttop = ttop + theight - fheight
+      end
     end
     local tlength = WindowTextWidth (self.win, v.font_id, v.text)
     local tcolour = self:get_colour(v.textcolour, def_colour)
     if v.backcolour and not (v.backcolour == 'bg_colour') then
       -- draw background rectangle
       local bcolour = self:get_colour(v.backcolour, def_bg_colour)
-      WindowRectOp (self.win, 2, v.start, top, v.start + tlength, top + self.window_data[line].height, bcolour)
+      WindowRectOp (self.win, 2, v.start, ttop, v.start + tlength, ttop + WindowFontInfo(self.win, v.font_id, 1), bcolour)
     end
-    mdebug('creating text', v)
     local textlen = WindowText (self.win, v.font_id, v.text,
-                    v.start, top, 0, 0, tcolour)
+                    v.start, ttop, 0, 0, tcolour)
     left = v.start + textlen
 
     if v.mousedown or v.cancelmousedown or v.mouseup or v.mouseover or v.cancelmouseover then
-        self:buildhotspot(v, v.start, top, left, bottom)
+        self:buildhotspot(v, v.start, ttop, left, bottom)
     end
-    --mdebug("Style Text", v.text, "left", tstart, "right", left, "top", top, "bottom", top + self.font_height)
   end -- for each style run
 
-  mdebug('left', start, 'top', top, 'right', left, 'bottom', bottom)
   return start, top, left, bottom
 
 end -- Display_Line
@@ -752,8 +720,6 @@ function Miniwin:drawwin()
   local height = self.window_data.height
   local width = self.window_data.width
 
-  mdebug('new height', height)
-  mdebug('new width', width)
   -- recreate the window the correct size
   if self.x ~= -1 and self.y ~= -1 then
     check (WindowCreate (self.win,
@@ -785,7 +751,6 @@ function Miniwin:drawwin()
      check (WindowRectOp (self.win, 5, 2, 2, -2, hbottom, 5, 8))
 
     self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, hbottom, empty, "Drag to move", 10)
-    mdebug(self.cname, 'drag hotspot header_height > 0 - bottom', hbottom)
   else
     self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, self:get_bottom_of_line(1), empty, "Drag to move", 10)
   end
@@ -809,22 +774,19 @@ function Miniwin:drawwin()
 
 
 -- show all fonts
-fonts = WindowFontList(self.win)
+-- fonts = WindowFontList(self.win)
+--
+-- if fonts then
+--   for _, v in ipairs (fonts) do
+--     print (v, WindowFontInfo(self.win, v, 21), WindowFontInfo(self.win, v, 19),WindowFontInfo(self.win, v, 8), WindowFontInfo(self.win, v, 1))
+--   end
+-- end -- if any
 
-if fonts then
-  for _, v in ipairs (fonts) do
-    print (v, WindowFontInfo(self.win, v, 21), WindowFontInfo(self.win, v, 19),WindowFontInfo(self.win, v, 8), WindowFontInfo(self.win, v, 1))
-  end
-end -- if any
-
-  mdebug('new - height', height, 'width', width)
 end
 
 
 function Miniwin:set(option, value, args)
-  mdebug('miniwin set')
   retcode, tvalue = self:checkvalue(option, value, args)
-  mdebug('option', option, 'retcode', retcode, 'tvalue', tvalue)
   if retcode == true then
     if string.find(option, "font") and not self.classinit then
       local font_name = nil
@@ -852,7 +814,6 @@ function Miniwin:set(option, value, args)
       end
     end
     retcode2 = super(self, option, value, args)
-    mdebug('super:set returned', retcode2)
     if retcode2 then
       if option == "windowpos" then
         self.x = -1
@@ -916,7 +877,6 @@ function Miniwin:dragrelease(flags, hotspot_id)
 end -- dragrelease
 
 function Miniwin:tabbroadcast(flag)
-  mdebug('tabbroadcast - self.disabled', self.disabled)
   local td = {}
   td.id = GetPluginID()
   if not text then
