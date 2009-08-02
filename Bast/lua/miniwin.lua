@@ -18,9 +18,12 @@ styles can have the following
   style.textcolour
   style.backcolour
   style.start - absolute position to start
-TODO:  style.hjust - can be set to center to put text in the center of the window on that line (default is top)
+  style.hjust - can be set to center to put text in the center of the window on that line (default is top)
+    values: 'left', 'center', 'right'
   style.vjust - can be set to vertically adjust text (comes into play when a line has several sizes of text)
+    values: 'top', 'center', 'bottom'
   style.font_name
+    if a font can't be loaded, then the default font is used
   style.font_size
   style.bold
   style.italic
@@ -655,21 +658,32 @@ function Miniwin:Display_Line (line, styles)
     def_bg_colour = self:get_colour("header_bg_colour")
   end
   for i,v in ipairs (styles) do
+    local tstart = v.start
     local ttop = top
-    if i == 1 then
-      start = v.start
-    end
     if v.vjust ~= nil then
---      print('line', line, 'v.vjust is set to', v.vjust)
       if v.vjust == 'center' then
-        theight = self:get_line_data(line, 'height')
-        fheight = WindowFontInfo(self.win, v.font_id, 1)
-        diff = (theight - fheight) / 2
-        ttop = ttop + diff
+        local theight = self:get_line_data(line, 'height')
+        local fheight = WindowFontInfo(self.win, v.font_id, 1)
+        ttop = ttop + (theight - fheight) / 2
       elseif v.vjust == 'bottom' then
-        theight = self:get_line_data(line, 'height')
-        fheight = WindowFontInfo(self.win, v.font_id, 1)
+        local theight = self:get_line_data(line, 'height')
+        local fheight = WindowFontInfo(self.win, v.font_id, 1)
         ttop = ttop + theight - fheight
+      end
+    end
+    if v.hjust ~= nil then
+      if v.hjust == 'center' then
+        local twidth = self:get_line_data(line, 'width')
+        local wwidth = self.window_data.width
+        local restt = twidth - tstart
+        local restw = wwidth - tstart
+        tstart = tstart + (restw - restt) / 2
+      elseif v.hjust == 'right' then
+        local twidth = self:get_line_data(line, 'width')
+        local wwidth = self.window_data.width
+        local restt = twidth - tstart
+        local restw = wwidth - tstart
+        tstart = tstart + restw - restt
       end
     end
     local tlength = WindowTextWidth (self.win, v.font_id, v.text)
@@ -677,14 +691,14 @@ function Miniwin:Display_Line (line, styles)
     if v.backcolour and not (v.backcolour == 'bg_colour') then
       -- draw background rectangle
       local bcolour = self:get_colour(v.backcolour, def_bg_colour)
-      WindowRectOp (self.win, 2, v.start, ttop, v.start + tlength, ttop + WindowFontInfo(self.win, v.font_id, 1), bcolour)
+      WindowRectOp (self.win, 2, tstart, ttop, tstart + tlength, ttop + WindowFontInfo(self.win, v.font_id, 1), bcolour)
     end
     local textlen = WindowText (self.win, v.font_id, v.text,
-                    v.start, ttop, 0, 0, tcolour)
-    left = v.start + textlen
+                    tstart, ttop, 0, 0, tcolour)
+    left = tstart + textlen
 
     if v.mousedown or v.cancelmousedown or v.mouseup or v.mouseover or v.cancelmouseover then
-        self:buildhotspot(v, v.start, ttop, left, bottom)
+        self:buildhotspot(v, tstart, ttop, left, bottom)
     end
   end -- for each style run
 
