@@ -49,6 +49,58 @@ require 'pluginhelper'
 require 'serialize'
 require 'copytable'
 
+DEFAULT_COLOUR = "@w"
+TRANSPARENCY_COLOUR = 0x080808
+BORDER_WIDTH = 2
+
+local BLACK = 1
+local RED = 2
+local GREEN = 3
+local YELLOW = 4
+local BLUE = 5
+local MAGENTA = 6
+local CYAN = 7
+local WHITE = 8
+
+-- colour styles (eg. @r is normal red, @R is bold red)
+
+-- @- is shown as ~
+-- @@ is shown as @
+
+-- This table uses the colours as defined in the MUSHclient ANSI tab, however the
+-- defaults are shown on the right if you prefer to use those.
+
+colour_conversion = {
+   k = GetNormalColour (BLACK)   ,   -- 0x000000
+   r = GetNormalColour (RED)     ,   -- 0x000080
+   g = GetNormalColour (GREEN)   ,   -- 0x008000
+   y = GetNormalColour (YELLOW)  ,   -- 0x008080
+   b = GetNormalColour (BLUE)    ,   -- 0x800000
+   m = GetNormalColour (MAGENTA) ,   -- 0x800080
+   c = GetNormalColour (CYAN)    ,   -- 0x808000
+   w = GetNormalColour (WHITE)   ,   -- 0xC0C0C0
+   K = GetBoldColour   (BLACK)   ,   -- 0x808080
+   R = GetBoldColour   (RED)     ,   -- 0x0000FF
+   G = GetBoldColour   (GREEN)   ,   -- 0x00FF00
+   Y = GetBoldColour   (YELLOW)  ,   -- 0x00FFFF
+   B = GetBoldColour   (BLUE)    ,   -- 0xFF0000
+   M = GetBoldColour   (MAGENTA) ,   -- 0xFF00FF
+   C = GetBoldColour   (CYAN)    ,   -- 0xFFFF00
+   W = GetBoldColour   (WHITE)   ,   -- 0xFFFFFF
+
+   -- add custom colours here
+
+  }  -- end conversion table
+
+-- take a string, and remove colour codes from it (eg. "@Ghello" becomes "hello"
+function strip_colours (s)
+  s = s:gsub ("@%-", "~")    -- fix tildes
+  s = s:gsub ("@@", "\0")  -- change @@ to 0x00
+  s = s:gsub ("@%a([^@]*)", "%1")
+  return (s:gsub ("%z", "@")) -- put @ back
+end -- strip_colours
+
+
 Miniwin = Phelpobject:subclass()
 
 function Miniwin:initialize(args)
@@ -74,7 +126,6 @@ function Miniwin:initialize(args)
   self.origy = 0
   self.firstdrawn = true
   self.drag_hotspot = self.cname .. "_drag_hotspot"
-
 
   -- below are things that can be kept as settings
   self.header_padding = 2
@@ -551,7 +602,7 @@ function Miniwin:convert_line(line, styles)
                       style.strikeout or self.fonts[def_font_id].strikeout)
 
       maxfontheight = math.max(maxfontheight, self.fonts[font_id].height)
-      local tlength = WindowTextWidth (self.win, font_id, style.text)
+      local tlength = WindowTextWidth (self.win, font_id, strip_colours(style.text))
       if style.start and style.start > start then
         linet.text[i].start = style.start
         start = style.start + tlength
@@ -643,6 +694,57 @@ function Miniwin:buildhotspot(style, left, top, right, bottom)
                 style.cursor or 1, 0)
 end
 
+-- displays text with colour codes imbedded
+--
+-- win: window to use
+-- font_id : font to use
+-- Text : what to display
+-- Left, Top, Right, Bottom : where to display it
+-- Capitalize : if true, turn the first letter into upper-case
+
+function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize)
+
+  if Text:match ("@") then
+    local x = Left  -- current x position
+    local need_caps = Capitalize
+
+    Text = Text:gsub ("@%-", "~")    -- fix tildes
+    Text = Text:gsub ("@@", "\0")  -- change @@ to 0x00
+
+    -- make sure we start with @ or gsub doesn't work properly
+    if Text:sub (1, 1) ~= "@" then
+      Text = DEFAULT_COLOUR .. Text
+    end -- if
+
+    for colour, text in Text:gmatch ("@(%a)([^@]+)") do
+      text = text:gsub ("%z", "@") -- put any @ characters back
+
+      if need_caps then
+        local count
+        text, count = text:gsub ("%a", string.upper, 1)
+        need_caps = count == 0 -- if not done, still need to capitalize yet
+      end -- if
+
+      if #text > 0 then
+        x = x + WindowText (self.win, font_id, text, x, Top, Right, Bottom,
+                            colour_conversion [colour] or GetNormalColour (WHITE))
+      end -- some text to display
+
+    end -- for each colour run
+
+    return x
+  end -- if
+
+  if Capitalize then
+    Text = Text:gsub ("%a", string.upper, 1)
+  end -- if leading caps wanted
+
+  return WindowText (self.win, font_id, Text, Left, Top, Right, Bottom,
+                    colour_conversion [DEFAULT_COLOUR] or GetNormalColour (WHITE))
+
+end -- colourtext
+
+
 function Miniwin:Display_Line (line, styles)
   local def_font_id = self.default_font_id
   local def_colour = self:get_colour("text_colour")
@@ -686,15 +788,20 @@ function Miniwin:Display_Line (line, styles)
         tstart = tstart + restw - restt
       end
     end
-    local tlength = WindowTextWidth (self.win, v.font_id, v.text)
-    local tcolour = self:get_colour(v.textcolour, def_colour)
+    local tlength = WindowTextWidth (self.win, v.font_id, strip_colours(v.text))
     if v.backcolour and not (v.backcolour == 'bg_colour') then
       -- draw background rectangle
       local bcolour = self:get_colour(v.backcolour, def_bg_colour)
       WindowRectOp (self.win, 2, tstart, ttop, tstart + tlength, ttop + WindowFontInfo(self.win, v.font_id, 1), bcolour)
     end
-    local textlen = WindowText (self.win, v.font_id, v.text,
+    local textlen = 0
+    if v.textcolour ~= nil then
+      local tcolour = self:get_colour(v.textcolour, def_colour)
+      textlen = WindowText (self.win, v.font_id, strip_colours(v.text),
                     tstart, ttop, 0, 0, tcolour)
+    else
+      textlen = self:colourtext(v.font_id, v.text, tstart, ttop, 0, 0)
+    end
     left = tstart + textlen
 
     if v.mousedown or v.cancelmousedown or v.mouseup or v.mouseover or v.cancelmouseover then
