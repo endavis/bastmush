@@ -49,7 +49,6 @@ require 'pluginhelper'
 require 'serialize'
 require 'copytable'
 
-DEFAULT_COLOUR = "@w"
 TRANSPARENCY_COLOUR = 0x080808
 BORDER_WIDTH = 2
 
@@ -152,7 +151,6 @@ function Miniwin:initialize(args)
   self.classinit = false
 
   self:add_setting( 'hyperlink_colour', {type="colour", help="hyperlink colour for this window", default=0x00FFFF})
-  self:add_setting( 'show_hyperlinks', {type="number", help="show the default hyperlinks", low=0, high=1, default=0})
 
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
@@ -344,7 +342,9 @@ function Miniwin:disable()
 end
 
 function Miniwin:toggle()
-  WindowShow(self.win, not WindowInfo(self.win, 5))
+  if not self.disabled then
+    WindowShow(self.win, not WindowInfo(self.win, 5))
+  end
   self:savestate()
 end
 
@@ -727,7 +727,7 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
 
       if #text > 0 then
         x = x + WindowText (self.win, font_id, text, x, Top, Right, Bottom,
-                            colour_conversion [colour] or GetNormalColour (WHITE))
+                            colour_conversion [colour] or self.text_colour)
       end -- some text to display
 
     end -- for each colour run
@@ -740,7 +740,7 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
   end -- if leading caps wanted
 
   return WindowText (self.win, font_id, Text, Left, Top, Right, Bottom,
-                    colour_conversion [DEFAULT_COLOUR] or GetNormalColour (WHITE))
+                    self.text_colour)
 
 end -- colourtext
 
@@ -754,12 +754,8 @@ function Miniwin:Display_Line (line, styles)
   local largestwidth = 0
   local bottom = self:get_bottom_of_line(line)
   local top = self:get_top_of_line(line)
-  if line <= self.header_height and line > 0 then
-    def_font_id = self.default_font_id .. '_bold'
-    def_colour = self:get_colour("header_text_colour")
-    def_bg_colour = self:get_colour("header_bg_colour")
-  end
   for i,v in ipairs (styles) do
+    local textlen = 0
     local tstart = v.start
     local ttop = top
     if v.vjust ~= nil then
@@ -789,21 +785,27 @@ function Miniwin:Display_Line (line, styles)
       end
     end
     local tlength = WindowTextWidth (self.win, v.font_id, strip_colours(v.text))
-    if v.backcolour and not (v.backcolour == 'bg_colour') then
-      -- draw background rectangle
-      local bcolour = self:get_colour(v.backcolour, def_bg_colour)
-      WindowRectOp (self.win, 2, tstart, ttop, tstart + tlength, ttop + WindowFontInfo(self.win, v.font_id, 1), bcolour)
-    end
-    local textlen = 0
-    if v.textcolour ~= nil then
-      local tcolour = self:get_colour(v.textcolour, def_colour)
-      textlen = WindowText (self.win, v.font_id, strip_colours(v.text),
-                    tstart, ttop, 0, 0, tcolour)
+    if line <= self.header_height and line > 0 then
+      def_colour = self:get_colour("header_text_colour")
+      textlen = WindowText (self.win, self.default_font_id_bold, strip_colours(v.text),
+                 tstart, ttop, 0, 0, def_colour)
     else
-      textlen = self:colourtext(v.font_id, v.text, tstart, ttop, 0, 0)
+      if v.backcolour and not (v.backcolour == 'bg_colour') then
+        -- draw background rectangle
+        local bcolour = self:get_colour(v.backcolour, def_bg_colour)
+        WindowRectOp (self.win, 2, tstart, ttop, tstart + tlength, ttop + WindowFontInfo(self.win, v.font_id, 1), bcolour)
+      end
+      if v.textcolour ~= nil then
+        local tcolour = self:get_colour(v.textcolour)
+        textlen = WindowText (self.win, v.font_id, strip_colours(v.text),
+                      tstart, ttop, 0, 0, tcolour)
+      elseif line <= self.header_height and line > 0 then
+
+      else
+        textlen = self:colourtext(v.font_id, v.text, tstart, ttop, 0, 0)
+      end
     end
     left = tstart + textlen
-
     if v.mousedown or v.cancelmousedown or v.mouseup or v.mouseover or v.cancelmouseover then
         self:buildhotspot(v, tstart, ttop, left, bottom)
     end
@@ -879,16 +881,6 @@ function Miniwin:drawwin()
   for i, v in ipairs (self.window_data) do
     self:Display_Line (i, self.window_data[i].text)
   end -- for
-
-  if self.show_hyperlinks == 1 then
-    self:make_hyperlink_text ("?", "bg_colour", -1, width - (2 * self.fonts[self.default_font_id].width),
-                    self.hyperlink_configure_background, "Choose background colour", nil, true)
-
-    if self.header_height > 0 then
-      self:make_hyperlink ("?", "header_bg_colour", self.header_height, width - (2 * self.fonts[self.default_font_id].width),
-                    self.hyperlink_configure_header, "Choose header background colour", nil, true)
-    end
-  end
 
   WindowDragHandler(self.win, self.drag_hotspot, "dragmove", "dragrelease", 0)
 
