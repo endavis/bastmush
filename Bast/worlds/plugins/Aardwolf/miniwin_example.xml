@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+
+<muclient>
+<plugin
+   name="miniwin_example"
+   author="Bast"
+   id="eee7adec415c1bbb534ef093"
+   language="Lua"
+   purpose="test miniwin functionality"
+   save_state="y"
+   date_written="2009-02-13 09:28:14"
+   requires="4.37"
+   version="1"
+   >
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Aliases  -->
+
+<aliases>
+</aliases>
+
+<script>
+<![CDATA[
+
+require 'var'
+require 'pluginhelper'
+require "miniwin"
+require "tprint"
+require "commas"
+require "serialize"
+
+testwin = Miniwin:new{name="Example"}
+testwin:set('header_height', 1, {default = true})
+styles = {}
+
+-- Header Line, centered
+style = {}
+style.text = "New Test Header"
+style.hjust = 'center'
+table.insert(styles, {style})
+
+-- First Line
+style = {}
+style.text = "New Test Text Line 1 @yNew Test Text Line 1@x @CNew Test Text Line 1@x New Test Text Line 1"
+style.hjust = 'center'
+style.backcolour = 'red'
+style.hint = serialize.save_simple(style)
+style.mouseover = nofunc
+table.insert(styles, {style})
+
+-- Second Line, several styles
+tstyle = {}
+
+-- Very Large Text
+style = {}
+style.text = "Large"
+style.font_name = 'Courier New'
+style.font_size = 30
+style.backcolour = "blue"
+style.hint = serialize.save_simple(style)
+style.mouseover = nofunc
+table.insert(tstyle, style)
+
+-- Space
+style = {}
+style.text = " "
+style.font_name = 'Courier New'
+style.font_size = 8
+style.hint = serialize.save_simple(style)
+style.mouseover = nofunc
+table.insert(tstyle, style)
+
+-- Some text
+style = {}
+style.text = "Just Text "
+style.mouseover = nofunc
+style.hint = 'Default Vertical Alignment of Top'
+table.insert(tstyle, style)
+
+-- Justify Bottom Vertically with hyperlink
+style = {}
+style.text = "Bottom Vertically "
+style.vjust = 'bottom'
+style.hint = serialize.save_simple(style)
+style.mouseover = nofunc
+table.insert(tstyle, style)
+
+-- Justify larger text, Arial Font, red text, green background
+style = {}
+style.text = "Center Vertically"
+style.font_name = 'Arial'
+style.font_size = 15
+style.backcolour = "green"
+style.textcolour = "red"
+style.vjust = 'center'
+style.hint = serialize.save_simple(style)
+style.mouseover = nofunc
+table.insert(tstyle, style)
+
+-- insert the second line
+table.insert(styles, tstyle)
+
+-- New Line
+style = {}
+style.text = "Just a New Line"
+style.mouseover = nofunc
+style.hint = 'Default Horizontal Alignment of Left'
+table.insert(styles, {style})
+
+-- New Line, Center Horizontally
+style = {}
+style.text = "Center Horizontally"
+style.hjust = 'center'
+style.hint = serialize.save_simple(style)
+style.mouseover = nofunc
+table.insert(styles, {style})
+
+-- New Line, Right Justify Horizontally
+style = {}
+style.text = "Right Horizontally"
+style.hint = serialize.save_simple(style)
+style.mouseover = nofunc
+style.hjust = 'right'
+
+table.insert(styles, {style})
+testwin:enable()
+testwin:createwin(styles)
+testwin:show(true)
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+
+  PluginhelperOnPluginEnable()
+  testwin:enable()
+  testwin:createwin(styles)
+  testwin:show(true)
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+
+option_set_default('cmd', 'mnexam')
+option_set_default('plugin_colour', 'steelblue')
+window_set(testwin)
+
+init_plugin_vars()
+set_plugin_alias()
+
+]]>
+</script>
+</muclient>
