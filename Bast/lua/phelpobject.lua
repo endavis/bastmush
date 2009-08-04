@@ -74,7 +74,7 @@ function Phelpobject:checkvalue(option, value)
     ColourNote("red", "", "That is not a valid value for " .. option)
     return 3, nil
   end
-  mdebug('checkvalue', value, 'type', varstuff.type, 'returned', tvalue)
+  mdebug('phelpobject checkvalue', value, 'type', varstuff.type, 'returned', tvalue)
   return true, tvalue
 end
 
