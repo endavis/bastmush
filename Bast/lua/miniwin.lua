@@ -713,7 +713,7 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
 
     -- make sure we start with @ or gsub doesn't work properly
     if Text:sub (1, 1) ~= "@" then
-      Text = DEFAULT_COLOUR .. Text
+      Text = "@x" .. Text
     end -- if
 
     for colour, text in Text:gmatch ("@(%a)([^@]+)") do
@@ -926,7 +926,7 @@ function Miniwin:set(option, value, args)
         self:createwin(self.text)
       end
     end
-    retcode2 = super(self, option, value, args)
+    retcode2 = super(self, option, tvalue, args)
     if retcode2 then
       if option == "windowpos" then
         self.x = -1
