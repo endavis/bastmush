@@ -58,6 +58,8 @@ require "tablesort"
 window = nil
 send_to_world = false
 
+cmdstuff = {}
+
 function set_plugin_alias()
   --[[
     this will change the command used for your plugin in the plugin_parse alias
@@ -270,7 +272,7 @@ function find_cmd(cmd)
 
 end
 
-function do_cmd(tcmd, name, line, wildcards)
+function do_cmd(tcmd)
   local ran = false
   fullcmd, cmd = find_cmd(tcmd)
   if cmd == nil then
@@ -280,7 +282,7 @@ function do_cmd(tcmd, name, line, wildcards)
     else
       ColourNote("", "", "")
       ColourNote("white", "black", "That is not a valid command")
-      do_cmd("help", name, line, wildcards)
+      do_cmd("help", cmdstuff.name, cmdstuff.line, cmdstuff.wildcards)
     end
     return false
   end
@@ -289,7 +291,7 @@ function do_cmd(tcmd, name, line, wildcards)
     ColourNote("red", "", "The function for command " .. fullcmd .. " is invalid, please check plugin")
     return false
   end
-  if cmd.func (name, line, wildcards) then
+  if cmd.func (cmdstuff.name, cmdstuff.line, cmdstuff.wildcards) then
     ran = true
   end -- all done
   if cmd.send_to_world then
@@ -315,7 +317,12 @@ function plugin_parse_helper(name, line, wildcards)
     end
   end
 
-  return do_cmd(wildcards.action, name, line, wildcards)
+  cmdstuff.name = name
+  cmdstuff.line = line
+  cmdstuff.wildcards = wildcards
+
+  DoAfterSpecial (.1, 'do_cmd("' .. wildcards.action ..'")', sendto.script)
+
 end
 
 function set_var(value, option, type, args)
@@ -518,12 +525,12 @@ end
 function PluginhelperOnPluginEnable()
   mdebug('OnPluginEnable')
   -- if we are connected when the plugin loads, it must have been reloaded whilst playing
-  if IsConnected () then
-    OnPluginConnect ()
-  end -- if already connected
   if window then
     window:init()
   end
+  if IsConnected () then
+    OnPluginConnect ()
+  end -- if already connected
   broadcast(-2)
 end
 
@@ -575,4 +582,9 @@ options_table = {
   tdebug = {help="toggle this for debugging info", type="bool", default=false},
   cmd = {help="the command to type for this plugin", type="string", after=set_plugin_alias, default="mb"},
 }
+
+function init_pluginhelper()
+  init_plugin_vars()
+  set_plugin_alias()
+end
 
