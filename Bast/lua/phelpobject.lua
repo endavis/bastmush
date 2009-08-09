@@ -26,6 +26,7 @@ function Phelpobject:initialize(args)
   --]]
   mdebug('phelpobject __init')
   self.classinit = true
+  self.shutdownf = false
   self.set_options = {}
   self.cname = args.name or "Default"
   mdebug('phelpobject __init self.cname', self.cname)
@@ -37,7 +38,10 @@ function Phelpobject:reset()
   end
 end
 
-function Phelpobject:savestate()
+function Phelpobject:savestate(override)
+  if self.classinit and not override then
+    return
+  end
   mdebug(self.cname, 'savestate')
   for i,v in pairs(self.set_options) do
     SetVariable(i .. self.cname, tostring(self[i]))
@@ -52,6 +56,37 @@ end
 
 function Phelpobject:__tostring()
   return self.cname
+end
+
+function Phelpobject:shutdown()
+  self.shutdownf = true
+  self:disable()
+end
+
+function Phelpobject:init()
+  for name,setting in pairs(self.set_options) do
+    local gvalue = GetVariable(name..self.cname)
+    if gvalue == nil or gvalue == 'nil' then
+      gvalue = setting.default
+    end
+    local tvalue = verify(gvalue, setting.type, {window = self})
+    self:set(name, tvalue, {silent = true})
+  end
+  self:savestate(true)
+  SaveState()
+  self:disable()
+end
+
+function Phelpobject:enable()
+  self.shutdownf = false
+  self.classinit = false
+  if self.disabled then
+    self.disabled = false
+  end
+end
+
+function Phelpobject:disable()
+  self:savestate()
 end
 
 function Phelpobject:checkvalue(option, value)
@@ -107,6 +142,7 @@ function Phelpobject:set(option, value, args)
   if retcode == true then
     if args.default then
       varstuff.default = tvalue
+      return
     end
     self[option] = tvalue
     mdebug("setting", option, "to", tvalue)
@@ -117,6 +153,13 @@ function Phelpobject:set(option, value, args)
   return false
 end
 
+function Phelpobject:set_default(option, value)
+  varstuff = self.set_options[option]
+  retcode, tvalue = self:checkvalue(option, value)
+  if retcode then
+    varstuff.default = tvalue
+  end
+end
 
 function Phelpobject:print_settings()
   for v,t in tableSort(self.set_options, 'sortlev', 50) do
@@ -138,7 +181,7 @@ function Phelpobject:add_setting(name, setting)
   self.set_options[name] = setting
   --self.skeys = sort_settings(self.set_options)
 
-  self:set(name, verify(GetVariable(name..self.cname) or setting.default, setting.type, {window = self}), {silent = true})
+  --self:set(name, verify(GetVariable(name..self.cname) or setting.default, setting.type, {window = self}), {silent = true})
   mdebug('done add_setting', name)
 end
 
