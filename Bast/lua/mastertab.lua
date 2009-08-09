@@ -2,47 +2,52 @@
 
 require 'miniwin'
 require 'tprint'
+require 'copytable'
 
 Mastertabwin = Miniwin:subclass()
 --string.gsub(tests, "[a-zA-z]", " ")
 -- add hide all and show all menu items
 
 function Mastertabwin:initialize(args)
-  self.classinit = true
   super(self, args)   -- notice call to superclass's constructor
   self.tabs = {}
   self.tab_padding = 10
   self.text = {}
   self.tabcount = 0
---  self:add_setting( 'orientation', {type="number", help="orientation of the tabs, 0 = horizontal, 1 = vertical", low=0, high=1, default=0, sortlev=44})
+  self.hotspots = {}
+  self:add_setting( 'orientation', {type="number", help="orientation of the tabs, 0 = horizontal, 1 = vertical", low=0, high=1, default=0, sortlev=44})
 
   local td = {}
   td.id = GetPluginID()
-  td.text = "Show All"
+  td.text = " Show Windows "
   td.func = self.showall
   td.name = 'z1Show all'
   td.win = self.win .. 'ShowAll'
-  td.popup = "Show all Windows"
+  td.popup = " Show Windows "
   self:addtab(td)
   td = {}
   td.id = GetPluginID()
-  td.text = "Hide All"
+  td.text = " Hide Windows "
   td.func = self.hideall
   td.name = 'z2Hide all'
   td.win = self.win .. 'HideAll'
-  td.popup = "Hide all Windows"
+  td.popup = " Hide Windows "
   self:addtab(td)
+
 end
 
 function Mastertabwin:hideall()
   for i,v in pairs(self.tabs) do
+    v.last = WindowInfo(v.win, 5)
     WindowShow(v.win, false)
   end
 end
 
 function Mastertabwin:showall()
   for i,v in pairs(self.tabs) do
-    WindowShow(v.win, true)
+    if v.last ~= nil then
+      WindowShow(v.win, v.last)
+    end
   end
 end
 
@@ -64,62 +69,137 @@ function Mastertabwin:removetab(args)
   self:drawtabs()
 end
 
-function Mastertabwin:createtabstyle(key, start)
-  local tstyle = {}
-  tstyle.text = self.tabs[key].text
-  tstyle.mousedown = self.tabs[key].func or self.toggletab
-  tstyle.hint = self.tabs[key].popup or "Toggle " .. self.tabs[key].name
-  tstyle.hotspot_id = key
-  tstyle.textcolour = self.hyperlink_colour
+function Mastertabwin:createtabstyle(start, key, newstyle)
+  local tstyle = copytable.deep(newstyle)
   tstyle.start = start
+  tstyle.text = newstyle.text
+  tstyle.length = WindowTextWidth (self.win, self.default_font_id, strip_colours(tstyle.text))
+  if self.tabs[key].win then
+    tstyle.mousedown = self.tabs[key].func or self.toggletab
+    tstyle.hint = self.tabs[key].popup or "Toggle " .. self.tabs[key].name
+    tstyle.hotspot_id = key .. start
+    self.hotspots[key .. start] = key
+  end
   return tstyle
 end
 
 function Mastertabwin:toggletab(flags, hotspot_id)
-  WindowShow(hotspot_id, not (WindowInfo(hotspot_id, 5)))
+  WindowShow(self.hotspots[hotspot_id], not (WindowInfo(self.hotspots[hotspot_id], 5)))
 end
 
 function Mastertabwin:drawtabs()
+  if self.orientation == 0 then
+    self:drawtabs_horizontal()
+  elseif self.orientation == 1 then
+    self:drawtabs_vertical()
+  end
+end
+
+function Mastertabwin:drawtabs_vertical()
   local ttext = {}
-  start = 0
+  for i,v in tableSort(self.tabs, 'name', 'Default') do
+    local start = self.width_padding
+    local tstyle = {}
+    if type(v.text) == 'table' then
+      for init,istyle in ipairs(v.text) do
+        local style = self:createtabstyle(start, i, istyle)
+        style.hjust = 'center'
+        table.insert(tstyle, style)
+      end
+      v['end'] = nil
+    else
+      local style = self:createtabstyle(start, i, {text = v.text})
+      style.hjust = 'center'
+      table.insert(tstyle, style)
+      v['end'] = nil
+    end
+    table.insert(ttext, tstyle)
+  end
+  self:createwin(ttext)
+end
+
+function Mastertabwin:drawtabs_horizontal()
+  outputwinwidth = GetInfo(281)
+  local alltext = {}
+  local ttext = {}
+  local start = self.width_padding
   for i,v in tableSort(self.tabs, 'name', 'Default') do
     start = start + self.tab_padding / 2
-    style = self:createtabstyle(i, start)
-    table.insert(ttext, style)
-    start = start + WindowTextWidth (self.win, self.default_font_id, style.text) + self.tab_padding / 2
+    v.start = start
+    if type(v.text) == 'table' then
+      for init,istyle in ipairs(v.text) do
+        local style = self:createtabstyle(start, i, istyle)
+        table.insert(ttext, style)
+        start = start + style.length
+      end
+      start = start + self.tab_padding / 2
+      v['end'] = start
+    else
+      v.start = start
+      local style = self:createtabstyle(start, i, {text = v.text})
+      table.insert(ttext, style)
+      start = start + style.length + self.tab_padding / 2
+      v['end'] = start
+    end
+    if start > outputwinwidth / 2 then
+      table.insert(alltext, ttext)
+      ttext = {}
+    end
   end
-  self:createwin({ttext})
+  if not next(ttext) then
+    table.insert(alltext, ttext)
+  end
+  self:createwin(alltext)
 end
 
 function Mastertabwin:drawwin()
-  super(self)
-  if self.window_data ~= nil then
-    for i,v in ipairs(self.window_data) do
-      for x,y in ipairs(v.text) do
-        if x ~= 1 then
-          WindowLine (self.win, y.start - self.tab_padding / 2, 0, y.start - self.tab_padding / 2, self.window_data.height, ColourNameToRGB ("white"), 0, 1)
-        end
+  if not next(self.text) then
+    return
+  end
+
+  if self.change_orient then
+    self.change_orient = false
+    self:drawtabs()
+  end
+
+  self:create_window_internal()
+
+  if self.orientation == 1 then
+    j = 1
+    for i,v in tableSort(self.tabs, 'name', 'Default') do
+      local tabcolour = v.tabcolour or self.bg_colour
+      local bcolour = self:get_colour(tabcolour)
+      WindowRectOp (self.win, 2, self.width_padding, self:get_top_of_line(j), self:calc_window_width() - self.width_padding, self:get_bottom_of_line(j), bcolour)
+      if j > 1 then
+        WindowLine (self.win, 1, self:get_top_of_line(j), self:calc_window_width() - 1, self:get_top_of_line(j), ColourNameToRGB ("white"), 0, 1)
       end
+      j = j + 1
     end
   end
+
+  if self.orientation == 0 then
+    for i,v in tableSort(self.tabs, 'name', 'Default') do
+      local tabcolour = v.tabcolour or self.bg_colour
+      local bcolour = self:get_colour(tabcolour)
+      local tend = v['end']
+      if tend > self:calc_window_width() - self.width_padding then
+        tend = self:calc_window_width() - self.width_padding
+      end
+
+      WindowRectOp (self.win, 2, v.start - self.tab_padding / 2, self:get_top_of_line(1), v['end'], self:get_bottom_of_line(1), bcolour)
+      WindowLine (self.win, v['end'] - 1, 0, v['end'] - 1, self.window_data.height, ColourNameToRGB ("white"), 0, 1)
+    end
+  end
+
+  for i, v in ipairs (self.window_data) do
+    self:Display_Line (i, self.window_data[i].text)
+  end -- for
 end
 
-
-function sort_table_keys(ttable, sortkey)
-  --[[
-     sort the keys of the options table
-  --]]
-  local function sortfunc (a, b)
-    return (ttable[a][sortkey] < ttable[b][sortkey])
-  end
-
-
-  local t2 = {}
-  for i,v in pairs(ttable) do
-    table.insert(t2, i)
-  end
-  table.sort(t2, sortfunc)
-
-  return t2
-
+function Mastertabwin:set(option, value, args)
+   if option == 'orientation' then
+     self.change_orient = true
+   end
+   retcode = super(self, option, value, args)
+   return retcode
 end
