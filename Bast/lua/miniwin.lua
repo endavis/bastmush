@@ -1,6 +1,6 @@
 -- miniwin.lua
 -- $Id$
--- class for creating windows miniwindows
+-- class for creating miniwindows
 
 -- Author: Eric Davis - 28th September 2008
 
@@ -128,8 +128,6 @@ function Miniwin:initialize(args)
 
   -- below are things that can be kept as settings
   self.header_padding = 2
-  self.shutdownf = false
-  self.plugininitf = false
 
   self:add_setting( 'disabled', {type="bool", help="is this window disabled", default=verify_bool(false), sortlev=38, readonly=true})
   self:add_setting( 'windowpos', {type="number", help="position for this window: see http://www.gammon.com.au/scripts/function.php?name=WindowCreate", low=0, high=13, default=6,sortlev=38})
@@ -148,14 +146,12 @@ function Miniwin:initialize(args)
   self:add_setting( 'height', {type="number", help="height of this window, 0 = auto", low=0, high=140, default=0, sortlev=44})
   self:add_setting( 'height_padding', {type="number", help="height padding for this window", low=0, high=30, default=5, sortlev=44})
   self:add_setting( 'width_padding', {type="number", help="width padding for this window", low=0, high=30, default=5, sortlev=44})
-  self.classinit = false
-
+  self:add_setting( 'use_tabwin', {type="bool", help="toggle to use tabwin", default=verify_bool(false), sortlev=50})
   self:add_setting( 'hyperlink_colour', {type="colour", help="hyperlink colour for this window", default=0x00FFFF})
 
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
   self.window_data = {}
-  self:setdefaultfont(self:addfont(self.font, self.font_size, false, false, false, false, true))
 
 end
 
@@ -163,7 +159,7 @@ end
 function Miniwin:savestate()
   super(self)
   tshownf = tostring(WindowInfo(self.win, 5))
-  if not self.shutdownf and not self.plugininitf then
+  if not self.shutdownf and not self.classinit then
     SetVariable ("shown"..self.cname, tshownf)
   end
 end
@@ -265,7 +261,7 @@ function Miniwin:getdefaultfont()
                  0, 0, 1, 1,
                  6,   -- top right
                  0,
-                 self:get_colour("bg_colour")) )
+                 verify_colour('black')) )
 
   check (WindowFont (self.win, "--NoFont--", "--NoFont--", 8, false, false, false, false, 0, 49))  -- normal
 
@@ -308,37 +304,24 @@ function Miniwin:show(flag)
   WindowShow(self.win, flag)
 end
 
-function Miniwin:shutdown()
-  self.shutdownf = true
-  self:disable()
-end
-
 function Miniwin:init()
-  --print("initialize miniwin")
-  self.plugininitf = true
-  self:disable()
+  super(self)
+
+  self:setdefaultfont(self:addfont(self.font, self.font_size, false, false, false, false, true))
 end
 
 function Miniwin:enable()
-  self.shutdownf = false
-  if self.plugininitf then
-    self.plugininitf = false
-    self:tabbroadcast(true)
-  end
   if self.disabled then
-    self.disabled = false
     self:tabbroadcast(true)
   end
+  super(self)
 end
 
 function Miniwin:disable()
-  if not self.plugininitf then
-    self.disabled = true
-  end
   self.firstdrawn = true
   WindowShow(self.win, false)
   self:tabbroadcast(false)
-  self:savestate()
+  super(self)
 end
 
 function Miniwin:toggle()
@@ -577,11 +560,6 @@ function Miniwin:get_line_data(line, type)
   return -1
 end
 
-function Miniwin:adjust_lines()
-  local widthchanged = false
-  return widthchanged
-end
-
 function Miniwin:convert_line(line, styles)
   local linet = {}
   local def_font_id = self.default_font_id
@@ -651,9 +629,6 @@ function Miniwin:calc_window_data()
     self.window_data.height = self:get_bottom_of_line(-1) + self.height_padding
     self.window_data.width = maxwidth
   end
-  while self:adjust_lines() do
-
-  end
 end
 
 function Miniwin:buildhotspot(style, left, top, right, bottom)
@@ -686,11 +661,11 @@ function Miniwin:buildhotspot(style, left, top, right, bottom)
   WindowAddHotspot(self.win, id,
                 left, top, right, bottom,
                 mouseover, -- mouseover
-                cancelmouseover or "", -- cancelmouseover
-                mousedown or "",
-                cancelmousedown or "", -- cancelmousedown
-                mouseup or "", -- mouseup
-                style.hint or "",
+                cancelmouseover, -- cancelmouseover
+                mousedown,
+                cancelmousedown, -- cancelmousedown
+                mouseup, -- mouseup
+                style.hint,
                 style.cursor or 1, 0)
 end
 
@@ -772,13 +747,13 @@ function Miniwin:Display_Line (line, styles)
     if v.hjust ~= nil then
       if v.hjust == 'center' then
         local twidth = self:get_line_data(line, 'width')
-        local wwidth = self.window_data.width
+        local wwidth = self:calc_window_width()
         local restt = twidth - tstart
         local restw = wwidth - tstart
         tstart = tstart + (restw - restt) / 2
       elseif v.hjust == 'right' then
         local twidth = self:get_line_data(line, 'width')
-        local wwidth = self.window_data.width
+        local wwidth = self:calc_window_width()
         local restt = twidth - tstart
         local restw = wwidth - tstart
         tstart = tstart + restw - restt
@@ -806,8 +781,12 @@ function Miniwin:Display_Line (line, styles)
       end
     end
     left = tstart + textlen
-    if v.mousedown or v.cancelmousedown or v.mouseup or v.mouseover or v.cancelmouseover then
-        self:buildhotspot(v, tstart, ttop, left, bottom)
+    if v.mousedown ~= nil or
+       v.cancelmousedown ~= nil or
+       v.mouseup ~= nil or
+       v.mouseover ~= nil or
+       v.cancelmouseover ~= nil then
+      self:buildhotspot(v, tstart, ttop, left, bottom)
     end
   end -- for each style run
 
@@ -828,20 +807,34 @@ function Miniwin:calc_text_width(text)
 end
 
 function Miniwin:calc_header_height()
-   local height = 0
+   local height = self.height_padding
    for i=1,self.header_height do
     height = height + self.window_data[i].height
    end
-   return height
+   return height + self.header_padding
 end
 
-function Miniwin:drawwin()
-  --print("Got past text check")
-  if not next(self.text) then
-    return
-  end
+function Miniwin:calc_window_height()
   local height = self.window_data.height
+
+  if self.height > 0 then
+    height = self.height
+  end
+  return height
+end
+
+function Miniwin:calc_window_width()
   local width = self.window_data.width
+
+  if self.width > 0 then
+    width = self.width
+  end
+  return width
+end
+
+function Miniwin:create_window_internal()
+  local height = self:calc_window_height()
+  local width = self:calc_window_width()
 
   -- recreate the window the correct size
   if self.x ~= -1 and self.y ~= -1 then
@@ -868,7 +861,7 @@ function Miniwin:drawwin()
   WindowDeleteAllHotspots (self.win)
 
   if self.header_height > 0 then
-     local hbottom = self:get_bottom_of_line(self.header_height) + self.header_padding
+     local hbottom = self:calc_header_height()
     -- header rectangle
      check (WindowRectOp (self.win, 2, 2, 2, -2, hbottom, self:get_colour("header_bg_colour")))
      check (WindowRectOp (self.win, 5, 2, 2, -2, hbottom, 5, 8))
@@ -878,13 +871,21 @@ function Miniwin:drawwin()
     self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, self:get_bottom_of_line(1), empty, "Drag to move", 10)
   end
 
+  WindowDragHandler(self.win, self.drag_hotspot, "dragmove", "dragrelease", 0)
+
+end
+
+function Miniwin:drawwin()
+  --print("Got past text check")
+  if not next(self.text) then
+    return
+  end
+
+  self:create_window_internal()
+
   for i, v in ipairs (self.window_data) do
     self:Display_Line (i, self.window_data[i].text)
   end -- for
-
-  WindowDragHandler(self.win, self.drag_hotspot, "dragmove", "dragrelease", 0)
-
-
 
 -- show all fonts
 -- fonts = WindowFontList(self.win)
@@ -902,6 +903,7 @@ function Miniwin:set(option, value, args)
   retcode, tvalue = self:checkvalue(option, value, args)
   if retcode == true then
     if string.find(option, "font") and not self.classinit then
+      print('font in option and not self.classinit')
       local font_name = nil
       local font_size = nil
       if option == 'font' then
@@ -928,7 +930,7 @@ function Miniwin:set(option, value, args)
     end
     retcode2 = super(self, option, tvalue, args)
     if retcode2 then
-      if option == "windowpos" then
+      if option == "windowpos" and not self.classinit then
         self.x = -1
         self.y = -1
       end
@@ -936,6 +938,9 @@ function Miniwin:set(option, value, args)
         local sflag = WindowInfo(self.win, 5)
         self:drawwin()
         WindowShow(self.win, sflag)
+      end
+      if option == 'use_tabwin' then
+        self:tabbroadcast(tvalue)
       end
       return true
     else
@@ -960,6 +965,13 @@ function Miniwin:dragmove(flags, hotspot_id)
 
   self.x = posx - self.startx
   self.y = posy - self.starty
+  if self.x < 0 then
+    self.x = 0
+  end
+  if self.y < 0 then
+    self.y = 0
+  end
+
   -- move the window to the new location
   WindowPosition(self.win, self.x, self.y, 0, 2);
 
@@ -985,27 +997,40 @@ function Miniwin:dragrelease(flags, hotspot_id)
     else
       WindowPosition(self.win, 0, 0, self.windowpos, 0)
     end
+    SaveState()
   end -- if out of bounds
 
 end -- dragrelease
 
-function Miniwin:tabbroadcast(flag)
-  local td = {}
-  td.id = GetPluginID()
-  if not text then
-    td.text = self.cname
-  else
-    td.text = text
-  end
-  td.name = self.cname
-  td.win = self.win
-  local wins = serialize.save( "windowstuff", td )
-  if flag then
-    if not self.disabled then
-      broadcast(5000, wins, wins)
+function Miniwin:tabbroadcast(flag, text)
+  local ttext = text or self.lasttabtext or self.cname
+  if self.use_tabwin then
+    local td = {}
+    td.id = GetPluginID()
+    td.name = self.cname
+    if self.tabcolour then
+      td.tabcolour = self.tabcolour
+    end
+    td.text = ttext
+    td.win = self.win
+    local wins = serialize.save( "windowstuff", td )
+    self.lasttabtext = text
+    if flag then
+      if not self.disabled then
+        broadcast(5000, wins, wins)
+      end
+    else
+      broadcast(5001, wins, wins)
     end
   else
-    broadcast(5001, wins, wins)
+    if not flag then
+      local td = {}
+      td.id = GetPluginID()
+      td.name = self.cname
+      td.win = self.win
+      local wins = serialize.save( "windowstuff", td )
+      broadcast(5001, wins, wins)
+    end
   end
 end
 
