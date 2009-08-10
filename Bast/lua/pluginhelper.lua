@@ -574,7 +574,7 @@ cmds_table = {
   debug      = {func=plugin_toggle_debug, help="toggle debugging"},
   set       = {func=plugin_set_helper, help="set script and window vars, show plugin vars when called with no arguments, 'window': show window vars, 'all': show all vars"},
   reset     = {func=plugin_reset, help="reset plugin to default values, 'all': both miniwin and plugin, 'win': just miniwin, 'plugin': just plugin"},
-  save     = {func=PluginhelperOnPluginSaveState, help="save plugin variables"},
+  save     = {func=SaveState, help="save plugin variables"},
 }
 
 options_table = {
