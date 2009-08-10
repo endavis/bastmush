@@ -34,6 +34,7 @@ function getactuallevel(level, remorts, tier)
 end
 
 function convertlevel(level)
+  level = tonumber(level)
   if level < 1 then
     return -1, -1, -1
   end
