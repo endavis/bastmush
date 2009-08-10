@@ -89,7 +89,7 @@ require "serialize"
 dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
 
 mapwin = Miniwin:new{name="Map"}
-mapwin:set('header_height', 2, {default = true})
+mapwin:set_default('header_height', 2)
 
 map_lines = {}
 coords = nil
