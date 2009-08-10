@@ -39,15 +39,18 @@ require 'miniwin'
 require 'tprint'
 require 'pluginhelper'
 require 'ldplugin'
+require 'aardutils'
 
 cpwin = Miniwin:new{name="CP"}
-cpwin:set('windowpos', 7, {default = true})
-cpwin:set('font_size', 7, {default = true})
-cpwin:set('font', 'Verdana', {default = true})
+cpwin:set_default('windowpos', 7)
+cpwin:set_default('font_size', 7)
+cpwin:set_default('font', 'Verdana')
 cpwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
 
 cpmobs = {}
 cptimer = {}
+level = nil
+curlevel = nil
 
 function show_cp_text ()
 
@@ -59,29 +62,33 @@ function show_cp_text ()
   if #cpmobs == 0 or not next(cptimer) then
     return
   end -- if
-
   -- heading
+
   style = {}
-  style.text = "Current campaign. You need to kill:  "
-  style.len = #style.text
-  style.style = 0
+  style.text = string.format("Campaign mobs left:", level.level)
   table.insert (texttable, {style})
 
   -- list of mobs
   for i, v in ipairs (cpmobs) do
     style = {}
     style.text = v.name .. " (" .. v.room .. ")"
-    style.len = #style.text
-    style.style = 0
     table.insert (texttable, {style})
   end -- for
 
+  tstyle = {}
   style = {}
-  style.text = string.format ("Time to go: %sd %sh %sm", cptimer.days, cptimer.hours, cptimer.mins)
-  style.len = #style.text
+  style.text = string.format ("Time to go: %sd %sh %sm - ", cptimer.days, cptimer.hours, cptimer.mins)
   style.textcolour = "time_colour"
-  style.style = 0
-  table.insert (texttable, {style})
+  table.insert(tstyle, style)
+  style = {}
+  style.text = "Level: " .. tostring(level.level)
+  if tonumber(level.level) == tonumber(curlevel) then
+    style.textcolour = cpwin.text_colour
+  else
+    style.textcolour = 'red'
+  end
+  table.insert(tstyle, style)
+  table.insert (texttable, tstyle)
 
   cpwin:enable()
   cpwin:createwin(texttable)
@@ -102,6 +109,11 @@ function OnPluginBroadcast (msg, id, name, text)
       -- get the mobs
       loadstring( pvar )()
       cpmobs = mobs
+
+      local pvar2 = GetPluginVariable(  "aaa66f81c50828bbbfda7100", "cp_info")
+      loadstring(pvar2)()
+      level = convertlevel(cp_info.level)
+
       show_cp_text()
     elseif msg == 2 then
       local pvar = GetPluginVariable(  "aaa66f81c50828bbbfda7100", "timer" )
@@ -116,7 +128,17 @@ function OnPluginBroadcast (msg, id, name, text)
       cpwin:disable()
     end
 
-  end -- cp broadcast
+  elseif id == "8a710e0783b431c06d61a54c" then
+    if msg == 1 then
+      -- get one variable
+      tcurlevel = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
+      if curlevel ~= tcurlevel then
+        curlevel = tcurlevel
+        show_cp_text()
+      end
+    end
+  end -- stats changed
+
   PluginhelperOnPluginBroadcast(msg, id, name, text)
 end
 
@@ -133,6 +155,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("broadcast_cp")
+  ldplugin("Stats_Detector")
 
   PluginhelperOnPluginEnable()
 end -- OnPluginEnable
@@ -177,14 +200,8 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'cp')
+option_set_default('cmd', 'mcp')
 option_set_default('plugin_colour', 'steelblue')
-
-cmd_update('help', 'send_to_world', true)
-
-add_cmd('check', {func=nofunc, help="", send_to_world=false})
-
-set_send_to_world(true)
 
 window_set(cpwin)
 
