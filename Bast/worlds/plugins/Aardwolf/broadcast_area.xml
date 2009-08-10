@@ -180,7 +180,7 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'areac')
+option_set_default('cmd', 'barea')
 option_set_default('plugin_colour', 'cyan')
 
 init_plugin_vars()
