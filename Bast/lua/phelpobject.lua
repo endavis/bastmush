@@ -8,7 +8,6 @@
 
 --]]
 
---require 'classlib'
 require 'tprint'
 require 'verify'
 require 'pluginhelper'
@@ -64,13 +63,14 @@ function Phelpobject:shutdown()
 end
 
 function Phelpobject:init()
-  for name,setting in pairs(self.set_options) do
+  for name,setting in tableSort(self.set_options, 'sortlev', 50) do
     local gvalue = GetVariable(name..self.cname)
     if gvalue == nil or gvalue == 'nil' then
       gvalue = setting.default
     end
     local tvalue = verify(gvalue, setting.type, {window = self})
-    self:set(name, tvalue, {silent = true})
+    mdebug('init setting', name, 'to', tvalue)
+    self:set(name, tvalue, {silent = true, window = self})
   end
   self:savestate(true)
   SaveState()
