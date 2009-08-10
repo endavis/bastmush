@@ -36,7 +36,7 @@ require "commas"
 require "serialize"
 
 testwin = Miniwin:new{name="Example"}
-testwin:set('header_height', 1, {default = true})
+testwin:set_default('header_height', 1)
 styles = {}
 
 -- Header Line, centered
@@ -85,8 +85,9 @@ table.insert(tstyle, style)
 
 -- Justify Bottom Vertically with hyperlink
 style = {}
-style.text = "Bottom Vertically "
+style.text = "Bottom Vertically (Bold) "
 style.vjust = 'bottom'
+style.bold = true
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(tstyle, style)
@@ -108,30 +109,32 @@ table.insert(styles, tstyle)
 
 -- New Line
 style = {}
-style.text = "Just a New Line"
+style.text = "Just a New Line (Strikeout)"
+style.strikeout = true
+style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
-style.hint = 'Default Horizontal Alignment of Left'
 table.insert(styles, {style})
 
 -- New Line, Center Horizontally
 style = {}
-style.text = "Center Horizontally"
+style.text = "Center Horizontally (Underline)"
 style.hjust = 'center'
+style.underline = true
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(styles, {style})
 
 -- New Line, Right Justify Horizontally
 style = {}
-style.text = "Right Horizontally"
+style.text = "Right Horizontally (Italic)"
+style.italic = true
+style.hjust = 'right'
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
-style.hjust = 'right'
+
 
 table.insert(styles, {style})
-testwin:enable()
-testwin:createwin(styles)
-testwin:show(true)
+
 ]]>
 </script>
 
@@ -158,9 +161,9 @@ function OnPluginEnable ()
 
 
   PluginhelperOnPluginEnable()
+  -- always create windows after OnPluginEnable due to default variable handling
   testwin:enable()
   testwin:createwin(styles)
-  testwin:show(true)
 end -- OnPluginEnable
 
 function OnPluginDisable ()
