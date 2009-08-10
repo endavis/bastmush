@@ -68,15 +68,15 @@ require "ldplugin"
 require "verify"
 
 moonwin = Miniwin:new{name="Moons"}
-moonwin:set('windowpos', 4, {default = true})
-moonwin:set('font_size', 8, {default = true})
-moonwin:set('font', 'DejaVu Sans Mono', {default = true})
-moonwin:set('text_colour', 'gold', {default = true})
-moonwin:add_setting("black_colour", {help="the colour for the black moon", type="colour", default=verify_colour("midnightblue"), sortlev=1})
-moonwin:add_setting("white_colour", {help="the colour for the white moon", type="colour", default=verify_colour("white"), sortlev=1})
-moonwin:add_setting("grey_colour", {help="the colour for the grey moon", type="colour", default=verify_colour("dimgray"), sortlev=1})
-moonwin:add_setting("three_colour", {help="the colour for the when three moons are up", type="colour", default=verify_colour("lime"), sortlev=2})
-moonwin:add_setting("three_bg_colour", {help="the colour for the background when the three moons are up", type="colour", default="bg_colour", sortlev=2})
+moonwin:set_default('windowpos', 4)
+moonwin:set_default('font_size', 8)
+moonwin:set_default('font', 'DejaVu Sans Mono')
+moonwin:set_default('text_colour', 'gold')
+moonwin:add_setting("black_colour", {help="the colour for the black moon", type="colour", default=verify_colour("midnightblue"), sortlev=35})
+moonwin:add_setting("white_colour", {help="the colour for the white moon", type="colour", default=verify_colour("white"), sortlev=35})
+moonwin:add_setting("grey_colour", {help="the colour for the grey moon", type="colour", default=verify_colour("dimgray"), sortlev=35})
+moonwin:add_setting("three_colour", {help="the colour for the when three moons are up", type="colour", default=verify_colour("lime"), sortlev=36})
+moonwin:add_setting("three_bg_colour", {help="the colour for the background when the three moons are up", type="colour", default="bg_colour", sortlev=36})
 
 countdown = nil
 countdowndur = nil
@@ -154,26 +154,18 @@ function styleplotdata()
     style.text = "3 moons are up for " .. tostring(duration) .. " ticks!!"
     style.textcolour = 'three_colour'
     local mstyle = {}
-    mstyle.text = tostring(0) .. ":" .. tostring(duration)
-    mstyle.len = #mstyle.text
-    mstyle.start = "mid"
-    mstyle.textcolour = 'three_colour'
-    if moonwin.usetab then
-
-    else
-      --moonwin.winhide:createwin({"", {mstyle}})
-    end
+    mstyle.text = ' Moons: ' .. duration .. ' '
+    mstyle.textcolour = moonwin.three_colour
+    moonwin.tabcolour = moonwin.three_bg_colour
+    moonwin:tabbroadcast(true, {mstyle})
   else
     style.text = "Next Union in " .. tostring(offset) .. " ticks for " .. tostring(duration) .. " ticks."
     local mstyle = {}
-    mstyle.text = tostring(offset) .. ":" .. tostring(duration)
-    mstyle.len = #mstyle.text
-    mstyle.start = "mid"
-    if moonwin.usetab then
-
-    else
-      --moonwin.winhide:createwin({"", {mstyle}})
-    end
+    mstyle.text = ' Moons: ' .. offset .. '-' .. duration .. ' '
+    --mstyle.textcolour = moonwin.text_colour
+    --moonwin.tabcolour = moonwin.bg_colour
+    moonwin.tabcolour = nil
+    moonwin:tabbroadcast(true, {mstyle})
   end
   max_width = math.max (max_width, #style.text)
   style.len = #style.text
@@ -321,6 +313,24 @@ function moonbot_reset()
   ColourNote("", "", "")
 end -- moonbot_reset
 
+function moonbot_report(name, line, wildcards)
+  chan = wildcards.list
+  if not chan or chan == '' then
+    chan = var.reportchan
+  end
+  offset, duration = nextunion()
+  if offset == nil then
+    print('The position of one or more moons is unknown')
+    return
+  else
+    if offset == 0 then
+      SendNoEcho(chan .. ' Three moons are up for ' .. duration .. ' ticks.')
+    else
+      SendNoEcho(chan .. ' Three moons will be up in ' .. offset .. ' ticks for ' .. duration .. ' ticks.')
+    end
+  end
+end
+
 ]]>
 </script>
 
@@ -394,6 +404,7 @@ end
 <![CDATA[
 
 add_option('plotlength', {help="set the length of the moon plot", type="number", high=80, low=0, after=styleplotdata, default=66})
+add_option('reportchan', {help="the default channel to do a moons report to", type="string", default='gt'})
 
 option_set_default('cmd', 'mb')
 option_set_default('plugin_colour', 'lime')
@@ -402,6 +413,7 @@ add_cmd('plot', {func=plotdata, help="plot moons"})
 add_cmd('union', {func=moonbot_union, help="show next moons union"})
 add_cmd('print', {func=printmoons, help="print the current moon phase #s"})
 add_cmd('mreset', {func=moonbot_reset, help="reset the moons"})
+add_cmd('report', {func=moonbot_report, help="reset the moons"})
 
 window_set(moonwin)
 
