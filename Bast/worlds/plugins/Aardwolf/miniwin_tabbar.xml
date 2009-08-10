@@ -28,14 +28,14 @@ require "var"
 require "pluginhelper"
 require "mastertab"
 
-plugins = {}
 tabwin = Mastertabwin:new{name="tabwin"}
-tabwin:set('windowpos', 4, {default = true})
-tabwin:set('font_size', 8, {default = true})
-tabwin:set('font', 'Courier New', {default = true})
-tabwin:set('text_colour', 'gold', {default = true})
-tabwin:set('header_height', 0, {default = true})
-tabwin:show(false)
+tabwin:set_default('windowpos', 4)
+tabwin:set_default('font_size', 8)
+tabwin:set_default('font', 'Courier New')
+tabwin:set_default('text_colour', 0x00FFFF)
+tabwin:set_default('header_height', 0)
+tabwin:set_default('width_padding', 1)
+tabwin:set_default('height_padding', 1)
 
 ]]>
 </script>
@@ -44,18 +44,23 @@ tabwin:show(false)
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
+  --local windowstuff = {}
   if id == GetPluginID() then
     return
   end
   if msg == 5000 then
     loadstring( text )()
-    winstuff = windowstuff
-    tabwin:addtab(winstuff)
-    tabwin:enable()
+    local winstuff = windowstuff
+    if next(winstuff) then
+      tabwin:enable()
+      tabwin:addtab(winstuff)
+    end
   elseif msg == 5001 then
     loadstring( text )()
-    winstuff = windowstuff
-    tabwin:removetab(winstuff)
+    local winstuff = windowstuff
+    if next(winstuff) then
+      tabwin:removetab(winstuff)
+    end
   end
   PluginhelperOnPluginBroadcast(msg, id, name, text)
 end
@@ -117,12 +122,11 @@ end
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'tb')
+option_set_default('cmd', 'mtb')
 
 window_set(tabwin)
 
-init_plugin_vars(options_table)
-set_plugin_alias()
+init_pluginhelper()
 
 ]]>
 </script>
