@@ -129,17 +129,18 @@ function Miniwin:initialize(args)
   -- below are things that can be kept as settings
   self.header_padding = 2
 
-  self:add_setting( 'disabled', {type="bool", help="is this window disabled", default=verify_bool(false), sortlev=38, readonly=true})
-  self:add_setting( 'windowpos', {type="number", help="position for this window: see http://www.gammon.com.au/scripts/function.php?name=WindowCreate", low=0, high=13, default=6,sortlev=38})
-  self:add_setting( 'x', {type="number", help="x location of this window, -1 = auto", default=-1, sortlev=39})
-  self:add_setting( 'y', {type="number", help="y location of this window, -1 = auto", default=-1, sortlev=39})
-  self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x00220E, sortlev=40})
-  self:add_setting( 'text_colour', {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=40})
-  self:add_setting( 'header_bg_colour', {type="colour", help="header colour for this window", default=0x696969, sortlev=41})
-  self:add_setting( 'header_text_colour', {type="colour", help="header text colour for this window", default=0x00FF00, sortlev=41})
-  self:add_setting( 'header_height', {type="number", help="the header height", default=1, low=0, high=10, sortlev=41})
-  self:add_setting( 'footer_bg_colour', {type="colour", help="footer colour for this window", default=0x696969, sortlev=42})
-  self:add_setting( 'footer_text_colour', {type="colour", help="footer text colour for this window", default=0x00FF00, sortlev=42})
+  self:add_setting( 'disabled', {type="bool", help="is this window disabled", default=verify_bool(false), sortlev=1, readonly=true})
+  self:add_setting( 'windowpos', {type="number", help="position for this window: see http://www.gammon.com.au/scripts/function.php?name=WindowCreate", low=0, high=13, default=6,sortlev=2})
+  self:add_setting( 'x', {type="number", help="x location of this window, -1 = auto", default=-1, sortlev=2})
+  self:add_setting( 'y', {type="number", help="y location of this window, -1 = auto", default=-1, sortlev=2})
+  self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x00220E, sortlev=3})
+  self:add_setting( 'text_colour', {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=3})
+  self:add_setting( 'hyperlink_colour', {type="colour", help="hyperlink colour for this window", default=0x00FFFF, sortlev=4})
+  self:add_setting( 'header_bg_colour', {type="colour", help="header colour for this window", default=0x696969, sortlev=5})
+  self:add_setting( 'header_text_colour', {type="colour", help="header text colour for this window", default=0x00FF00, sortlev=5})
+  self:add_setting( 'header_height', {type="number", help="the header height", default=1, low=0, high=10, sortlev=5})
+  self:add_setting( 'footer_bg_colour', {type="colour", help="footer colour for this window", default=0x696969, sortlev=6})
+  self:add_setting( 'footer_text_colour', {type="colour", help="footer text colour for this window", default=0x00FF00, sortlev=6})
   self:add_setting( 'font_size', {type="number", help="font_size for this window", low=2, high=30, default=8, sortlev=43})
   self:add_setting( 'font', {type="string", help="change the font for this window", default=self:getdefaultfont(), sortlev=43})
   self:add_setting( 'width', {type="number", help="width of this window, 0 = auto", low=0, high=100, default=0, sortlev=44})
@@ -147,7 +148,6 @@ function Miniwin:initialize(args)
   self:add_setting( 'height_padding', {type="number", help="height padding for this window", low=0, high=30, default=5, sortlev=44})
   self:add_setting( 'width_padding', {type="number", help="width padding for this window", low=0, high=30, default=5, sortlev=44})
   self:add_setting( 'use_tabwin', {type="bool", help="toggle to use tabwin", default=verify_bool(false), sortlev=50})
-  self:add_setting( 'hyperlink_colour', {type="colour", help="hyperlink colour for this window", default=0x00FFFF})
 
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
@@ -157,11 +157,11 @@ end
 
 
 function Miniwin:savestate()
-  super(self)
-  tshownf = tostring(WindowInfo(self.win, 5))
   if not self.shutdownf and not self.classinit then
+    tshownf = tostring(WindowInfo(self.win, 5))
     SetVariable ("shown"..self.cname, tshownf)
   end
+  super(self)
 end
 
 function Miniwin:isfontinstalled(fontid, font_name)
@@ -287,10 +287,9 @@ function Miniwin:createwin (text)
     if flag == nil then
       flag = false
     end
-    WindowShow(self.win, flag)
-  else
-    self:show(tshow)
+    tshow = flag
   end
+  self:show(tshow)
 end
 
 function Miniwin:show(flag)
@@ -311,22 +310,20 @@ function Miniwin:init()
 end
 
 function Miniwin:enable()
-  if self.disabled then
-    self:tabbroadcast(true)
-  end
   super(self)
+  self:tabbroadcast(true)
 end
 
 function Miniwin:disable()
   self.firstdrawn = true
-  WindowShow(self.win, false)
+  self:show(false)
   self:tabbroadcast(false)
   super(self)
 end
 
 function Miniwin:toggle()
   if not self.disabled then
-    WindowShow(self.win, not WindowInfo(self.win, 5))
+    self:show(not WindowInfo(self.win, 5))
   end
   self:savestate()
 end
@@ -903,7 +900,6 @@ function Miniwin:set(option, value, args)
   retcode, tvalue = self:checkvalue(option, value, args)
   if retcode == true then
     if string.find(option, "font") and not self.classinit then
-      print('font in option and not self.classinit')
       local font_name = nil
       local font_size = nil
       if option == 'font' then
@@ -937,7 +933,7 @@ function Miniwin:set(option, value, args)
       if not self.classinit then
         local sflag = WindowInfo(self.win, 5)
         self:drawwin()
-        WindowShow(self.win, sflag)
+        self:show(sflag)
       end
       if option == 'use_tabwin' then
         self:tabbroadcast(tvalue)
