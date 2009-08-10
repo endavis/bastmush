@@ -38,15 +38,16 @@ require 'ldplugin'
 quest_text = {}
 quest_stuff = {mob=nil, room=nil, area=nil}
 quest_timer = {}
+winbetweenquest = true
 
 questwin = Miniwin:new{name="Quest"}
-questwin:set('font', 'Comic Sans MS', {default = true})
-questwin:set('bg_colour', 0xE7FFFF, {default = true})
-questwin:set('text_colour', 0x000000, {default = true})
-questwin:set('windowpos', 7, {default = true})
-questwin:set('header_height', 0, {default = true})
-questwin:set('width_padding', 5, {default = true})
-questwin:set('height_padding', 3, {default = true})
+questwin:set_default('font', 'Comic Sans MS')
+questwin:set_default('bg_colour', 0xE7FFFF)
+questwin:set_default('text_colour', 0x000000)
+questwin:set_default('windowpos', 7)
+questwin:set_default('header_height', 0)
+questwin:set_default('width_padding', 5)
+questwin:set_default('height_padding', 3)
 questwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0x82004B), sortlev=1})
 questwin:add_setting("avail_bg_colour", {help="the background colour for when a quest available", type="colour", default=verify_colour("red"), sortlev=1})
 questwin:add_setting("avail_colour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
@@ -71,8 +72,13 @@ function build_quest()
   style.textcolour = 'time_colour'
   style.style = 0
   table.insert (quest_text, {style})
-
   show_quest ()
+  style = {}
+  style.text = " Quest: On "
+  style.textcolour = questwin.time_colour
+  questwin.tabcolour = questwin.bg_colour
+  questwin:tabbroadcast(true, {style})
+  questwin:show(true)
 end
 
 function show_quest ()
@@ -83,6 +89,7 @@ function show_quest ()
 
   questwin:enable()
   questwin:createwin(quest_text)
+  questwin:show(winbetweenquest)
 end -- show_quest_text
 
 ]]>
@@ -106,6 +113,11 @@ function OnPluginBroadcast (msg, id, name, text)
       style.textcolour = 'avail_colour'
       table.insert(quest_text, {style})
       show_quest()
+      style = {}
+      style.text = ' Quest: Now '
+      style.textcolour = questwin.avail_colour
+      questwin.tabcolour = questwin.avail_bg_colour
+      questwin:tabbroadcast(true, {style})
     elseif msg == 2 then
       -- quest mob info
       quest_timer = {}
@@ -126,6 +138,11 @@ function OnPluginBroadcast (msg, id, name, text)
       -- quest mob dead
       quest_text = {"Quest Complete - Hand it in"}
       show_quest()
+      style = {}
+      style.text = ' Quest: Comp '
+      style.textcolour = questwin.text_colour
+      questwin.tabcolour = questwin.bg_colour
+      questwin:tabbroadcast(true, {style})
     elseif msg == 5 then
       return
     elseif msg == 6 then
@@ -142,8 +159,15 @@ function OnPluginBroadcast (msg, id, name, text)
       style.text=  string.format ("Next quest: %s", timer.text)
       style.len = #style.text
       style.textcolour = 'time_colour'
+      winbetweenquest = WindowInfo(questwin.win, 5)
       table.insert(quest_text, {style})
       show_quest()
+      style = {}
+      style.text = ' Quest: ' .. timer.text .. ' '
+      style.textcolour = questwin.time_colour
+      tstyle = {style}
+      questwin.tabcolour = questwin.bg_colour
+      questwin:tabbroadcast(true, tstyle)
     end
 
   end -- stats changed
@@ -208,7 +232,7 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'gw')
+option_set_default('cmd', 'mquest')
 option_set_default('plugin_colour', 'steelblue')
 
 window_set(questwin)
