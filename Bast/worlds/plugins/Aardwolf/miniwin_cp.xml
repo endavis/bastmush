@@ -77,11 +77,11 @@ function show_cp_text ()
 
   tstyle = {}
   style = {}
-  style.text = string.format ("Time to go: %sd %sh %sm - ", cptimer.days, cptimer.hours, cptimer.mins)
+  style.text = string.format ("Time to go: %sd %sh %sm ", cptimer.days, cptimer.hours, cptimer.mins)
   style.textcolour = "time_colour"
   table.insert(tstyle, style)
   style = {}
-  style.text = "Level: " .. tostring(level.level)
+  style.text = "- Level: " .. tostring(level.level)
   if tonumber(level.level) == tonumber(curlevel) then
     style.textcolour = cpwin.text_colour
   else
