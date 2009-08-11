@@ -28,6 +28,8 @@ Broadcasts
         kill_info.bonusxp = 0
         kill_info.xp = "101"
         kill_info.mob = "A demon shock trooper"
+        kill_info.vorpal = 0
+        kill_info.vorpal_weapon = ''
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
@@ -96,6 +98,15 @@ TODO: when corpse doesn't give gold, kill is not inserted into the database
    sequence="100"
   >
   </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   match="^Deep magic stirs within your weapon. It seems to have a life of its own.$"
+   name="vorpmob"
+   script="vorpmob"
+   sequence="100"
+  >
+  </trigger>
 </triggers>
 
 
@@ -111,6 +122,10 @@ require "ldplugin"
 
 kill_info = {}
 kill_info.tp = 0
+kill_info.vorpal = 0
+kill_info.vorpal_weapon = ''
+
+cur_weapon = ''
 
 function mobxp( name, line, wildcards )
   if name == 'mobxp' then
@@ -120,6 +135,11 @@ function mobxp( name, line, wildcards )
     kill_info.bonusxp = wildcards[1]
   end
 
+end
+
+function vorpmob( name, line, wildcards)
+  kill_info.vorpal = 1
+  kill_info.vorpal_weapon = cur_weapon
 end
 
 function mobgold( name, line, wildcards )
@@ -139,6 +159,8 @@ function mobgold( name, line, wildcards )
   broadcast(1, var.kill_info)
   kill_info = {}
   kill_info.tp = 0
+  kill_info.vorpal = 0
+  kill_info.vorpal_weapon = ''
 
 end
 
@@ -157,8 +179,19 @@ function OnPluginBroadcast (msg, id, name, text)
 
     -- get one variable
     kill_info.mob = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
+    kill_info.level = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
 
   end -- stats changed
+
+  if id == "aaa7dc9ed92ffc6146964abc" then
+    if msg == 2 then
+      loadstring(text)()
+      local eqitem = item
+      if eqitem.place == 'wielded' then
+        cur_weapon = eqitem.itemsn
+      end
+    end
+  end
 
   PluginhelperOnPluginBroadcast(msg, id, name, text)
 end
@@ -176,6 +209,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("Stats_Detector")
+  ldplugin("broadcast_eq")
 
   PluginhelperOnPluginEnable()
 end -- OnPluginEnable
