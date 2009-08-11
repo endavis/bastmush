@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: miniwin_quest.xml 470 2009-08-01 20:09:33Z endavis $ -->
+<muclient>
+<plugin
+   name="miniwin_double"
+     author="Bast"
+   id="eeed33165bd63fe12e148e5d"
+   language="Lua"
+   purpose="Shows double in a miniwin"
+   date_written="2008-07-24"
+   requires="4.34"
+   version="1.0"
+   save_state="y"
+   >
+<description trim="y">
+<![CDATA[
+Shows a double miniwin when their is double xp
+]]>
+</description>
+
+</plugin>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+require "commas"
+require 'var'
+require "commas"
+require 'miniwin'
+require 'tprint'
+require 'pluginhelper'
+require 'ldplugin'
+
+doublewin = Miniwin:new{name="Double"}
+doublewin:set_default('font', 'Comic Sans MS')
+doublewin:set_default('bg_colour', 'black')
+doublewin:set_default('text_colour', 'red')
+doublewin:set_default('windowpos', 7)
+doublewin:set_default('header_height', 0)
+doublewin:set_default('width_padding', 5)
+doublewin:set_default('height_padding', 3)
+
+function show_double (ttimer)
+
+  local styles = {}
+  local style = {}
+  style.text = 'Double: ' .. ttimer.text
+  table.insert(styles, {style})
+  doublewin:enable()
+  doublewin:createwin(styles)
+  style = {}
+  style.text = 'Double: ' .. ttimer.text
+  style.textcolour = doublewin.text_colour
+  doublewin:tabbroadcast(true, {style})
+
+end -- show_noexp
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "aaafc15678afa22343c5a327" then
+      if msg == 1 then
+        --get the timer info
+        loadstring( text )()
+        -- do something with ttimer
+        if timer.secs == 0 then
+          doublewin:disable()
+        elseif timer.secs > 0 then
+          show_double(timer)
+        end
+      end
+    end -- timer
+  end
+
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin("broadcast_noexp")
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+
+option_set_default('cmd', 'mdbl')
+option_set_default('plugin_colour', 'steelblue')
+
+window_set(doublewin)
+
+init_plugin_vars()
+set_plugin_alias()
+
+]]>
+</script>
+
+</muclient>

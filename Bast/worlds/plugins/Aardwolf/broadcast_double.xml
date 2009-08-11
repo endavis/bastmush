@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: broadcast_runto.xml 483 2009-08-04 19:22:11Z endavis $ -->
+<muclient>
+<plugin
+   name="xBroadcast_Double"
+   author="Bast"
+   id="aaafc15678afa22343c5a327"
+   language="Lua"
+   purpose="Sends updates when double is on"
+   save_state="y"
+   date_written="2009-08-02"
+   requires="4.28"
+   version="1.0"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+Detects when there is double
+
+Example:
+
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "aaafc15678afa22343c5a327" then
+      if msg == 1 then
+        --get the timer info
+        loadstring( text )()
+        -- do something with timer
+      end
+    end -- playing status changed
+  end
+
+]]>
+</description>
+
+</plugin>
+
+<!--  Triggers  -->
+<triggers>
+  <trigger
+   enabled="y"
+   regexp="y"
+   script="doublestart"
+   match="^For the next (?&lt;length&gt;\d+) minutes experience is doubled in honor of the new superhero\.$"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   script="doublestart"
+   match="^For the next (?&lt;length&gt;\d+) minutes all experience is doubled!!$"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   script="doublestart"
+   match="^Double experience for (?&lt;length&gt;\d+) minutes courtesy of (.*).$"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   script="doublestart"
+   match="^\[[ ]*(?&lt;length&gt;\d+) minutes of double exp started courtesy (.*)\]$"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   script="doublestart"
+   match="^INFO: Double experience is running (.*) (?&lt;length&gt;\d+) minutes left.$"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   script="doublestart"
+   match="^Double exp will expire in roughly (?&lt;length&gt;\d+) minutes.$"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   regexp="y"
+   script="doublefinish"
+   match="^INFO: Bonus experience has now expired.$"
+   sequence="100"
+   group="doublestuff"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   regexp="y"
+   script="doubletime"
+   match="^INFO: (?&lt;length&gt;\d+) minutes* remaining of bonus experience.$"
+   sequence="100"
+   group="doublestuff"
+  >
+  </trigger>
+</triggers>
+
+<!--  Timers  -->
+<timers>
+  <timer
+      script="update_timer"
+      enabled="n"
+      second="30.00"
+      name="doubletimer"
+      >
+  </timer>
+</timers>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+
+require "var"
+require "pluginhelper"
+require "verify"
+require 'ldplugin'
+require 'serialize'
+
+doubleend = 0
+
+function doublestart(name, line, wildcards)
+  enabletriggroup('doublestuff', true)
+  doubletime(name, line, wildcards)
+end
+
+function broadcast_timer(left)
+  local timer = {}
+  timer['secs'] = left
+  timer['text'] = convert_time(left)
+  ttimer = serialize.save( "timer", timer )
+  broadcast(1, ttimer, ttimer)
+end
+
+function doubletime(name, line, wildcards)
+  local doubleleft = tonumber (wildcards.length) * 60
+  doubleend = os.time() + doubleleft
+  ResetTimer("doubletimer")
+  EnableTimer("doubletimer", true)
+  broadcast_timer(doubleleft)
+end
+
+function doublefinish(name, line, wildcards)
+  doubleend = 0
+  EnableTimer("doubletimer", false)
+  enabletriggroup('doublestuff', false)
+  broadcast_timer(0)
+end
+
+function update_timer()
+  left = doubleend - os.time()
+  broadcast_timer(left)
+end
+
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+
+option_set_default('cmd', 'bdbl')
+option_set_default('plugin_colour', 'orange')
+
+init_pluginhelper()
+
+]]>
+</script>
+</muclient>
