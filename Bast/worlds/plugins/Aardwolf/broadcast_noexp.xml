@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: broadcast_runto.xml 483 2009-08-04 19:22:11Z endavis $ -->
+<muclient>
+<plugin
+   name="xBroadcast_Noexp"
+   author="Bast"
+   id="aaa65ac8122d795ad5348dcd"
+   language="Lua"
+   purpose="Sends updates when noexp is toggle"
+   save_state="y"
+   date_written="2009-08-02"
+   requires="4.28"
+   version="1.0"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+Detects when noexp is toggled
+
+Example:
+
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "aaa65ac8122d795ad5348dcd" then
+      if msg == 1 then
+        -- noexp on
+      elseif msg == 2 then
+        -- noexp off
+      end
+    end -- noexp changed
+  end
+
+]]>
+</description>
+
+</plugin>
+
+<!--  Triggers  -->
+<triggers>
+  <trigger
+   enabled="y"
+   regexp="y"
+   script="noexp"
+   name="noexp"
+   match="^You will no longer receive experience. Happy questing!$"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   script="noexp"
+   name="expon"
+   match="^You will now receive experience. Happy leveling!$"
+   sequence="100"
+  >
+  </trigger>
+</triggers>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+
+require "var"
+require "pluginhelper"
+require "verify"
+require 'ldplugin'
+
+
+function noexp(name, line, wildcards)
+  if name == 'noexp' then
+    broadcast(1)
+    var.noexp = true
+  elseif name == 'expon' then
+    broadcast(2)
+    var.noexp = false
+  end
+
+end
+
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  if verify_bool(var.noexp) then
+    broadcast(1)
+  else
+    broadcast(2)
+  end
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+
+add_option('noexp', {help="true if noexp is on, false otherwise", type="bool", default=false, readonly=true})
+
+option_set_default('cmd', 'bnoexp')
+option_set_default('plugin_colour', 'orange')
+
+init_pluginhelper()
+
+]]>
+</script>
+</muclient>

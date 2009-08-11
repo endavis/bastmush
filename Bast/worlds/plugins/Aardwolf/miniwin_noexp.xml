@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: miniwin_quest.xml 470 2009-08-01 20:09:33Z endavis $ -->
+<muclient>
+<plugin
+   name="miniwin_noexp"
+     author="Bast"
+   id="eee0c922b56427cb80fe117e"
+   language="Lua"
+   purpose="Shows noexp in a miniwin"
+   date_written="2008-07-24"
+   requires="4.34"
+   version="1.0"
+   save_state="y"
+   >
+<description trim="y">
+<![CDATA[
+Shows a noexp miniwin when noexp is enabled
+]]>
+</description>
+
+</plugin>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+require "commas"
+require 'var'
+require "commas"
+require 'miniwin'
+require 'tprint'
+require 'pluginhelper'
+require 'ldplugin'
+
+noexpwin = Miniwin:new{name="Noexp"}
+noexpwin:set_default('font', 'Comic Sans MS')
+noexpwin:set_default('bg_colour', 'black')
+noexpwin:set_default('text_colour', 'red')
+noexpwin:set_default('windowpos', 7)
+noexpwin:set_default('header_height', 0)
+noexpwin:set_default('width_padding', 5)
+noexpwin:set_default('height_padding', 3)
+
+noexp = nil
+
+function show_noexp ()
+
+  if verify_bool(noexp) then
+    local styles = {}
+    local style = {}
+    style.text = " ** NOEXP ** "
+    style.len = #style.text
+    table.insert(styles, {style})
+    noexpwin:enable()
+    noexpwin:createwin(styles)
+    style = {}
+    style.text = "** NOEXP **"
+    style.textcolour = noexpwin.text_colour
+    noexpwin:tabbroadcast(true, {style})
+  end
+
+end -- show_noexp
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  if id == "aaa65ac8122d795ad5348dcd" then
+    if msg == 1 then
+      noexp = true
+      show_noexp()
+    elseif msg == 2 then
+      noexp = false
+      noexpwin:disable()
+    end
+  end -- noexp changed
+  PluginhelperOnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  PluginhelperOnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  PluginhelperOnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin("broadcast_noexp")
+
+  PluginhelperOnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  PluginhelperOnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+  if noexp == nil then
+    print('getting noexp')
+    noexp = verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp'))
+    show_noexp()
+  end
+
+  PluginhelperOnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  PluginhelperOnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  PluginhelperOnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+
+option_set_default('cmd', 'mnoexp')
+option_set_default('plugin_colour', 'steelblue')
+
+window_set(noexpwin)
+
+init_plugin_vars()
+set_plugin_alias()
+
+]]>
+</script>
+
+</muclient>
