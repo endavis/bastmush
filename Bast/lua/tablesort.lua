@@ -13,7 +13,7 @@
   > test['b']['sortlev'] = 40
 
   Example 1
-  > for i,v in pairsSort(test) do
+  > for i,v in tableSort(test) do
      print(i)
     end
 
@@ -22,7 +22,7 @@
    b
 
   Example 2
-  > for i,v in pairsSort(test, 'sortlev', 50) do
+  > for i,v in tableSort(test, 'sortlev', 50) do
      print(i)
     end
 
@@ -58,3 +58,4 @@ function tableSort(ttable, sortkey, default)
   end  -- iterator function
 
 end
+
