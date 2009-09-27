@@ -302,8 +302,8 @@ end
 function gq_declared (name, line, wildcards)
   check( EnableTrigger ("gq_join", true) )
   check( EnableTrigger ("gq_start", true) )
-  enabletriggroup("gqdone", true)
-  broadcast(1)
+  phelper:enabletriggroup("gqdone", true)
+  phelper:broadcast(1)
 end
 
 function gq_join (name, line, wildcards)
@@ -311,7 +311,7 @@ function gq_join (name, line, wildcards)
   check( EnableTrigger ("gq_join", false) )
   mobsleft = {}
   gq_new()
-  broadcast(2)
+  phelper:broadcast(2)
   if started then
     gq_start()
   end
@@ -321,7 +321,7 @@ function gq_start (name, line, wildcards)
   check( EnableTrigger ("gq_start", false) )
   started = true
   if joined then
-    enabletriggroup("gqin", true)
+    phelper:enabletriggroup("gqin", true)
 
     Execute("gq check")
   end
@@ -333,10 +333,10 @@ function gq_item (name, line, wildcards)
       gq_info['mobs'] = copytable.deep(mobsleft)
       SaveState()
     end
-    enabletriggroup("gqcheck", false)
+    phelper:enabletriggroup("gqcheck", false)
     check( EnableTrigger ("finishgqcheck", false) )
     var.mobs = serialize.save( "mobs", mobsleft )
-    broadcast(3, var.mobs)
+    phelper:broadcast(3, var.mobs)
     return
   elseif name == "finishgqcheck"  then
     return
@@ -371,7 +371,7 @@ function gq_mob_dead (name, line, wildcards)
   end
   if found then
     var.mobs = serialize.save( "mobs", mobsleft )
-    broadcast(3, var.mobs)
+    phelper:broadcast(3, var.mobs)
   else
     print("GQ: could not find mob", enemy)
     Execute("gq check")
@@ -387,12 +387,12 @@ end
 
 function gq_complete(name, line, wildcards)
   gq_info['won'] = 1
-  enabletriggroup("gqrew", true)
+  phelper:enabletriggroup("gqrew", true)
 end
 
 function gq_check( name, line, wildcards)
   mobsleft = {}
-  enabletriggroup("gqcheck", true)
+  phelper:enabletriggroup("gqcheck", true)
 end -- cp_check
 
 function gq_none( name, line, wildcards)
@@ -400,15 +400,15 @@ function gq_none( name, line, wildcards)
   var.gq_info = serialize.save( "gq_info", gq_info )
   SaveState()
   if joined then
-    broadcast(4, var.gq_info)
+    phelper:broadcast(4, var.gq_info)
   end
-  broadcast(5)
+  phelper:broadcast(5)
   check( EnableTrigger ("gq_join", false) )
   check( EnableTrigger ("gq_start", false) )
-  enabletriggroup("gqcheck", false)
-  enabletriggroup("gqin", false)
-  enabletriggroup("gqrew", false)
-  enabletriggroup("gqdone", false)
+  phelper:enabletriggroup("gqcheck", false)
+  phelper:enabletriggroup("gqin", false)
+  phelper:enabletriggroup("gqrew", false)
+  phelper:enabletriggroup("gqdone", false)
   joined = false
   started = false
 end
@@ -445,43 +445,43 @@ function OnPluginBroadcast (msg, id, name, text)
     curlevel = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
   end -- stats changed
 
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("Stats_Detector")
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -503,11 +503,10 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'bgq')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'bgq')
+phelper:set_default('plugin_colour', 'orange')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>

@@ -40,8 +40,8 @@ Example:
 
 require "var"
 require "pluginhelper"
-require "verify"
 require "ldplugin"
+require "verify"
 
 status = {}
 
@@ -52,11 +52,14 @@ function OnPluginTelnetOption (option)
 
   itype = tonumber(string.byte(option,2))
 
-  broadcast(itype)
-  if var.crontick == "true" and (status.statestring == 'active' or
+  phelper:broadcast(itype)
+  phelper:mdebug(type(phelper.crontick))
+  phelper:mdebug(phelper.crontick)
+  phelper:mdebug(status.statestring)
+  if verify_bool(phelper.crontick) and (status.statestring == 'active' or
                                  status.statestring == 'sleeping' or
                                  status.statestring == 'resting') then
-    mdebug("Sending", "cr")
+    phelper:mdebug("Sending", "cr")
     SendNoEcho("")
   end
 
@@ -73,44 +76,44 @@ function OnPluginBroadcast (msg, id, name, text)
     status = GetPluginVariableList("aaa79afcb20fa11787c5a327")
   end -- if
 
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("broadcast_state")
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -134,13 +137,12 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-add_option('crontick', {help="send a cr to mud on a tick", type="bool", default=verify_bool(false)})
+phelper:add_setting('crontick', {help="send a cr to mud on a tick", type="bool", default=verify_bool(false)})
 
-option_set_default('cmd', 'btick')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'btick')
+phelper:set_default('plugin_colour', 'orange')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>

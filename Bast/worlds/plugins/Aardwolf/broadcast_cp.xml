@@ -304,7 +304,7 @@ function cp_mob_dead (name, line, wildcards)
   end
   if found then
     var.mobs = serialize.save( "mobs", mobsleft )
-    broadcast(1, var.mobs)
+    phelper:broadcast(1, var.mobs)
   else
     print("CP: could not find mob", enemy)
     Execute("cp check")
@@ -333,15 +333,15 @@ function cp_time (name, line, wildcards)
     when_required = when_required + tonumber (minutes) * 60
   end -- some days left
 
-  enabletriggroup("campaigncheck", false)
-  enabletriggroup("campaignin", true)
+  phelper:enabletriggroup("campaigncheck", false)
+  phelper:enabletriggroup("campaignin", true)
 
   if not next(cp_info['mobs']) then
     cp_info['mobs'] = copytable.shallow(mobsleft)
     SaveState()
   end
   var.mobs = serialize.save( "mobs", mobsleft )
-  broadcast(1, var.mobs)
+  phelper:broadcast(1, var.mobs)
   update_timer()
   check(EnableTimer("cp_timer", true))
 
@@ -351,7 +351,7 @@ function campaign_done (name, line, wildcards)
 
   var.cp_info = serialize.save( "cp_info", cp_info )
   SaveState()
-  broadcast(3, var.cp_info)
+  phelper:broadcast(3, var.cp_info)
   cp_none()
 end -- campaign_done
 
@@ -359,7 +359,7 @@ function campaign_fail (name, line, wildcards)
   cp_info.failed = 1
   var.cp_info = serialize.save( "cp_info", cp_info )
   SaveState()
-  broadcast(4, var.cp_info)
+  phelper:broadcast(4, var.cp_info)
   cp_none()
 end -- campaign_done
 
@@ -367,11 +367,11 @@ function campaign_reward (name, line, wildcards)
   local type = wildcards.type
   local amount = wildcards.amount
   cp_info[rewardtable[type]] = amount
-  enabletriggroup("campaigndone", true)
+  phelper:enabletriggroup("campaigndone", true)
 end
 
 function campaign_complete(name, line, wildcards)
-  enabletriggroup("campaignrew", true)
+  phelper:enabletriggroup("campaignrew", true)
   cp_info['finishtime'] = GetInfo(304)
 end
 
@@ -380,16 +380,16 @@ function update_timer()
   local time_to_go = when_required - os.time ()
   timer['secs'] = time_to_go
   timer['text'] = convert_time(time_to_go)
-  local days, hours, mins = SecondsToDHM(time_to_go)
+  local days, hours, mins, seconds = SecondsToDHMS(time_to_go)
   timer['days'] = days
   timer['hours'] = hours
   timer['mins'] = mins
   var.timer = serialize.save( "timer", timer )
-  broadcast(2, var.timer)
+  phelper:broadcast(2, var.timer)
 end
 
 function cp_check( name, line, wildcards)
-  enabletriggroup("campaigncheck", true)
+  phelper:enabletriggroup("campaigncheck", true)
   mobsleft = {}
   timer = {}
 end -- cp_check
@@ -411,24 +411,12 @@ function cp_new()
 end
 
 function cp_none( name, line, wildcards)
-  enabletriggroup("campaigncheck", false)
-  enabletriggroup("campaignin", false)
-  enabletriggroup("campaignrew", false)
-  enabletriggroup("campaigndone", false)
+  phelper:enabletriggroup("campaigncheck", false)
+  phelper:enabletriggroup("campaignin", false)
+  phelper:enabletriggroup("campaignrew", false)
+  phelper:enabletriggroup("campaigndone", false)
   check(EnableTimer("cp_timer", false))
   timer = {}
-end
-
-function SecondsToDHM(sSeconds)
-  local nSeconds = tonumber(sSeconds)
-  if nSeconds == 0 then
-    return "00:00:00"
-  else
-    nDays = math.floor(nSeconds/(3600 * 24))
-    nHours = math.floor(nSeconds/3600 - (nDays * 24))
-    nMins = math.floor(nSeconds/60 - (nHours * 60) - (nDays * 24 * 60))
-    return nDays, nHours, nMins
-  end
 end
 
 ]]>
@@ -445,7 +433,7 @@ function OnPluginBroadcast (msg, id, name, text)
     curlevel = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
   end -- stats changed
 
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
@@ -453,39 +441,39 @@ function OnPluginInstall ()
 
   assert (loadstring (GetVariable ("cp_info") or "")) ()
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("Stats_Detector")
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
   var.cp_info = serialize.save( "cp_info", cp_info )
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -510,11 +498,10 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'bcp')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'bcp')
+phelper:set_default('plugin_colour', 'orange')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>

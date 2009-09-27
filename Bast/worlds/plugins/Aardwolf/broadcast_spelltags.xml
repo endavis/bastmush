@@ -92,8 +92,7 @@ TODO:
 require "var"
 require "serialize"
 require "commas"
-
-tdebug = false
+require "pluginhelper"
 
 function spelltag_on (name, line, wildcards)
   local spelltag = {}
@@ -107,7 +106,7 @@ function spelltag_on (name, line, wildcards)
   elseif name == 'recon' then
     bcastnum = 3
   end
-  broadcast(bcastnum, spelltags, spelltags)
+  phelper:broadcast(bcastnum, spelltags, spelltags)
 
 end -- spelltag_on
 
@@ -122,7 +121,7 @@ function spelltag_off (name, line, wildcards)
   elseif name == 'recoff' then
     bcastnum = 4
   end
-  broadcast(bcastnum, spelltags, spelltags)
+  phelper:broadcast(bcastnum, spelltags, spelltags)
 
 end -- spelltag_off
 
@@ -135,38 +134,81 @@ function spell_failure (name, line, wildcards)
 
   sfails = serialize.save( "spelltag", sfail )
 
-  broadcast(5, sfails, sfails)
+  phelper:broadcast(5, sfails, sfails)
 end
 
-function broadcast(num, data, broadcastdata)
-  if tdebug then
-    print(GetPluginInfo (GetPluginID (), 1), ": Broadcast", num)
-    if data then
-      print(data)
-    end
-  end
-  BroadcastPlugin(tonumber(num), broadcastdata)
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  --PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
-function OnPluginInstall ()
+]]>
+</script>
 
- if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    return
-  end -- they didn't enable us last time
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
 
-end -- OnPluginInstall
+<script>
+<![CDATA[
 
-function OnPluginDisable ()
-  BroadcastPlugin(-1)
-end -- OnPluginDisable
+phelper:set_default('cmd', 'bstag')
+phelper:set_default('plugin_colour', 'steelblue')
 
+phelper:enable()
 
 ]]>
 </script>

@@ -185,7 +185,7 @@ whoisinfo = {}
 
 function whois_start(name, line, wildcards)
   whoisinfo = {}
-  enabletriggroup("whois", true)
+  phelper:enabletriggroup("whois", true)
   --SendNoEcho('nopretitle')
   Send(line)
 end
@@ -236,12 +236,12 @@ end
 
 function whois_end(name, line, wildcards)
   check(EnableTrigger("whois_end", false))
-  enabletriggroup("whois", false)
+  phelper:enabletriggroup("whois", false)
   --SendNoEcho('nopretitle')
   whoisinfo['totallevels'] = (whoisinfo.remorts - 1) * 201 + whoisinfo.level
   whoisinfo['totaltrivia'] = 0
   var.whoisinfo = serialize.save( "whoisinfo", whoisinfo )
-  broadcast(1, var.whoisinfo)
+  phelper:broadcast(1, var.whoisinfo)
 end
 
 ]]>
@@ -251,43 +251,43 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -311,11 +311,10 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'bwhois')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'bwhois')
+phelper:set_default('plugin_colour', 'orange')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>

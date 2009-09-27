@@ -51,7 +51,6 @@ and then get the values by:
 
 require "var"
 require "pluginhelper"
-require "verify"
 
 -- pull in telnet option handling
 dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
@@ -83,7 +82,7 @@ function OnPluginTelnetOption (option)
   var.state = state
   var.statestring = statestrings[state]
 
-  broadcast(state)
+  phelper:broadcast(state)
 
 end -- function
 
@@ -94,44 +93,44 @@ end -- function
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
   TelnetOptionOn (TELOPT_REQUEST_STATUS)  -- get actual status (eg. afk, playing)
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -155,11 +154,10 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'bstate')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'bstate')
+phelper:set_default('plugin_colour', 'orange')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>

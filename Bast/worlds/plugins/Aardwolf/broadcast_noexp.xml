@@ -66,17 +66,15 @@ Example:
 
 require "var"
 require "pluginhelper"
-require "verify"
-require 'ldplugin'
 
 
 function noexp(name, line, wildcards)
   if name == 'noexp' then
-    broadcast(1)
-    var.noexp = true
+    phelper:broadcast(1)
+    phelper.noexp = true
   elseif name == 'expon' then
-    broadcast(2)
-    var.noexp = false
+    phelper:broadcast(2)
+    phelper.noexp = false
   end
 
 end
@@ -90,49 +88,49 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
 
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
   if verify_bool(var.noexp) then
-    broadcast(1)
+    phelper:broadcast(1)
   else
-    broadcast(2)
+    phelper:broadcast(2)
   end
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -156,12 +154,12 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-add_option('noexp', {help="true if noexp is on, false otherwise", type="bool", default=false, readonly=true})
+phelper:add_setting('noexp', {help="true if noexp is on, false otherwise", type="bool", default=false, readonly=true})
 
-option_set_default('cmd', 'bnoexp')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'bnoexp')
+phelper:set_default('plugin_colour', 'orange')
 
-init_pluginhelper()
+phelper:enable()
 
 ]]>
 </script>

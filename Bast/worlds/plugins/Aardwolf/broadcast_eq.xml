@@ -274,7 +274,7 @@ function removeeq ( name, line, wildcards )
   end
   local item = {place = place, item = wildcards.item}
   local titem = serialize.save( "item", item )
-  broadcast(2, titem, titem)
+  phelper:broadcast(2, titem, titem)
 end
 
 function weareq ( name, line, wildcards )
@@ -298,34 +298,59 @@ function weareq ( name, line, wildcards )
   end
   local item = {place = place, item = wildcards.item}
   local titem = serialize.save( "item", item )
-  broadcast(1, titem, titem)
+  phelper:broadcast(1, titem, titem)
 end
-
-function OnPluginEnable ()
-
-end
-
-function OnPluginDisable ()
-  BroadcastPlugin(-1)
-end
-
-function OnPluginSaveState ()
-
-  PluginhelperOnPluginSaveState()
-end -- function OnPluginSaveState
-
-function OnPluginInstall ()
-
- if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    return
-  end -- they didn't enable us last time
-
-end -- OnPluginInstall
 
 ]]>
 </script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
 
 <aliases>
   <alias
@@ -344,11 +369,10 @@ end -- OnPluginInstall
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'beq')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'beq')
+phelper:set_default('plugin_colour', 'orange')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>

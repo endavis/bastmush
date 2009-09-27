@@ -66,7 +66,6 @@ require swalec's Aardwolf_exits_detector
 
 require "var"
 require "pluginhelper"
-require "verify"
 require 'ldplugin'
 
 runto = false
@@ -77,8 +76,8 @@ current_room = ''
 function runstart(name, line, wildcards)
   runto = true
   seenrecall = false
-  enabletriggroup("runtostuff", true)
-  broadcast(1)
+  phelper:enabletriggroup("runtostuff", true)
+  phelper:broadcast(1)
 end
 
 function runend(name, line, wildcards)
@@ -87,11 +86,11 @@ function runend(name, line, wildcards)
     return
   end
   if runto and seenrecall then
-    enabletriggroup("runtostuff", false)
+    phelper:enabletriggroup("runtostuff", false)
     runto = false
     seenrecall = false
     oneexit = false
-    broadcast(2)
+    phelper:broadcast(2)
   end
 end
 ]]>
@@ -109,44 +108,44 @@ function OnPluginBroadcast (msg, id, name, text)
       end
     end
   end
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin ("Aardwolf_Exits_Detector")
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -170,10 +169,10 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'brunto')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'brunto')
+phelper:set_default('plugin_colour', 'orange')
 
-init_pluginhelper()
+phelper:enable()
 
 ]]>
 </script>

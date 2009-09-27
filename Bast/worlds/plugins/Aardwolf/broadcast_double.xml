@@ -132,7 +132,7 @@ require 'serialize'
 doubleend = 0
 
 function doublestart(name, line, wildcards)
-  enabletriggroup('doublestuff', true)
+  phelper:enabletriggroup('doublestuff', true)
   doubletime(name, line, wildcards)
 end
 
@@ -141,7 +141,7 @@ function broadcast_timer(left)
   timer['secs'] = left
   timer['text'] = convert_time(left)
   ttimer = serialize.save( "timer", timer )
-  broadcast(1, ttimer, ttimer)
+  phelper:broadcast(1, ttimer, ttimer)
 end
 
 function doubletime(name, line, wildcards)
@@ -155,7 +155,7 @@ end
 function doublefinish(name, line, wildcards)
   doubleend = 0
   EnableTimer("doubletimer", false)
-  enabletriggroup('doublestuff', false)
+  phelper:enabletriggroup('doublestuff', false)
   broadcast_timer(0)
 end
 
@@ -173,43 +173,43 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
 
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -233,10 +233,10 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'bdbl')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'bdbl')
+phelper:set_default('plugin_colour', 'orange')
 
-init_pluginhelper()
+phelper:enable()
 
 ]]>
 </script>

@@ -335,37 +335,37 @@ function blankquest ()
 end
 
 function quest_handed_in (name, line, wildcards)
-  enabletriggroup("questin", false)
+  phelper:enabletriggroup("questin", false)
   quest_info['finishtime'] = GetInfo(304)
   var.quest_info = serialize.save( "quest_info", quest_info )
-  broadcast(5, var.quest_info)
+  phelper:broadcast(5, var.quest_info)
   when_required = os.time () + (30 * 60)  -- 30 mins to go
   onquest = false
   update_timer()
   check(EnableTimer("questtimer", true))
-  enabletriggroup("questrew", true)
+  phelper:enabletriggroup("questrew", true)
 
 end -- quest_handed_in
 
 function quest_available (name, line, wildcards)
   check(EnableTimer("questtimer", false))
-  broadcast(1)
+  phelper:broadcast(1)
 end -- quest_available
 
 function quest_fail(name, line, wildcards)
-  enabletriggroup("questin", false)
+  phelper:enabletriggroup("questin", false)
   when_required = os.time () + (15 * 60)  -- 15 mins to go
   onquest = false
   update_timer()
   quest_info.failed = 1
   var.quest_info = serialize.save( "quest_info", quest_info )
-  broadcast(8, var.quest_info)
+  phelper:broadcast(8, var.quest_info)
   check(EnableTimer("questtimer", true))
 end
 
 function quest_done (name, line, wildcards)
   check(EnableTimer("questtimer", false))
-  broadcast(4)
+  phelper:broadcast(4)
 end -- quest_done
 
 function quest_time_to_go (name, line, wildcards)
@@ -377,7 +377,7 @@ function quest_time_to_go (name, line, wildcards)
 end -- quest_time_to_go
 
 function start_questor_stuff (name, line, wildcards)
-  enabletriggroup("qinfo", true)
+  phelper:enabletriggroup("qinfo", true)
   blankquest()
   quest_info['starttime'] = GetInfo(304)
 end -- start_questor_stuff
@@ -393,7 +393,7 @@ end -- roomName
 function areaName( strTriggerName, trig_line, wildcards )
   quest_info['mobarea'] = wildcards[1]
   var.quest_info = serialize.save( "quest_info", quest_info )
-  broadcast(2, var.quest_info)
+  phelper:broadcast(2, var.quest_info)
 end
 
 function questor_time (name, line, wildcards)
@@ -420,8 +420,8 @@ function questor_time (name, line, wildcards)
   end -- some days left
 
   onquest = true
-  enabletriggroup("qinfo", false)
-  enabletriggroup("questin", true)
+  phelper:enabletriggroup("qinfo", false)
+  phelper:enabletriggroup("questin", true)
   update_timer()
   check(EnableTimer("questtimer", true))
 
@@ -437,18 +437,18 @@ function update_timer()
   timer['text'] = convert_time(time_to_go)
   var.timer = serialize.save( "timer", timer )
   if onquest then
-    broadcast(3, var.timer)
+    phelper:broadcast(3, var.timer)
   else
-    broadcast(7, var.timer)
+    phelper:broadcast(7, var.timer)
   end
 end
 
 function quest_rewards (name, line, wildcards)
   if name == 'finishqpcatcher' then
     if trim(line) == '' then
-      enabletriggroup("questrew", false)
+      phelper:enabletriggroup("questrew", false)
       var.quest_info = serialize.save( "quest_info", quest_info )
-      broadcast(6, var.quest_info)
+      phelper:broadcast(6, var.quest_info)
     end
   elseif name == "qcompletecatcher" then
     quest_info['qp'] = wildcards[1]
@@ -483,43 +483,43 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -545,11 +545,10 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'bqu')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'bqu')
+phelper:set_default('plugin_colour', 'orange')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>

@@ -129,7 +129,7 @@ Example
   <trigger
    enabled="y"
    regexp="y"
-   match="^Congratulations .*, you have now completed character creation.$"
+   match="^     Congratulations %1, you have now completed character creation.$"
    name="created"
    script="created"
    sequence="100"
@@ -176,11 +176,11 @@ function created( name, line, wildcards )
 end
 
 function superhero( name, line, wildcards )
-  broadcast(4)
+  phelper:broadcast(4)
 end
 
 function remort(name, line, wildcards)
-  broadcast(5)
+  phelper:broadcast(5)
 end
 
 function resetinfo()
@@ -208,11 +208,11 @@ function level ( name, line, wildcards )
   if levelinfo.type == "level" then
     levelinfo.newlevel = wildcards[1]
     if tonumber(levelinfo.newlevel) == 200 then
-      broadcast(3)
+      phelper:broadcast(3)
     end
   end
   levelinfo.time = GetInfo(304)
-  enabletriggroup( "linfo", true )
+  phelper:enabletriggroup( "linfo", true )
 end
 
 function levelgains (name, line, wildcards)
@@ -233,9 +233,9 @@ function levbonus (name, line, wildcards)
   elseif name == "bonusstat" then
     levelinfo[string.lower(string.sub(wildcards[1], 1, 3))] = 1
   elseif name == "finishlevel" then
-    enabletriggroup( "linfo", false )
+    phelper:enabletriggroup( "linfo", false )
     var.levelinfo = serialize.save( "levelinfo", levelinfo )
-    broadcast(1, var.levelinfo)
+    phelper:broadcast(1, var.levelinfo)
   end
 end
 
@@ -255,7 +255,7 @@ function OnPluginBroadcast (msg, id, name, text)
     end
   end -- if
 
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
@@ -263,38 +263,38 @@ function OnPluginInstall ()
 
   assert (loadstring (GetVariable ("levelinfo") or "")) ()
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("broadcast_state")
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -317,11 +317,10 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'blev')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'blev')
+phelper:set_default('plugin_colour', 'orange')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>

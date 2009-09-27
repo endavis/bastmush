@@ -294,16 +294,16 @@ item = {}
 item_name = ''
 
 function check_invmon()
-  if not verify_bool(var.isinvmonon) then
+  if not verify_bool(phelper.isinvmonon) then
     SendNoEcho('invmon on')
   end
 end
 
 function invmon ( name, line, wildcards )
   if name == "invmonon" then
-    var.isinvmonon = true
+    phelper:set('isinvmonon', true)
   elseif name == "invmonoff" then
-    var.isinvmonon = false
+    phelper:set('isinvmonon', false)
   end
 end
 
@@ -317,10 +317,11 @@ function builditem(wildcards)
 end
 
 function broadcast_invmon ( name, line, wildcards )
+  phelper:mdebug(line)
   if tonumber(wildcards.action) ~= 1 then
     builditem(wildcards)
     local items = serialize.save( "item", item )
-    broadcast(wildcards.action, items, items)
+    phelper:broadcast(wildcards.action, items, items)
     name = ''
   else
     builditem(wildcards)
@@ -330,7 +331,7 @@ end
 function removeeq ( name, line, wildcards )
   item.name = wildcards.item
   local items = serialize.save( "item", titem )
-  broadcast(1, items, items)
+  phelper:broadcast(1, items, items)
   name = ''
 end
 
@@ -345,18 +346,18 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
@@ -365,27 +366,27 @@ function OnPluginEnable ()
     check_invmon()
   end -- if already connected
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -408,13 +409,12 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-add_option('isinvmonon', {help="is the invmon command on", type="bool", readonly=true, verify_bool(false)})
+phelper:add_setting('isinvmonon', {help="is the invmon command on", type="bool", readonly=true, verify_bool(false)})
 
-option_set_default('cmd', 'bimon')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'bimon')
+phelper:set_default('plugin_colour', 'orange')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>
