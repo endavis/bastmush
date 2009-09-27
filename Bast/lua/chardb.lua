@@ -29,6 +29,15 @@ function Statdb:initialize(args)
   self.dbname = "/stats.db"
 end
 
+function Statdb:open()
+  if self.db == nil then
+    self.db = assert(sqlite3.open(self.dbloc .. self.dbname))
+    self.db:exec(string.format('ATTACH ' .. self.dbloc .. 'aardinfo.db AS aarddb'))
+  end
+  self.conns = self.conns + 1
+  return true
+end
+
 function Statdb:getstat(stat)
   local tstat = nil
   if self:open() then
@@ -118,7 +127,7 @@ function Statdb:savewhois(whoisinfo)
       stmt:step()
       stmt:finalize()
       self:addmilestone('start')
-      mdebug("no previous stats, created new")
+      phelper:mdebug("no previous stats, created new")
     else
       local stmt = self.db:prepare[[ UPDATE stats set level = :level, totallevels = :totallevels,
                                             remorts = :remorts, tiers = :tiers, race = :race,
@@ -137,7 +146,7 @@ function Statdb:savewhois(whoisinfo)
       stmt:bind_names(  whoisinfo  )
       stmt:step()
       stmt:finalize()
-      mdebug("updated stats")
+      phelper:mdebug("updated stats")
     end
     self:addclasses(whoisinfo['classes'])
     self:close()
@@ -174,7 +183,7 @@ function Statdb:addmilestone(milestone)
     stmt:step()
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
-    mdebug("inserted milestone:", milestone, "with rowid:", rowid)
+    phelper:mdebug("inserted milestone:", milestone, "with rowid:", rowid)
     self:close()
     return rowid
   end
@@ -230,7 +239,7 @@ function Statdb:savequest( questinfo )
     stmt:step()
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
-    mdebug("inserted quest:", rowid)
+    phelper:mdebug("inserted quest:", rowid)
     self:close()
     return rowid
   end
@@ -294,7 +303,7 @@ function Statdb:savecp( cpinfo )
     stmt:step()
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
-    mdebug("inserted cp:", rowid)
+    phelper:mdebug("inserted cp:", rowid)
     local stmt2 = self.db:prepare[[ INSERT INTO cpmobs VALUES
                                       (NULL, :cp_id, :name, :room) ]]
     for i,v in ipairs(cpinfo['mobs']) do
@@ -352,7 +361,7 @@ function Statdb:savelevel( levelinfo )
     stmt:step()
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
-    mdebug("inserted", levelinfo['type'], ":", rowid)
+    phelper:mdebug("inserted", levelinfo['type'], ":", rowid)
     stmt2 = self.db:exec(string.format("UPDATE levels SET finishtime = %d WHERE level_id = %d;" ,
                                           levelinfo.time, rowid - 1))
     rowid = self.db:last_insert_rowid()
@@ -373,6 +382,7 @@ function Statdb:checkmobkillstable()
         gold INT default 0,
         tp INT default 0,
         time INT default -1,
+        vorpal_weapon TEXT default '',
         level INT default -1
       )]])
     end
@@ -386,12 +396,12 @@ function Statdb:savemobkill( killinfo )
     self:addtostat('totaltrivia', killinfo.tp)
     killinfo['level'] = tonumber(db:getstat('totallevels'))
     local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (NULL, :mob, :xp, :bonusxp,
-                                                          :gold, :tp, :time, :level) ]]
+                                                          :gold, :tp, :time, :vorpal_weapon, :level) ]]
     stmt:bind_names(  killinfo  )
     stmt:step()
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
-    mdebug("inserted mobkill:", rowid)
+    phelper:mdebug("inserted mobkill:", rowid)
     self:close()
   end
 end
@@ -452,7 +462,7 @@ function Statdb:savegq( gqinfo )
     stmt:step()
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
-    mdebug("inserted gq:", rowid)
+    phelper:mdebug("inserted gq:", rowid)
     local stmt2 = self.db:prepare[[ INSERT INTO gqmobs VALUES
                                       (NULL, :gq_id, :num, :name, :room) ]]
     tprint(gqinfo['mobs'])
@@ -543,6 +553,49 @@ function Statdb:addclasses(classes)
       stmt2:reset()
     end
     stmt2:finalize()
+    self:close()
+  end
+end
+
+--[[
+{invdata}
+55280913,HKG,@Dthe @YRing @Dof @MHorus@w,91,7,1,-1,-1
+60125052,K,a @Gd@yrago@Gn @wmask,100,6,0,-1,-1
+158909251,K,@WConadrain Clothes@w,40,6,0,-1,-1
+164129013,K,@BA@bura @wof @RD@rivinity@w,79,1,0,-1,-1
+149303771,HKG,@cNeu@Ctrali@czer Sh@Ca@crd@w,80,6,0,-1,-1
+162791501,K,@BS@bcar @wof @RB@rattle@w,80,7,0,-1,-1
+162738960,K,@BF@baith @wof @RS@rteel@w,82,7,0,-1,-1
+145412098,K,@wMoricand Clothes@w,50,6,0,-1,-1
+161002920,K,a puzzling ring,111,7,0,-1,-1
+160959663,K,authorization papers,112,10,0,-1,-1
+153450231,HKG,a ball of light,100,1,0,-1,-1
+151228967,KG,a crystal shard,1,6,0,-1,-1
+62364720,KG,@ga @GVe@grdu@Gre @gtoken@w,100,10,0,-1,-1
+149303101,HK,a silk pouch,80,11,0,-1,-1
+149228513,HKG,a ball of light,102,1,0,-1,-1
+149215087,K,authorization papers,111,10,0,-1,-1
+60365031,K,a @Rd@revil's @Rh@rand@w,100,5,0,-1,-1
+58695136,K,@W>@yxxxxx@W(@Rseal of the Wild Boar@W)@yxxxxx@W<@w,95,7,0,-1,-1
+118982790,HKG,a @YBag of @RAardwolf@w,120,11,1,-1,-1
+6285391,HKG,a @YBag of @RAardwolf@w,120,11,1,-1,-1
+6285290,HKG,a @YBag of @RAardwolf@w,120,11,1,-1,-1
+6285193,HKG,@ME@Ya@Cs@Mt@Ye@Cr @MB@Ya@Cs@Mk@Ye@Ct@w,200,11,1,-1,-1
+6285177,HKG,a demon school backpack,157,11,0,-1,-1
+6285176,HKG,@WS@wa@Wt@wc@Wh@we@Wl o@wf @WS@wa@Wn@wc@Wt@wi@Wt@wy,100,11,1,-1,-1
+{/invdata}
+--]]
+function Statdb:checkitemtable()
+  if self:open() then
+    if not self:checkfortable('items') then
+      self.db:exec([[CREATE TABLE items(
+        sn INTEGER NOT NULL PRIMARY KEY,
+        name TEXT,
+        cleanname TEXT,
+        slot INT default -1,
+        flags TEXT,
+      )]])
+    end
     self:close()
   end
 end
