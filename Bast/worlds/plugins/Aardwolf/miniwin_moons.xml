@@ -109,7 +109,7 @@ function styleplotdata()
   style.style = 0
   table.insert (texttable, {style})
 
-  local tplotdata=buildplotdata(var.plotlength)
+  local tplotdata=buildplotdata(phelper.plotlength)
   for i,t in pairs(tplotdata) do
     local tstyle = {}
     style = {}
@@ -183,7 +183,7 @@ function plotdata()
      (moons.white.now == nil ) then
     Note( "The cycle of one or more moons is unknown.")
   else
-    local tplotdata=buildplotdata(var.plotlength)
+    local tplotdata=buildplotdata(phelper.plotlength)
     for i,t in pairs(tplotdata) do
       local temp = "["
       for _,v in ipairs(t) do
@@ -296,12 +296,12 @@ function nextunion()
   end
 end -- nextunion()
 
-function moonbot_union(name, line, wildcards)
+function moonbot_union(cmddict)
   print(nextunion())
   return true
 end -- moonbot_union
 
-function moonbot_reset()
+function moonbot_reset(cmddict)
   for i,v in pairs(moons) do
     moons[i].now = nil
   end
@@ -313,10 +313,10 @@ function moonbot_reset()
   ColourNote("", "", "")
 end -- moonbot_reset
 
-function moonbot_report(name, line, wildcards)
-  chan = wildcards.list
+function moonbot_report(cmddict)
+  chan = cmddict[1]
   if not chan or chan == '' then
-    chan = var.reportchan
+    chan = phelper.reportchan
   end
   offset, duration = nextunion()
   if offset == nil then
@@ -341,44 +341,44 @@ function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa70b4680508448e19b8b25" and msg == 1 then
     ontick()
   end
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall()
 
-  PluginhelperOnPluginInstall ()  -- do initialization stuff
+  phelper:OnPluginInstall ()  -- do initialization stuff
 end -- OnPluginInstall
 
 function OnPluginClose()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("broadcast_tick")
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
   moonbot_reset()
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end
 
 ]]>
@@ -403,22 +403,21 @@ end
 <script>
 <![CDATA[
 
-add_option('plotlength', {help="set the length of the moon plot", type="number", high=80, low=0, after=styleplotdata, default=66})
-add_option('reportchan', {help="the default channel to do a moons report to", type="string", default='gt'})
+phelper:add_setting('plotlength', {help="set the length of the moon plot", type="number", high=80, low=0, after=styleplotdata, default=66})
+phelper:add_setting('reportchan', {help="the default channel to do a moons report to", type="string", default='gt'})
 
-option_set_default('cmd', 'mb')
-option_set_default('plugin_colour', 'lime')
+phelper:set_default('cmd', 'mb')
+phelper:set_default('plugin_colour', 'lime')
 
-add_cmd('plot', {func=plotdata, help="plot moons"})
-add_cmd('union', {func=moonbot_union, help="show next moons union"})
-add_cmd('print', {func=printmoons, help="print the current moon phase #s"})
-add_cmd('mreset', {func=moonbot_reset, help="reset the moons"})
-add_cmd('report', {func=moonbot_report, help="reset the moons"})
+phelper:add_cmd('plot', {func=plotdata, help="plot moons"})
+phelper:add_cmd('union', {func=moonbot_union, help="show next moons union"})
+phelper:add_cmd('print', {func=printmoons, help="print the current moon phase #s"})
+phelper:add_cmd('mreset', {func=moonbot_reset, help="reset the moons"})
+phelper:add_cmd('report', {func=moonbot_report, help="report the position of the moons"})
 
-window_set(moonwin)
+phelper:add_pobject('win', moonwin)
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>

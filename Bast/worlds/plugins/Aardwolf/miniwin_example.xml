@@ -35,15 +35,23 @@ require "tprint"
 require "commas"
 require "serialize"
 
+
 testwin = Miniwin:new{name="Example"}
 testwin:set_default('header_height', 1)
+testwin2 = Miniwin:new{name="Example_2"}
+testwin2:set_default('header_height', 1)
 styles = {}
+styles2 = {}
 
 -- Header Line, centered
 style = {}
-style.text = "New Test Header"
+style.text = "Example Window"
 style.hjust = 'center'
 table.insert(styles, {style})
+stylet = {}
+stylet.hjust = 'center'
+stylet.text = "Example Window 2"
+table.insert(styles2, {stylet})
 
 -- First Line
 style = {}
@@ -53,6 +61,7 @@ style.backcolour = 'red'
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(styles, {style})
+--table.insert(styles2, {style})
 
 -- Second Line, several styles
 tstyle = {}
@@ -106,6 +115,7 @@ table.insert(tstyle, style)
 
 -- insert the second line
 table.insert(styles, tstyle)
+--table.insert(styles2, tstyle)
 
 -- New Line
 style = {}
@@ -114,6 +124,7 @@ style.strikeout = true
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(styles, {style})
+--table.insert(styles2, {style})
 
 -- New Line, Center Horizontally
 style = {}
@@ -123,6 +134,7 @@ style.underline = true
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(styles, {style})
+--table.insert(styles2, {style})
 
 -- New Line, Right Justify Horizontally
 style = {}
@@ -132,9 +144,9 @@ style.hjust = 'right'
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 
-
 table.insert(styles, {style})
-
+--table.insert(styles2, {style})
+tprint(styles2)
 ]]>
 </script>
 
@@ -142,48 +154,50 @@ table.insert(styles, {style})
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
   --OnPluginDisable is automatically called by pluginhelper
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
 
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
   -- always create windows after OnPluginEnable due to default variable handling
   testwin:enable()
   testwin:createwin(styles)
+  testwin2:enable()
+  testwin2:createwin(styles)
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -206,12 +220,13 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'mnexam')
-option_set_default('plugin_colour', 'steelblue')
-window_set(testwin)
+phelper:set_default('cmd', 'mnexam')
+phelper:set_default('plugin_colour', 'steelblue')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:add_pobject('win', testwin)
+phelper:add_pobject('win2', testwin2)
+
+phelper:enable()
 
 ]]>
 </script>

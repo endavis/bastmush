@@ -66,59 +66,57 @@ end -- show_noexp
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  function OnPluginBroadcast (msg, id, name, text)
-    if id == "aaafc15678afa22343c5a327" then
-      if msg == 1 then
-        --get the timer info
-        loadstring( text )()
-        -- do something with ttimer
-        if timer.secs == 0 then
-          doublewin:disable()
-        elseif timer.secs > 0 then
-          show_double(timer)
-        end
+  if id == "aaafc15678afa22343c5a327" then
+    if msg == 1 then
+      --get the timer info
+      loadstring( text )()
+      -- do something with ttimer
+      if timer.secs == 0 then
+        doublewin:disable()
+      elseif timer.secs > 0 then
+        show_double(timer)
       end
-    end -- timer
-  end
+    end
+  end -- timer
 
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("broadcast_noexp")
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -141,13 +139,12 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'mdbl')
-option_set_default('plugin_colour', 'steelblue')
+phelper:set_default('cmd', 'mdbl')
+phelper:set_default('plugin_colour', 'steelblue')
 
-window_set(doublewin)
+phelper:add_pobject('win', doublewin)
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>

@@ -80,49 +80,48 @@ function OnPluginBroadcast (msg, id, name, text)
       noexpwin:disable()
     end
   end -- noexp changed
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("broadcast_noexp")
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
   if noexp == nil then
-    print('getting noexp')
     noexp = verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp'))
     show_noexp()
   end
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -145,13 +144,12 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'mnoexp')
-option_set_default('plugin_colour', 'steelblue')
+phelper:set_default('cmd', 'mnoexp')
+phelper:set_default('plugin_colour', 'steelblue')
 
-window_set(noexpwin)
+phelper:add_pobject('win', noexpwin)
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>
