@@ -98,14 +98,14 @@ function createmilestone()
   tlist = convertlevel(level)
   milestone = string.format("t%sr%sl%s", tlist.tier, tlist.remort, tlist.level)
   Execute("whois")
-  DoAfterSpecial(3, string.format('db:addmilestone("%s")', milestone), 12)
+  DoAfterSpecial(5, string.format('db:addmilestone("%s")', milestone), 12)
 end
 
-function AddMilestone(name, line, wildcards)
-  if wildcards.list then
-    if db:addmilestone(wildcards.list) > 0 then
-      plugin_header("")
-      ColourNote(RGBColourToName(var.plugin_colour), "black", "added milestone " .. wildcards.list)
+function AddMilestone(cmddict)
+  if cmddict[1] then
+    if db:addmilestone(cmddict[1]) > 0 then
+      phelper:plugin_header("")
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "added milestone " .. cmddict[1])
       ColourNote( "", "", "")
     end
   end
@@ -145,7 +145,7 @@ function formatitem(itemname, value1, value2)
 end
 
 function formatCompMile(milestone1, milestone2)
-  plugin_header("Comparing " .. milestone1.milestone .. " to " .. milestone2.milestone)
+  phelper:plugin_header("Comparing " .. milestone1.milestone .. " to " .. milestone2.milestone)
   formatheader(milestone1.milestone, milestone2.milestone)
   for h,item in pairs(fieldstocomp) do
     formatitem(item, milestone1[item], milestone2[item])
@@ -153,17 +153,16 @@ function formatCompMile(milestone1, milestone2)
   ColourNote( "", "", "")
 end
 
-function CompareMilestones(name, line, wildcards)
-  if wildcards.list then
+function CompareMilestones(cmddict)
+  if cmddict[1] then
     local milestone1 = {}
     local milestone2 = {}
-    milestones = utils.split(wildcards.list, " ")
-    if #milestones == 1 then
+    if #cmddict == 1 then
       sql1 = "SELECT * FROM stats WHERE milestone = 'current'"
-      sql2 = "SELECT * FROM stats WHERE milestone = '" .. milestones[1] .. "'"
-    elseif #milestones > 1 then
-      sql1 = "SELECT * FROM stats WHERE milestone = '" .. milestones[1] .. "'"
-      sql2 = "SELECT * FROM stats WHERE milestone = '" .. milestones[2] .. "'"
+      sql2 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[1] .. "'"
+    elseif #cmddict > 1 then
+      sql1 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[1] .. "'"
+      sql2 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[2] .. "'"
     end
     if db:open() then
       for a in db.db:nrows(sql1) do
@@ -175,8 +174,8 @@ function CompareMilestones(name, line, wildcards)
       db:close()
     end
     if not next(milestone1) or not next(milestone2) then
-      plugin_header("")
-      ColourNote(RGBColourToName(var.plugin_colour), "black", "one of the milestones does not exist")
+      phelper:splugin_header("")
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "one of the milestones does not exist")
       ColourNote( "", "", "")
       return
     end
@@ -184,9 +183,9 @@ function CompareMilestones(name, line, wildcards)
   end
 end
 
-function ListMilestones(name, line, wildcards)
-  if wildcards.list then
-    findstr, n = string.gsub(wildcards.list, "*", "%%")
+function ListMilestones(cmddict)
+  if cmddict[1] then
+    findstr, n = string.gsub(cmddict[1], "*", "%%")
     findstr, n = string.gsub(findstr, "?", "_")
     sql = "SELECT milestone FROM stats WHERE milestone like '" .. findstr .. "'"
   else
@@ -194,9 +193,9 @@ function ListMilestones(name, line, wildcards)
   end
   if db:open() then
     if db:checkfortable('stats') then
-      plugin_header("Milestones")
+      phelper:plugin_header("Milestones")
       for a in db.db:nrows(sql) do
-        ColourNote(RGBColourToName(var.plugin_colour), "black", a['milestone'])
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", a['milestone'])
       end
       ColourNote( "", "", "")
     end
@@ -227,44 +226,43 @@ function OnPluginBroadcast (msg, id, name, text)
     savegq()
   end
 
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  db:checkdir()
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -288,15 +286,14 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-add_cmd('addmilestone', {func=AddMilestone, help="add a milestone"})
-add_cmd('comparemilstone', {func=CompareMilestones, help="compare two milestones"})
-add_cmd('listmilestones', {func=ListMilestones, help="list all milestones"})
+phelper:add_cmd('addmilestone', {func=AddMilestone, help="add a milestone"})
+phelper:add_cmd('comparemilstone', {func=CompareMilestones, help="compare two milestones"})
+phelper:add_cmd('listmilestones', {func=ListMilestones, help="list all milestones"})
 
-option_set_default('cmd', 'statdb')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'statdb')
+phelper:set_default('plugin_colour', 'orange')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>
