@@ -66,7 +66,7 @@ require "ldplugin"
 require "verify"
 require "serialize"
 require "tprint"
-require "var"
+--require "var"
 require "pluginhelper"
 require "commas"
 
@@ -93,17 +93,17 @@ function check_room(room)
 end
 
 function wear_regen()
-  if verify_bool(var.off) == true then
+  if verify_bool(phelper.off) == true then
     return
   end
   if trywear then
     return
   end
-  if not verify_bool(var.regenworn) or tryremove then
+  if not verify_bool(phelper.regenworn) or tryremove then
     trywear = true
     --DoAfterSpecial (3, 'try_wear()', sendto.script)
-    if var.regensn then
-      Send("wear " .. var.regensn .. " lfinger")
+    if phelper.regensn then
+      Send("wear " .. phelper.regensn .. " lfinger")
     else
       Send("wear regen lfinger")
     end
@@ -114,9 +114,9 @@ function remove_regen()
   if tryremove then
     return
   end
-  if verify_bool(var.regenworn) or trywear then
+  if verify_bool(phelper.regenworn) or trywear then
     tryremove = true
-    Send("wear " .. var.oldringsn .. " lfinger")
+    Send("wear " .. phelper.oldringsn .. " lfinger")
   end
 end
 
@@ -132,55 +132,55 @@ function sleep(name, line, wildcards)
 end
 
 function checkstand()
-  if oldstatus.statestring == 'sleeping' and not verify_bool(var.inregen) then
+  if oldstatus.statestring == 'sleeping' and not verify_bool(phelper.inregen) then
     remove_regen()
   end
 end
 
 function add_room(name, line, wildcards)
-  plugin_header()
+  phelper:plugin_header()
   if current_room == nil then
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Could not get current room")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not get current room")
     ColourNote("", "", "")
     return
   end
   room = trim(string.gsub(current_room, "%(G%)", ""))
   if regenrooms[room] == 1 then
-    ColourNote(RGBColourToName(var.plugin_colour), "black", room .. " already in regen list")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", room .. " already in regen list")
     ColourNote("", "", "")
     return
   end
 
   regenrooms[room] = 1
-  ColourNote(RGBColourToName(var.plugin_colour), "black", "Added Room: " .. room)
+  ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Added Room: " .. room)
   ColourNote("", "", "")
   wear_regen()
 end
 
 function remove_room(name, line, wildcards)
-  plugin_header()
+  phelper:plugin_header()
   if current_room == nil then
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Could not get current room")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not get current room")
     ColourNote("", "", "")
     return
   end
   room = trim(string.gsub(current_room, "%(G%)", ""))
   if regenrooms[room] == 1 then
     regenrooms[room] = nil
-    ColourNote(RGBColourToName(var.plugin_colour), "black", room .. " removed")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", room .. " removed")
     ColourNote("", "", "")
     remove_regen()
     return
   end
 
-  ColourNote(RGBColourToName(var.plugin_colour), "black", room .. " not in room list")
+  ColourNote(RGBColourToName(phelper.plugin_colour), "black", room .. " not in room list")
   ColourNote("", "", "")
 end
 
 function show_rooms(name, line, wildcards)
-  plugin_header(" Regen Rooms")
+  phelper:plugin_header(" Regen Rooms")
   for room,_ in pairs(regenrooms) do
-    ColourNote(RGBColourToName(var.plugin_colour), "black", room)
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", room)
   end
   ColourNote("", "", "")
 end
@@ -204,19 +204,19 @@ function OnPluginBroadcast (msg, id, name, text)
     if msg == 2 then
       current_room = GetPluginVariable("18c24130ab326dc05b49420d", "roomname")
 
-      oldregen  = verify_bool(var.inregen)
-      var.inregen = check_room(current_room)
+      oldregen  = verify_bool(phelper.inregen)
+      phelper:set('inregen', check_room(current_room), {silent=true})
 
-      if oldregen and verify_bool(var.inregen) then
+      if oldregen and verify_bool(phelper.inregen) then
         return
       end
 
-      if verify_bool(var.inregen) and ((not verify_bool(var.regenworn)) or tryremove) and not runto then
+      if verify_bool(phelper.inregen) and ((not verify_bool(phelper.regenworn)) or tryremove) and not runto then
         wear_regen()
         return
       end
 
-      if (not verify_bool(var.inregen)) and (verify_bool(var.regenworn) or trywear) then
+      if (not verify_bool(phelper.inregen)) and (verify_bool(phelper.regenworn) or trywear) then
         remove_regen()
         return
       end
@@ -233,7 +233,7 @@ function OnPluginBroadcast (msg, id, name, text)
       clientAFK = text == "y"
       if clientAFK and status.statestring == 'active' then
         wear_regen()
-      elseif (not clientAFK) and not verify_bool(var.inregen) and status.statestring == 'active' then
+      elseif (not clientAFK) and not verify_bool(phelper.inregen) and status.statestring == 'active' then
         remove_regen()
       end
     end
@@ -243,8 +243,8 @@ function OnPluginBroadcast (msg, id, name, text)
     if msg == 2 then
       if eqitem.place == "lfinger" then
         if eqitem.name == "Aardwolf Ring of Regeneration" then
-          var.regenworn = true
-          var.regensn = eqitem.itemsn
+          phelper:set('regenworn',  true, {silent=true})
+          phelper:set('regensn', eqitem.itemsn, {silent=trie})
           trywear = false
           SaveState()
         end
@@ -252,18 +252,18 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 1 then
       if eqitem.place == "lfinger" then
         if eqitem.name ~= "Aardwolf Ring of Regeneration" then
-          var.oldringsn = eqitem.itemsn
-          var.oldringdesc = eqitem.name
+          phelper:set('oldringsn', eqitem.itemsn, {silent=true})
+          phelper:set('oldringdesc', eqitem.name, {silent=true})
           SaveState()
         elseif eqitem.name == "Aardwolf Ring of Regeneration" then
-          var.regenworn = false
+          phelper:set('regenworn', false, {silent=true})
           tryremove = false
           SaveState()
         end
       end
     end
   end
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
@@ -271,12 +271,12 @@ function OnPluginInstall ()
 
   assert (loadstring (GetVariable ("regenrooms") or "")) ()
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
@@ -289,29 +289,29 @@ function OnPluginEnable ()
   ldplugin ("broadcast_state")
   ldplugin ("broadcast_invmon")
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
   SetVariable ("regenrooms",
                "regenrooms = " .. serialize.save_simple (regenrooms))
 
-  PluginhelperOnPluginSaveState(options_table)
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -336,23 +336,22 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-add_option('inregen', {help="whether you are in a room in the regen room list", type="bool", default=verify_bool(false), readonly=true})
-add_option('regenworn', {help="whether you are wearing a regen ring", type="bool", default=verify_bool(false), readonly=true})
-add_option('regensn', {help="the sn for the regen ring", type="string", default="", readonly=true})
-add_option('oldringsn', {help="the sn for the old ring", type="string", default="", readonly=true})
-add_option('oldringdesc', {help="the description for the old ring", type="string", default="", readonly=true})
-add_option('off', {help="turn off wearing ring", type="bool", default=verify_bool(true)})
+phelper:add_setting('inregen', {help="whether you are in a room in the regen room list", type="bool", default=verify_bool(false), readonly=true})
+phelper:add_setting('regenworn', {help="whether you are wearing a regen ring", type="bool", default=verify_bool(false), readonly=true})
+phelper:add_setting('regensn', {help="the sn for the regen ring", type="string", default="", readonly=true})
+phelper:add_setting('oldringsn', {help="the sn for the old ring", type="string", default="", readonly=true})
+phelper:add_setting('oldringdesc', {help="the description for the old ring", type="string", default="", readonly=true})
+phelper:add_setting('off', {help="turn off wearing ring", type="bool", default=verify_bool(true)})
 
-option_set_default('cmd', 'regen')
-option_set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'regen')
+phelper:set_default('plugin_colour', 'orange')
 
-add_cmd('add', {func=add_room, help="add current room as a regen room"})
-add_cmd('remove', {func=remove_room, help="remove current room as a regen room"})
-add_cmd('show', {func=show_rooms, help="show rooms"})
+phelper:add_cmd('add', {func=add_room, help="add current room as a regen room"})
+phelper:add_cmd('remove', {func=remove_room, help="remove current room as a regen room"})
+phelper:add_cmd('show', {func=show_rooms, help="show rooms"})
 
-init_plugin_vars()
-set_plugin_alias()
-
+phelper:enable()
+tprint(phelper)
 ]]>
 </script>
 </muclient>
