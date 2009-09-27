@@ -91,8 +91,50 @@ dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
 mapwin = Miniwin:new{name="Map"}
 mapwin:set_default('header_height', 2)
 
+legwin = Miniwin:new{name="Legend"}
+legwin:set_default('header_height', 0)
+legwin:set_default('windowpos', 12)
+
 map_lines = {}
 coords = nil
+
+dirmap = {
+  e = 'east',
+  w = 'west',
+  n = 'north',
+  s = 'south',
+  u = 'up',
+  d = 'down'
+}
+
+info = {
+"@WMap legend:@w",
+"",
+"  @M#@w  - You                      --- - North/south wall",
+"  @R*@w  - Other players             |  - East/west wall",
+"  @Y!@w  - Mobiles                   +  - Door (closed)",
+"  @C!@w  - Pet/other charmed mob     @B+@w  - Door (locked)",
+"  @R!@w  - Angry mob (with Sense     >  - Up exit",
+"       Anger cast)               @y>@w  - Up exit (closed)",
+"  @G!@w  - Unkillable Mob            <  - Down exit",
+"  @G$@w  - Shopkeeper                @y<@w  - Down exit (closed)",
+"",
+" @C[@W?@C]@w - Area exit                 @R#@w  - PK-flagged room",
+" @G[@W?@G]@w - Clan public hall exit     @RD@w  - Donation room",
+"",
+"@WTerrains:@w",
+"",
+" [ ]   Inside             . .   City",
+" @g, `@w   Field              @G; ;@w   Hills",
+" @y/@w     Mountain           @B~ ~@w   Water",
+" @B~ ~@w   Waternoswim        @c. .@w   Air",
+" @y~ ~@w   Desert             @Y% %@w   Quicksand",
+" @b~ ~@w   Underwater         @C~ ~@w   Ice",
+" @B. .@w   Underground        - -   East/West road",
+" . .   North/South road   @C~ ~@w   River",
+" @R/@w     Volcano            @b% %@w   Cave",
+" # #   Dungeon            @g( *@w   Forest",
+}
 
 function process_coords ( name, line, wildcards, styles )
   local tcoords = wildcards[1]
@@ -130,7 +172,72 @@ function process_coords ( name, line, wildcards, styles )
   style.style = 0
   table.insert (tstyle, style)
 
+  
   coords = tstyle
+end
+
+function godir(win, flags, hotspot_id)
+  SendNoEcho(dirmap[hotspot_id:lower()])
+end
+
+function godirlocked(win, flags, hotspot_id)
+  SendNoEcho('open ' .. dirmap[hotspot_id:lower()])
+  SendNoEcho(dirmap[hotspot_id:lower()])
+end
+
+function goenter(win, flags, hotspot_id)
+    phelper:mdebug('enter', hotspot_id)
+--  SendNoEcho('enter ' .. dir)
+end
+
+
+dirfunc = {}
+dirfunc['E'] = godir
+dirfunc['(E)'] = godirlocked
+dirfunc['W'] = godir
+dirfunc['(W)'] = godirlocked
+dirfunc['N'] = godir
+dirfunc['(N)'] = godirlocked
+dirfunc['S'] = godir
+dirfunc['(S)'] = godirlocked
+dirfunc['U'] = godir
+dirfunc['(U)'] = godirlocked
+dirfunc['D'] = godir
+dirfunc['(D)'] = godirlocked
+
+
+function convert_exits(styles)
+  local tstyles = {}
+  for i,v in ipairs(styles) do
+    if v.text:find(':') then
+      phelper:mdebug(v)
+      local texits = {}
+      local tvar = utils.split(v.text, " ")
+      for t,e in ipairs(tvar) do
+        local estyle = {}
+        estyle.textcolour = v.textcolour
+        estyle.text = e .. ' '
+        local test = dirfunc[e]
+        if test ~= nil then
+          if test == godirlocked then
+            local replacements = {['('] = '', [')'] = ''}
+            estyle.hotspot_id = string.gsub(e, ".", replacements)
+          else
+            estyle.hotspot_id = e
+          end
+          estyle.mousedown = test
+        end
+        table.insert(tstyles, estyle)
+      end
+    else
+      table.insert(tstyles, v)
+    end
+  end
+  
+  style = popup_style(legwin, "LG", "yellow")
+  style.hjust = "right"
+  table.insert (tstyles, style)
+  return tstyles
 end
 
 -- map redirector
@@ -153,7 +260,13 @@ function map_redirect (name, line, wildcards, styles)
     end
     mapwin:enable()
     mapwin:createwin(map_lines)
+    
+    legwin:enable()
+    legwin:createwin(info)
   else
+    if line:find('Exits') then
+       styles = convert_exits(styles)
+    end
     for i,v in ipairs(styles) do
       v.backcolour = "bg_colour"
     end
@@ -169,24 +282,24 @@ end -- function map_redirect
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
   --OnPluginDisable is automatically called by pluginhelper
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
@@ -196,7 +309,7 @@ function OnPluginDisable ()
     TelnetOptionOff (TELOPT_EXIT_NAMES)
   end
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
@@ -206,17 +319,17 @@ function OnPluginConnect ()
   TelnetOptionOn (TELOPT_ROOM_NAMES)
   TelnetOptionOn (TELOPT_EXIT_NAMES)
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -239,13 +352,13 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'mw')
-option_set_default('plugin_colour', 'steelblue')
+phelper:set_default('cmd', 'mw')
+phelper:set_default('plugin_colour', 'steelblue')
 
-window_set(mapwin)
+phelper:add_pobject('win', mapwin)
+phelper:add_pobject('legend', legwin)
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 </script>
