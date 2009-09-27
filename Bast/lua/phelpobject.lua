@@ -209,14 +209,8 @@ function Phelpobject:set_external(option, value, args)
     ColourNote("", "", "")
     return 1, nil
   end
-  local changedsetting = nil
   args = args or {}
-  if args.silent == nil or args.silent then
-    function changedsetting(toption, tvarstuff, cvalue)
-
-    end
-  else
-    function changedsetting(toption, tvarstuff, cvalue)
+  local function changedsetting(toption, tvarstuff, cvalue)
       self:plugin_header()
       if tvarstuff.type == "colour" then
         colourname = RGBColourToName(self:get_colour(cvalue))
@@ -228,7 +222,6 @@ function Phelpobject:set_external(option, value, args)
               colourname, "black", tostring(cvalue))
       end
       ColourNote("", "", "")
-    end
   end
   retcode = self:set(option, value, args)
   if retcode == true then
@@ -383,7 +376,6 @@ function Phelpobject:run_cmd(cmddict, silent)
   fullcmd, cmd = self:find_cmd(cmddict.action)
   if fullcmd ~= nil then
     local splitstr = cmd.split or " "
-    print('splitstr', splitstr)
     local tcmddict = {}
     tcmddict = utils.split(cmddict.list or '', splitstr)
     tcmddict.line = cmddict.line
