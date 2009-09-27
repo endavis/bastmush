@@ -7,13 +7,12 @@
 --[[
 
 --]]
-
+require 'var'
 require 'tprint'
 require 'verify'
-require 'pluginhelper'
 require 'serialize'
 require 'copytable'
-require 'tableSort'
+require 'tablesort'
 
 local Object = require 'objectlua.Object'
 
@@ -23,25 +22,90 @@ function Phelpobject:initialize(args)
   --[[
 
   --]]
-  mdebug('phelpobject __init')
+  self:mdebug('phelpobject __init')
   self.classinit = true
   self.shutdownf = false
   self.set_options = {}
   self.cname = args.name or "Default"
-  mdebug('phelpobject __init self.cname', self.cname)
+  self.id = GetPluginID() .. self.cname
+  self:mdebug('phelpobject __init self.cname', self.cname)
+  self.cmds_table = {}
+
+  self:add_setting( 'tdebug', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1})
+
+  self:add_cmd('help', {func="cmd_help", help="show help"})
+  self:add_cmd('debug', {func="cmd_debug", help="toggle debugging"})
+  self:add_cmd('set', {func="cmd_set", help="set settings"})
+  self:add_cmd('reset', {func="cmd_reset", help="reset settings to default values"})
+  self:add_cmd('save', {func=SaveState, help="save plugin variables"})
+
 end
 
-function Phelpobject:reset()
-  for i,v in pairs(self.set_options) do
-    self[i] = verify(v.default, v.type, {low=v.low, high=v.high, silent=true})
+function Phelpobject:cmd_set(cmddict)
+  option = cmddict[1]
+  value = cmddict[2]
+  if option == nil or self.set_options[option] == nil then
+    ColourNote("", "", "")
+    if option ~= nil and option ~= '' then
+      self:plugin_header()
+      ColourNote("white", "black", "That is not a valid setting")
+    end
+    self:print_settings_helper()
+    return false
+  end
+  return self:set_external(option, value, {silent=false})
+end
+
+function Phelpobject:cmd_debug(cmddict)
+  return self:set('tdebug', not self.tdebug, {silent=false})
+end
+
+function Phelpobject:cmd_help(cmddict)
+  --[[
+    this function prints a help table for cmds_table
+  --]]
+  self:plugin_header("Commands")
+
+  for i,v in tableSort(self.cmds_table) do
+    if v.help ~= '' then
+      ColourNote( "white", "black", string.format("%-15s", i),
+              RGBColourToName(var.plugin_colour),  "black", ": " .. v.help )
+    end
+  end
+  ColourNote( "", "", "")
+  return true
+end
+
+function Phelpobject:cmd_reset(cmddict)
+  self:init_vars(true)
+  self:plugin_header()
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "Plugin options reset for " .. self.cname)
+  return true
+end
+
+function Phelpobject:set_default(option, value)
+  varstuff = self.set_options[option]
+  retcode, tvalue = self:checkvalue(option, value)
+  if retcode then
+    varstuff.default = tvalue
   end
 end
+
+
+function Phelpobject:plugin_header(header)
+  header = header or ""
+  ColourNote("", "", "")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
+             RGBColourToName(var.plugin_colour), "black", "v" .. GetPluginInfo(GetPluginID (),19) .. " " .. self.cname .. " ",
+             "white", "black", header)
+  ColourNote("white", "black", "-----------------------------------------------")
+end
+
 
 function Phelpobject:savestate(override)
   if self.classinit and not override then
     return
   end
-  mdebug(self.cname, 'savestate')
   for i,v in pairs(self.set_options) do
     SetVariable(i .. self.cname, tostring(self[i]))
   end
@@ -62,19 +126,27 @@ function Phelpobject:shutdown()
   self:disable()
 end
 
+function Phelpobject:find_setting(setting)
+  soption = self.set_options[setting]
+  return soption
+end
+
 function Phelpobject:init()
+  self:init_vars()
+  self:disable()
+end
+
+function Phelpobject:init_vars(reset)
   for name,setting in tableSort(self.set_options, 'sortlev', 50) do
     local gvalue = GetVariable(name..self.cname)
-    if gvalue == nil or gvalue == 'nil' then
+    if gvalue == nil or gvalue == 'nil' or reset then
       gvalue = setting.default
     end
     local tvalue = verify(gvalue, setting.type, {window = self})
-    mdebug('init setting', name, 'to', tvalue)
     self:set(name, tvalue, {silent = true, window = self})
   end
   self:savestate(true)
   SaveState()
-  self:disable()
 end
 
 function Phelpobject:enable()
@@ -92,30 +164,51 @@ end
 function Phelpobject:checkvalue(option, value)
   local varstuff = self.set_options[option]
   if not varstuff then
+    self:plugin_header()
     ColourNote("red", "", "Option" .. option .. "does not exist.")
     return 2, nil
-  end
-  if varstuff.readonly and not self.classinit then
-    plugin_header()
-    ColourNote(RGBColourToName(var.plugin_colour), "", "That is a read-only var")
-    ColourNote("", "", "")
-    return 1, nil
   end
   if value == 'default' then
     value = varstuff.default
   end
   tvalue = verify(value, varstuff.type, {low=varstuff.low, high=varstuff.high, window=self})
   if tvalue == nil then
+    self:plugin_header()
     ColourNote("red", "", "That is not a valid value for " .. option)
     return 3, nil
   end
-  mdebug('phelpobject checkvalue', value, 'type', varstuff.type, 'returned', tvalue)
   return true, tvalue
 end
 
 function Phelpobject:set(option, value, args)
-  mdebug('phelpobject set option', option, 'value', value)
+  if args == nil then
+    args = {}
+  end
+  retcode, tvalue = self:checkvalue(option, value)
   varstuff = self.set_options[option]
+  if retcode == true then
+    self[option] = tvalue
+    afterf = varstuff.after
+    if afterf then
+      self:run_func(afterf)
+    end
+    if args.putvar then
+      var[option] = tvalue
+    end
+    SaveState()
+    return true
+  end
+  return false
+end
+
+function Phelpobject:set_external(option, value, args)
+  varstuff = self.set_options[option]
+  if varstuff.readonly and not self.classinit then
+    self:plugin_header()
+    ColourNote(RGBColourToName(var.plugin_colour), "", "That is a read-only var")
+    ColourNote("", "", "")
+    return 1, nil
+  end
   local changedsetting = nil
   args = args or {}
   if args.silent == nil or args.silent then
@@ -124,7 +217,7 @@ function Phelpobject:set(option, value, args)
     end
   else
     function changedsetting(toption, tvarstuff, cvalue)
-      plugin_header()
+      self:plugin_header()
       if tvarstuff.type == "colour" then
         colourname = RGBColourToName(self:get_colour(cvalue))
         ColourNote("orange", "black", toption .. " set to : ",
@@ -137,28 +230,44 @@ function Phelpobject:set(option, value, args)
       ColourNote("", "", "")
     end
   end
-  retcode, tvalue = self:checkvalue(option, value, args)
-  mdebug('phelpobject set checkvalue retcode', retcode, 'tvalue', tvalue)
+  retcode = self:set(option, value, args)
   if retcode == true then
-    if args.default then
-      varstuff.default = tvalue
-      return
-    end
-    self[option] = tvalue
-    mdebug("setting", option, "to", tvalue)
     changedsetting(option, varstuff, tvalue)
-    SaveState()
     return true
   end
   return false
 end
 
-function Phelpobject:set_default(option, value)
-  varstuff = self.set_options[option]
-  retcode, tvalue = self:checkvalue(option, value)
-  if retcode then
-    varstuff.default = tvalue
+function Phelpobject:print_settings_helper(ttype)
+  --[[
+    this function goes through the setoptions table and the window and prints each setting
+  --]]
+  self:plugin_header("Settings")
+  for v,t in tableSort(self.set_options, 'sortlev', 50) do
+    self:print_setting_helper(v, self[v], t.help, t.type, t.readonly)
   end
+  ColourNote("", "", "")
+end
+
+function Phelpobject:print_setting_helper(setting, value, help, ttype, readonly)
+  --[[
+    this function prints a setting a standard format
+     if the setting is a colour, then it will print the value in that colour
+  --]]
+  local colour = var.plugin_colour
+  if ttype == "colour" then
+    local tcolour = verify_colour(value)
+    if tcolour ~= nil then
+     colour = tcolour
+     value = RGBColourToName(colour)
+    end
+  end
+  if readonly then
+    help = help .. ' (readonly)'
+  end
+  ColourNote( "white", "black", string.format("%-20s : ", setting),
+              RGBColourToName(colour), "black", string.format("%-20s", tostring(value)),
+              "white", "black", " - " .. help)
 end
 
 function Phelpobject:print_settings()
@@ -171,17 +280,176 @@ function Phelpobject:print_settings()
     if t.type == "colour" then
       value = verify_colour(value, {window = self})
     end
-    print_setting_helper(v, value, t.help, t.type, t.readonly)
+    self:print_setting_helper(v, value, t.help, t.type, t.readonly)
   end
 end
 
 
 function Phelpobject:add_setting(name, setting)
-  mdebug('phelpobject add_setting', name)
   self.set_options[name] = setting
-  --self.skeys = sort_settings(self.set_options)
+end
 
-  --self:set(name, verify(GetVariable(name..self.cname) or setting.default, setting.type, {window = self}), {silent = true})
-  mdebug('done add_setting', name)
+function Phelpobject:mdebug(...)
+  if var.tdebug == "true" or self.tdebug then
+    print(GetPluginInfo (GetPluginID (), 1), "- Object", self.cname, ": Debug")
+    local tstring = {}
+    for n=1,select('#',...) do
+      local e = select(n,...)
+      if type(e) == 'table' then
+        if #tstring > 0 then
+          print(unpack(tstring))
+          tstring = {}
+        end
+        tprint(e)
+      else
+        table.insert(tstring, e)
+      end
+    end
+    if #tstring > 0 then
+      print(unpack(tstring))
+    end
+    print(" ")
+  end
+end
+
+function Phelpobject:broadcast(num, data, broadcastdata)
+  if var.tdebug == "true" then
+    print(GetPluginInfo (GetPluginID (), 1), ": Broadcast", num)
+    if data then
+      print(data)
+    end
+    print("")
+  end
+  BroadcastPlugin(tonumber(num), broadcastdata)
+end
+
+function Phelpobject:add_cmd(name, stuff)
+  if not self.cmds_table[name] then
+    self.cmds_table[name] = stuff
+  else
+    print("cmd", name, "already exists")
+  end
+end
+
+function Phelpobject:find_cmd(cmd)
+  --[[
+    find the cmd
+  --]]
+  if cmd == nil or cmd == '' then
+    return nil, nil
+  end
+  cmd = string.lower(cmd)
+  if self.cmds_table[cmd] then
+    return cmd, self.cmds_table[cmd]
+  end
+  fcmd = "^" .. cmd .. ".*$"
+  for tcmd,cmditem in pairs(self.cmds_table) do
+    tstart, tend =  string.find(string.lower(tcmd), fcmd)
+    if tstart and tstart > 0 then
+      return tcmd, self.cmds_table[tcmd]
+    end
+  end
+
+  return nil, nil
+
+end
+
+function Phelpobject:run_func(tfunc, args)
+  if type(tfunc) == 'string' then
+    func = self[tfunc]
+    if func then
+      func(self, args)
+      return true
+    else
+      ColourNote("red", "", "Could not find function " .. fullcmd .. " in " .. self.cname)
+      return false
+    end
+  elseif type(tfunc) == 'function' then
+    tfunc(args)
+    return true
+  end
+  ColourNote("red", "", "The function for command " .. fullcmd .. " is invalid, please check plugin")
+  return false
+end
+
+function Phelpobject:run_cmd(cmddict, silent)
+  if silent == nil then
+    silent = false
+  end
+  if (cmddict.action == nil or cmddict.action == '') and silent == false then
+    self:cmd_help(cmddict)
+    return false
+  end
+  fullcmd, cmd = self:find_cmd(cmddict.action)
+  if fullcmd ~= nil then
+    local splitstr = cmd.split or " "
+    print('splitstr', splitstr)
+    local tcmddict = {}
+    tcmddict = utils.split(cmddict.list or '', splitstr)
+    tcmddict.line = cmddict.line
+    retcode = self:run_func(cmd.func, tcmddict)
+    return retcode
+  end
+  if not silent then
+    ColourNote("", "", "")
+    ColourNote("white", "black", "That is not a valid command")
+    self:cmd_help(cmddict)
+  end
+  return false
+
+end
+
+function Phelpobject:enabletriggroup(group, flag)
+  if EnableTriggerGroup (group, flag) == 0 then
+    if flag then
+      print("no triggers to enable for group", group)
+    else
+      print("no triggers to disable for group", group)
+    end
+    print("")
+  end
+end
+
+function Phelpobject:cmd_update(cmd, key, value)
+  self.cmds_table[cmd][key] = value
+end
+
+function Phelpobject:get_colour(colour, default, return_original)
+  local return_orig = return_original or false
+  local tcolour = nil
+  local i = 0
+  local found = false
+  if colour then
+    local temp = colour
+    while i < 5 do
+      if self[temp] then
+        temp = self[temp]
+      elseif not self[temp] and i > 0 then
+        found = true
+        break
+      end
+      i = i + 1
+    end
+    if temp and found then
+      colour = temp
+    end
+  end
+  if colour then
+    tcolour = verify_colour(colour, {})
+    if tcolour ~= nil and tcolour ~= -1 then
+      if return_orig then
+        return colour
+      else
+        return tcolour
+      end
+    end
+  end
+  if self.parent then
+    colour = self.parent:get_colour(colour, default, return_original)
+    if colour then
+      return colour
+    end
+  end
+  return default
 end
 
