@@ -22,7 +22,7 @@ function Mastertabwin:initialize(args)
   td.text = " Show Windows "
   td.func = self.showall
   td.name = 'z1Show all'
-  td.win = self.win .. 'ShowAll'
+  td.win = self.id .. 'ShowAll'
   td.popup = " Show Windows "
   self:addtab(td)
   td = {}
@@ -30,7 +30,7 @@ function Mastertabwin:initialize(args)
   td.text = " Hide Windows "
   td.func = self.hideall
   td.name = 'z2Hide all'
-  td.win = self.win .. 'HideAll'
+  td.win = self.id .. 'HideAll'
   td.popup = " Hide Windows "
   self:addtab(td)
 
@@ -60,6 +60,7 @@ function Mastertabwin:counttabs()
 end
 
 function Mastertabwin:addtab(args)
+  self:mdebug(args)
   self.tabs[args.win] = args
   self:drawtabs()
 end
@@ -73,7 +74,7 @@ function Mastertabwin:createtabstyle(start, key, newstyle)
   local tstyle = copytable.deep(newstyle)
   tstyle.start = start
   tstyle.text = newstyle.text
-  tstyle.length = WindowTextWidth (self.win, self.default_font_id, strip_colours(tstyle.text))
+  tstyle.length = WindowTextWidth (self.id, self.default_font_id, strip_colours(tstyle.text))
   if self.tabs[key].win then
     tstyle.mousedown = self.tabs[key].func or self.toggletab
     tstyle.hint = self.tabs[key].popup or "Toggle " .. self.tabs[key].name
@@ -84,6 +85,7 @@ function Mastertabwin:createtabstyle(start, key, newstyle)
 end
 
 function Mastertabwin:toggletab(flags, hotspot_id)
+  self:mdebug('flags', flags, 'hotspot_id', hotspot_id)
   WindowShow(self.hotspots[hotspot_id], not (WindowInfo(self.hotspots[hotspot_id], 5)))
 end
 
@@ -169,9 +171,9 @@ function Mastertabwin:drawwin()
     for i,v in tableSort(self.tabs, 'name', 'Default') do
       local tabcolour = v.tabcolour or self.bg_colour
       local bcolour = self:get_colour(tabcolour)
-      WindowRectOp (self.win, 2, self.width_padding, self:get_top_of_line(j), self:calc_window_width() - self.width_padding, self:get_bottom_of_line(j), bcolour)
+      WindowRectOp (self.id, 2, self.width_padding, self:get_top_of_line(j), self:calc_window_width() - self.width_padding, self:get_bottom_of_line(j), bcolour)
       if j > 1 then
-        WindowLine (self.win, 1, self:get_top_of_line(j), self:calc_window_width() - 1, self:get_top_of_line(j), ColourNameToRGB ("white"), 0, 1)
+        WindowLine (self.id, 1, self:get_top_of_line(j), self:calc_window_width() - 1, self:get_top_of_line(j), ColourNameToRGB ("white"), 0, 1)
       end
       j = j + 1
     end
@@ -186,8 +188,8 @@ function Mastertabwin:drawwin()
         tend = self:calc_window_width() - self.width_padding
       end
 
-      WindowRectOp (self.win, 2, v.start - self.tab_padding / 2, self:get_top_of_line(1), v['end'], self:get_bottom_of_line(1), bcolour)
-      WindowLine (self.win, v['end'] - 1, 0, v['end'] - 1, self.window_data.height, ColourNameToRGB ("white"), 0, 1)
+      WindowRectOp (self.id, 2, v.start - self.tab_padding / 2, self:get_top_of_line(1), v['end'], self:get_bottom_of_line(1), bcolour)
+      WindowLine (self.id, v['end'] - 1, 0, v['end'] - 1, self.window_data.height, ColourNameToRGB ("white"), 0, 1)
     end
   end
 

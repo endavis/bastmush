@@ -42,10 +42,10 @@ TODO: add footer
 TODO: fix setting header as a static line or though the style passed in
 --]]
 
+require 'var'
 require 'phelpobject'
 require 'tprint'
 require 'verify'
-require 'pluginhelper'
 require 'serialize'
 require 'copytable'
 
@@ -107,7 +107,6 @@ function Miniwin:initialize(args)
 
   --]]
   super(self, args)
-  self.win = GetPluginID()..self.cname
   self.parent = args.parent or nil
   self.header = args.header or "None"
   self.text = {}
@@ -124,10 +123,13 @@ function Miniwin:initialize(args)
   self.origx = 0
   self.origy = 0
   self.firstdrawn = true
-  self.drag_hotspot = self.cname .. "_drag_hotspot"
+  self.drag_hotspot = "_drag_hotspot"
 
   -- below are things that can be kept as settings
   self.header_padding = 2
+
+  self:add_cmd('toggle', {func="cmd_toggle", help="toggle window"})
+  self:add_cmd('fonts', {func="cmd_fonts", help="show fonts loaded in this miniwin"})
 
   self:add_setting( 'disabled', {type="bool", help="is this window disabled", default=verify_bool(false), sortlev=1, readonly=true})
   self:add_setting( 'windowpos', {type="number", help="position for this window: see http://www.gammon.com.au/scripts/function.php?name=WindowCreate", low=0, high=13, default=6,sortlev=2})
@@ -155,17 +157,51 @@ function Miniwin:initialize(args)
 
 end
 
+function Miniwin:cmd_toggle(cmddict)
+  self:toggle()
+end
+
+function Miniwin:cmd_fonts(cmddict)
+  self:plugin_header('Loaded Fonts')
+  local fonts = WindowFontList(self.id)
+  if fonts then
+    for _, v in ipairs (fonts) do
+      local name = WindowFontInfo(self.id, v, 21)
+      local size = tonumber(WindowFontInfo(self.id, v, 2)) - tonumber(WindowFontInfo(self.id, v, 3))
+      local bold = tonumber(WindowFontInfo(self.id, v, 8)) > 400
+      local italic = tonumber(WindowFontInfo(self.id, v, 16)) > 0
+      local underline = tonumber(WindowFontInfo(self.id, v, 17)) > 0
+      local struck = tonumber(WindowFontInfo(self.id, v, 18)) > 0
+      local tlist = {}
+      if bold then
+        table.insert(tlist, "bold")
+      end
+      if italic then
+        table.insert(tlist, "italic")
+      end
+      if underline then
+        table.insert(tlist, "underline")
+      end
+      if struck then
+        table.insert(tlist, "struck")
+      end
+      local flags = table.concat(tlist, ", ")
+      local stuff = string.format('%-20s %-3d %s', name, size, flags)
+      ColourNote(RGBColourToName(var.plugin_colour), "", stuff)
+    end
+  end -- if any
+end
 
 function Miniwin:savestate()
   if not self.shutdownf and not self.classinit then
-    tshownf = tostring(WindowInfo(self.win, 5))
+    tshownf = tostring(WindowInfo(self.id, 5))
     SetVariable ("shown"..self.cname, tshownf)
   end
   super(self)
 end
 
 function Miniwin:isfontinstalled(fontid, font_name)
-  if string.lower(WindowFontInfo (self.win, fontid, 21)) == string.lower(font_name) then
+  if string.lower(WindowFontInfo (self.id, fontid, 21)) == string.lower(font_name) then
     return true
   end
   return false
@@ -230,21 +266,21 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
   fontt.fontid = fontid
   fontt.size = size
 
-  check (WindowCreate (self.win,
+  check (WindowCreate (self.id,
                  0, 0, 1, 1,
                  6,   -- top right
                  0,
                  self.bg_colour) )
 
-  check (WindowFont (self.win, fontid, font, size, bold, italic, underline, strikeout, 0, 49))
+  check (WindowFont (self.id, fontid, font, size, bold, italic, underline, strikeout, 0, 49))
 
   if not self:isfontinstalled(fontid, font) then
     return -1
   end
 
-  fontt.height = WindowFontInfo (self.win, fontid, 1) + 1 -- height
-  fontt.width = WindowFontInfo (self.win, fontid, 6)  -- avg width
-  fontt.font_name = WindowFontInfo (self.win, fontid, 21)  -- name
+  fontt.height = WindowFontInfo (self.id, fontid, 1) + 1 -- height
+  fontt.width = WindowFontInfo (self.id, fontid, 6)  -- avg width
+  fontt.font_name = WindowFontInfo (self.id, fontid, 21)  -- name
   fontt.bold = bold
   fontt.italic = italic
   fontt.underline = underline
@@ -256,16 +292,16 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
 end
 
 function Miniwin:getdefaultfont()
---  return self.win .. '_default_font'
-  check (WindowCreate (self.win,
+--  return self.id .. '_default_font'
+  check (WindowCreate (self.id,
                  0, 0, 1, 1,
                  6,   -- top right
                  0,
                  verify_colour('black')) )
 
-  check (WindowFont (self.win, "--NoFont--", "--NoFont--", 8, false, false, false, false, 0, 49))  -- normal
+  check (WindowFont (self.id, "--NoFont--", "--NoFont--", 8, false, false, false, false, 0, 49))  -- normal
 
-  return string.lower(WindowFontInfo (self.win, "--NoFont--", 21))
+  return string.lower(WindowFontInfo (self.id, "--NoFont--", 21))
 
 end
 
@@ -276,7 +312,7 @@ function Miniwin:createwin (text)
   self.text = text
   self.window_data = {}
   self:calc_window_data()
-  tshow = WindowInfo(self.win, 5)
+  tshow = WindowInfo(self.id, 5)
   if tshow == nil then
     tshow = false
   end
@@ -296,11 +332,11 @@ function Miniwin:show(flag)
   if flag == nil then
     flag = false
   end
-  if self.disabled then
-    WindowShow(self.win, false)
+  if verify_bool(self.disabled) then
+    WindowShow(self.id, false)
     return
   end
-  WindowShow(self.win, flag)
+  WindowShow(self.id, flag)
 end
 
 function Miniwin:init()
@@ -323,18 +359,57 @@ end
 
 function Miniwin:toggle()
   if not self.disabled then
-    self:show(not WindowInfo(self.win, 5))
+    self:show(not WindowInfo(self.id, 5))
   end
   self:savestate()
 end
 
-function Miniwin:mousedown (flags, hotspotid)
+function Miniwin:addhotspot(id, left, top, right, bottom, mouseover, cancelmouseover, mousedown,
+                   cancelmousedown, mouseup, hint, cursor)
 
+  if id == nil then
+   id = tostring(GetUniqueNumber())
+  end
+
+  if mousedown then
+   self.hyperlink_functions['mousedown'] [id] = mousedown
+   mousedown = "mousedown"
+  end
+  if cancelmousedown then
+   self.hyperlink_functions['cancelmousedown'] [id] = cancelmousedown
+   cancelmousedown = "cancelmousedown"
+  end
+  if mouseup then
+   self.hyperlink_functions['mouseup'] [id] = mouseup
+   mouseup = "mouseup"
+  end
+  if mouseover then
+   self.hyperlink_functions['mouseover'] [id] = mouseover
+   mouseover = "mouseover"
+  end
+  if cancelmouseover then
+   self.hyperlink_functions['cancelmouseover'] [id] = cancelmouseover
+   cancelmouseover = "cancelmouseover"
+  end
+  WindowAddHotspot(self.id, self.id .. ':' .. id,
+                left, top, right, bottom,
+                mouseover, -- mouseover
+                cancelmouseover, -- cancelmouseover
+                mousedown,
+                cancelmousedown, -- cancelmousedown
+                mouseup, -- mouseup
+                hint,
+                cursor or 1, 0)
+
+end
+
+function Miniwin:mousedown (flags, hotspotid)
+  --print('mousedown', 'hotspotid', hotspotid)
   -- find where mouse is so we can adjust window relative to mouse
-  self.startx, self.starty = WindowInfo (self.win, 14), WindowInfo (self.win, 15)
+  self.startx, self.starty = WindowInfo (self.id, 14), WindowInfo (self.id, 15)
 
   -- find where window is in case we drag it offscreen
-  self.origx, self.origy = WindowInfo (self.win, 10), WindowInfo (self.win, 11)
+  self.origx, self.origy = WindowInfo (self.id, 10), WindowInfo (self.id, 11)
 
   local f = self.hyperlink_functions['mousedown'][hotspotid]
   if f then
@@ -415,18 +490,8 @@ function Miniwin:make_hyperlink_regular(id, left, top, right, bottom, action, hi
   if bottom == nil then
     bottom = top + self.fonts[self.default_font_id].height
   end
-
-  WindowAddHotspot(self.win, id,
-                    left, top, right, bottom,
-                   "", -- mouseover
-                   "", -- cancelmouseover
-                   "mousedown",
-                   "", -- cancelmousedown
-                   "", -- mouseup
-                   hint,
-                   cursor or 1, 0)
-
-  self.hyperlink_functions['mousedown'][id] = action
+  self:addhotspot(id, left, top, right, bottom, nil, nil, action,
+                   nil, nil, hint, cursor)
 
   return right
 
@@ -463,7 +528,7 @@ function Miniwin:make_hyperlink_text (text, id, line, left, action, hint, cursor
   ttext = self:convert_line(line, {text})
 
 --  tprint(ttext)
-  --local retval = WindowText (self.win, self.font_id, text, left, top, right, bottom, self.hyperlink_colour)
+  --local retval = WindowText (self.id, self.font_id, text, left, top, right, bottom, self.hyperlink_colour)
   if text then
     left, top, right, bottom = self:Display_Line(line, ttext.text)
   end
@@ -471,45 +536,6 @@ function Miniwin:make_hyperlink_text (text, id, line, left, action, hint, cursor
   return right
 
 end -- make_hyperlink_text
-
-function Miniwin:get_colour(colour, default, return_original)
-  local return_orig = return_original or false
-  local tcolour = nil
-  local i = 0
-  local found = false
-  if colour then
-    local temp = colour
-    while i < 5 do
-      if self[temp] then
-        temp = self[temp]
-      elseif not self[temp] and i > 0 then
-        found = true
-        break
-      end
-      i = i + 1
-    end
-    if temp and found then
-      colour = temp
-    end
-  end
-  if colour then
-    tcolour = verify_colour(colour, {})
-    if tcolour ~= nil and tcolour ~= -1 then
-      if return_orig then
-        return colour
-      else
-        return tcolour
-      end
-    end
-  end
-  if self.parent then
-    colour = self.parent:get_colour(colour, default, return_original)
-    if colour then
-      return colour
-    end
-  end
-  return default
-end
 
 function Miniwin:get_line_position(line, what)
   local start = 0
@@ -577,7 +603,7 @@ function Miniwin:convert_line(line, styles)
                       style.strikeout or self.fonts[def_font_id].strikeout)
 
       maxfontheight = math.max(maxfontheight, self.fonts[font_id].height)
-      local tlength = WindowTextWidth (self.win, font_id, strip_colours(style.text))
+      local tlength = WindowTextWidth (self.id, font_id, strip_colours(style.text))
       if style.start and style.start > start then
         linet.text[i].start = style.start
         start = style.start + tlength
@@ -606,7 +632,7 @@ function Miniwin:convert_line(line, styles)
       linet.text[1].text = styles
       linet.text[1].start = start
       maxfontheight = math.max(maxfontheight, self.fonts[self.default_font_id].height)
-      local tlength = WindowTextWidth (self.win, self.default_font_id, linet.text[1].text)
+      local tlength = WindowTextWidth (self.id, self.default_font_id, linet.text[1].text)
       start = start + tlength
   end
   linet.width = start + self.width_padding
@@ -629,41 +655,10 @@ function Miniwin:calc_window_data()
 end
 
 function Miniwin:buildhotspot(style, left, top, right, bottom)
-  local mousedown = ""
-  local cancelmousedown = ""
-  local mouseup = ""
-  local mouseover = ""
-  local cancelmouseover = ""
-  id = style.hotspot_id or tostring(GetUniqueNumber())
-  if style.mousedown then
-   self.hyperlink_functions['mousedown'] [id] = style.mousedown
-   mousedown = "mousedown"
-  end
-  if style.cancelmousedown then
-   self.hyperlink_functions['cancelmousedown'] [id] = style.cancelmousedown
-   cancelmousedown = "cancelmousedown"
-  end
-  if style.mouseup then
-   self.hyperlink_functions['mouseup'] [id] = style.mouseup
-   mouseup = "mouseup"
-  end
-  if style.mouseover then
-   self.hyperlink_functions['mouseover'] [id] = style.mouseover
-   mouseover = "mouseover"
-  end
-  if style.cancelmouseover then
-   self.hyperlink_functions['cancelmouseover'] [id] = style.cancelmouseover
-   cancelmouseover = "cancelmouseover"
-  end
-  WindowAddHotspot(self.win, id,
-                left, top, right, bottom,
-                mouseover, -- mouseover
-                cancelmouseover, -- cancelmouseover
-                mousedown,
-                cancelmousedown, -- cancelmousedown
-                mouseup, -- mouseup
-                style.hint,
-                style.cursor or 1, 0)
+
+  self:addhotspot(style.hotspot_id, left, top, right, bottom, style.mouseover, style.cancelmouseover, style.mousedown,
+                   style.cancelmousedown, style.mouseup, style.hint, style.cursor)
+
 end
 
 -- displays text with colour codes imbedded
@@ -698,7 +693,7 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
       end -- if
 
       if #text > 0 then
-        x = x + WindowText (self.win, font_id, text, x, Top, Right, Bottom,
+        x = x + WindowText (self.id, font_id, text, x, Top, Right, Bottom,
                             colour_conversion [colour] or self.text_colour)
       end -- some text to display
 
@@ -711,7 +706,7 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
     Text = Text:gsub ("%a", string.upper, 1)
   end -- if leading caps wanted
 
-  return WindowText (self.win, font_id, Text, Left, Top, Right, Bottom,
+  return WindowText (self.id, font_id, Text, Left, Top, Right, Bottom,
                     self.text_colour)
 
 end -- colourtext
@@ -733,11 +728,11 @@ function Miniwin:Display_Line (line, styles)
     if v.vjust ~= nil then
       if v.vjust == 'center' then
         local theight = self:get_line_data(line, 'height')
-        local fheight = WindowFontInfo(self.win, v.font_id, 1)
+        local fheight = WindowFontInfo(self.id, v.font_id, 1)
         ttop = ttop + (theight - fheight) / 2
       elseif v.vjust == 'bottom' then
         local theight = self:get_line_data(line, 'height')
-        local fheight = WindowFontInfo(self.win, v.font_id, 1)
+        local fheight = WindowFontInfo(self.id, v.font_id, 1)
         ttop = ttop + theight - fheight
       end
     end
@@ -756,20 +751,20 @@ function Miniwin:Display_Line (line, styles)
         tstart = tstart + restw - restt
       end
     end
-    local tlength = WindowTextWidth (self.win, v.font_id, strip_colours(v.text))
+    local tlength = WindowTextWidth (self.id, v.font_id, strip_colours(v.text))
     if line <= self.header_height and line > 0 then
       def_colour = self:get_colour("header_text_colour")
-      textlen = WindowText (self.win, self.default_font_id_bold, strip_colours(v.text),
+      textlen = WindowText (self.id, self.default_font_id_bold, strip_colours(v.text),
                  tstart, ttop, 0, 0, def_colour)
     else
       if v.backcolour and not (v.backcolour == 'bg_colour') then
         -- draw background rectangle
         local bcolour = self:get_colour(v.backcolour, def_bg_colour)
-        WindowRectOp (self.win, 2, tstart, ttop, tstart + tlength, ttop + WindowFontInfo(self.win, v.font_id, 1), bcolour)
+        WindowRectOp (self.id, 2, tstart, ttop, tstart + tlength, ttop + WindowFontInfo(self.id, v.font_id, 1), bcolour)
       end
       if v.textcolour ~= nil then
         local tcolour = self:get_colour(v.textcolour)
-        textlen = WindowText (self.win, v.font_id, strip_colours(v.text),
+        textlen = WindowText (self.id, v.font_id, strip_colours(v.text),
                       tstart, ttop, 0, 0, tcolour)
       elseif line <= self.header_height and line > 0 then
 
@@ -795,10 +790,10 @@ function Miniwin:calc_text_width(text)
   length = 0
   if type(text) == "table" then
     for _, v in ipairs (text) do
-      length = length + WindowTextWidth(self.win, self.font_id, v.text)
+      length = length + WindowTextWidth(self.id, self.font_id, v.text)
     end
   else
-    length = length + WindowTextWidth (self.win, self.font_id, text)
+    length = length + WindowTextWidth (self.id, self.font_id, text)
   end
   return length
 end
@@ -835,7 +830,7 @@ function Miniwin:create_window_internal()
 
   -- recreate the window the correct size
   if self.x ~= -1 and self.y ~= -1 then
-    check (WindowCreate (self.win,
+    check (WindowCreate (self.id,
                  self.x, self.y,   -- left, top (auto-positions)
                  width,     -- width
                  height,  -- height
@@ -843,7 +838,7 @@ function Miniwin:create_window_internal()
                  2,  -- flags
                  self:get_colour("bg_colour")) )
   else
-    check (WindowCreate (self.win,
+    check (WindowCreate (self.id,
                  0, 0,   -- left, top (auto-positions)
                  width,     -- width
                  height,  -- height
@@ -853,22 +848,22 @@ function Miniwin:create_window_internal()
   end
 
   -- DrawEdge rectangle
-  check (WindowRectOp (self.win, 5, 0, 0, 0, 0, 10, 15))
+  check (WindowRectOp (self.id, 5, 0, 0, 0, 0, 10, 15))
 
-  WindowDeleteAllHotspots (self.win)
+  WindowDeleteAllHotspots (self.id)
 
   if self.header_height > 0 then
      local hbottom = self:calc_header_height()
     -- header rectangle
-     check (WindowRectOp (self.win, 2, 2, 2, -2, hbottom, self:get_colour("header_bg_colour")))
-     check (WindowRectOp (self.win, 5, 2, 2, -2, hbottom, 5, 8))
+     check (WindowRectOp (self.id, 2, 2, 2, -2, hbottom, self:get_colour("header_bg_colour")))
+     check (WindowRectOp (self.id, 5, 2, 2, -2, hbottom, 5, 8))
 
-    self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, hbottom, empty, "Drag to move", 10)
+    self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, hbottom, empty, "Drag to move: " .. self.id, 10)
   else
-    self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, self:get_bottom_of_line(1), empty, "Drag to move", 10)
+    self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, self:get_bottom_of_line(1), empty, "Drag to move: " .. self.id, 10)
   end
 
-  WindowDragHandler(self.win, self.drag_hotspot, "dragmove", "dragrelease", 0)
+  WindowDragHandler(self.id, self.id .. ':' .. self.drag_hotspot, "dragmove", "dragrelease", 0)
 
 end
 
@@ -885,11 +880,11 @@ function Miniwin:drawwin()
   end -- for
 
 -- show all fonts
--- fonts = WindowFontList(self.win)
+-- fonts = WindowFontList(self.id)
 --
 -- if fonts then
 --   for _, v in ipairs (fonts) do
---     print (v, WindowFontInfo(self.win, v, 21), WindowFontInfo(self.win, v, 19),WindowFontInfo(self.win, v, 8), WindowFontInfo(self.win, v, 1))
+--     print (v, WindowFontInfo(self.id, v, 21), WindowFontInfo(self.id, v, 19),WindowFontInfo(self.id, v, 8), WindowFontInfo(self.id, v, 1))
 --   end
 -- end -- if any
 
@@ -931,7 +926,7 @@ function Miniwin:set(option, value, args)
         self.y = -1
       end
       if not self.classinit then
-        local sflag = WindowInfo(self.win, 5)
+        local sflag = WindowInfo(self.id, 5)
         self:drawwin()
         self:show(sflag)
       end
@@ -956,8 +951,8 @@ end
 function Miniwin:dragmove(flags, hotspot_id)
 
   -- find where it is now
-  local posx, posy = WindowInfo (self.win, 17),
-                     WindowInfo (self.win, 18)
+  local posx, posy = WindowInfo (self.id, 17),
+                     WindowInfo (self.id, 18)
 
   self.x = posx - self.startx
   self.y = posy - self.starty
@@ -969,7 +964,7 @@ function Miniwin:dragmove(flags, hotspot_id)
   end
 
   -- move the window to the new location
-  WindowPosition(self.win, self.x, self.y, 0, 2);
+  WindowPosition(self.id, self.x, self.y, 0, 2);
 
   -- change the mouse cursor shape appropriately
   if posx < 0 or posx > GetInfo (281) or
@@ -982,16 +977,16 @@ function Miniwin:dragmove(flags, hotspot_id)
 end -- dragmove
 
 function Miniwin:dragrelease(flags, hotspot_id)
-  local newx, newy = WindowInfo (self.win, 17), WindowInfo (self.win, 18)
+  local newx, newy = WindowInfo (self.id, 17), WindowInfo (self.id, 18)
 
   -- don't let them drag it out of view
   if newx < 0 or newx > GetInfo (281) or
      newy < 0 or newy > GetInfo (280) then
      -- put it back
     if self.x ~= -1 and self.y ~= -1 then
-      WindowPosition(self.win, self.origx, self.origy, 0, 2)
+      WindowPosition(self.id, self.origx, self.origy, 0, 2)
     else
-      WindowPosition(self.win, 0, 0, self.windowpos, 0)
+      WindowPosition(self.id, 0, 0, self.windowpos, 0)
     end
     SaveState()
   end -- if out of bounds
@@ -1008,24 +1003,24 @@ function Miniwin:tabbroadcast(flag, text)
       td.tabcolour = self.tabcolour
     end
     td.text = ttext
-    td.win = self.win
+    td.win = self.id
     local wins = serialize.save( "windowstuff", td )
     self.lasttabtext = text
     if flag then
       if not self.disabled then
-        broadcast(5000, wins, wins)
+        self:broadcast(5000, wins, wins)
       end
     else
-      broadcast(5001, wins, wins)
+      self:broadcast(5001, wins, wins)
     end
   else
     if not flag then
       local td = {}
       td.id = GetPluginID()
       td.name = self.cname
-      td.win = self.win
+      td.win = self.id
       local wins = serialize.save( "windowstuff", td )
-      broadcast(5001, wins, wins)
+      self:broadcast(5001, wins, wins)
     end
   end
 end
@@ -1035,3 +1030,15 @@ function empty(flags, hotspot_id)
 
 end
 
+function popup_style(win, text, colour)
+  style = {}
+  style.text = text
+  style.textcolour = colour
+  style.mouseover = function (flags, hotspotid)
+                      win:show(true)
+                    end
+  style.cancelmouseover = function (flags, hotspotid)
+                      win:show(false)
+                    end
+  return style
+end
