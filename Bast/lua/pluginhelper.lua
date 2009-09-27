@@ -8,7 +8,7 @@ this module will help with setting up plugin commands and variables
 requires the verify module
 
 adding an option looks like this
-add_option('plotlength' , {help="set the length of the moon plot", type="number", high=80, low=0, after=styleplotdata, default=66})
+phelper:add_option('plotlength' , {help="set the length of the moon plot", type="number", high=80, low=0, after=styleplotdata, default=66})
 
 valid values in the table are:
   help     -- the help for this option
@@ -18,6 +18,7 @@ valid values in the table are:
   after    -- the function to run after this option has been set
   sortlev  -- you can group options by setting this, all options with the same number will be printed together
   readonly -- this is a read only variable
+  split    -- char to use to split arguments, default is a space
 
 options already included (these do not need to be manually added)
 cmd - the cmd for this plugin
@@ -25,11 +26,11 @@ plugin_colour - the colour for this plugin
 tdebug - the debug variable
 
 to change the defaults for these options
-option_set_default('cmd', 'regen')
-option_set_default('plugin_colour', 'orange')
+phelper:option_set_default('cmd', 'regen')
+phelper:option_set_default('plugin_colour', 'orange')
 
 adding a command looks like this
-add_cmd('plot', {func=plotdata, help="plot moons"})
+phelper:add_cmd('plot', {func=plotdata, help="plot moons"})
 
 valid values -
   func     -- the function to call
@@ -49,394 +50,289 @@ commands already included (these do not need to be manually added)
 
 --]]
 
+require "var"
 require "tprint"
 require "commas"
 require "verify"
 require "utils"
 require "tablesort"
+require "phelpobject"
 
-window = nil
-send_to_world = false
+Pluginhelper = Phelpobject:subclass()
 
-cmdstuff = {}
+function Pluginhelper:initialize(args)
+  super(self, args)
 
-function set_plugin_alias()
+  self.send_to_world = false
+  self.cmdstuff = {}
+
+  self.pobjects = {}
+  self.pobjects_by_id = {}
+
+  self:add_cmd('objects', {func="cmd_objects", help="list objects associated with this plugin"})
+
+  self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime"})
+  self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb"})
+
+end
+
+function Pluginhelper:cmd_objects()
+  self:plugin_header("Object associated with this plugin")
+  for i,v in pairs(self.pobjects) do
+    ColourNote(RGBColourToName(var.plugin_colour), "black", i)
+  end
+  ColourNote("", "", "")
+end
+
+function Pluginhelper:run_cmd(cmddict)
+  if (cmddict.action == nil or cmddict.action == '') then
+    local tcmd = self:find_default_cmd()
+    if tcmd == "" then
+      self:cmd_help(cmddict)
+      return false
+    end
+    cmddict.action = tcmd
+  end
+
+  retcode = super(self, cmddict, true)
+
+  if not retcode then
+    local pobj = self.pobjects[cmddict.action]
+    if pobj ~= nil then
+      cmddict.action = cmddict[1]
+      table.remove(cmddict, 1)
+      pobj:run_cmd(cmddict)
+    else
+      ColourNote("", "", "")
+      ColourNote("white", "black", "That is not a valid command")
+      self:cmd_help(cmddict)
+      return false
+    end
+  else
+--  if cmd.send_to_world then
+--    SendNoEcho(self.cmdstuff.line)
+--  end
+    return true
+  end
+
+  return false
+end
+
+function Pluginhelper:plugin_header(header)
+  header = header or ""
+  ColourNote("", "", "")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
+             RGBColourToName(var.plugin_colour), "black", "v" .. GetPluginInfo(GetPluginID (),19) .. " ",
+             "white", "black", header)
+  ColourNote("white", "black", "-----------------------------------------------")
+end
+
+function Pluginhelper:enable()
+  super(self)
+  self:init_vars()
+end
+
+function Pluginhelper:set_plugin_alias()
   --[[
     this will change the command used for your plugin in the plugin_parse alias
     the first word will be the action to take, the rest will be arguments to that action
   --]]
   --match="^(shortcmd|longcmd)(:|\\s+|$)((?<action>[+\\-A-za-z0-9]*)\\s*)?(?<list>[\\+\\-A-Za-z0-9, :_#]+)?$"
   match="^(cmdstring)(:|\\s+|$)((?<action>[+\\-A-za-z0-9]*)\\s*)?(?<list>.+)?$"
-  match, n = string.gsub (match, "cmdstring", var.cmd or "")
+  match, n = string.gsub (match, "cmdstring", self.cmd or "")
   SetAliasOption ("plugin_parse", "match", match)
   DoAfterSpecial (10, 'BroadcastPlugin (1001)', sendto.script)
 end
 
-function plugin_header(header)
-  header = header or ""
-  ColourNote("", "", "")
-  ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
-             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),19) .. " ",
-             "white", "black", header)
-  ColourNote("white", "black", "-----------------------------------------------")
-end
-
-function plugin_help_helper(name, line, wildcards)
-  --[[
-    this function prints a help table for cmds_table
-  --]]
-  plugin_header("Commands")
-
-  for i,v in pairs(cmds_table) do
-    if v.help ~= '' then
-      ColourNote( "white", "black", string.format("%-15s", i),
-              RGBColourToName(var.plugin_colour),  "black", ": " .. v.help )
-    end
+function Pluginhelper:reset(cmddict)
+  super(cmddict)
+  for i,v in pairs(self.pobjects) do
+    v:init_vars(true)
   end
-  ColourNote( "", "", "")
-
-end
-
-function print_setting_helper(setting, value, help, ttype, readonly)
-  --[[
-    this function prints a setting a standard format
-     if the setting is a colour, then it will print the value in that colour
-  --]]
-  local colour = var.plugin_colour
-  if ttype == "colour" then
-    local tcolour = verify_colour(value)
-    if tcolour ~= nil then
-     colour = tcolour
-     value = RGBColourToName(colour)
-    end
-  end
-  if readonly then
-    help = help .. ' (readonly)'
-  end
-  ColourNote( "white", "black", string.format("%-20s : ", setting),
-              RGBColourToName(colour), "black", string.format("%-20s", tostring(value)),
-              "white", "black", " - " .. help)
-end
-
-function print_settings_helper(ttype)
-  --[[
-    this function goes through the setoptions table and the window and prints each setting
-  --]]
-  plugin_header("Settings")
-  if ttype == "plugin" or ttype == "all" then
-    for v,t in tableSort(options_table, 'sortlev', 50) do
-      if t.get then
-        value = t.get(v)
-      else
-        value = var[v]
-      end
-      print_setting_helper(v, value, t.help, t.type, t.readonly)
-    end
-  end
-  if ttype == "window" or ttype == "all" then
-    if window then
-      window:print_settings()
-    end
-  end
+  self:plugin_header()
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "Plugin options reset ")
   ColourNote("", "", "")
 end
 
-function plugin_reset(name, line, wildcards)
-  if not wildcards.list then
-    print_settings_helper("plugin")
-    return
-  end
-  plugin_header()
-  local tvar = utils.split(wildcards.list, " ")
-  local ttype = tvar[1]
-  if ttype == "plugin" or ttype == "all" then
-    init_plugin_vars(true)
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Plugin options reset ")
-  end
-  if ttype == "window" or ttype == "all" then
-    if window then
-      window:reset()
+function Pluginhelper:find_default_cmd()
+  for tcmd,cmditem in pairs(self.cmds_table) do
+    if cmditem.default then
+      return tcmd
     end
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Window options reset ")
   end
-  ColourNote("", "", "")
+  return ""
 end
 
-
-function plugin_toggle_debug(name, line, wildcards)
-  toption = options_table["tdebug"]
-  if var.tdebug == "true" then
-    set_var("false", "tdebug", toption.type, {low=toption.low, high=toption.high})
-  else
-    set_var("true", "tdebug", toption.type, {low=toption.low, high=toption.high})
+function Pluginhelper:set(option, value, args)
+  if args == nil then
+    args = {}
   end
+  args.putvar = true
+  retcode = super(self, option, value, args)
 end
 
-function plugin_set_helper(name, line, wildcards)
-  --[[
-    this function will attempt to set an item in the options_table table or in a window
-  --]]
-  local function nooption()
-    ColourNote("", "", "")
-    ColourNote("white", "black", "That is not a valid setting")
-    print_settings_helper("all")
+function Pluginhelper:find_pobject(object)
+-- Function to find a pobject by name or id
+  if self.pobjects[object] then
+    return self.pobjects[object]
+  elseif self.pobjects_by_id[object] then
+    return self.pobjects_by_id[object]
   end
+  return nil
+end
 
-  if not wildcards.list then
-    print_settings_helper("plugin")
-    return
-  end
-  local tvar = utils.split(wildcards.list, " ")
-  local option = tvar[1]
-  if option ~= nil then
-    option = trim(option)
-  end
-  if option == "all" or option == "window" then
-    print_settings_helper(option)
-    return
-  end
-  table.remove(tvar, 1)
-  local value = table.concat(tvar, " ")
-  if value ~= nil then
-    value = trim(value)
-  end
-  if not option then
-    nooption()
-    return false
-  else
-    local soption = find_option(option)
-    if soption and soption.readonly then
-      plugin_header()
-      ColourNote(RGBColourToName(var.plugin_colour), "", "That is a read-only var")
-      return true
-    end
-    if not soption then
-      if window and window:set(option, value, false) then
-         return true
-      else
-         nooption()
-         return false
+function Pluginhelper:add_pobject(name, object)
+ if object == nil then
+   print(name, "is nil in add_pobject")
+   return
+ end
+ self.pobjects[name] = object
+ self.pobjects_by_id[object.id] = object
+end
+
+function Pluginhelper:set_send_to_world(tf)
+  self.send_to_world = tf
+end
+
+function Pluginhelper:mousedown(flags, hotspotid)
+  object_id, hotspotid = fix_hotspotid(hotspotid)
+  self.pobjects_by_id[object_id]:mousedown(flags, hotspotid)
+end
+
+function Pluginhelper:cancelmousedown(flags, hotspotid)
+  object_id, hotspotid = fix_hotspotid(hotspotid)
+  self.pobjects_by_id[object_id]:cancelmousedown(flags, hotspotid)
+end
+
+function Pluginhelper:mouseover(flags, hotspotid)
+  object_id, hotspotid = fix_hotspotid(hotspotid)
+  self.pobjects_by_id[object_id]:mouseover(flags, hotspotid)
+end
+
+function Pluginhelper:cancelmouseover(flags, hotspotid)
+  object_id, hotspotid = fix_hotspotid(hotspotid)
+  self.pobjects_by_id[object_id]:cancelmouseover(flags, hotspotid)
+end
+
+function Pluginhelper:mouseup(flags, hotspotid)
+  object_id, hotspotid = fix_hotspotid(hotspotid)
+  self.pobjects_by_id[object_id]:mouseup(flags, hotspotid)
+end
+
+function Pluginhelper:dragmove(flags, hotspotid)
+  object_id, hotspotid = fix_hotspotid(hotspotid)
+  self.pobjects_by_id[object_id]:dragmove(flags, hotspotid)
+end -- dragmove
+
+function Pluginhelper:dragrelease(flags, hotspotid)
+  object_id, hotspotid = fix_hotspotid(hotspotid)
+  self.pobjects_by_id[object_id]:dragrelease(flags, hotspotid)
+end
+
+function Pluginhelper:OnPluginBroadcast(msg, id, name, text)
+--  mdebug('OnPluginBroadcast')
+  if id == "eee96e233d11e6910f1d9e8e" and msg == -2 then
+    for i,v in pairs(self.pobjects) do
+      if not v.disabled then
+        v:tabbroadcast(true)
       end
     end
-    if value == 'default' then
-      value = soption.default
-    end
-    f = soption.func
-    if not f then
-      f = set_var
-    end
-    test = f(value, option, soption.type, {low=soption.low, high=soption.high})
-    if test == nil then
-      return false
-    end
-    afterf = soption.after
-    if afterf then
-      afterf()
-    end
-    SaveState()
-    return true
   end
 end
 
+--function Pluginhelper:__newindex(name, val)
+--  super(self, name, val)
+--end
 
-function find_option(option)
-  soption = options_table[option]
-  return soption
+function Pluginhelper:OnPluginInstall()
+  self:mdebug('OnPluginInstall')
+  if GetVariable ("enabled") == "false" then
+    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
+    check (EnablePlugin(GetPluginID (), false))
+    return
+  end -- they didn't enable us last time
+
+  OnPluginEnable ()  -- do initialization stuff
 end
 
-function add_cmd(name, stuff)
-  if not cmds_table[name] then
-    cmds_table[name] = stuff
-  else
-    print("cmd", name, "already exists")
+function Pluginhelper:OnPluginClose()
+  self:mdebug('OnPluginClose')
+
+  OnPluginDisable()
+end
+
+function Pluginhelper:OnPluginEnable()
+  self:mdebug('OnPluginEnable')
+  -- if we are connected when the plugin loads, it must have been reloaded whilst playing
+  for i,v in pairs(self.pobjects) do
+    if not v.disabled then
+      v:init(true)
+    end
   end
+  if IsConnected () then
+    OnPluginConnect ()
+  end -- if already connected
+  self:broadcast(-2)
 end
 
-function find_cmd(cmd)
+function Pluginhelper:OnPluginDisable()
+  self:mdebug('OnPluginDisable')
+  if IsConnected() then
+    OnPluginDisconnect()
+  end
+    for i,v in pairs(self.pobjects) do
+      if not v.disabled then
+        v:shutdown(true)
+      end
+    end
+  self:broadcast(-1)
+end
+
+function Pluginhelper:OnPluginConnect()
+  self:mdebug('OnPluginConnect')
+
+end
+
+function Pluginhelper:OnPluginDisconnect()
+  self:mdebug('OnPluginDisConnect')
+
+end
+
+function Pluginhelper:OnPluginSaveState()
+  self:mdebug('OnPluginSaveState')
   --[[
-    find the cmd in the cmds and default_cmds tables
+     save all the vars in the options table, requires the "var" module
   --]]
-  cmd = string.lower(cmd)
-  if cmds_table[cmd] then
-    return cmd, cmds_table[cmd]
-  end
-  fcmd = "^" .. cmd .. ".*$"
-  for tcmd,cmditem in pairs(cmds_table) do
-    tstart, tend =  string.find(string.lower(tcmd), fcmd)
-    if tstart and tstart > 0 then
-      return tcmd, cmds_table[tcmd]
+  --tprint(self.set_options)
+  self:savestate(true)
+  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  for i,v in pairs(self.pobjects) do
+    if not v.disabled then
+      v:savestate(true)
     end
   end
-
-  return nil, nil
 
 end
 
-function do_cmd(tcmd)
-  local ran = false
-  fullcmd, cmd = find_cmd(tcmd)
-  if cmd == nil then
-    if send_to_world then
-      SendNoEcho(line)
-      return true
-    else
-      ColourNote("", "", "")
-      ColourNote("white", "black", "That is not a valid command")
-      do_cmd("help", cmdstuff.name, cmdstuff.line, cmdstuff.wildcards)
-    end
-    return false
-  end
-
-  if not cmd.func then
-    ColourNote("red", "", "The function for command " .. fullcmd .. " is invalid, please check plugin")
-    return false
-  end
-  if cmd.func (cmdstuff.name, cmdstuff.line, cmdstuff.wildcards) then
-    ran = true
-  end -- all done
-  if cmd.send_to_world then
-    SendNoEcho(line)
-  end
-  return ran
+function do_cmd()
+  phelper:run_cmd(phelper.cmdstuff)
 end
 
 function plugin_parse_helper(name, line, wildcards)
   --[[
     find the command that was specified and pass arguments to it
   --]]
-  if wildcards.action == "" then
-    for tcmd,cmditem in pairs(cmds_table) do
-      if cmditem.default then
-        wildcards.action = tcmd
-        break
-      end
-    end
-    if wildcards.action == "" then
-      do_cmd("help", name, line, wildcards)
-      return true
-    end
-  end
 
-  cmdstuff.name = name
-  cmdstuff.line = line
-  cmdstuff.wildcards = wildcards
+  phelper.cmdstuff.action = wildcards.action
+  phelper.cmdstuff.line = line
+  phelper.cmdstuff.list = wildcards.list
+  DoAfterSpecial (.1, 'do_cmd()', sendto.script)
 
-  DoAfterSpecial (.1, 'do_cmd("' .. wildcards.action ..'")', sendto.script)
-
-end
-
-function set_var(value, option, type, args)
-  --[[
-     set a variable in a plugin, requires the "var" module
-  --]]
-  local tvalue = verify(value, type, args)
-  if tvalue == nil then
-    ColourNote("red", "black", "That is not a valid value.")
-    return nil
-  end
-  plugin_header("Settings")
-  if type == "colour" then
-    colourname = RGBColourToName(tvalue)
-    ColourNote("orange", "black", option .. " set to : ",
-             colourname, "black", colourname)
-  else
-    colourname = RGBColourToName(var.plugin_colour)
-    ColourNote("orange", "black", option .. " set to : ",
-             colourname, "black", tostring(tvalue))
-  end
-  ColourNote("", "", "")
-  var[option]= tvalue
-  return true
-end
-
-function add_option(name, stuff)
-  if not options_table[name] then
-    options_table[name] = stuff
-  else
-    print("option", name, "already exists")
-  end
-end
-
-function init_plugin_vars(reset)
-  --[[
-    initialize all variables in the options_table, requires "var" module
-  --]]
-  for i,v in pairs(options_table) do
-    local tvalue = nil
-    if reset then
-      tvalue = v.default
-    else
-      tvalue = GetVariable(i) or v.default
-    end
-    tvalue = verify(tvalue, v.type, {low=v.low, high=v.high, silent=true})
-    var[i] = tvalue
-    afterf = v.after
-    if afterf then
-      afterf()
-    end
-  end
-end
-
-
-function send_cmd_world(name, line, wildcards)
-   SendNoEcho(line)
-end
-
-function togglewindow(name, line, wildcards)
-  if window ~= nil then
-    window:toggle(window)
-  end
 end
 
 function nofunc(name, line, wildcards)
   return true
 end
-
-function broadcast(num, data, broadcastdata)
-  if var.tdebug == "true" then
-    print(GetPluginInfo (GetPluginID (), 1), ": Broadcast", num)
-    if data then
-      print(data)
-    end
-    print("")
-  end
-  BroadcastPlugin(tonumber(num), broadcastdata)
-end
-
-function enabletriggroup(group, flag)
-  if EnableTriggerGroup (group, flag) == 0 then
-    if flag then
-      print("no triggers to enable for group", group)
-    else
-      print("no triggers to disable for group", group)
-    end
-    print("")
-  end
-end
-
-function mdebug(...)
-  if var.tdebug == "true" then
-    print(GetPluginInfo (GetPluginID (), 1), ": Debug")
-    local tstring = {}
-    for n=1,select('#',...) do
-      local e = select(n,...)
-      if type(e) == 'table' then
-        if #tstring > 0 then
-          print(unpack(tstring))
-          tstring = {}
-        end
-        tprint(e)
-      else
-        table.insert(tstring, e)
-      end
-    end
-    if #tstring > 0 then
-      print(unpack(tstring))
-    end
-    print(" ")
-  end
-end
-
 
 function SecondsToDHMS(sSeconds)
   local nSeconds = tonumber(sSeconds)
@@ -451,140 +347,38 @@ function SecondsToDHMS(sSeconds)
   end
 end
 
-function window_set(twindow)
-  window = twindow
-  add_cmd('toggle', {func=togglewindow, help="toggle the miniwindow"})
-end
-
-function option_set_default(opname, opdef)
-  options_table[opname].default = opdef
-end
-
-function cmd_update(cmd, key, value)
-  cmds_table[cmd][key] = value
-end
-
-function set_send_to_world(tf)
-  send_to_world = tf
-end
-
 function mousedown(flags, hotspotid)
-  window:mousedown(flags, hotspotid)
+  phelper:mousedown(flags, hotspotid)
 end
 
 function cancelmousedown(flags, hotspotid)
-  window:cancelmousedown(flags, hotspotid)
+  phelper:cancelmousedown(flags, hotspotid)
 end
 
 function mouseover(flags, hotspotid)
-  window:mouseover(flags, hotspotid)
+  phelper:mouseover(flags, hotspotid)
 end
 
 function cancelmouseover(flags, hotspotid)
-  window:cancelmouseover(flags, hotspotid)
+  phelper:cancelmouseover(flags, hotspotid)
 end
 
 function mouseup(flags, hotspotid)
-  window:mouseup(flags, hotspotid)
+  phelper:mouseup(flags, hotspotid)
 end
 
-function dragmove(flags, hotspot_id)
-  window:dragmove(flags, hotspot_id)
+function dragmove(flags, hotspotid)
+  phelper:dragmove(flags, hotspotid)
 end -- dragmove
 
-function dragrelease(flags, hotspot_id)
-  window:dragrelease(flags, hotspot_id)
+function dragrelease(flags, hotspotid)
+  phelper:dragrelease(flags, hotspotid)
 end
 
-function PluginhelperOnPluginBroadcast(msg, id, name, text)
---  mdebug('OnPluginBroadcast')
-  if id == "eee96e233d11e6910f1d9e8e" and msg == -2 then
-    if window and not window.disabled then
-      window:tabbroadcast(true)
-    end
-  end
+function fix_hotspotid(hotspotid)
+  _place = string.find(hotspotid, ':')
+  return string.sub(hotspotid, 0, _place - 1), string.sub(hotspotid, _place + 1)
 end
 
-function PluginhelperOnPluginInstall()
-  mdebug('OnPluginInstall')
-  if GetVariable ("enabled") == "false" then
-    ColourNote ("yellow", "", "Warning: Plugin " .. GetPluginName ().. " is currently disabled.")
-    check (EnablePlugin(GetPluginID (), false))
-    return
-  end -- they didn't enable us last time
-
-  OnPluginEnable ()  -- do initialization stuff
-end
-
-function PluginhelperOnPluginClose()
-  mdebug('OnPluginClose')
-
-  OnPluginDisable()
-end
-
-function PluginhelperOnPluginEnable()
-  mdebug('OnPluginEnable')
-  -- if we are connected when the plugin loads, it must have been reloaded whilst playing
-  if window then
-    window:init()
-  end
-  if IsConnected () then
-    OnPluginConnect ()
-  end -- if already connected
-  broadcast(-2)
-end
-
-function PluginhelperOnPluginDisable()
-  mdebug('OnPluginDisable')
-  if IsConnected() then
-    OnPluginDisconnect()
-  end
-  if window then
-    window:shutdown()
-  end
-  broadcast(-1)
-end
-
-function PluginhelperOnPluginConnect()
-  mdebug('OnPluginConnect')
-
-end
-
-function PluginhelperOnPluginDisconnect()
-  mdebug('OnPluginDisConnect')
-
-end
-
-function PluginhelperOnPluginSaveState()
-  mdebug('OnPluginSaveState')
-  --[[
-     save all the vars in the options table, requires the "var" module
-  --]]
-  for i,v in pairs(options_table) do
-    SetVariable (i, tostring(var[i]))
-  end
-  SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  if window then
-    window:savestate()
-  end
-end
-
-cmds_table = {
-  help      = {func=plugin_help_helper, help="show help"},
-  debug      = {func=plugin_toggle_debug, help="toggle debugging"},
-  set       = {func=plugin_set_helper, help="set script and window vars, show plugin vars when called with no arguments, 'window': show window vars, 'all': show all vars"},
-  reset     = {func=plugin_reset, help="reset plugin to default values, 'all': both miniwin and plugin, 'win': just miniwin, 'plugin': just plugin"},
-  save     = {func=SaveState, help="save plugin variables"},
-}
-
-options_table = {
-  plugin_colour = {help="set the plugin colour", type="colour", default="lime"},
-  tdebug = {help="toggle this for debugging info", type="bool", default=false},
-  cmd = {help="the command to type for this plugin", type="string", after=set_plugin_alias, default="mb"},
-}
-
-function init_pluginhelper()
-  init_plugin_vars()
-  set_plugin_alias()
-end
+phelper = Pluginhelper:new{name='phelp'}
 
