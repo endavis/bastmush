@@ -30,7 +30,16 @@
 <triggers>
   <trigger
    enabled="n"
-   match="^\s*(?&lt;from&gt;\d+)\s+(?&lt;to&gt;\d+)\s+(?&lt;lock&gt;\d+)\s+(?&lt;author&gt;.+?)(  )+?(?&lt;name&gt;.+?)\s*$"
+   match="^From To   Lock  (?&lt;fourth&gt;.*)[ ]+Area Name[ ]*$"
+   sequence="99"
+   script="parseheaders"
+   regexp="y"
+   group="areareg"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^\s*(?&lt;from&gt;\d+)\s+(?&lt;to&gt;\d+)\s+(?&lt;lock&gt;\d+)\s+(?&lt;fourth&gt;.+?)(  )+?(?&lt;name&gt;.+?)\s*$"
    sequence="100"
    script="parsearea"
    regexp="y"
@@ -39,7 +48,7 @@
   </trigger>
   <trigger
    enabled="n"
-   match="^\s*(?&lt;from&gt;\d+)\s+(?&lt;to&gt;\d+)\s+(?&lt;author&gt;.+?)(  )+?(?&lt;name&gt;.+?)\s*$"
+   match="^\s*(?&lt;from&gt;\d+)\s+(?&lt;to&gt;\d+)\s+(?&lt;fourth&gt;.+?)(  )+?(?&lt;name&gt;.+?)\s*$"
    sequence="101"
    script="parsearea"
    regexp="y"
@@ -64,12 +73,12 @@
   <alias
    name="areastart"
    script="areas_start"
-   match="^areas$"
+   match="^areas (.*)$"
    enabled="y"
    regexp="y"
    sequence="100"
   >
-  <send>areas</send>
+  <send>areas %1</send>
   </alias>
 
 </aliases>
@@ -86,32 +95,42 @@ require "commas"
 require "verify"
 require "tprint"
 
+fourthheader = ''
+
+function parseheaders(name, line, wildcards)
+  print('parseheaders')
+  print(line)
+  tprint(wildcards)
+  fourthheader = string.lower(trim(wildcards['fourth']))
+end
+
 function parsearea (name, line, wildcards)
   area = {}
   area.name = trim(wildcards.name)
-  area.author = trim(wildcards.author)
   area.to = wildcards.to
   area.from = wildcards.from
   area.speedwalk = ''
   area.keyword = ''
+  area.builder = ''
+  area[fourthheader] = wildcards['fourth']
   if name == "nolock" then
     area.lock = 0
   else
     area.lock = wildcards.lock
   end
   areainfo = serialize.save( "area", area )
-  broadcast(1, areainfo, areainfo)
+  phelper:broadcast(1, areainfo, areainfo)
 end
 
 function areas_start(name, line, wildcards)
-  enabletriggroup("areareg", true)
-  enabletriggroup("area", true)
+  phelper:enabletriggroup("areareg", true)
+  phelper:enabletriggroup("area", true)
 end
 
 function areas_done(name, line, wildcards)
-  enabletriggroup("areareg", false)
-  enabletriggroup("area", false)
-  broadcast(2)
+  phelper:enabletriggroup("areareg", false)
+  phelper:enabletriggroup("area", false)
+  phelper:broadcast(2)
 end
 
 ]]>
@@ -121,43 +140,43 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  PluginhelperOnPluginBroadcast(msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
 
-  PluginhelperOnPluginInstall()
+  phelper:OnPluginInstall()
 end -- OnPluginInstall
 
 function OnPluginClose ()
 
-  PluginhelperOnPluginClose()
+  phelper:OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
 
-  PluginhelperOnPluginEnable()
+  phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
 
-  PluginhelperOnPluginDisable()
+  phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
 
-  PluginhelperOnPluginConnect()
+  phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
-  PluginhelperOnPluginDisconnect()
+  phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
 
-  PluginhelperOnPluginSaveState()
+  phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
 
 ]]>
@@ -180,11 +199,10 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-option_set_default('cmd', 'barea')
-option_set_default('plugin_colour', 'cyan')
+phelper:set_default('cmd', 'barea')
+phelper:set_default('plugin_colour', 'cyan')
 
-init_plugin_vars()
-set_plugin_alias()
+phelper:enable()
 
 ]]>
 
