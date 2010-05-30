@@ -39,6 +39,7 @@ function Statdb:open()
 end
 
 function Statdb:getstat(stat)
+  self:checkstatstable()
   local tstat = nil
   if self:open() then
     for a in self.db:nrows('SELECT * FROM stats WHERE milestone = "current"') do
@@ -50,6 +51,7 @@ function Statdb:getstat(stat)
 end
 
 function Statdb:addtostat(stat, add)
+  self:checkstatstable()
   if tonumber(add) == 0 then
     return true
   end
@@ -95,7 +97,7 @@ function Statdb:checkstatstable()
         duelslost INT default 0,
         timeskilled INT default 0,
         monsterskilled INT default 0,
-        combatmazekills INT default 0,
+        combatmazewins INT default 0,
         combatmazedeaths INT default 0,
         powerupsall INT default 0,
         totaltrivia INT default 0,
@@ -114,13 +116,13 @@ function Statdb:savewhois(whoisinfo)
   local oldlevel = self:getstat('level')
   if self:open() then
     if name == nil then
-    local stmt = self.db:prepare[[ INSERT INTO stats VALUES (NULL, :name, :level, :totallevels,
+      local stmt = self.db:prepare[[ INSERT INTO stats VALUES (NULL, :name, :level, :totallevels,
                                                           :remorts, :tiers,:race, :sex,
                                                           :subclass, :qpearned, :questscomplete,
                                                           :questsfailed, :campaignsdone, :campaignsfld,
                                                           :gquestswon, :duelswon, :duelslost,
                                                           :timeskilled, :monsterskilled,
-                                                          :combatmazekills, :combatmazedeaths,
+                                                          :combatmazewins, :combatmazedeaths,
                                                           :powerupsall, :totaltrivia, 0, 'current') ]]
 
       stmt:bind_names(  whoisinfo  )
@@ -139,7 +141,7 @@ function Statdb:savewhois(whoisinfo)
                                             gquestswon = :gquestswon, duelswon = :duelswon,
                                             duelslost = :duelslost, timeskilled = :timeskilled,
                                             monsterskilled = :monsterskilled,
-                                            combatmazekills = :combatmazekills,
+                                            combatmazewins = :combatmazewins,
                                             combatmazedeaths = :combatmazedeaths,
                                             powerupsall = :powerupsall WHERE milestone = 'current';]]
 
@@ -176,7 +178,7 @@ function Statdb:addmilestone(milestone)
                                                           :questsfailed, :campaignsdone, :campaignsfld,
                                                           :gquestswon, :duelswon, :duelslost,
                                                           :timeskilled, :monsterskilled,
-                                                          :combatmazekills, :combatmazedeaths,
+                                                          :combatmazewins, :combatmazedeaths,
                                                           :powerupsall, :totaltrivia, :time, :milestone) ]]
 
     stmt:bind_names(  stats  )
@@ -366,6 +368,7 @@ function Statdb:savelevel( levelinfo )
                                           levelinfo.time, rowid - 1))
     rowid = self.db:last_insert_rowid()
     self:close()
+    self:addmilestone(levelinfo['newlevel'])
     return rowid
   end
   return -1
@@ -394,6 +397,7 @@ function Statdb:savemobkill( killinfo )
   self:checkmobkillstable()
   if self:open() then
     self:addtostat('totaltrivia', killinfo.tp)
+    self:addtostat('monsterskilled', 1)
     killinfo['level'] = tonumber(db:getstat('totallevels'))
     local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (NULL, :mob, :xp, :bonusxp,
                                                           :gold, :tp, :time, :vorpal_weapon, :level) ]]
