@@ -123,7 +123,7 @@ fieldstocomp = {
  'duelslost',
  'timeskilled',
  'monsterskilled',
- 'combatmazekills',
+ 'combatmazewins',
  'combatmazedeaths',
  'powerupsall',
  'totaltrivia',
@@ -148,7 +148,7 @@ function formatCompMile(milestone1, milestone2)
   phelper:plugin_header("Comparing " .. milestone1.milestone .. " to " .. milestone2.milestone)
   formatheader(milestone1.milestone, milestone2.milestone)
   for h,item in pairs(fieldstocomp) do
-    formatitem(item, milestone1[item], milestone2[item])
+    formatitem(item, milestone1[item] or 0, milestone2[item] or 0)
   end
   ColourNote( "", "", "")
 end
@@ -159,8 +159,11 @@ function CompareMilestones(cmddict)
     local milestone2 = {}
     if #cmddict == 1 then
       sql1 = "SELECT * FROM stats WHERE milestone = 'current'"
+      sql2 = "SELECT * FROM stats WHERE milestone = 'start'"    
+    elseif #cmddict == 2 then
+      sql1 = "SELECT * FROM stats WHERE milestone = 'current'"
       sql2 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[1] .. "'"
-    elseif #cmddict > 1 then
+    elseif #cmddict > 2 then
       sql1 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[1] .. "'"
       sql2 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[2] .. "'"
     end
@@ -174,7 +177,7 @@ function CompareMilestones(cmddict)
       db:close()
     end
     if not next(milestone1) or not next(milestone2) then
-      phelper:splugin_header("")
+      phelper:plugin_header("")
       ColourNote(RGBColourToName(phelper.plugin_colour), "black", "one of the milestones does not exist")
       ColourNote( "", "", "")
       return
