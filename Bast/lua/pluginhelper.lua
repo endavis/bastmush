@@ -71,13 +71,13 @@ function Pluginhelper:initialize(args)
 
   self:add_cmd('objects', {func="cmd_objects", help="list objects associated with this plugin"})
 
-  self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime"})
+  self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1})
   self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb"})
 
 end
 
 function Pluginhelper:cmd_objects()
-  self:plugin_header("Object associated with this plugin")
+  self:plugin_header("Objects associated with this plugin")
   for i,v in pairs(self.pobjects) do
     ColourNote(RGBColourToName(var.plugin_colour), "black", i)
   end
@@ -94,14 +94,20 @@ function Pluginhelper:run_cmd(cmddict)
     cmddict.action = tcmd
   end
 
-  retcode = super(self, cmddict, true)
+  local splitstr = " "
+  tcmddict = utils.split(cmddict.list or '', splitstr)
+  tcmddict.line = cmddict.line
+  tcmddict.action = cmddict.action
+
+  retcode = super(self, tcmddict, true)
 
   if not retcode then
+
     local pobj = self.pobjects[cmddict.action]
     if pobj ~= nil then
-      cmddict.action = cmddict[1]
-      table.remove(cmddict, 1)
-      pobj:run_cmd(cmddict)
+      tcmddict.action = tcmddict[1]
+      table.remove(tcmddict, 1)
+      pobj:run_cmd(tcmddict)
     else
       ColourNote("", "", "")
       ColourNote("white", "black", "That is not a valid command")
@@ -187,7 +193,7 @@ function Pluginhelper:add_pobject(name, object)
    print(name, "is nil in add_pobject")
    return
  end
- self.pobjects[name] = object
+ self.pobjects[object.cname] = object
  self.pobjects_by_id[object.id] = object
 end
 
@@ -304,7 +310,6 @@ function Pluginhelper:OnPluginSaveState()
   --[[
      save all the vars in the options table, requires the "var" module
   --]]
-  --tprint(self.set_options)
   self:savestate(true)
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
   for i,v in pairs(self.pobjects) do

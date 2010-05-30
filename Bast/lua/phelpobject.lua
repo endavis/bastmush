@@ -165,7 +165,7 @@ function Phelpobject:checkvalue(option, value)
   local varstuff = self.set_options[option]
   if not varstuff then
     self:plugin_header()
-    ColourNote("red", "", "Option" .. option .. "does not exist.")
+    ColourNote("red", "", "Option " .. option .. " does not exist.")
     return 2, nil
   end
   if value == 'default' then
@@ -189,11 +189,11 @@ function Phelpobject:set(option, value, args)
   if retcode == true then
     self[option] = tvalue
     afterf = varstuff.after
-    if afterf then
-      self:run_func(afterf)
-    end
     if args.putvar then
       var[option] = tvalue
+    end
+    if afterf then
+      self:run_func(afterf)
     end
     SaveState()
     return true
@@ -375,11 +375,7 @@ function Phelpobject:run_cmd(cmddict, silent)
   end
   fullcmd, cmd = self:find_cmd(cmddict.action)
   if fullcmd ~= nil then
-    local splitstr = cmd.split or " "
-    local tcmddict = {}
-    tcmddict = utils.split(cmddict.list or '', splitstr)
-    tcmddict.line = cmddict.line
-    retcode = self:run_func(cmd.func, tcmddict)
+    retcode = self:run_func(cmd.func, cmddict)
     return retcode
   end
   if not silent then
