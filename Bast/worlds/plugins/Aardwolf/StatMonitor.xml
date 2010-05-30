@@ -368,7 +368,7 @@ function StatReport(minutes)
     end
     db:close()
   end
-  ColourNote(RGBColourToName(var.plugin_colour), "black", "Stats for the Last " .. minutes .. " minutes")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "Stats for the Last " .. convert_time(minutes * 60))
   formathourcol()
   ColourNote(RGBColourToName(var.plugin_colour), "black",   "---------------------------------------")
   if queststats.total == nil then
@@ -401,8 +401,16 @@ function settimer()
 end
 
 function cmd_report(cmddict)
-  StatReport(tonumber(cmddict[1]))
-end -- moonbot_reset
+  if #cmddict >= 1 then
+    if cmddict[1] == "" then
+      minutes = round((GetInfo(304) - GetInfo(301)) / 60)
+      --  minutes = round(GetInfo(301) / 60)
+    else
+      minutes = tonumber(cmddict[1])
+    end
+  end
+  StatReport(minutes)
+end -- cmd_report
 
 ]]>
 </script>
