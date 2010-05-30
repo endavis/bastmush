@@ -40,6 +40,7 @@ require 'tprint'
 require 'pluginhelper'
 require 'ldplugin'
 require 'aardutils'
+require 'verify'
 
 cpwin = Miniwin:new{name="CP"}
 cpwin:set_default('windowpos', 7)
@@ -72,6 +73,9 @@ function show_cp_text ()
   for i, v in ipairs (cpmobs) do
     style = {}
     style.text = v.name .. " (" .. v.room .. ")"
+    if verify_bool(v.mobdead) then
+      style.textcolour = "yellow"
+    end
     table.insert (texttable, {style})
   end -- for
 

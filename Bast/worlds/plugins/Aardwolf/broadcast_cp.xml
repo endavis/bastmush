@@ -256,6 +256,7 @@ require "commas"
 require "verify"
 require "copytable"
 require "ldplugin"
+require "utils"
 
 rewardtable = {
   quest = 'qp',
@@ -276,13 +277,20 @@ function cleanname(name)
 end
 
 function campaign_item (name, line, wildcards)
+  phelper:mdebug(wildcards)
   name = wildcards.name
+  mobdead = false
   room = wildcards.room
+  if string.find(room, '- Dead') then
+    tlist = utils.split(room, '-')
+    room = trim(tlist[1])
+    mobdead = true
+  end
   if not name or not room then
     print("error parsing line: ", line)
     tprint(wildcards)
   else
-    table.insert(mobsleft, {name=name, room=room, clean=cleanname(name)})
+    table.insert(mobsleft, {name=name, room=room, clean=cleanname(name), mobdead=mobdead})
   end
 end -- campaign_item
 
