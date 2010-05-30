@@ -60,7 +60,7 @@ function Mastertabwin:counttabs()
 end
 
 function Mastertabwin:addtab(args)
-  self:mdebug(args)
+  self:mdebug('addtab: ', args)
   self.tabs[args.win] = args
   self:drawtabs()
 end
@@ -98,6 +98,7 @@ function Mastertabwin:drawtabs()
 end
 
 function Mastertabwin:drawtabs_vertical()
+  self:mdebug('drawtabs_vertical')
   local ttext = {}
   for i,v in tableSort(self.tabs, 'name', 'Default') do
     local start = self.width_padding
@@ -117,10 +118,12 @@ function Mastertabwin:drawtabs_vertical()
     end
     table.insert(ttext, tstyle)
   end
+  self:mdebug('ttext in drawtabs_vertical', ttext)
   self:createwin(ttext)
 end
 
 function Mastertabwin:drawtabs_horizontal()
+  self:mdebug('drawtabs_horizontal')
   outputwinwidth = GetInfo(281)
   local alltext = {}
   local ttext = {}
@@ -147,14 +150,17 @@ function Mastertabwin:drawtabs_horizontal()
       table.insert(alltext, ttext)
       ttext = {}
     end
+    if next(ttext) then
+      table.insert(alltext, ttext)
+    end
   end
-  if not next(ttext) then
-    table.insert(alltext, ttext)
-  end
+  self:mdebug('ttext in drawtabs_horizontal', ttext)
+  self:mdebug('alltext in drawtabs_horizontal', alltext)
   self:createwin(alltext)
 end
 
 function Mastertabwin:drawwin()
+  self:mdebug('drawing tab win')
   if not next(self.text) then
     return
   end
