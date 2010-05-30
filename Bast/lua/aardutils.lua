@@ -6,7 +6,7 @@ http://code.google.com/p/bastmush
 functions in this module
 --]]
 
- function findkeyword(item)
+function findkeyword(item)
   wlist = utils.split(item, " ")
   badwords = {
     ring = 1,
