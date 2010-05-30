@@ -321,7 +321,7 @@ function formattotals(totals)
              )
 end
 
-function StatReport()
+function StatReport(minutes)
   local queststats = {}
   local cpstats = {}
   local gqstats = {}
@@ -331,7 +331,8 @@ function StatReport()
   hourtotals.xp = 0
   hourtotals.tp = 0
   finishtime = GetInfo(304)
-  starttime = finishtime - (60 * 60)
+  minutes = tonumber(minutes) or var.reportminutes
+  starttime = finishtime - (minutes * 60)
   if db:open() then
     if db:checkfortable('quests') then
       for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp + mccp + lucky + tier), SUM(gold), SUM(tp) FROM quests where finishtime > %d;", starttime)) do
@@ -367,7 +368,7 @@ function StatReport()
     end
     db:close()
   end
-  ColourNote(RGBColourToName(var.plugin_colour), "black", "Stats for the Last Hour")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "Stats for the Last " .. minutes .. " minutes")
   formathourcol()
   ColourNote(RGBColourToName(var.plugin_colour), "black",   "---------------------------------------")
   if queststats.total == nil then
@@ -396,8 +397,12 @@ function StatReport()
 end
 
 function settimer()
-   SetTimerOption ("StatReport", "minute", var.minutes)
+   SetTimerOption ("StatReport", "minute", var.showminutes)
 end
+
+function cmd_report(cmddict)
+  StatReport(tonumber(cmddict[1]))
+end -- moonbot_reset
 
 ]]>
 </script>
@@ -475,12 +480,17 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-phelper:add_setting('minutes', {help="the number of minutes between StatMon output", type="number", after=settimer, default=60})
 
 phelper:set_default('cmd', 'statmon')
 phelper:set_default('plugin_colour', 'orange')
 
+phelper:add_setting('showminutes', {help="the number of minutes between StatMon output", type="number", after=settimer, default=60})
+phelper:add_setting('reportminutes', {help="the number of minutes that Statmon reports on", type="number", default=60})
+
+phelper:add_cmd('report', {func=cmd_report, help="show stats for the last x minutes, x being what is passed as an argument"})
+
 phelper:enable()
+
 
 ]]>
 </script>
