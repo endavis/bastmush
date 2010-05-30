@@ -209,7 +209,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("Stats_Detector")
-  ldplugin("broadcast_eq")
+  ldplugin("broadcast_invmon")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
