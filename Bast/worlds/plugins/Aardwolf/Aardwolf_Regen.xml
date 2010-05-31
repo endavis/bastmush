@@ -81,12 +81,11 @@ regenrooms = {}
 runto = false
 
 
-function check_room(room)
-  if not room or not current_room then
+function check_room(room_id)
+  if not room_id or not current_room then
     return false
   end
-  room = trim(string.gsub(current_room, "%(G%)", ""))
-  if regenrooms[room] == 1 then
+  if regenrooms[room_id] ~= nil then
     return true
   end
   return false
@@ -144,15 +143,14 @@ function add_room(name, line, wildcards)
     ColourNote("", "", "")
     return
   end
-  room = trim(string.gsub(current_room, "%(G%)", ""))
-  if regenrooms[room] == 1 then
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", room .. " already in regen list")
+  if regenrooms[current_room.id] ~= nil then
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", current_room.name .. " (" .. current_room.id .. ")" .. " already in regen list")
     ColourNote("", "", "")
     return
   end
 
-  regenrooms[room] = 1
-  ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Added Room: " .. room)
+  regenrooms[current_room.id] = current_room.name
+  ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Added Room: " .. current_room.name .. " (" .. current_room.id .. ")")
   ColourNote("", "", "")
   wear_regen()
 end
@@ -164,23 +162,22 @@ function remove_room(name, line, wildcards)
     ColourNote("", "", "")
     return
   end
-  room = trim(string.gsub(current_room, "%(G%)", ""))
-  if regenrooms[room] == 1 then
-    regenrooms[room] = nil
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", room .. " removed")
+  if regenrooms[current_room.id] ~= nil then
+    regenrooms[current_room.id] = nil
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", current_room.name .. " (" .. current_room.id .. ")" .. " removed")
     ColourNote("", "", "")
     remove_regen()
     return
   end
 
-  ColourNote(RGBColourToName(phelper.plugin_colour), "black", room .. " not in room list")
+  ColourNote(RGBColourToName(phelper.plugin_colour), "black", current_room.name .. " (" .. current_room.id .. ")" .. " not in room list")
   ColourNote("", "", "")
 end
 
 function show_rooms(name, line, wildcards)
   phelper:plugin_header(" Regen Rooms")
-  for room,_ in pairs(regenrooms) do
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", room)
+  for id,name in pairs(regenrooms) do
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", name .. " (" .. id .. ")")
   end
   ColourNote("", "", "")
 end
@@ -200,12 +197,14 @@ function OnPluginBroadcast (msg, id, name, text)
     if status.statestring == 'active' then
        checkstand()
     end
-  elseif id == "18c24130ab326dc05b49420d" then
-    if msg == 2 then
-      current_room = GetPluginVariable("18c24130ab326dc05b49420d", "roomname")
-
+  elseif id == "85f72d0e263d75df7bde6f00" then
+     if msg == 4 then
+      current_room = {}
+      current_room['id'] = tonumber(text)
+     elseif msg == 2 then
+      current_room['name'] = text
       oldregen  = verify_bool(phelper.inregen)
-      phelper:set('inregen', check_room(current_room), {silent=true})
+      phelper:set('inregen', check_room(current_room.id), {silent=true})
 
       if oldregen and verify_bool(phelper.inregen) then
         return
@@ -220,8 +219,7 @@ function OnPluginBroadcast (msg, id, name, text)
         remove_regen()
         return
       end
-
-    end
+     end
   elseif id == "aaa7b6edb20fa44565c5a327" then
     if msg == 1 then
       runto = true
@@ -285,7 +283,7 @@ function OnPluginEnable ()
   end -- if already connected
 
   ldplugin ("broadcast_runto")
-  ldplugin ("Aardwolf_Exits_Detector")
+  ldplugin ("ATCP_NJG")
   ldplugin ("broadcast_state")
   ldplugin ("broadcast_invmon")
 
@@ -351,7 +349,6 @@ phelper:add_cmd('remove', {func=remove_room, help="remove current room as a rege
 phelper:add_cmd('show', {func=show_rooms, help="show rooms"})
 
 phelper:enable()
-tprint(phelper)
 ]]>
 </script>
 </muclient>
