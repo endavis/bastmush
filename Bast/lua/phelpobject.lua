@@ -12,7 +12,7 @@ require 'tprint'
 require 'verify'
 require 'serialize'
 require 'copytable'
-require 'tablesort'
+require 'tablefuncs'
 
 local Object = require 'objectlua.Object'
 
