@@ -368,7 +368,7 @@ function Statdb:savelevel( levelinfo )
                                           levelinfo.time, rowid - 1))
     rowid = self.db:last_insert_rowid()
     self:close()
-    self:addmilestone(levelinfo['newlevel'])
+    self:addmilestone(tostring(levelinfo['newlevel']))
     return rowid
   end
   return -1
