@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: miniwin_map.xml 520 2009-09-27 20:18:06Z endavis $ -->
+<muclient>
+<plugin
+   name="miniwin_stats"
+   author="Bast"
+   id="eee90c778a44169e1e1d9585"
+   language="Lua"
+   purpose="display stats in a miniwindow"
+   date_written="2008-07-18"
+   requires="4.34"
+   version="1.0"
+   save_state="y"
+   >
+<description trim="y">
+Redirects the map to a mini window.
+</description>
+
+</plugin>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+
+require 'var'
+require 'pluginhelper'
+require "miniwin"
+require "tprint"
+require "commas"
+require "serialize"
+require "tablefuncs"
+
+statwin = Miniwin:new{name="Stats"}
+
+function build_stat_window()
+  stats = GetPluginVariableList("8a710e0783b431c06d61a54c")
+
+  styles = {}
+  table.insert(styles, {{text = 'Stats', hjust='center'}})
+  
+  tstyle = format_stat('Strength', stats.str, stats.base_str, 90)
+  table.insert(tstyle, {text="", start=170})
+  tableExtend(tstyle, format_stat('HP', stats.hp, stats.max_hp, 210))
+  table.insert(styles, tstyle)
+  
+  tstyle = format_stat('Strength', stats.str, stats.base_str, 90)
+  table.insert(tstyle, {text="", start=170})
+  tableExtend(tstyle, format_stat('Mana', stats.mana, stats.max_mana, 210))
+  table.insert(styles, tstyle)
+
+  tstyle = format_stat('Intelligence', stats.int, stats.base_int, 90)
+  table.insert(tstyle, {text="", start=170})
+  tableExtend(tstyle, format_stat('Moves', stats.moves, stats.max_moves, 210))
+  table.insert(styles, tstyle)
+
+  table.insert(styles, format_stat('Wisdom', stats.wis, stats.base_wis, 90))
+  table.insert(styles, format_stat('Dexterity', stats.dex, stats.base_dex, 90))
+  
+  tstyle = format_stat('Constitution', stats.con, stats.base_con, 90)
+  table.insert(tstyle, {text="", start=170})
+  tableExtend(tstyle, format_stat('HR', stats.hitroll, nil, 210))
+  table.insert(styles, tstyle)
+
+  tstyle = format_stat('Luck', stats.luck, stats.base_luck, 90)
+  table.insert(tstyle, {text="", start=170})
+  tableExtend(tstyle, format_stat('DR', stats.damroll, nil, 210))
+  table.insert(styles, tstyle)
+  
+  table.insert(styles, {{text = ''}})
+  
+  tstyle = format_stat('XP to Level', stats.to_level, nil, 90)
+  table.insert(tstyle, {text="", start=170})
+  tableExtend(tstyle, format_stat('Level', stats.level, nil, 210, "#00EE00"))
+  table.insert(styles, tstyle)
+  
+  tstyle = format_stat('Alignment', stats.align, nil, 90)
+  table.insert(tstyle, {text="", start=170})
+  tableExtend(tstyle, format_stat('Gold', stats.gold, nil, 210, 'gold'))
+  table.insert(styles, tstyle)
+  
+  statwin:enable()
+  statwin:createwin(styles)
+end
+
+function format_stat(statname, statcur, statother, start, color)
+    allstyle = {}
+    
+    style = {}    
+    style.text = statname 
+    style.textcolour = "lightseagreen"
+    table.insert(allstyle, style)
+
+    style = {}
+    style.text = ' : '
+    style.textcolour = "lightseagreen"
+    style.start = start
+    table.insert(allstyle, style)
+
+    style = {}
+    style.text = statcur
+    if color then
+      style.textcolour = color
+    else
+      style.textcolour = 'white'
+    end
+    table.insert(allstyle, style)
+    
+    if statother then
+      style = {}
+      style.text = '/'
+      style.textcolour = "lightseagreen"
+      table.insert(allstyle, style)
+      
+      style = {}
+      style.text = statother
+      style.textcolour = 'white'
+      table.insert(allstyle, style)
+    end
+
+    return allstyle
+end
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  if msg == 1 and id == "8a710e0783b431c06d61a54c" then
+    build_stat_window()
+  end
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<aliases>
+  <alias
+   name="plugin_parse"
+   script="plugin_parse_helper"
+   match="nothing"
+   enabled="y"
+   regexp="y"
+   ignore_case="y"
+   sequence="110"
+   expand_variables="y"
+  >
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'mstat')
+phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:add_pobject('win', statwin)
+
+phelper:enable()
+
+]]>
+</script>
+</muclient>
