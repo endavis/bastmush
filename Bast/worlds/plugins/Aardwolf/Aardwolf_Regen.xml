@@ -115,13 +115,13 @@ function remove_regen()
   end
   if verify_bool(phelper.regenworn) or trywear then
     tryremove = true
-    Send("wear " .. phelper.oldringsn .. " lfinger")
+    SendNoEcho("wear " .. phelper.oldringsn .. " lfinger")
   end
 end
 
 function try_wear()
   if not tryremove then
-    Send("wear regen lfinger")
+    SendNoEcho("wear regen lfinger")
   end
 end
 
