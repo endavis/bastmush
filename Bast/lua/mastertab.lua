@@ -1,5 +1,7 @@
 -- $Id$
-
+--[[
+  if hide windows is pushed twice it doesn't remember what was hidden
+--]]
 require 'miniwin'
 require 'tprint'
 require 'copytable'
@@ -15,6 +17,7 @@ function Mastertabwin:initialize(args)
   self.text = {}
   self.tabcount = 0
   self.hotspots = {}
+  self.alreadyhidden = false
   self:add_setting( 'orientation', {type="number", help="orientation of the tabs, 0 = horizontal, 1 = vertical", low=0, high=1, default=0, sortlev=44})
 
   local td = {}
@@ -37,9 +40,12 @@ function Mastertabwin:initialize(args)
 end
 
 function Mastertabwin:hideall()
-  for i,v in pairs(self.tabs) do
-    v.last = WindowInfo(v.win, 5)
-    WindowShow(v.win, false)
+  if not self.alreadyhidden then
+    self.alreadyhidden = true
+    for i,v in pairs(self.tabs) do
+      v.last = WindowInfo(v.win, 5)
+      WindowShow(v.win, false)
+    end
   end
 end
 
@@ -49,6 +55,7 @@ function Mastertabwin:showall()
       WindowShow(v.win, v.last)
     end
   end
+  self.alreadyhidden = false
 end
 
 function Mastertabwin:counttabs()
