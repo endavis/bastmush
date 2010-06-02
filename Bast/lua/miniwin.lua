@@ -40,6 +40,12 @@ styles can have the following
 
 TODO: add footer
 TODO: fix setting header as a static line or though the style passed in
+TODO: change start arg to be relative to font size, so 14 means 14 characters instead of position 14 absolute
+TODO: add a miniwindow to set all settings
+  - colours open PickColour
+  - strings, number opens utils.editbox or utils.msgbox
+  - fonts open utils.fontpicker
+  - booleans toggle between true and false when clicked
 --]]
 
 require 'var'
@@ -858,9 +864,9 @@ function Miniwin:create_window_internal()
      check (WindowRectOp (self.id, 2, 2, 2, -2, hbottom, self:get_colour("header_bg_colour")))
      check (WindowRectOp (self.id, 5, 2, 2, -2, hbottom, 5, 8))
 
-    self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, hbottom, empty, "Drag to move: " .. self.id, 10)
+    self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, hbottom, empty, "Drag to move: " .. self.cname, 10)
   else
-    self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, self:get_bottom_of_line(1), empty, "Drag to move: " .. self.id, 10)
+    self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, self:get_bottom_of_line(1), empty, "Drag to move: " .. self.cname, 10)
   end
 
   WindowDragHandler(self.id, self.id .. ':' .. self.drag_hotspot, "dragmove", "dragrelease", 0)
