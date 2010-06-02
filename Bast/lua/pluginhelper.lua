@@ -55,7 +55,7 @@ require "tprint"
 require "commas"
 require "verify"
 require "utils"
-require "tablesort"
+require "tablefuncs"
 require "phelpobject"
 
 Pluginhelper = Phelpobject:subclass()
@@ -95,10 +95,11 @@ function Pluginhelper:run_cmd(cmddict)
   end
 
   local splitstr = " "
-  tcmddict = utils.split(cmddict.list or '', splitstr)
+  tcmddict = parse_cmdline(cmddict.list or '')
   tcmddict.line = cmddict.line
   tcmddict.action = cmddict.action
 
+  self:mdebug('tcmddict after parse_cmdline', tcmddict)
   retcode = super(self, tcmddict, true)
 
   if not retcode then
@@ -322,6 +323,23 @@ end
 
 function do_cmd()
   phelper:run_cmd(phelper.cmdstuff)
+end
+
+function parse_cmdline(cmdline)
+  re = rex.new ("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'")
+
+  rtable = {}
+
+  function f (m, t)
+    newstring, found = string.gsub(m, "^['\"](.-)['\"]$", "%1")
+    table.insert(rtable, newstring)
+  end
+
+  -- match regular expression to a string
+
+  re:gmatch (cmdline, f)
+
+  return rtable
 end
 
 function plugin_parse_helper(name, line, wildcards)
