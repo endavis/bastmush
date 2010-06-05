@@ -33,6 +33,7 @@ require "serialize"
 require "tablefuncs"
 
 statwin = Miniwin:new{name="Stats"}
+statwin:set_default('width_padding', 10)
 
 function build_stat_window()
   stats = GetPluginVariableList("8a710e0783b431c06d61a54c")
@@ -40,66 +41,66 @@ function build_stat_window()
   styles = {}
   table.insert(styles, {{text = 'Stats', hjust='center'}})
   
-  tstyle = format_stat('Strength', stats.str, stats.base_str, 90)
-  table.insert(tstyle, {text="", start=170})
-  tableExtend(tstyle, format_stat('HP', stats.hp, stats.max_hp, 210))
+  tstyle = format_stat('Strength', stats.str, stats.base_str, 13, 3)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('HP', stats.hp, stats.max_hp, 5, #tostring(stats.max_hp)))
   table.insert(styles, tstyle)
   
-  tstyle = format_stat('Intelligence', stats.int, stats.base_int, 90)
-  table.insert(tstyle, {text="", start=170})
-  tableExtend(tstyle, format_stat('Mana', stats.mana, stats.max_mana, 210))
+  tstyle = format_stat('Intelligence', stats.int, stats.base_int, 13, 3)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('Mana', stats.mana, stats.max_mana, 5, #tostring(stats.max_mana)))
   table.insert(styles, tstyle)
 
 
-  tstyle = format_stat('Wisdom', stats.wis, stats.base_wis, 90)
-  table.insert(tstyle, {text="", start=170})
-  tableExtend(tstyle, format_stat('Moves', stats.moves, stats.max_moves, 210))
+  tstyle = format_stat('Wisdom', stats.wis, stats.base_wis, 13, 3)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('Moves', stats.moves, stats.max_moves, 5, #tostring(stats.max_moves)))
   table.insert(styles, tstyle)
 
-  table.insert(styles, format_stat('Dexterity', stats.dex, stats.base_dex, 90))
+  table.insert(styles, format_stat('Dexterity', stats.dex, stats.base_dex, 13, 3))
   
-  tstyle = format_stat('Constitution', stats.con, stats.base_con, 90)
-  table.insert(tstyle, {text="", start=170})
-  tableExtend(tstyle, format_stat('HR', stats.hitroll, nil, 210))
+  tstyle = format_stat('Constitution', stats.con, stats.base_con, 13, 3)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('HR', stats.hitroll, nil, 5, #tostring(stats.hitroll)))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Luck', stats.luck, stats.base_luck, 90)
-  table.insert(tstyle, {text="", start=170})
-  tableExtend(tstyle, format_stat('DR', stats.damroll, nil, 210))
+  tstyle = format_stat('Luck', stats.luck, stats.base_luck, 13, 3)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('DR', stats.damroll, nil, 5, #tostring(stats.damroll)))
   table.insert(styles, tstyle)
   
   table.insert(styles, {{text = ''}})
   
-  tstyle = format_stat('XP to Level', stats.to_level, nil, 90)
-  table.insert(tstyle, {text="", start=170})
-  tableExtend(tstyle, format_stat('Level', stats.level, nil, 210, "#00EE00"))
+  tstyle = format_stat('XP to Level', stats.to_level, nil, 13, 7)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('Level', stats.level, nil, 5, #tostring(stats.level), "#00EE00"))
   table.insert(styles, tstyle)
   
-  tstyle = format_stat('Alignment', stats.align, nil, 90)
-  table.insert(tstyle, {text="", start=170})
-  tableExtend(tstyle, format_stat('Gold', stats.gold, nil, 210, 'gold'))
+  tstyle = format_stat('Alignment', stats.align, nil, 13, 7)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('Gold', stats.gold, nil, 5, #tostring(stats.gold), 'gold'))
   table.insert(styles, tstyle)
   
   statwin:enable()
   statwin:createwin(styles)
 end
 
-function format_stat(statname, statcur, statother, start, color)
+function format_stat(statname, statcur, statother, colwidth, statlength, color)
     allstyle = {}
     
     style = {}    
-    style.text = statname 
+    style.text = string.format( "%-" .. tostring(colwidth) .. "s", statname ) 
     style.textcolour = "lightseagreen"
     table.insert(allstyle, style)
 
     style = {}
     style.text = ' : '
     style.textcolour = "lightseagreen"
-    style.start = start
+    --style.start = start
     table.insert(allstyle, style)
 
     style = {}
-    style.text = statcur
+    style.text = string.format( "%" .. tostring(statlength) .. "s",  statcur)
     if color then
       style.textcolour = color
     else
@@ -114,7 +115,7 @@ function format_stat(statname, statcur, statother, start, color)
       table.insert(allstyle, style)
       
       style = {}
-      style.text = statother
+      style.text = string.format( "%-" .. tostring(statlength) .. "s",  statother)
       style.textcolour = 'white'
       table.insert(allstyle, style)
     end
