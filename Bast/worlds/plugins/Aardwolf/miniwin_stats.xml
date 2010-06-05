@@ -45,17 +45,17 @@ function build_stat_window()
   tableExtend(tstyle, format_stat('HP', stats.hp, stats.max_hp, 210))
   table.insert(styles, tstyle)
   
-  tstyle = format_stat('Strength', stats.str, stats.base_str, 90)
+  tstyle = format_stat('Intelligence', stats.int, stats.base_int, 90)
   table.insert(tstyle, {text="", start=170})
   tableExtend(tstyle, format_stat('Mana', stats.mana, stats.max_mana, 210))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Intelligence', stats.int, stats.base_int, 90)
+
+  tstyle = format_stat('Wisdom', stats.wis, stats.base_wis, 90)
   table.insert(tstyle, {text="", start=170})
   tableExtend(tstyle, format_stat('Moves', stats.moves, stats.max_moves, 210))
   table.insert(styles, tstyle)
 
-  table.insert(styles, format_stat('Wisdom', stats.wis, stats.base_wis, 90))
   table.insert(styles, format_stat('Dexterity', stats.dex, stats.base_dex, 90))
   
   tstyle = format_stat('Constitution', stats.con, stats.base_con, 90)
