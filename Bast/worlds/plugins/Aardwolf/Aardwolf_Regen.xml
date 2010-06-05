@@ -33,7 +33,6 @@ It will remove the regen ring when
   when leaving a regen room
   when you stop idling
 
-Requires swalec's aardwolf exit detector
 ]]>
 </description>
 
@@ -102,9 +101,9 @@ function wear_regen()
     trywear = true
     --DoAfterSpecial (3, 'try_wear()', sendto.script)
     if phelper.regensn then
-      Send("wear " .. phelper.regensn .. " lfinger")
+      SendNoEcho("wear " .. phelper.regensn .. " lfinger")
     else
-      Send("wear regen lfinger")
+      SendNoEcho("wear regen lfinger")
     end
   end
 end
