@@ -43,6 +43,7 @@ noexpwin:set_default('windowpos', 7)
 noexpwin:set_default('header_height', 0)
 noexpwin:set_default('width_padding', 5)
 noexpwin:set_default('height_padding', 3)
+noexpwin:disable()
 
 noexp = nil
 
