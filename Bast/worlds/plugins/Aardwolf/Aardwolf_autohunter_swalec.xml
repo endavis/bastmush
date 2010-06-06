@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
 <!-- $Id$ -->
+<!-- based on the autohunter from Swalecs_plugins_2010_03_12_15_39.zip -->
 <!-- Saved on Thursday, October 30, 2008, 7:39 PM -->
 <!-- MuClient version 4.33 -->
-
 <muclient>
 <plugin
-   name="Aardwolf_Autohunt"
+   name="Aardwolf_autohunt_swalec"
    id="19c24130ab326dc05b49420d"
    language="Lua"
-   purpose="Autohunt mobs"
+   purpose="Automatically hunt mobs"
    author = "swalec"
    date_written="2008-10-30 19:38:12"
    requires="4.33"
@@ -42,13 +42,13 @@ THE SOFTWARE.
 <description trim="y">
 
 An autohunt plugin for aardwolf. It opens doors where appropriate, and should
-detect edge conditions including locked doors and other problems.
+detect edge conditions including locked doors and other problems. 
 
 
 autohunt mobname    --> autohunt the mob with name mobname
 autohunt hunt       --> this text
 autohunt (stop|off) --> stop autohunt
-autohunt            --> restart the hunt of the last mob you hunted
+autohunt            --> restart the hunt of the last mob you hunted 
                         or autohunted
 
 Normal usage for a new area will be to do
@@ -56,22 +56,22 @@ Normal usage for a new area will be to do
 hunt 1.guard
 hunt 2.guard
 
-till you find the right one and then
+till you find the right one and then 
 
 autohunt
 
 In general, autohunting will abort when it reaches a condition which seems
 wrong. Some conditions are missing at the moment -- more to follow. A simple
 
-autohunt
+autohunt 
 
-will continue.
+will continue. 
 
 
 Acknowledgement:
 
 Although the code is independent, this was original inspired Onoitsu2's
-autohunt plugin.
+autohunt plugin. 
 
 License:
 
@@ -104,7 +104,7 @@ This plugin is released under the MIT license.
     script = "hunt"
     >
   </alias>
-
+  
   <alias
     enabled = "y"
     match = "autohunt"
@@ -118,14 +118,31 @@ This plugin is released under the MIT license.
     script = "autohunt_mob"
     >
   </alias>
-
+  
 
 </aliases>
 
 <triggers>
+
+  <!-- new messages...-->
   <trigger
     enabled = "n"
-    match = "^The trail of (.*?) is confusing, but you're reasonably sure %w+ headed (.*?)\.$"
+    match = "^You are confident that (.*?) passed through here, heading (.*?)\.$"
+    script= "hunt_response_trigger"
+    group = "swalec.autohunt"
+    regexp= "y"
+    >
+  </trigger>
+  
+
+  <!-- 
+       Last remort this worked for sure...
+  -->
+
+  <trigger
+    enabled = "n"
+    match = "^The trail of (.*?) is confusing, but you're reasonably sure (.*?) headed (.*?)\.$"
+
     script = "hunt_response_trigger"
     group = "swalec.autohunt"
     regexp= "y"
@@ -143,15 +160,6 @@ This plugin is released under the MIT license.
 
   <trigger
     enabled = "n"
-    match = "^You are confident that (.*?) passed through here, heading (.*?)\.$"
-    script= "hunt_response_trigger"
-    group = "swalec.autohunt"
-    regexp= "y"
-    >
-  </trigger>
-
-  <trigger
-    enabled = "n"
     match = "^You are certain that (.*?) is (.*?) from here\.$"
     script= "hunt_response_trigger"
     group = "swalec.autohunt"
@@ -160,23 +168,41 @@ This plugin is released under the MIT license.
   </trigger>
 
   <trigger
-      group="swalec.autohunt"
-      make_underline="y"
-      match="^(.*?) is here\!$"
-      regexp="y"
-      script="autohunt_complete"
-      send_to="12"
-      sequence="100">
+    enabled = "n"
+    match = "^You have no idea what you're doing, but maybe (.*?) left (.*?)\?$"
+    script= "hunt_response_trigger"
+    group = "swalec.autohunt"
+    regexp= "y"
+    >
   </trigger>
 
   <trigger
-      enabled="n"
-      group="swalec.autohunt"
-      make_underline="y"
-      match="^You couldn\'t find a path to (.*?) from here\.$"
-      regexp="y"
-      script="autohunt_complete"
-      send_to="12"
+      enabled = "n"
+      match = "There are traces of (.*?) having been here. Perhaps they lead (.*?)\?$"
+      script = "hunt_response_trigger"
+      group = "swalec.autohunt"
+      regexp = "y"
+      >
+  </trigger>
+
+  <trigger 
+      group="swalec.autohunt" 
+      make_underline="y" 
+      match="^(.*?) is here\!$" 
+      regexp="y" 
+      script="autohunt_complete" 
+      send_to="12" 
+      sequence="100">
+  </trigger>
+
+  <trigger 
+      enabled="n" 
+      group="swalec.autohunt" 
+      make_underline="y" 
+      match="^You couldn\'t find a path to (.*?) from here\.$" 
+      regexp="y" 
+      script="autohunt_complete" 
+      send_to="12" 
       sequence="100">
   </trigger>
 
@@ -201,7 +227,7 @@ function OnHelp ()
   world.Note (world.GetPluginInfo (world.GetPluginID (), 3))
 end
 ]]>
-</script>
+</script> 
 
 
 
@@ -220,6 +246,14 @@ require "addxml"
 --
 -- state
 --
+
+-- can be false (off), 
+-- "auto" (full autohunt), 
+-- "creep" (send hunt every move, but don't move)
+-- "step" (send hunt, do a single move)
+-- "hunt" (send hunt, do noting)
+local autohuntmode = false
+
 local autohunt = false
 local lastroom = ""
 local sameroomname = 0
@@ -230,23 +264,29 @@ local huntmob = ""
 local current_exits = {}
 local waiting = false
 
---
+-- 
 -- autohunt initiate
 --
 function hunt( name, line, wildcards )
    lasthuntorautohunt = wildcards [ 1 ]
+   --print( "setting lasthuntorautohunt", lasthuntorautohunt )
    Send( line )
 end
 
 function autohunt_empty( name, line, wildcards )
    waiting = false
    if ( lasthuntorautohunt ~= "") then
+      autohuntmode = "auto"
       autohunt_init( lasthuntorautohunt )
    else
       ColourNote( "white", "green", "No last mob to hunt" )
    end
 end
 
+function autohunt_creep( name, line, wildcards )
+   autohuntmode = "creep"
+   autohunt_iterate()
+end
 
 function autohunt_mob( name, line, wildcards )
    waiting = false
@@ -256,7 +296,17 @@ function autohunt_mob( name, line, wildcards )
       autohunt_complete()
    elseif ( wildcards[ 1 ] == "help" ) then
       OnHelp()
-   else
+   elseif ( wildcards[ 1 ] == "creep" ) then
+      autohuntmode = "creep"
+      ColourNote( "white", "green", "Creep mode enabled" )
+   elseif ( wildcards[ 1 ] == "nocreep" ) then
+      autohuntmode = false
+      ColourNote( "white", "green", "Creep mode disabled" )
+   elseif ( wildcards[ 1 ] == "step" ) then 
+      autohuntmode = "step" 
+      autohunt_init( lasthuntorautohunt )               
+   else   
+      autohuntmode = "auto"
       lasthuntorautohunt = wildcards[ 1 ]
       autohunt_init( wildcards[ 1 ] )
    end
@@ -268,49 +318,67 @@ function autohunt_init ( mobname )
    autohunt = true
    sameroomname = 0
    lastroom = ""
-
+   
    world.EnableTriggerGroup( "swalec.autohunt", 1 )
-
+   
    ColourNote( "white", "green", "Autohunt ON" )
-
+         
    autohunt_iterate()
 end
 
 function autohunt_iterate()
    if not waiting then
      ColourNote( "white", "green", "Autohunting " .. huntmob )
-     if( autohunt and
-         (sameroomname < 10) ) then
+   if( (autohuntmode == "auto"
+        or autohuntmode == "creep" 
+        or autohuntmode == "step") and
+       (sameroomname < 25) ) then
         waiting = true
         Send( "hunt " .. huntmob )
      end
    end
-   if( sameroomname >= 10 ) then
+   if( sameroomname >= 25 ) then
       autohunt_complete()
    end
 end
 
 function autohunt_complete( name, line, wildcards, styles )
-
    ColourNote( "white", "green", "Autohunt Stopped" )
+   autohuntmode = false
    autohunt = false
    world.EnableTriggerGroup ( "swalec.autohunt", 0 )
-
+   BroadcastPlugin( 1, "complete" )
 end
 
---
+-- 
 -- autohunt response
---
+-- 
 
 function hunt_response_trigger( name, line, wildcards, styles )
-   direction = wildcards[ 2 ]
-
+   
+   -- almost all of the triggers have 2 wildcards, but one has 3
+   direction = wildcards[ 3 ] or wildcards[ 2 ]
+     
    if( current_exits[ direction ] == 2) then
       Send( "open " .. direction )
    end
-
+   
    waiting = false
-   Send( direction )
+   if(  autohuntmode == "auto" ) then
+      Send( direction )
+      return
+   end
+   
+   if( autohuntmode == "creep" ) then
+      ColourNote( "white", "green", "Autohunt creep mode -- autohunt nocreep to disable" )
+      return
+   end
+
+   if( autohuntmode == "step" ) then
+      autohuntmode = false
+      Send( direction )
+      ColourNote( "white", "green", "Autohunt step" )
+   end
 end
 
 -- we have a new room -- store the name of the room, check that it hasn't
@@ -318,34 +386,35 @@ end
 
 function room_change()
    local var = GetPluginVariableList(  "18c24130ab326dc05b49420d" )
-
-   -- how many times have we been in the same room.
+   
+   -- how many times have we been in the same room. 
    if( var.roomname == lastroom ) then
       sameroomname = sameroomname + 1
-      if( autohunt ) then
+      if( autohuntmode == "auto" ) and ( autohunt ) then
          ColourNote( "white", "green", "Autohunt: identical room name " .. sameroomname )
       end
    else
       sameroomname = 0
    end
-   lastroom = var.roomname
-
+   lastroom = var.roomname      
+   
 end
 
 -- we have a new set of exits -- therefore harvest directions and send hunt
 function exits_change()
    local var = GetPluginVariableList(  "18c24130ab326dc05b49420d" )
-   -- var is serialised, so load it (which returns a function) and
+   -- var is serialised, so load it (which returns a function) and 
    -- run the function
-
+   
    loadstring( var.exits )()
    current_exits = exits
-
+   
    -- if we are autohunting, we need to iterate
-
-   if( autohunt ) then
-      autohunt_iterate()
+   
+   if( autohuntmode == "auto" ) and ( autohunt ) then
+      autohunt_iterate() 
    end
+
 
 end
 
@@ -357,31 +426,31 @@ function OnPluginBroadcast( msg, id, name, text )
       if ( msg == 1 ) then
          room_change()
       end
-
+      
       -- Can't move
       if ( msg == 3 ) then
          autohunt_complete()
       end
    end
-
-
+   
+   
    -- fighting
    if ( id == "8a710e0783b431c06d61a54c" ) then
       local stats =  GetPluginVariableList ("8a710e0783b431c06d61a54c")
       if( stats.fighting == "y" ) then
-         if ( autohunt ) then
+         if ( autohuntmode ) and (autohunt) then 
             autohunt_complete()
          end
       end
    end
 
-
+   
 end
 
 function OnPluginInstall()
    checkplugin( "18c24130ab326dc05b49420d", "Aardwolf_exits_detector.xml" )
    checkplugin( "8a710e0783b431c06d61a54c", "Stats_Detector.xml" )
-
+   
    OnHelp()
 end -- OnPLuginInstall
 
