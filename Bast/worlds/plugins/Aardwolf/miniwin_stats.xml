@@ -80,6 +80,13 @@ function build_stat_window()
   table.insert(tstyle, {text="   "})
   tableExtend(tstyle, format_stat('Gold', stats.gold, nil, 5, #tostring(stats.gold), 'gold'))
   table.insert(styles, tstyle)
+
+  table.insert(styles, {{text = ''}})
+  
+  tstyle = format_stat('QP', stats.qp, nil, 13, 7)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('TP', stats.tp, nil, 5, #tostring(stats.tp)))
+  table.insert(styles, tstyle)  
   
   statwin:enable()
   statwin:createwin(styles)
