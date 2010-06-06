@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: miniwin_map.xml 520 2009-09-27 20:18:06Z endavis $ -->
+<!-- $Id$ -->
 <muclient>
 <plugin
    name="miniwin_stats"

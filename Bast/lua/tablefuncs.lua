@@ -1,4 +1,4 @@
--- $Id: tablefuncs.lua 510 2009-09-27 19:04:26Z endavis $
+-- $Id$
 --[[
 http://code.google.com/p/bastmush
  - Documentation and examples

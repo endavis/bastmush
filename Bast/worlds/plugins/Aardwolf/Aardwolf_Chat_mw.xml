@@ -3,6 +3,8 @@
 
 <!-- Bits of this plugin and ideas were borrowed and remixed from the MUSHclient community. http://www.gammon.com.au/forum/?id=9385 and others. -->
 <!-- Modifications for Aardwolf and extra awesome sauce added by Fiendish with help from Orogan -->
+<!-- This is based on revision 39 from http://code.google.com/p/aardwolfclientpackage/source/browse/trunk/Aardwolf_Chat_Capture_mw.xml -->
+<!-- $Id$ -->
 
 <muclient>
     <plugin
