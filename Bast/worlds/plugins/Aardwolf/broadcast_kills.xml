@@ -19,18 +19,6 @@
 [FOR PLUGIN AUTHORS ONLY]
 
 Broadcasts when a mob is killed
-Broadcasts
-   1 - mob killed
-    kill_info = {}
-        kill_info.tp = 0
-        kill_info.gold = "599"
-        kill_info.time = 1241305477
-        kill_info.bonusxp = 0
-        kill_info.xp = "101"
-        kill_info.mob = "A demon shock trooper"
-        kill_info.vorpal = 0
-        kill_info.vorpal_weapon = ''
-
 Example
   function OnPluginBroadcast (msg, id, name, text)
     if id == "aaa61c4570508448e19c7c14" and msg == 1 then
@@ -41,6 +29,18 @@ Example
       kill = kill_info
     end
   end
+
+xBroadcast_Kills : Broadcast 1
+kill_info = {}
+  kill_info.mob = "The miller's wife"
+  kill_info.vorpal = 0
+  kill_info.vorpal_weapon = ""
+  kill_info.time = 1275867123
+  kill_info.gold = "2267"
+  kill_info.bonusxp = "5"
+  kill_info.level = "139"
+  kill_info.xp = "5"
+  kill_info.tp = 0
 
 TODO: when corpse doesn't give gold, kill is not inserted into the database
 ]]>

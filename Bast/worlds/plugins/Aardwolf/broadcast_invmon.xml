@@ -34,6 +34,22 @@ Example
     end
   end
 
+You remove Aardwolf Ring of Regeneration from your left finger.
+xBroadcast_Invmon : Broadcast 1
+item = {}
+  item.itemsn = "6285182"
+  item.place = "lfinger"
+  item.name = "Aardwolf Ring of Regeneration"
+  item.container = "-1"
+
+You wear Four Winds on your left finger.
+xBroadcast_Invmon : Broadcast 2
+item = {}
+  item.itemsn = "6285213"
+  item.place = "lfinger"
+  item.name = "Four Winds"
+  item.container = "-1"
+
 ]]>
 </description>
 </plugin>

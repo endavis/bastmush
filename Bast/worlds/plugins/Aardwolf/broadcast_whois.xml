@@ -21,41 +21,6 @@
 Broadcasts stats when leveling
 Broadcasts
    1 - whois info, get var.whoisinfo and loadstring it
-    whoisinfo = {}
-        whoisinfo.powerupsall = 0
-        whoisinfo.birthdate = "15 Jul 2003"
-        whoisinfo.questscomplete = "5689"
-        whoisinfo.tiers = "0"
-        whoisinfo.qpearned = "124541"
-        whoisinfo.totaltrivia = 0
-        whoisinfo.race = "shade"
-        whoisinfo.combatmazekills = "0"
-        whoisinfo.trainedstats = "416"
-        whoisinfo.totallevels = 870
-        whoisinfo.level = "66"
-        whoisinfo.triviapoints = "21"
-        whoisinfo.hoursonline = "4575"
-        whoisinfo.questpoints = "18330"
-        whoisinfo.powerupsmort = 0
-        whoisinfo.combatmazedeaths = "0"
-        whoisinfo.timeskilled = "165"
-        whoisinfo.subclass = "ninja"
-        whoisinfo.monsterskilled = "30816"
-        whoisinfo.campaignsfld = "35"
-        whoisinfo.duelswon = "0"
-        whoisinfo.classes = {}
-            whoisinfo.classes[1] = "thief"
-            whoisinfo.classes[2] = "psionicist"
-            whoisinfo.classes[3] = "cleric"
-            whoisinfo.classes[4] = "paladin"
-            whoisinfo.classes[5] = "mage"
-        whoisinfo.campaignsdone = "777"
-        whoisinfo.remorts = 5
-        whoisinfo.sex = "male"
-        whoisinfo.gquestswon = "26"
-        whoisinfo.duelslost = "0"
-        whoisinfo.questsfailed = "137"
-        whoisinfo.name = "Bast"
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
@@ -67,6 +32,43 @@ Example
       info = whoisinfo
     end
   end
+
+xBroadcast_Whois : Broadcast 1
+whoisinfo = {}
+  whoisinfo.powerupsall = 0
+  whoisinfo.birthdate = "15 Jul 2003"
+  whoisinfo.questscomplete = "7061"
+  whoisinfo.tiers = "0"
+  whoisinfo.qpearned = "152329"
+  whoisinfo.race = "shade"
+  whoisinfo.combatmazewins = "0"
+  whoisinfo.trainedstats = "711"
+  whoisinfo.totallevels = 943
+  whoisinfo.level = "139"
+  whoisinfo.triviapoints = "52"
+  whoisinfo.hoursonline = "5567"
+  whoisinfo.questpoints = "22318"
+  whoisinfo.powerupsmort = 0
+  whoisinfo.combatmazedeaths = "0"
+  whoisinfo.timeskilled = "166"
+  whoisinfo.subclass = "ninja"
+  whoisinfo.monsterskilled = "35153"
+  whoisinfo.campaignsfld = "35"
+  whoisinfo.duelswon = "0"
+  whoisinfo.classes = {}
+    whoisinfo.classes[1] = "thief"
+    whoisinfo.classes[2] = "psionicist"
+    whoisinfo.classes[3] = "cleric"
+    whoisinfo.classes[4] = "paladin"
+    whoisinfo.classes[5] = "mage"
+  whoisinfo.campaignsdone = "850"
+  whoisinfo.remorts = 5
+  whoisinfo.sex = "male"
+  whoisinfo.gquestswon = "48"
+  whoisinfo.duelslost = "0"
+  whoisinfo.questsfailed = "138"
+  whoisinfo.name = "Bast"
+
 ]]>
 </description>
 </plugin>
@@ -239,7 +241,6 @@ function whois_end(name, line, wildcards)
   phelper:enabletriggroup("whois", false)
   --SendNoEcho('nopretitle')
   whoisinfo['totallevels'] = (whoisinfo.remorts - 1) * 201 + whoisinfo.level
-  whoisinfo['totaltrivia'] = 0
   var.whoisinfo = serialize.save( "whoisinfo", whoisinfo )
   phelper:broadcast(1, var.whoisinfo)
 end

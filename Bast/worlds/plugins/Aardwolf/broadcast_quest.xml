@@ -37,30 +37,57 @@ Broadcasts
 Example:
   function OnPluginBroadcast (msg, id, name, text)
     if id == "aaa8a9eda20fa11787c6b438" and msg == 2 then
-      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438" , "mob")
+      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438" , "quest_info")
 
       --get the mob info
       loadstring( pvar )()
-      mob_info = mob
+      quest_stuff = quest_info
     end
   end
-
-quest_info looks like this:
+  
+xBroadcast_Quest : Broadcast 2
 quest_info = {}
-  quest_info.starttime = 1242241160
+  quest_info.starttime = 1275869546
   quest_info.lucky = 0
-  quest_info.mobroom = "The Cage of the Oni"
-  quest_info.mobarea = "Anthrox"
+  quest_info.mobroom = "In the Corridor"
+  quest_info.mobarea = "Tir na nOg"
   quest_info.tier = 0
   quest_info.trains = 0
   quest_info.tp = 0
-  quest_info.mccp = "2"
+  quest_info.mccp = 0
   quest_info.pracs = 0
-  quest_info.gold = "3060"
-  quest_info.finishtime = 1242241200
-  quest_info.mobname = "the oni"
+  quest_info.gold = 0
+  quest_info.finishtime = -1
+  quest_info.mobname = "Cu Roi, the Sorcerer"
   quest_info.failed = 0
-  quest_info.qp = "14"
+  quest_info.qp = 0
+  
+xBroadcast_Quest : Broadcast 3
+timer = {}
+  timer.text = "44 m"
+  timer.secs = 2640
+
+xBroadcast_Quest : Broadcast 5
+quest_info = {}
+  quest_info.starttime = 1275869546
+  quest_info.lucky = 0
+  quest_info.mobroom = "In the Corridor"
+  quest_info.mobarea = "Tir na nOg"
+  quest_info.tier = 0
+  quest_info.trains = 0
+  quest_info.tp = 0
+  quest_info.mccp = 0
+  quest_info.pracs = 0
+  quest_info.gold = 0
+  quest_info.finishtime = 1275869582
+  quest_info.mobname = "Cu Roi, the Sorcerer"
+  quest_info.failed = 0
+  quest_info.qp = 0
+
+xBroadcast_Quest : Broadcast 7
+timer = {}
+  timer.text = "28 m"
+  timer.secs = 1707
 
 ]]>
 </description>

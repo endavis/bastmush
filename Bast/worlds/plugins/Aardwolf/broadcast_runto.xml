@@ -32,7 +32,6 @@ Example:
     end -- playing status changed
   end
 
-require swalec's Aardwolf_exits_detector
 ]]>
 </description>
 

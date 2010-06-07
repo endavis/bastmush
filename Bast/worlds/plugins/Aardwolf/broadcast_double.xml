@@ -32,6 +32,11 @@ Example:
     end -- playing status changed
   end
 
+xBroadcast_Double : Broadcast 1
+timer = {}
+  timer.text = "2 m"
+  timer.secs = 90
+
 ]]>
 </description>
 
