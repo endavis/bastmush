@@ -154,36 +154,34 @@ function formatCompMile(milestone1, milestone2)
 end
 
 function CompareMilestones(cmddict)
-  if cmddict[1] then
-    local milestone1 = {}
-    local milestone2 = {}
-    if #cmddict == 1 then
-      sql1 = "SELECT * FROM stats WHERE milestone = 'current'"
-      sql2 = "SELECT * FROM stats WHERE milestone = 'start'"    
-    elseif #cmddict == 2 then
-      sql1 = "SELECT * FROM stats WHERE milestone = 'current'"
-      sql2 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[1] .. "'"
-    elseif #cmddict > 2 then
-      sql1 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[1] .. "'"
-      sql2 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[2] .. "'"
-    end
-    if db:open() then
-      for a in db.db:nrows(sql1) do
-        milestone1 = a
-      end
-      for a in db.db:nrows(sql2) do
-        milestone2 = a
-      end
-      db:close()
-    end
-    if not next(milestone1) or not next(milestone2) then
-      phelper:plugin_header("")
-      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "one of the milestones does not exist")
-      ColourNote( "", "", "")
-      return
-    end
-    formatCompMile(milestone1, milestone2)
+  local milestone1 = {}
+  local milestone2 = {}
+  if #cmddict == 0 then
+    sql1 = "SELECT * FROM stats WHERE milestone = 'current'"
+    sql2 = "SELECT * FROM stats WHERE milestone = 'start'"    
+  elseif #cmddict == 1 then
+    sql1 = "SELECT * FROM stats WHERE milestone = 'current'"
+    sql2 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[1] .. "'"
+  elseif #cmddict >= 2 then
+    sql1 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[1] .. "'"
+    sql2 = "SELECT * FROM stats WHERE milestone = '" .. cmddict[2] .. "'"
   end
+  if db:open() then
+    for a in db.db:nrows(sql1) do
+      milestone1 = a
+    end
+    for a in db.db:nrows(sql2) do
+      milestone2 = a
+    end
+    db:close()
+  end
+  if not next(milestone1) or not next(milestone2) then
+    phelper:plugin_header("")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "one of the milestones does not exist")
+    ColourNote( "", "", "")
+    return
+  end
+  formatCompMile(milestone1, milestone2)
 end
 
 function ListMilestones(cmddict)
