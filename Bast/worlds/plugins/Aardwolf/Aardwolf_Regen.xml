@@ -277,14 +277,12 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  if IsConnected () then
-      current_room = GetPluginVariable("18c24130ab326dc05b49420d", "roomname")
-  end -- if already connected
 
   ldplugin ("broadcast_runto")
   ldplugin ("ATCP_NJG")
   ldplugin ("broadcast_state")
   ldplugin ("broadcast_invmon")
+  ldplugin ("AFK_Detector.xml")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
