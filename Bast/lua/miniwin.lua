@@ -6,13 +6,6 @@
 
 --[[
 
-Exposed functions are:
-
-
-Example of making a popup window:
-
-  require "window"
-
 styles can have the following
   style.text = 'text'
   style.textcolour
@@ -40,7 +33,6 @@ styles can have the following
 
 TODO: add footer
 TODO: fix setting header as a static line or though the style passed in
-TODO: change start arg to be relative to font size, so 14 means 14 characters instead of position 14 absolute
 TODO: add a miniwindow to set all settings
   - colours open PickColour
   - strings, number opens utils.editbox or utils.msgbox

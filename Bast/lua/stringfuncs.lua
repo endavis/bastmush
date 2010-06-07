@@ -4,6 +4,9 @@ http://code.google.com/p/bastmush
  - Documentation and examples
  
 functions in this module
+
+wrap - usage: wrap(line, length)
+  wrap the line at length, will try to find closest comma or space
 --]]
 
 function wrap(line, length)
