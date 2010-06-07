@@ -31,6 +31,7 @@ require "tprint"
 require "commas"
 require "serialize"
 require "tablefuncs"
+require "ldplugin"
 
 statwin = Miniwin:new{name="Stats"}
 statwin:set_default('width_padding', 10)
@@ -156,7 +157,8 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-
+  ldplugin("Stats_Detector")
+  
   phelper:OnPluginEnable()
 end -- OnPluginEnable
 
