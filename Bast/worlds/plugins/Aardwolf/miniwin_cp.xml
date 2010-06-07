@@ -47,6 +47,7 @@ cpwin:set_default('windowpos', 7)
 cpwin:set_default('font_size', 7)
 cpwin:set_default('font', 'Verdana')
 cpwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
+cpwin:disable()
 
 cpmobs = {}
 cptimer = {}
