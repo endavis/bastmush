@@ -57,7 +57,19 @@ function Phelpobject:cmd_set(cmddict)
 end
 
 function Phelpobject:cmd_debug(cmddict)
-  return self:set('tdebug', not self.tdebug, {silent=false})
+  newvalue = not self.tdebug
+  retcode = self:set('tdebug', not self.tdebug)
+  if retcode then
+     self:plugin_header()
+     colourname = RGBColourToName(var.plugin_colour)
+     if newvalue then
+        ColourNote(colourname, "black", "Debugging is now on")
+     else
+        ColourNote(colourname, "black", "Debugging is now off")
+     end
+     ColourNote("", "", "")
+  end
+  return retcode
 end
 
 function Phelpobject:cmd_help(cmddict)
