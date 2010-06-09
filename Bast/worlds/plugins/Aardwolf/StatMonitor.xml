@@ -445,6 +445,10 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("StatDB")
+  ldplugin('broadcast_quest')
+  ldplugin('broadcast_level')
+  ldplugin('broadcast_cp')
+  ldplugin('broadcast_gq')  
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
