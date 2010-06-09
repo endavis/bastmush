@@ -13,6 +13,33 @@ this module will load certain plugins
 --]]
 require "check"
 
+
+function scan_dir_for_file (path, tfile)
+
+  -- find all files in that directory
+  local t = assert (utils.readdir (path .. "\\*"))
+
+  for k, v in pairs (t) do
+   if not v.hidden and 
+      not v.system and
+      k:sub (1, 1) ~= "." then
+      -- recurse to process file or subdirectory
+      if v.directory then
+        found = scan_dir_for_file (path .. "\\" .. k, tfile)
+        if found then
+          return found
+        end
+      elseif k == tfile then
+        return path .. "\\" .. k
+      end -- if 
+     
+   end -- if
+  
+  end -- for
+  return false
+end -- scan_dir 
+
+
 function getcolour(id)
   local colour = GetPluginVariable(id, 'plugin_colour') or var.plugin_colour or "red"
   return RGBColourToName(colour)
@@ -102,34 +129,70 @@ function loadfromfile(file)
   if id ~= nil then
     return id
   else
-    LoadPlugin(file)
-    id = getidbyfile(file)
-    if id ~= nil then
-      return id
+    nfile = scan_dir_for_file (GetInfo(60), file)
+    if nfile then
+      retcode = LoadPlugin(nfile)
+      if retcode == 0 then
+        id = getidbyfile(file)
+        return id
+      elseif retcode == ePluginFileNotFound then
+        return "Not Found"
+      elseif retcode == eProblemsLoadingPlugin then
+        return "Problem"
+      else      
+        return false
+      end
     else
-      return false
+      return "Not Found"
     end
   end
 end
 
 function ldplugin_helper(plugin, silent)
+  --print("ldplugin_helper", plugin)
   silent = silent or false
   local loaded = false
   loaded = loadfromfile(plugin)
   if loaded == false then
     if not silent then
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-      ColourNote("yellow", "black", GetPluginInfo (GetPluginID (), 1) .. " will not work correctly without " .. plugin)
+      ColourNote("yellow", "black", GetPluginInfo (GetPluginID (), 1) .. " (1) will not work correctly without " .. plugin)
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     else
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
       ColourNote("yellow", "black", " Could not load " .. plugin)
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     end
+    return false
+  elseif loaded == "Not Found" then
+    if not silent then
+      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+      ColourNote("yellow", "black", GetPluginInfo (GetPluginID (), 1) .. " (2) will not work correctly without " .. plugin)
+      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+    else
+      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+      ColourNote("yellow", "black", " Could not load " .. plugin .. " because the file was not found")
+      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+    end
+  elseif loaded == "Problem" then
+    if not silent then
+      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+      ColourNote("yellow", "black", GetPluginInfo (GetPluginID (), 1) .. " (3) will not work correctly without " .. plugin)
+      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+    else
+      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+      ColourNote("yellow", "black", " Could not load " .. plugin .. " because of loading problems" )
+      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+    end  
   end
   penable = GetPluginInfo(loaded, 17)
   if not penable then
     EnablePlugin(loaded, true)
+  end
+  if silent then
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+    ColourNote("yellow", "black", " Loaded " .. plugin  )
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------") 
   end
   return loaded
 end
