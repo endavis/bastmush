@@ -59,6 +59,7 @@ require "verify"
 require "chardb"
 require "aardutils"
 require "tprint"
+require "ldplugin"
 
 db = Statdb{}
 
