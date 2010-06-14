@@ -296,7 +296,8 @@ end
 
 function Phelpobject:mdebug(...)
   if var.tdebug == "true" or self.tdebug then
-    print(GetPluginInfo (GetPluginID (), 1), "- Object", self.cname, ": Debug")
+    print("DEBUG: " .. GetPluginInfo (GetPluginID (), 1), "- Object", self.cname, ": Debug")
+    print("---------------------------------------------")
     local tstring = {}
     for n=1,select('#',...) do
       local e = select(n,...)
