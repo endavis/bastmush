@@ -12,6 +12,11 @@ SELECT SUM(qp + mccp + lucky + tier), SUM(tp) FROM quests WHERE finishtime > now
 SELECT SUM(qp), SUM(tp) FROM campaigns WHERE finishtime > now - 1 hour;
 SELECT SUM(xp + bonusxp) FROM mobkils WHERE time > now - 1 hour;
 
+QP/CP/GQ AVE TIME
+SELECT AVG(finishtime - starttime) FROM quests where failed = 0
+SELECT AVG(finishtime - starttime) FROM campaigns where failed = 0
+SELECT AVG(finishtime - starttime) FROM gquests where won = 1
+
 --]]
 
 require 'class'
@@ -368,7 +373,9 @@ function Statdb:savelevel( levelinfo )
                                           levelinfo.time, rowid - 1))
     rowid = self.db:last_insert_rowid()
     self:close()
-    self:addmilestone(tostring(levelinfo['newlevel']))
+    if levelinfo['type'] == 'level' then
+      self:addmilestone(tostring(levelinfo['newlevel']))
+    end
     return rowid
   end
   return -1
