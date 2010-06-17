@@ -175,6 +175,7 @@ require "commas"
 require "pluginhelper"
 require "verify"
 require "aardutils"
+require "ldplugin"
 
 -- keys - type, time, newlevel, hp, mana, mov, trains, pracs, bonustrains, bonusstats = {}
 -- bonusstats subtable keys are the bonus stat names
@@ -252,6 +253,10 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
+  if id == "aaa0ab9ed92f8fc614664bd1" and msg == 2 then
+    SendNoEcho("whois")
+  end
+  
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
@@ -267,6 +272,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  ldplugin('broadcast_level')
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
