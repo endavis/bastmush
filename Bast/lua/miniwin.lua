@@ -120,6 +120,7 @@ function Miniwin:initialize(args)
   self.starty = 0
   self.origx = 0
   self.origy = 0
+  self.clickshow = false
   self.firstdrawn = true
   self.drag_hotspot = "_drag_hotspot"
 
@@ -1036,7 +1037,12 @@ function popup_style(win, text, colour)
                       win:show(true)
                     end
   style.cancelmouseover = function (flags, hotspotid)
-                      win:show(false)
+                      if not win.clickshow then
+                        win:show(false)
+                      end
                     end
+  style.mousedown = function (flags, hotspotid)
+                      win.clickshow = not win.clickshow
+                    end 
   return style
 end
