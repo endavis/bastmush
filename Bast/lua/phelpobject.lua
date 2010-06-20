@@ -319,12 +319,10 @@ function Phelpobject:mdebug(...)
 end
 
 function Phelpobject:broadcast(num, data, broadcastdata)
-  if var.tdebug == "true" then
-    print(GetPluginInfo (GetPluginID (), 1), ": Broadcast", num)
-    if data then
-      print(data)
-    end
-    print("")
+  if data then
+    self:mdebug("Broadcast " .. num .. "\n", data)
+  else
+    self:mdebug("Broadcast " .. num .. "\n")
   end
   BroadcastPlugin(tonumber(num), broadcastdata)
 end
