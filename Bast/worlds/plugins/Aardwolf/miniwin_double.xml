@@ -43,7 +43,7 @@ doublewin:set_default('windowpos', 7)
 doublewin:set_default('header_height', 0)
 doublewin:set_default('width_padding', 5)
 doublewin:set_default('height_padding', 3)
-doublewin:disable()
+--doublewin:disable()
 
 function show_double (ttimer)
 
