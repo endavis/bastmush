@@ -4,6 +4,25 @@ http://code.google.com/p/bastmush
  - Documentation and examples
 
 functions in this module
+
+findkeyword - usage: findkeyword(item)
+  return the first keyword of the item that is not an article
+
+getactuallevel - usage: getactuallevel(level, remorts, tier)
+  - find the actual level based on remorts, tier, and current level
+
+convertlevel - usage: convertlevel(level)
+  - opposite of getactuallevel, return a table with keys tier, remort, level
+
+classabb table
+  - a table of class abbreviations, key is the abbreviation, value is
+    the long name for the class
+
+objecttypes table
+  - table of object types
+
+wearlocs table
+  - table of wear locations
 --]]
 
 function findkeyword(item)
