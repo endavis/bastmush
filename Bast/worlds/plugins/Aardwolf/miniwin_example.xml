@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: miniwin_example.xml 521 2009-09-27 20:18:34Z endavis $ -->
-<!-- $Rev:$ -->
+<!-- $Id$ -->
+<!-- $Rev$ -->
 
 <muclient>
 <plugin
