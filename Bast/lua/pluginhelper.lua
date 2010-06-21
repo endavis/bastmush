@@ -57,6 +57,7 @@ require "verify"
 require "utils"
 require "tablefuncs"
 require "phelpobject"
+require "addxml"
 
 Pluginhelper = Phelpobject:subclass()
 
@@ -136,6 +137,15 @@ end
 
 function Pluginhelper:enable()
   super(self)
+  addxml.alias {    match = "nothing",
+                    script = "plugin_parse_helper",
+                    name = "plugin_parse",
+                    regexp = true,
+                    enabled = true,
+                    ignore_case = true,
+                    sequence = 110,
+                    expand_variables = true
+               }
   self:init_vars()
 end
 
