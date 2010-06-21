@@ -74,7 +74,6 @@ current_room = ''
 function runstart(name, line, wildcards)
   runto = true
   seenrecall = false
-  --phelper:enabletriggroup("runtostuff", true)
   phelper:broadcast(1)
 end
 
@@ -96,7 +95,6 @@ function OnPluginBroadcast (msg, id, name, text)
     if msg == 4 then
       if seenrecall == true then
         seenrecall = false
-        print("enabling runtostuff")
         phelper:enabletriggroup("runtostuff", true)
       end    
       if tostring(text) == tostring(32418) then
