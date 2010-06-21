@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id$ -->
+<!-- $Id: miniwin_example.xml 521 2009-09-27 20:18:34Z endavis $ -->
+<!-- $Rev:$ -->
 
 <muclient>
 <plugin
@@ -34,6 +35,7 @@ require "miniwin"
 require "tprint"
 require "commas"
 require "serialize"
+require "copytable"
 
 
 testwin = Miniwin:new{name="Example"}
@@ -145,8 +147,9 @@ style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 
 table.insert(styles, {style})
---table.insert(styles2, {style})
-tprint(styles2)
+styles2 = copytable.deep(styles)
+
+table.insert(styles, {popup_style(testwin2, "Show Miniwin Example 2", "yellow")})
 ]]>
 </script>
 
@@ -177,7 +180,7 @@ function OnPluginEnable ()
   testwin:enable()
   testwin:createwin(styles)
   testwin2:enable()
-  testwin2:createwin(styles)
+  testwin2:createwin(styles2)
 end -- OnPluginEnable
 
 function OnPluginDisable ()
