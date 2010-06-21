@@ -37,7 +37,7 @@ end
 function Statdb:open()
   if self.db == nil then
     self.db = assert(sqlite3.open(self.dbloc .. self.dbname))
-    self.db:exec(string.format('ATTACH ' .. self.dbloc .. 'aardinfo.db AS aarddb'))
+    --self.db:exec(string.format('ATTACH ' .. self.dbloc .. 'aardinfo.db AS aarddb'))
   end
   self.conns = self.conns + 1
   return true
