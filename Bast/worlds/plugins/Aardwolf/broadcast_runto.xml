@@ -69,26 +69,19 @@ require 'ldplugin'
 
 runto = false
 seenrecall = false
-oneexit = false
 current_room = ''
 
 function runstart(name, line, wildcards)
   runto = true
   seenrecall = false
-  phelper:enabletriggroup("runtostuff", true)
+  --phelper:enabletriggroup("runtostuff", true)
   phelper:broadcast(1)
 end
 
 function runend(name, line, wildcards)
-  if seenrecall and not oneexit then
-    oneexit = true
-    return
-  end
-  if runto and seenrecall then
+  if runto then
     phelper:enabletriggroup("runtostuff", false)
     runto = false
-    seenrecall = false
-    oneexit = false
     phelper:broadcast(2)
   end
 end
@@ -99,10 +92,14 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  if id == "18c24130ab326dc05b49420d" then
-    if msg == 2 then
-      current_room = GetPluginVariable("18c24130ab326dc05b49420d", "roomname")
-      if current_room == 'The Grand City of Aylor (G)' then
+  if id == "85f72d0e263d75df7bde6f00" then
+    if msg == 4 then
+      if seenrecall == true then
+        seenrecall = false
+        print("enabling runtostuff")
+        phelper:enabletriggroup("runtostuff", true)
+      end    
+      if tostring(text) == tostring(32418) then
         seenrecall = true
       end
     end
@@ -122,8 +119,8 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin ("Aardwolf_Exits_Detector")
-
+  ldplugin ("ATCP_NJG")
+  
   phelper:OnPluginEnable()
 end -- OnPluginEnable
 
