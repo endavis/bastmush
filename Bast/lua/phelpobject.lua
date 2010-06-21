@@ -171,6 +171,7 @@ end
 
 function Phelpobject:disable()
   self:savestate()
+  self.disabled = true
 end
 
 function Phelpobject:checkvalue(option, value)
