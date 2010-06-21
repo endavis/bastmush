@@ -177,7 +177,7 @@ function Mastertabwin:drawwin()
     self:drawtabs()
   end
 
-  self:create_window_internal()
+  self:pre_create_window_internal()
 
   if self.orientation == 1 then
     j = 1
@@ -209,6 +209,9 @@ function Mastertabwin:drawwin()
   for i, v in ipairs (self.window_data) do
     self:Display_Line (i, self.window_data[i].text)
   end -- for
+
+  self:post_create_window_internal()
+
 end
 
 function Mastertabwin:set(option, value, args)

@@ -823,7 +823,7 @@ function Miniwin:calc_window_width()
   return width
 end
 
-function Miniwin:create_window_internal()
+function Miniwin:pre_create_window_internal()
   local height = self:calc_window_height()
   local width = self:calc_window_width()
 
@@ -857,13 +857,15 @@ function Miniwin:create_window_internal()
      check (WindowRectOp (self.id, 2, 2, 2, -2, hbottom, self:get_colour("header_bg_colour")))
      check (WindowRectOp (self.id, 5, 2, 2, -2, hbottom, 5, 8))
 
-    self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, hbottom, empty, "Drag to move: " .. self.cname, 10)
-  else
-    self:make_hyperlink("", self.drag_hotspot, 0, 0, 0, self:get_bottom_of_line(1), empty, "Drag to move: " .. self.cname, 10)
   end
+  self:make_hyperlink("", self.drag_hotspot, width-15, 0, 0, self:get_bottom_of_line(1), empty, "Drag to move: " .. self.cname, 10)
 
   WindowDragHandler(self.id, self.id .. ':' .. self.drag_hotspot, "dragmove", "dragrelease", 0)
 
+end
+
+function Miniwin:post_create_window_internal()
+  return
 end
 
 function Miniwin:drawwin()
@@ -872,20 +874,13 @@ function Miniwin:drawwin()
     return
   end
 
-  self:create_window_internal()
+  self:pre_create_window_internal()
 
   for i, v in ipairs (self.window_data) do
     self:Display_Line (i, self.window_data[i].text)
   end -- for
 
--- show all fonts
--- fonts = WindowFontList(self.id)
---
--- if fonts then
---   for _, v in ipairs (fonts) do
---     print (v, WindowFontInfo(self.id, v, 21), WindowFontInfo(self.id, v, 19),WindowFontInfo(self.id, v, 8), WindowFontInfo(self.id, v, 1))
---   end
--- end -- if any
+  self:post_create_window_internal()
 
 end
 
