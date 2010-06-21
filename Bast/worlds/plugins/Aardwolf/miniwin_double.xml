@@ -123,20 +123,6 @@ end -- function OnPluginSaveState
 ]]>
 </script>
 
-<aliases>
-  <alias
-   name="plugin_parse"
-   script="plugin_parse_helper"
-   match="nothing"
-   enabled="y"
-   regexp="y"
-   ignore_case="y"
-   sequence="110"
-   expand_variables="y"
-  >
-  </alias>
-</aliases>
-
 <script>
 <![CDATA[
 
