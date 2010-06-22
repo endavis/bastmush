@@ -390,7 +390,8 @@ function Statdb:checkmobkillstable()
         gold INT default 0,
         tp INT default 0,
         time INT default -1,
-        vorpal_weapon TEXT default '',
+        wielded_weapon TEXT default '',
+        second_weapon TEXT default '',
         level INT default -1
       )]])
     end
@@ -405,7 +406,7 @@ function Statdb:savemobkill( killinfo )
     self:addtostat('monsterskilled', 1)
     killinfo['level'] = tonumber(db:getstat('totallevels'))
     local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (NULL, :mob, :xp, :bonusxp,
-                                                          :gold, :tp, :time, :vorpal_weapon, :level) ]]
+                                                          :gold, :tp, :time, :vorpal_weapon, :second_weapon, :level) ]]
     stmt:bind_names(  killinfo  )
     stmt:step()
     stmt:finalize()

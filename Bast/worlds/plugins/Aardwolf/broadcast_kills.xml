@@ -35,7 +35,8 @@ xBroadcast_Kills : Broadcast 1
 kill_info = {}
   kill_info.mob = "The miller's wife"
   kill_info.vorpal = 0
-  kill_info.vorpal_weapon = ""
+  kill_info.wielded_weapon = ""
+  kill_info.second_weapon = ""
   kill_info.time = 1275867123
   kill_info.gold = "2267"
   kill_info.bonusxp = "5"
@@ -134,10 +135,11 @@ require "ldplugin"
 kill_info = {}
 kill_info.tp = 0
 kill_info.vorpal = 0
-kill_info.vorpal_weapon = ''
+kill_info.wielded_weapon = ''
+kill_info.second_weapon = ''
 kill_info.bcasted = true
 
-cur_weapon = ''
+var.cur_weapon = ''
 
 function mobxp( name, line, wildcards )
   if name == 'mobxp' then
@@ -155,7 +157,8 @@ end
 
 function vorpmob( name, line, wildcards)
   kill_info.vorpal = 1
-  kill_info.vorpal_weapon = cur_weapon
+  kill_info.wielded_weapon = phelper.weaponsn
+  kill_info.second_weapon = phelper.secondsn
 end
 
 function mobgold( name, line, wildcards )
@@ -182,7 +185,8 @@ function broadcast_kill()
   kill_info = {}
   kill_info.tp = 0
   kill_info.vorpal = 0
-  kill_info.vorpal_weapon = ''
+  kill_info.wielded_weapon = ''
+  kill_info.second_weapon = ''
   kill_info.bcasted = true 
 end
 
@@ -213,8 +217,12 @@ function OnPluginBroadcast (msg, id, name, text)
       loadstring(text)()
       local eqitem = item
       if eqitem.place == 'wielded' then
-        cur_weapon = eqitem.itemsn
+        phelper:set('weaponsn', eqitem.itemsn, {silent=true})      
       end
+      if eqitem.place == 'second' then
+        phelper:set('secondsn', eqitem.itemsn, {silent=true})      
+      end
+      
     end
   end
 
@@ -267,6 +275,9 @@ end -- function OnPluginSaveState
 
 phelper:set_default('cmd', 'bkill')
 phelper:set_default('plugin_colour', 'orange')
+
+phelper:add_setting('weaponsn', {help="the sn of the weapon that is currently wielded", type="string", default="", readonly=true})
+phelper:add_setting('secondsn', {help="the sn of the weapon that is currently wielded", type="string", default="", readonly=true})
 
 phelper:enable()
 
