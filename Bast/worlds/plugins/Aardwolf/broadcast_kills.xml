@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
 <!-- $Id$ -->
+
 <muclient>
 <plugin
    name="xBroadcast_Kills"
@@ -42,7 +43,6 @@ kill_info = {}
   kill_info.xp = "5"
   kill_info.tp = 0
 
-TODO: when corpse doesn't give gold, kill is not inserted into the database
 ]]>
 </description>
 </plugin>
@@ -107,6 +107,17 @@ TODO: when corpse doesn't give gold, kill is not inserted into the database
    sequence="100"
   >
   </trigger>
+  <trigger
+   enabled="n"
+   match="^$"
+   regexp="y"
+   sequence="100"
+   script="broadcast_kill"
+   name="deadtrig"
+   group="deadtrig"
+  >
+  </trigger>
+ 
 </triggers>
 
 
@@ -124,6 +135,7 @@ kill_info = {}
 kill_info.tp = 0
 kill_info.vorpal = 0
 kill_info.vorpal_weapon = ''
+kill_info.bcasted = true
 
 cur_weapon = ''
 
@@ -131,10 +143,14 @@ function mobxp( name, line, wildcards )
   if name == 'mobxp' then
     kill_info.bonusxp = 0
     kill_info.xp = wildcards[1]
+    kill_info.time = GetInfo(304)
+    kill_info.bcasted = false
+    --DoAfterSpecial(.2, 'broadcast_kill()', 12)
+    EnableTrigger ("deadtrig", true)
+    -- enable deadtrig
   elseif name == 'bonusxp' then
     kill_info.bonusxp = wildcards[1]
   end
-
 end
 
 function vorpmob( name, line, wildcards)
@@ -154,14 +170,20 @@ function mobgold( name, line, wildcards )
     kill_info.gold = wildcards[2]
   end
   kill_info.gold = string.gsub(kill_info.gold, ",", "")
-  kill_info.time = GetInfo(304)
-  var.kill_info = serialize.save( "kill_info", kill_info )
-  phelper:broadcast(1, var.kill_info)
+end
+
+function broadcast_kill()
+  if kill_info.bcasted == false then
+    var.kill_info = serialize.save( "kill_info", kill_info )
+    phelper:broadcast(1, var.kill_info)
+    --disable deadtrig
+  end
+  EnableTrigger ("deadtrig", false)
   kill_info = {}
   kill_info.tp = 0
   kill_info.vorpal = 0
   kill_info.vorpal_weapon = ''
-
+  kill_info.bcasted = true 
 end
 
 function trivmob( name, line, wildcards )
@@ -178,8 +200,11 @@ function OnPluginBroadcast (msg, id, name, text)
   if msg == 1 and id == "8a710e0783b431c06d61a54c" then
 
     -- get one variable
-    kill_info.mob = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
-    kill_info.level = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
+    mob = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
+    if mob ~= nil and mob ~= "" and kill_info.bcasted then
+      kill_info.mob = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
+      kill_info.level = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
+    end
 
   end -- stats changed
 
@@ -236,20 +261,6 @@ end -- function OnPluginSaveState
 
 ]]>
 </script>
-
-<aliases>
-  <alias
-   name="plugin_parse"
-   script="plugin_parse_helper"
-   match="nothing"
-   enabled="y"
-   regexp="y"
-   ignore_case="y"
-   sequence="110"
-   expand_variables="y"
-  >
-  </alias>
-</aliases>
 
 <script>
 <![CDATA[
