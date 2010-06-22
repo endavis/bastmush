@@ -61,7 +61,7 @@ require "aardutils"
 require "tprint"
 require "ldplugin"
 
-db = Statdb{}
+db = Statdb:new{}
 
 quest_stuff = {}
 hourtotals = {}

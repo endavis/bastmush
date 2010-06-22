@@ -38,7 +38,7 @@ require "tprint"
 require "aardutils"
 require "ldplugin"
 
-db = Statdb{}
+db = Statdb:new{}
 
 function savelevel()
   local pvar = GetPluginVariable(  "aaa0ab9ed92f8fc614664bd1" , "levelinfo")
@@ -195,9 +195,24 @@ function ListMilestones(cmddict)
   end
   if db:open() then
     if db:checkfortable('stats') then
-      phelper:plugin_header("Milestones")
-      for a in db.db:nrows(sql) do
-        ColourNote(RGBColourToName(phelper.plugin_colour), "black", a['milestone'])
+      max = nil
+      min = nil
+      sql2 = "SELECT MIN(totallevels) as MIN, MAX(totallevels) as MAX FROM stats WHERE stats.totallevels == stats.milestone"
+      for a in db.db:nrows(sql2) do 
+        max = a['MAX']
+        min = a['MIN']
+      end
+      phelper:plugin_header("Milestones")      
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", 'levels between ' .. min .. ' and ' .. max)
+      for b in db.db:nrows(sql) do
+          test = tonumber(b['milestone'])
+          if test ~= nil then
+            if test > tonumber(max) or test < tonumber(min) then
+              ColourNote(RGBColourToName(phelper.plugin_colour), "black", b['milestone'])
+            end
+          else
+            ColourNote(RGBColourToName(phelper.plugin_colour), "black", b['milestone'])
+          end
       end
       ColourNote( "", "", "")
     end
