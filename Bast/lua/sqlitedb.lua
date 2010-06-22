@@ -1,11 +1,13 @@
 -- $Id$
-require 'class'
+
 require 'tprint'
 require 'verify'
 require 'pluginhelper'
 require 'var'
 
-class "Sqlitedb"
+local Object = require 'objectlua.Object'
+
+Sqlitedb = Object:subclass()
 
 function Sqlitedb:initialize(args)
   self.dbloc = GetPluginVariable ("", "dblocation") or GetInfo(58)

@@ -19,18 +19,16 @@ SELECT AVG(finishtime - starttime) FROM gquests where won = 1
 
 --]]
 
-require 'class'
 require 'tprint'
 require 'verify'
 require 'pluginhelper'
 require 'sqlitedb'
 require 'aardutils'
 
-
-class "Statdb"(Sqlitedb)
+Statdb = Sqlitedb:subclass()
 
 function Statdb:initialize(args)
-  super(args)   -- notice call to superclass's constructor
+  super(self, args)   -- notice call to superclass's constructor
   self.dbname = "/stats.db"
 end
 
