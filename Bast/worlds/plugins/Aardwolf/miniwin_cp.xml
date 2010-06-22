@@ -47,6 +47,8 @@ cpwin:set_default('windowpos', 7)
 cpwin:set_default('font_size', 7)
 cpwin:set_default('font', 'Verdana')
 cpwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
+cpwin:add_setting("mobdead_colour", {help="the colour for when a mob is dead", type="colour", default=verify_colour("red"), sortlev=1})
+cpwin:add_setting("notlevel_colour", {help="the colour for when this cp is no longer from this level", type="colour", default=verify_colour("cyan"), sortlev=1})
 --cpwin:disable()
 
 cpmobs = {}
@@ -75,7 +77,7 @@ function show_cp_text ()
     style = {}
     style.text = v.name .. " (" .. v.room .. ")"
     if verify_bool(v.mobdead) then
-      style.textcolour = "yellow"
+      style.textcolour = "mobdead_colour"
     end
     table.insert (texttable, {style})
   end -- for
@@ -90,7 +92,7 @@ function show_cp_text ()
   if tonumber(level.level) == tonumber(curlevel) then
     style.textcolour = cpwin.text_colour
   else
-    style.textcolour = 'red'
+    style.textcolour = "notlevel_colour"
   end
   table.insert(tstyle, style)
   table.insert (texttable, tstyle)

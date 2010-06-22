@@ -342,6 +342,13 @@ cp_info = {}
       name="cp_timer"
       >
   </timer>
+  <timer
+      script="mob_timer"
+      enabled="n"
+      minute="5"
+      name="mob_timer"
+      >
+  </timer>  
 </timers>
 
 
@@ -378,7 +385,6 @@ function cleanname(name)
 end
 
 function campaign_item (name, line, wildcards)
-  phelper:mdebug(wildcards)
   name = wildcards.name
   mobdead = false
   room = wildcards.room
@@ -386,6 +392,11 @@ function campaign_item (name, line, wildcards)
     tlist = utils.split(room, '-')
     room = trim(tlist[1])
     mobdead = true
+  end
+  if mobdead then
+    if GetTimerInfo("mob_timer", 6) == false then
+      check(EnableTimer("mob_timer", true))
+    end
   end
   if not name or not room then
     print("error parsing line: ", line)
@@ -396,28 +407,7 @@ function campaign_item (name, line, wildcards)
 end -- campaign_item
 
 function cp_mob_dead (name, line, wildcards)
-  local tenemy = enemy
-  local found = false
-  if var.tdebug == "true" then
-    print("Enemy:", string.lower(enemy))
-  end
-  for i,v in ipairs(mobsleft) do
-    if var.tdebug == "true" then
-      print("Clean:", v.clean)
-    end
-    if v.clean == string.lower(tenemy) then
-      table.remove(mobsleft, i)
-      found = true
-      break
-    end
-  end
-  if found then
-    var.mobs = serialize.save( "mobs", mobsleft )
-    phelper:broadcast(1, var.mobs)
-  else
-    print("CP: could not find mob", enemy)
-    Execute("cp check")
-  end
+  Execute("cp check")
 end
 
 function cp_time (name, line, wildcards)
@@ -451,8 +441,10 @@ function cp_time (name, line, wildcards)
   end
   var.mobs = serialize.save( "mobs", mobsleft )
   phelper:broadcast(1, var.mobs)
-  update_timer()
-  check(EnableTimer("cp_timer", true))
+  build_time()
+  if GetTimerInfo("cp_timer", 6) == false then
+    check(EnableTimer("cp_timer", true))
+  end
 
 end -- cp_time
 
@@ -484,7 +476,7 @@ function campaign_complete(name, line, wildcards)
   cp_info['finishtime'] = GetInfo(304)
 end
 
-function update_timer()
+function build_time()
   -- how long to go
   local time_to_go = when_required - os.time ()
   timer['secs'] = time_to_go
@@ -495,6 +487,22 @@ function update_timer()
   timer['mins'] = mins
   var.timer = serialize.save( "timer", timer )
   phelper:broadcast(2, var.timer)
+end
+
+function update_timer()
+  build_time()
+end
+
+function mob_timer()
+  for i,v in ipairs(mobsleft) do
+    if v.mobdead == true then
+      Execute("cp check")
+      return
+    end
+  end
+  if GetTimerInfo("mob_timer", 6) == true then
+    check(EnableTimer("mob_timer", false))
+  end  
 end
 
 function cp_check( name, line, wildcards)
@@ -587,22 +595,6 @@ end -- function OnPluginSaveState
 
 ]]>
 </script>
-
-<!--  Aliases  -->
-
-<aliases>
-  <alias
-   name="plugin_parse"
-   script="plugin_parse_helper"
-   match="nothing"
-   enabled="y"
-   regexp="y"
-   ignore_case="y"
-   sequence="110"
-   expand_variables="y"
-  >
-  </alias>
-</aliases>
 
 <script>
 <![CDATA[
