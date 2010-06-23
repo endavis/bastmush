@@ -14,6 +14,8 @@ require 'serialize'
 require 'copytable'
 require 'tablefuncs'
 
+AddFont (GetInfo (66) .. "\\Dina.fon")
+
 local Object = require 'objectlua.Object'
 
 Phelpobject = Object:subclass()
