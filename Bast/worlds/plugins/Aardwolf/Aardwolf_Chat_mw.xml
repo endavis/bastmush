@@ -9,13 +9,13 @@
 <muclient>
     <plugin
     name="Chat_Capture_Miniwindow"
-    author="Fiendish"
+    author="Fiendish/Bast"
     id="b555825a4a5700c35fa80780"
     language="Lua"
     purpose="Move chats to a miniwindow"
     date_written="2010-04-04"
     requires="4.51"
-    version="1.0"
+    version="1.01"
     save_state="y"
     >
 

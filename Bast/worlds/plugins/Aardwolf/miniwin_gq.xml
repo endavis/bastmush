@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2009-02-22 21:20:25"
    requires="4.38"
-   version="1.0"
+   version="2.0"
    >
 <description trim="y">
 Redirects the gq to the miniwindow.

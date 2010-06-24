@@ -14,13 +14,13 @@ world you want chats to go to.
 <muclient>
 <plugin
    name="Aardwolf_Chat"
-   author="Nick Gammon"
+   author="Nick Gammon/Bast"
    id="c46cf2efaba34c42b3dd17bf"
    language="Lua"
    purpose="Redirects Aardwolf chat messages"
    date_written="2008-06-18"
    requires="4.08"
-   version="1.0"
+   version="1.01"
    save_state="y"
    >
 <description trim="y">
