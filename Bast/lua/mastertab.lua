@@ -18,7 +18,7 @@ function Mastertabwin:initialize(args)
   self.tabcount = 0
   self.hotspots = {}
   self.alreadyhidden = false
-  self:add_setting( 'orientation', {type="number", help="orientation of the tabs, 0 = horizontal, 1 = vertical", low=0, high=1, default=0, sortlev=44})
+  self:add_setting( 'orientation', {type="number", help="orientation of the tabs, 0 = horizontal, 1 = vertical", low=0, high=1, default=1, sortlev=44})
 
   local td = {}
   td.id = GetPluginID()
@@ -102,6 +102,7 @@ function Mastertabwin:drawtabs()
   elseif self.orientation == 1 then
     self:drawtabs_vertical()
   end
+  self:show(true)
 end
 
 function Mastertabwin:drawtabs_vertical()

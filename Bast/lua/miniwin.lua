@@ -148,7 +148,7 @@ function Miniwin:initialize(args)
   self:add_setting( 'height', {type="number", help="height of this window, 0 = auto", low=0, high=140, default=0, sortlev=44})
   self:add_setting( 'height_padding', {type="number", help="height padding for this window", low=0, high=30, default=5, sortlev=44})
   self:add_setting( 'width_padding', {type="number", help="width padding for this window", low=0, high=30, default=5, sortlev=44})
-  self:add_setting( 'use_tabwin', {type="bool", help="toggle to use tabwin", default=verify_bool(false), sortlev=50})
+  self:add_setting( 'use_tabwin', {type="bool", help="toggle to use tabwin", default=verify_bool(true), sortlev=50})
 
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
