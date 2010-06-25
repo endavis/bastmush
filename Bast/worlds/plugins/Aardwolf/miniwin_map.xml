@@ -94,6 +94,7 @@ mapwin:set_default('header_height', 2)
 legwin = Miniwin:new{name="Legend"}
 legwin:set_default('header_height', 0)
 legwin:set_default('windowpos', 12)
+legwin:set_default('use_tabwin', false)
 
 map_lines = {}
 coords = nil
