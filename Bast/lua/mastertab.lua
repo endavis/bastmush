@@ -5,6 +5,7 @@
 require 'miniwin'
 require 'tprint'
 require 'copytable'
+require 'tablefuncs'
 
 Mastertabwin = Miniwin:subclass()
 --string.gsub(tests, "[a-zA-z]", " ")
@@ -13,7 +14,8 @@ Mastertabwin = Miniwin:subclass()
 function Mastertabwin:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.tabs = {}
-  self.tab_padding = 10
+  --self.tab_padding = 10
+  self.tab_padding = 0
   self.text = {}
   self.tabcount = 0
   self.hotspots = {}
@@ -106,9 +108,11 @@ function Mastertabwin:drawtabs()
 end
 
 function Mastertabwin:drawtabs_vertical()
-  self:mdebug('drawtabs_vertical')
+  --self:mdebug('drawtabs_vertical')
   local ttext = {}
   for i,v in tableSort(self.tabs, 'name', 'Default') do
+    --self:mdebug('v in drawtab_vertical', v)
+    --local tabcolour = v.tabcolour or self.bg_colour
     local start = self.width_padding
     local tstyle = {}
     if type(v.text) == 'table' then
@@ -124,25 +128,37 @@ function Mastertabwin:drawtabs_vertical()
       table.insert(tstyle, style)
       v['end'] = nil
     end
+    tstyle.leftborder = true
+    tstyle.rightborder = true
+    tstyle.topborder = true
+    tstyle.bottomborder = true
+    tstyle.bordercolour = self.border_colour
+    tstyle.backcolour = v.tabcolour or nil
+    --self:mdebug('style being added', tstyle)
     table.insert(ttext, tstyle)
   end
-  self:mdebug('ttext in drawtabs_vertical', ttext)
+  --self:mdebug('ttext in drawtabs_vertical', ttext)
   self:createwin(ttext)
 end
 
 function Mastertabwin:drawtabs_horizontal()
-  self:mdebug('drawtabs_horizontal')
+  --self:mdebug('drawtabs_horizontal')
   outputwinwidth = GetInfo(281)
   local alltext = {}
   local ttext = {}
   local start = self.width_padding
+   
   for i,v in tableSort(self.tabs, 'name', 'Default') do
     start = start + self.tab_padding / 2
     v.start = start
+    local tstyle = {}
     if type(v.text) == 'table' then
       for init,istyle in ipairs(v.text) do
         local style = self:createtabstyle(start, i, istyle)
-        table.insert(ttext, style)
+        tstyle.topborder = true
+        tstyle.bottomborder = true
+        tstyle.backcolour = v.tabcolour or nil
+        table.insert(tstyle, style)
         start = start + style.length
       end
       start = start + self.tab_padding / 2
@@ -150,69 +166,24 @@ function Mastertabwin:drawtabs_horizontal()
     else
       v.start = start
       local style = self:createtabstyle(start, i, {text = v.text})
-      table.insert(ttext, style)
+      style.backcolour = v.tabcolour or nil
+      table.insert(tstyle, style)
       start = start + style.length + self.tab_padding / 2
       v['end'] = start
     end
-    if start > outputwinwidth / 2 then
-      table.insert(alltext, ttext)
-      ttext = {}
-    end
-    if next(ttext) then
-      table.insert(alltext, ttext)
-    end
+    tstyle[1].leftborder = true
+    tstyle[#tstyle].rightborder = true
+    tableExtend(ttext, tstyle)
+    --if self.x + start > (outputwinwidth - self.x) / 2 then
+    --  table.insert(alltext, ttext)
+    --  start = self.width_padding
+    --  ttext = {}
+    --end
   end
-  self:mdebug('ttext in drawtabs_horizontal', ttext)
+  table.insert(alltext, ttext)
+  --self:mdebug('ttext in drawtabs_horizontal', ttext)
   self:mdebug('alltext in drawtabs_horizontal', alltext)
   self:createwin(alltext)
-end
-
-function Mastertabwin:drawwin()
-  self:mdebug('drawing tab win')
-  if not next(self.text) then
-    return
-  end
-
-  if self.change_orient then
-    self.change_orient = false
-    self:drawtabs()
-  end
-
-  self:pre_create_window_internal()
-
-  if self.orientation == 1 then
-    j = 1
-    for i,v in tableSort(self.tabs, 'name', 'Default') do
-      local tabcolour = v.tabcolour or self.bg_colour
-      local bcolour = self:get_colour(tabcolour)
-      WindowRectOp (self.id, 2, self.width_padding, self:get_top_of_line(j), self:calc_window_width() - self.width_padding, self:get_bottom_of_line(j), bcolour)
-      if j > 1 then
-        WindowLine (self.id, 1, self:get_top_of_line(j), self:calc_window_width() - 1, self:get_top_of_line(j), ColourNameToRGB ("white"), 0, 1)
-      end
-      j = j + 1
-    end
-  end
-
-  if self.orientation == 0 then
-    for i,v in tableSort(self.tabs, 'name', 'Default') do
-      local tabcolour = v.tabcolour or self.bg_colour
-      local bcolour = self:get_colour(tabcolour)
-      local tend = v['end']
-      if tend > self:calc_window_width() - self.width_padding then
-        tend = self:calc_window_width() - self.width_padding
-      end
-
-      WindowRectOp (self.id, 2, v.start - self.tab_padding / 2, self:get_top_of_line(1), v['end'], self:get_bottom_of_line(1), bcolour)
-      WindowLine (self.id, v['end'] - 1, 0, v['end'] - 1, self.window_data.height, ColourNameToRGB ("white"), 0, 1)
-    end
-  end
-
-  for i, v in ipairs (self.window_data) do
-    self:Display_Line (i, self.window_data[i].text)
-  end -- for
-
-  self:post_create_window_internal()
-
 end
 
 function Mastertabwin:set(option, value, args)

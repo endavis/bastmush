@@ -106,7 +106,7 @@ end
 <script>
 <![CDATA[
 
-phelper:set_default('cmd', 'mtb')
+phelper:set_default('cmd', 'mtab')
 
 phelper:add_pobject('win', tabwin)
 
