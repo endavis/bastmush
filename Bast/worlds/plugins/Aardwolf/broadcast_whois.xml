@@ -150,6 +150,13 @@ whoisinfo = {}
    sequence="101"
   >
   </trigger>
+  <trigger
+   enabled="y"
+   match="Welcome to Aardwolf. May your adventures be mystical, challenging and rewarding."
+   name="check_whois"
+   script="check_whois"
+  >
+  </trigger>  
 </triggers>
 
 <aliases>
@@ -191,6 +198,12 @@ function whois_start(name, line, wildcards)
   phelper:enabletriggroup("whois", true)
   --SendNoEcho('nopretitle')
   Send(line)
+end
+
+function check_whois(name, line, wildcards)
+  if not verify_bool(phelper.seenwhois) then
+     Execute("whois")
+  end
 end
 
 function whois_line1(name, line, wildcards)
@@ -303,8 +316,11 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
+
 phelper:set_default('cmd', 'bwhois')
 phelper:set_default('plugin_colour', 'orange')
+
+phelper:add_setting('seenwhois', {help="have seen a whois for StatDB", type="bool", default=false, readonly=true})
 
 phelper:enable()
 

@@ -58,7 +58,7 @@ function show_noexp ()
     noexpwin:enable()
     noexpwin:createwin(styles)
     style = {}
-    style.text = "** NOEXP **"
+    style.text = " ** NOEXP ** "
     style.textcolour = noexpwin.text_colour
     noexpwin:tabbroadcast(true, {style})
   end

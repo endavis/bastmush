@@ -54,7 +54,7 @@ function show_double (ttimer)
   doublewin:enable()
   doublewin:createwin(styles)
   style = {}
-  style.text = 'Double: ' .. ttimer.text
+  style.text = ' Double: ' .. ttimer.text .. ' '
   style.textcolour = doublewin.text_colour
   doublewin:tabbroadcast(true, {style})
 

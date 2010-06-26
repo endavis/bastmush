@@ -76,6 +76,7 @@ function build_quest()
   style = {}
   style.text = " Quest: On "
   style.textcolour = questwin.time_colour
+  style.backcolour = questwin.bg_colour
   questwin.tabcolour = questwin.bg_colour
   questwin:tabbroadcast(true, {style})
   questwin:show(true)
@@ -116,6 +117,7 @@ function OnPluginBroadcast (msg, id, name, text)
       style = {}
       style.text = ' Quest: Now '
       style.textcolour = questwin.avail_colour
+      style.backcolour = questwin.avail_bg_colour
       questwin.tabcolour = questwin.avail_bg_colour
       questwin:tabbroadcast(true, {style})
     elseif msg == 2 then
@@ -141,6 +143,7 @@ function OnPluginBroadcast (msg, id, name, text)
       style = {}
       style.text = ' Quest: Comp '
       style.textcolour = questwin.text_colour
+      style.backcolour = questwin.bg_colour
       questwin.tabcolour = questwin.bg_colour
       questwin:tabbroadcast(true, {style})
     elseif msg == 5 then
@@ -165,6 +168,7 @@ function OnPluginBroadcast (msg, id, name, text)
       style = {}
       style.text = ' Quest: ' .. timer.text .. ' '
       style.textcolour = questwin.time_colour
+      style.backcolour = questwin.bg_colour      
       tstyle = {style}
       questwin.tabcolour = questwin.bg_colour
       questwin:tabbroadcast(true, tstyle)
