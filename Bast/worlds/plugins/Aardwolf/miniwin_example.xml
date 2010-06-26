@@ -53,10 +53,11 @@ table.insert(styles2, {stylet})
 style = {}
 style.text = "New Test Text Line 1 @yNew Test Text Line 1@x @CNew Test Text Line 1@x New Test Text Line 1"
 style.hjust = 'center'
-style.backcolour = 'red'
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
-table.insert(styles, {style})
+nstyle = {style}
+nstyle.backcolour = 'red'
+table.insert(styles, nstyle)
 --table.insert(styles2, {style})
 
 -- Second Line, several styles
@@ -64,10 +65,15 @@ tstyle = {}
 
 -- Very Large Text
 style = {}
-style.text = "Large"
+style.text = " Large "
 style.font_name = 'Courier New'
 style.font_size = 30
 style.backcolour = "blue"
+style.leftborder = true
+style.rightborder = true
+style.topborder = true
+style.bottomborder = true
+style.borderstyle = 1
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(tstyle, style)
@@ -83,27 +89,38 @@ table.insert(tstyle, style)
 
 -- Some text
 style = {}
-style.text = "Just Text "
+style.text = " Just Text "
+style.leftborder = true
+style.rightborder = true
+style.topborder = true
+style.bottomborder = true
+style.bordercolour = "yellow"
+style.borderwidth = 2
+style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
-style.hint = 'Default Vertical Alignment of Top'
 table.insert(tstyle, style)
 
 -- Justify Bottom Vertically with hyperlink
 style = {}
-style.text = "Bottom Vertically (Bold) "
+style.text = " Bottom Vertically (Bold) "
 style.vjust = 'bottom'
 style.bold = true
+style.leftborder = true
+style.rightborder = true
+style.topborder = true
+style.bottomborder = true
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(tstyle, style)
 
 -- Justify larger text, Arial Font, red text, green background
 style = {}
-style.text = "Center Vertically"
+style.text = " Center Vertically "
 style.font_name = 'Arial'
 style.font_size = 15
 style.backcolour = "green"
 style.textcolour = "red"
+style.fillall = true
 style.vjust = 'center'
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
@@ -143,7 +160,15 @@ style.mouseover = nofunc
 table.insert(styles, {style})
 styles2 = copytable.deep(styles)
 
-table.insert(styles, {popup_style(testwin2, "Show Miniwin Example 2", "yellow")})
+style = {popup_style(testwin2, "Show Miniwin Example 2", "blue")}
+style[1].hjust='center'
+style.leftborder = true
+style.rightborder = true
+style.topborder = true
+style.bottomborder = true
+style.backcolour = 'white'
+
+table.insert(styles, style)
 ]]>
 </script>
 
