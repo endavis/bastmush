@@ -30,6 +30,13 @@ styles can have the following
   style.cancelmouseover
   style.cursor
   style.hint
+  style.leftborder (true or false)
+  style.rightborder (true or false)
+  style.bottomborder (true or false)
+  style.topborder (true or false)
+  style.bordercolour (default white)
+  style.borderstyle (default 0)
+  style.borderwidth (default 1)
 
 TODO: add footer
 TODO: fix setting header as a static line or though the style passed in
@@ -142,6 +149,7 @@ function Miniwin:initialize(args)
   self:add_setting( 'header_height', {type="number", help="the header height", default=1, low=0, high=10, sortlev=5})
   self:add_setting( 'footer_bg_colour', {type="colour", help="footer colour for this window", default=0x696969, sortlev=6})
   self:add_setting( 'footer_text_colour', {type="colour", help="footer text colour for this window", default=0x00FF00, sortlev=6})
+  self:add_setting( 'border_colour', {type="colour", help="background colour for this window", default="white", sortlev=7})
   self:add_setting( 'font_size', {type="number", help="font_size for this window", low=2, high=30, default=8, sortlev=43})
   self:add_setting( 'font', {type="string", help="change the font for this window", default=self:getdefaultfont(), sortlev=43})
   self:add_setting( 'width', {type="number", help="width of this window, 0 = auto", low=0, high=100, default=0, sortlev=44})
@@ -529,7 +537,7 @@ function Miniwin:make_hyperlink_text (text, id, line, left, action, hint, cursor
 --  tprint(ttext)
   --local retval = WindowText (self.id, self.font_id, text, left, top, right, bottom, self.hyperlink_colour)
   if text then
-    left, top, right, bottom = self:Display_Line(line, ttext.text)
+    left, top, right, bottom = self:Display_Line(line, ttext)
   end
 
   return right
@@ -582,17 +590,18 @@ function Miniwin:get_line_data(line, type)
   return -1
 end
 
-function Miniwin:convert_line(line, styles)
+function Miniwin:convert_line(linenum, line)
+  --self:mdebug('original line', line)
   local linet = {}
   local def_font_id = self.default_font_id
   local maxfontheight = 0
   local start = self.width_padding
-  if line <= self.header_height and line > 0 then
+  if linenum <= self.header_height and linenum > 0 then
     def_font_id = self.default_font_id_bold
   end
   linet.text = {}
-  if type(styles) == 'table' then
-    for i,style in ipairs(styles) do
+  if type(line) == 'table' then
+    for i,style in ipairs(line) do
       table.insert(linet.text, i, {})
       font_id = self:addfont(style.font_name or self.fonts[def_font_id].font_name,
                       style.font_size or self.fonts[def_font_id].size,
@@ -624,11 +633,28 @@ function Miniwin:convert_line(line, styles)
       linet.text[i].mouseover = style.mouseover
       linet.text[i].cancelmouseover = style.cancelmouseover
       linet.text[i].hint = style.hint
+      linet.text[i].leftborder = style.leftborder
+      linet.text[i].rightborder = style.rightborder
+      linet.text[i].bottomborder = style.bottomborder
+      linet.text[i].topborder = style.topborder
+      linet.text[i].bordercolour = style.bordercolour or self.border_colour
+      linet.text[i].borderstyle = style.borderstyle
+      linet.text[i].borderwidth = style.borderwidth
+      linet.text[i].fillall = style.fillall
     end
+
+    linet.leftborder = line.leftborder or false
+    linet.rightborder = line.rightborder or false
+    linet.bottomborder = line.bottomborder or false
+    linet.topborder = line.topborder or false
+    linet.borderstyle = line.borderstyle or 0
+    linet.borderwidth = line.borderwidth or 1
+    linet.bordercolour = line.bordercolour or self.border_colour
+    linet.backcolour = line.backcolour or nil
   else
       table.insert(linet.text, 1, {})
       linet.text[1].font_id = self.default_font_id
-      linet.text[1].text = styles
+      linet.text[1].text = line
       linet.text[1].start = start
       maxfontheight = math.max(maxfontheight, self.fonts[self.default_font_id].height)
       local tlength = WindowTextWidth (self.id, self.default_font_id, linet.text[1].text)
@@ -636,6 +662,7 @@ function Miniwin:convert_line(line, styles)
   end
   linet.width = start + self.width_padding
   linet.height = maxfontheight
+  --self:mdebug('converted line', linet)
   return linet
 end
 
@@ -711,39 +738,46 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
 end -- colourtext
 
 
-function Miniwin:Display_Line (line, styles)
+function Miniwin:Display_Line (linenum, styles)
+  self:mdebug('Displaying', styles)
   local def_font_id = self.default_font_id
   local def_colour = self:get_colour("text_colour")
   local def_bg_colour = self:get_colour("bg_colour")
   local left = self.width_padding
   local start = left
   local largestwidth = 0
-  local bottom = self:get_bottom_of_line(line)
-  local top = self:get_top_of_line(line)
-  for i,v in ipairs (styles) do
+  local bottom = self:get_bottom_of_line(linenum)
+  local top = self:get_top_of_line(linenum)
+
+  local tbackcolour = styles.backcolour
+  if tbackcolour then
+     WindowRectOp (self.id, 2, 0 + self.width_padding, top, self:calc_window_width() - self.width_padding, bottom, ColourNameToRGB (tbackcolour) )
+  end
+
+  for i,v in ipairs (styles.text) do
     local textlen = 0
     local tstart = v.start
     local ttop = top
     if v.vjust ~= nil then
       if v.vjust == 'center' then
-        local theight = self:get_line_data(line, 'height')
+        local theight = self:get_line_data(linenum, 'height')
         local fheight = WindowFontInfo(self.id, v.font_id, 1)
         ttop = ttop + (theight - fheight) / 2
       elseif v.vjust == 'bottom' then
-        local theight = self:get_line_data(line, 'height')
+        local theight = self:get_line_data(linenum, 'height')
         local fheight = WindowFontInfo(self.id, v.font_id, 1)
         ttop = ttop + theight - fheight
       end
     end
     if v.hjust ~= nil then
       if v.hjust == 'center' then
-        local twidth = self:get_line_data(line, 'width')
+        local twidth = self:get_line_data(linenum, 'width')
         local wwidth = self:calc_window_width()
         local restt = twidth - tstart
         local restw = wwidth - tstart
         tstart = tstart + (restw - restt) / 2
       elseif v.hjust == 'right' then
-        local twidth = self:get_line_data(line, 'width')
+        local twidth = self:get_line_data(linenum, 'width')
         local wwidth = self:calc_window_width()
         local restt = twidth - tstart
         local restw = wwidth - tstart
@@ -751,7 +785,7 @@ function Miniwin:Display_Line (line, styles)
       end
     end
     local tlength = WindowTextWidth (self.id, v.font_id, strip_colours(v.text))
-    if line <= self.header_height and line > 0 then
+    if linenum <= self.header_height and linenum > 0 then
       def_colour = self:get_colour("header_text_colour")
       textlen = WindowText (self.id, self.default_font_id_bold, strip_colours(v.text),
                  tstart, ttop, 0, 0, def_colour)
@@ -759,17 +793,36 @@ function Miniwin:Display_Line (line, styles)
       if v.backcolour and not (v.backcolour == 'bg_colour') then
         -- draw background rectangle
         local bcolour = self:get_colour(v.backcolour, def_bg_colour)
-        WindowRectOp (self.id, 2, tstart, ttop, tstart + tlength, ttop + WindowFontInfo(self.id, v.font_id, 1), bcolour)
+        if v.fillall then
+          WindowRectOp (self.id, 2, tstart, top, tstart + tlength, bottom + 1, bcolour)
+        else
+          WindowRectOp (self.id, 2, tstart, ttop, tstart + tlength, ttop + WindowFontInfo(self.id, v.font_id, 1), bcolour)
+        end
       end
       if v.textcolour ~= nil then
         local tcolour = self:get_colour(v.textcolour)
         textlen = WindowText (self.id, v.font_id, strip_colours(v.text),
                       tstart, ttop, 0, 0, tcolour)
-      elseif line <= self.header_height and line > 0 then
+      elseif linenum <= self.header_height and linenum > 0 then
 
       else
         textlen = self:colourtext(v.font_id, v.text, tstart, ttop, 0, 0)
       end
+    end
+    tbordercolour = v.bordercolour
+    tborderwidth = v.borderwidth or 1
+    tborderstyle = v.borderstyle or 0
+    if v.topborder then
+        WindowLine (self.id, v.start, top, v.start + textlen, top, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+    end
+    if v.bottomborder then
+        WindowLine (self.id, v.start, bottom, v.start + textlen + 1, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+    end
+    if v.leftborder then
+        WindowLine (self.id, v.start, top, v.start, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+    end
+    if v.rightborder then
+        WindowLine (self.id, v.start + textlen, top, v.start + textlen, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
     end
     left = tstart + textlen
     if v.mousedown ~= nil or
@@ -777,9 +830,25 @@ function Miniwin:Display_Line (line, styles)
        v.mouseup ~= nil or
        v.mouseover ~= nil or
        v.cancelmouseover ~= nil then
-      self:buildhotspot(v, tstart, ttop, left, bottom)
+      self:buildhotspot(v, tstart, top, left, bottom + 1)
     end
   end -- for each style run
+
+  tbordercolour = styles.bordercolour
+  tborderwidth = styles.borderwidth or 1
+  tborderstyle = styles.borderstyle or 0
+  if styles.topborder then
+      WindowLine (self.id, 0 + self.width_padding, top, self:calc_window_width() - self.width_padding, top, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+  end
+  if styles.bottomborder then
+      WindowLine (self.id, 0 + self.width_padding, bottom, self:calc_window_width() - self.width_padding + 1, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+  end
+  if styles.leftborder then
+      WindowLine (self.id, 0 + self.width_padding, top, 0 + self.width_padding, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+  end
+  if styles.rightborder then
+      WindowLine (self.id, self:calc_window_width() - self.width_padding, top, self:calc_window_width() - self.width_padding, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+  end
 
   return start, top, left, bottom
 
@@ -877,7 +946,7 @@ function Miniwin:drawwin()
   self:pre_create_window_internal()
 
   for i, v in ipairs (self.window_data) do
-    self:Display_Line (i, self.window_data[i].text)
+    self:Display_Line (i, self.window_data[i])
   end -- for
 
   self:post_create_window_internal()
@@ -988,7 +1057,19 @@ function Miniwin:dragrelease(flags, hotspot_id)
 end -- dragrelease
 
 function Miniwin:tabbroadcast(flag, text)
-  local ttext = text or self.lasttabtext or self.cname
+  local ttext = ""
+  if text then
+    if not next(text) then
+      ttext = " " .. text .. " "
+    else
+      ttext = text
+    end
+  elseif self.lasttabtext then
+    ttext = self.lasttabtext
+  elseif self.cname then
+    ttext = " " .. self.cname .. " "
+  end
+  
   if self.use_tabwin then
     local td = {}
     td.id = GetPluginID()
