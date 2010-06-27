@@ -749,9 +749,8 @@ function Miniwin:Display_Line (linenum, styles)
   local bottom = self:get_bottom_of_line(linenum)
   local top = self:get_top_of_line(linenum)
 
-  local tbackcolour = styles.backcolour
-  if tbackcolour then
-     WindowRectOp (self.id, 2, 0 + self.width_padding, top, self:calc_window_width() - self.width_padding, bottom, ColourNameToRGB (tbackcolour) )
+  if styles.backcolour then
+     WindowRectOp (self.id, 2, 0 + self.width_padding, top, self:calc_window_width() - self.width_padding, bottom, verify_colour (styles.backcolour) )
   end
 
   for i,v in ipairs (styles.text) do
@@ -813,16 +812,16 @@ function Miniwin:Display_Line (linenum, styles)
     tborderwidth = v.borderwidth or 1
     tborderstyle = v.borderstyle or 0
     if v.topborder then
-        WindowLine (self.id, v.start, top, v.start + textlen, top, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+        WindowLine (self.id, v.start, top, v.start + textlen, top, verify_colour (tbordercolour), tborderstyle, tborderwidth)
     end
     if v.bottomborder then
-        WindowLine (self.id, v.start, bottom, v.start + textlen + 1, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+        WindowLine (self.id, v.start, bottom, v.start + textlen + 1, bottom, verify_colour (tbordercolour), tborderstyle, tborderwidth)
     end
     if v.leftborder then
-        WindowLine (self.id, v.start, top, v.start, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+        WindowLine (self.id, v.start, top, v.start, bottom, verify_colour (tbordercolour), tborderstyle, tborderwidth)
     end
     if v.rightborder then
-        WindowLine (self.id, v.start + textlen, top, v.start + textlen, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+        WindowLine (self.id, v.start + textlen, top, v.start + textlen, bottom, verify_colour (tbordercolour), tborderstyle, tborderwidth)
     end
     left = tstart + textlen
     if v.mousedown ~= nil or
@@ -838,16 +837,16 @@ function Miniwin:Display_Line (linenum, styles)
   tborderwidth = styles.borderwidth or 1
   tborderstyle = styles.borderstyle or 0
   if styles.topborder then
-      WindowLine (self.id, 0 + self.width_padding, top, self:calc_window_width() - self.width_padding, top, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+      WindowLine (self.id, 0 + self.width_padding, top, self:calc_window_width() - self.width_padding, top, verify_colour (tbordercolour), tborderstyle, tborderwidth)
   end
   if styles.bottomborder then
-      WindowLine (self.id, 0 + self.width_padding, bottom, self:calc_window_width() - self.width_padding + 1, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+      WindowLine (self.id, 0 + self.width_padding, bottom, self:calc_window_width() - self.width_padding + 1, bottom, verify_colour (tbordercolour), tborderstyle, tborderwidth)
   end
   if styles.leftborder then
-      WindowLine (self.id, 0 + self.width_padding, top, 0 + self.width_padding, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+      WindowLine (self.id, 0 + self.width_padding, top, 0 + self.width_padding, bottom, verify_colour (tbordercolour), tborderstyle, tborderwidth)
   end
   if styles.rightborder then
-      WindowLine (self.id, self:calc_window_width() - self.width_padding, top, self:calc_window_width() - self.width_padding, bottom, ColourNameToRGB (tbordercolour), tborderstyle, tborderwidth)
+      WindowLine (self.id, self:calc_window_width() - self.width_padding, top, self:calc_window_width() - self.width_padding, bottom, verify_colour (tbordercolour), tborderstyle, tborderwidth)
   end
 
   return start, top, left, bottom
