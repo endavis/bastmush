@@ -34,6 +34,7 @@ require 'miniwin'
 require 'tprint'
 require 'pluginhelper'
 require 'ldplugin'
+require 'verify'
 
 noexpwin = Miniwin:new{name="Noexp"}
 noexpwin:set_default('font', 'Comic Sans MS')

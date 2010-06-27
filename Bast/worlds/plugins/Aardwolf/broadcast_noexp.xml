@@ -66,6 +66,7 @@ Example:
 
 require "var"
 require "pluginhelper"
+require "verify"
 
 
 function noexp(name, line, wildcards)
