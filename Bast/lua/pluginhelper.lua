@@ -58,6 +58,7 @@ require "utils"
 require "tablefuncs"
 require "phelpobject"
 require "addxml"
+require "stringfuncs"
 
 Pluginhelper = Phelpobject:subclass()
 
@@ -371,7 +372,7 @@ end
 function SecondsToDHMS(sSeconds)
   local nSeconds = tonumber(sSeconds)
   if nSeconds == 0 then
-    return "00:00:00"
+    return 0, 0, 0, 0
   else
     nDays = math.floor(nSeconds/(3600 * 24))
     nHours = math.floor(nSeconds/3600 - (nDays * 24))
@@ -379,6 +380,37 @@ function SecondsToDHMS(sSeconds)
     nSecs = sSeconds % 60
     return nDays, nHours, nMins, nSecs
   end
+end
+
+function convert_ticks(ticks)
+  --string.format ("Time to go: %sd %sh %sm ", cptimer.days, cptimer.hours, cptimer.mins)
+  tout = {}
+  seconds = (ticks / 2) * 60
+  tout.days, tout.hours, tout.mins, tout.secs = SecondsToDHMS(seconds)
+  tstring = {}
+  if tout.days ~= 0 then
+    table.insert(tstring, string.format('%sd', tostring(tout.days)))
+    table.insert(tstring, string.format('%sh', tostring(tout.hours)))
+    table.insert(tstring, string.format('%sm', tostring(tout.mins)))
+    if tout.secs ~= 0 then
+      table.insert(tstring, string.format('%ss', tostring(tout.secs)))
+    end
+  elseif tout.hours ~= 0 then
+    table.insert(tstring, string.format('%sh', tostring(tout.hours)))
+    table.insert(tstring, string.format('%sm', tostring(tout.mins)))
+    if tout.secs ~= 0 then
+      table.insert(tstring, string.format('%ss', tostring(tout.secs)))
+    end
+  elseif tout.mins ~= 0 then
+    table.insert(tstring, string.format('%sm', tostring(tout.mins)))
+    if tout.secs ~= 0 then
+      table.insert(tstring, string.format('%ss', tostring(tout.secs)))
+    end
+  elseif tout.secs ~= 0 then
+    table.insert(tstring, string.format('%ss', tostring(tout.secs)))
+  end
+  tout.string = strjoin(':', tstring)
+  return tout
 end
 
 function mousedown(flags, hotspotid)
