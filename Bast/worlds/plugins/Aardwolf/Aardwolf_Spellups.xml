@@ -1487,7 +1487,7 @@ function wanted_spellups (name, line, wildcards)
             ColourNote ("red", "", "You have not learnt '" .. name .. "'.")
             invalid = true
           elseif spells [sn].percent == 1 then
-            ColourNote ("red", "", "You have not practised '" .. name .. "'.")
+            ColourNote ("red", "", "You have not practiced '" .. name .. "'.")
             invalid = true
           elseif not spells [sn].spellup then
             ColourNote ("red", "", "Spell '" .. name .. "' is not a spellup.")
