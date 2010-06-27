@@ -34,6 +34,7 @@ require 'miniwin'
 require 'tprint'
 require 'pluginhelper'
 require 'ldplugin'
+require 'verify'
 
 quest_text = {}
 quest_stuff = {mob=nil, room=nil, area=nil}
@@ -77,7 +78,7 @@ function build_quest()
   style.text = " Quest: On "
   style.textcolour = questwin.time_colour
   style.backcolour = questwin.bg_colour
-  questwin.tabcolour = questwin.bg_colour
+  questwin.tabcolour = questwin:get_colour(questwin.bg_colour)
   questwin:tabbroadcast(true, {style})
   questwin:show(true)
 end
@@ -118,7 +119,7 @@ function OnPluginBroadcast (msg, id, name, text)
       style.text = ' Quest: Now '
       style.textcolour = questwin.avail_colour
       style.backcolour = questwin.avail_bg_colour
-      questwin.tabcolour = questwin.avail_bg_colour
+      questwin.tabcolour = questwin:get_colour(questwin.avail_bg_colour)
       questwin:tabbroadcast(true, {style})
     elseif msg == 2 then
       -- quest mob info

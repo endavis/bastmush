@@ -156,7 +156,7 @@ function styleplotdata()
     local mstyle = {}
     mstyle.text = ' Moons: ' .. duration .. ' '
     mstyle.textcolour = moonwin.three_colour
-    moonwin.tabcolour = moonwin.three_bg_colour
+    moonwin.tabcolour = moonwin:get_colour(moonwin.three_bg_colour)
     moonwin:tabbroadcast(true, {mstyle})
   else
     style.text = "Next Union in " .. tostring(offset) .. " ticks for " .. tostring(duration) .. " ticks."
