@@ -151,7 +151,8 @@ function styleplotdata()
   offset, duration = nextunion()
   style = {}
   if offset == 0 then
-    style.text = "3 moons are up for " .. tostring(duration) .. " ticks!!"
+    durstring = convert_ticks(duration)
+    style.text = "3 moons are up for " .. tostring(duration) .. " ticks (" .. durstring.string .. ")!!"
     style.textcolour = 'three_colour'
     local mstyle = {}
     mstyle.text = ' Moons: ' .. duration .. ' '
@@ -159,7 +160,9 @@ function styleplotdata()
     moonwin.tabcolour = moonwin:get_colour(moonwin.three_bg_colour)
     moonwin:tabbroadcast(true, {mstyle})
   else
-    style.text = "Next Union in " .. tostring(offset) .. " ticks for " .. tostring(duration) .. " ticks."
+    durstring = convert_ticks(duration)
+    offstring = convert_ticks(offset)
+    style.text = "Next Union in " .. tostring(offset) .. " ticks (" .. offstring.string .. ") for " .. tostring(duration) .. " ticks (" .. durstring.string .. ")."
     local mstyle = {}
     mstyle.text = ' Moons: ' .. offset .. '-' .. duration .. ' '
     --mstyle.textcolour = moonwin.text_colour
