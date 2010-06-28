@@ -202,8 +202,12 @@ function ListMilestones(cmddict)
         max = a['MAX']
         min = a['MIN']
       end
-      phelper:plugin_header("Milestones")      
-      ColourNote(RGBColourToName(phelper.plugin_colour), "black", 'levels between ' .. min .. ' and ' .. max)
+      phelper:plugin_header("Milestones")
+      if max then
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", 'levels between ' .. min .. ' and ' .. max)
+      elseif min ~= nil then
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", 'level ' .. tostring(min))
+      end
       for b in db.db:nrows(sql) do
           test = tonumber(b['milestone'])
           if test ~= nil then
