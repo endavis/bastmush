@@ -399,7 +399,6 @@ end
 
 function settimer()
    if tonumber(var.showminutes) == -1 and GetTimerInfo ("StatReport", 6) then
-     print("disabling timer")
      EnableTimer("StatReport", false)
    else
      SetTimerOption ("StatReport", "minute", var.showminutes)
@@ -492,7 +491,7 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'statmon')
 phelper:set_default('plugin_colour', 'orange')
 
-phelper:add_setting('showminutes', {help="the number of minutes between StatMon output", type="number", after=settimer, default=60})
+phelper:add_setting('showminutes', {help="the number of minutes between StatMon output, -1 to disable", type="number", after=settimer, default=60})
 phelper:add_setting('reportminutes', {help="the number of minutes that Statmon reports on", type="number", default=60})
 
 phelper:add_cmd('report', {func=cmd_report, help="show stats for the last x minutes, x being what is passed as an argument"})
