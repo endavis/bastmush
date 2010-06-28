@@ -7,6 +7,9 @@ functions in this module
 
 wrap - usage: wrap(line, length)
   wrap the line at length, will try to find closest comma or space
+
+strjoin - usage: strjoin(delimiter, list)
+  join the list with delimiter
 --]]
 
 function wrap(line, length)
