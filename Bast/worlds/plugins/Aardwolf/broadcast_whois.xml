@@ -203,6 +203,7 @@ end
 function check_whois(name, line, wildcards)
   if not verify_bool(phelper.seenwhois) then
      Execute("whois")
+     phelper:set('seenwhois', true, {silent=true})     
   end
 end
 
@@ -257,6 +258,7 @@ function whois_end(name, line, wildcards)
   whoisinfo['totallevels'] = (whoisinfo.remorts - 1) * 201 + whoisinfo.level
   var.whoisinfo = serialize.save( "whoisinfo", whoisinfo )
   phelper:broadcast(1, var.whoisinfo)
+  phelper:set('seenwhois', true, {silent=true})
 end
 
 ]]>
