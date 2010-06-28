@@ -15,7 +15,7 @@
    save_state="y"
    date_written="2009-04-11 21:11:47"
    requires="4.40"
-   version="2.0"
+   version="2.01"
    >
 
 </plugin>
@@ -398,7 +398,15 @@ function StatReport(minutes)
 end
 
 function settimer()
-   SetTimerOption ("StatReport", "minute", var.showminutes)
+   if tonumber(var.showminutes) == -1 and GetTimerInfo ("StatReport", 6) then
+     print("disabling timer")
+     EnableTimer("StatReport", false)
+   else
+     SetTimerOption ("StatReport", "minute", var.showminutes)
+     if not GetTimerInfo ("StatReport", 6) then
+       EnableTimer("StatReport", true)        
+     end
+   end
 end
 
 function cmd_report(cmddict)
