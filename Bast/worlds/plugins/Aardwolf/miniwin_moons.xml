@@ -70,7 +70,7 @@ require "verify"
 moonwin = Miniwin:new{name="Moons"}
 moonwin:set_default('windowpos', 4)
 moonwin:set_default('font_size', 8)
-moonwin:set_default('font', 'DejaVu Sans Mono')
+--moonwin:set_default('font', 'DejaVu Sans Mono')
 moonwin:set_default('text_colour', 'gold')
 moonwin:add_setting("black_colour", {help="the colour for the black moon", type="colour", default=verify_colour("midnightblue"), sortlev=35})
 moonwin:add_setting("white_colour", {help="the colour for the white moon", type="colour", default=verify_colour("white"), sortlev=35})
