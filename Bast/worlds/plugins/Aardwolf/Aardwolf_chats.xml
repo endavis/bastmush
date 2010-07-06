@@ -27,8 +27,8 @@ world you want chats to go to.
 <![CDATA[
 Redirects chats, tells and channels to the "Chats" world window.
 
-chats echo on   --> also echo in the main window
-chats echo off  --> only show in the other window
+wchats echo on   --> also echo in the main window
+wchats echo off  --> only show in the other window
 
 ]]>
 </description>
@@ -105,7 +105,7 @@ chats echo off  --> only show in the other window
 <aliases>
   <alias
    script="chat_echo"
-   match="^chats echo( on| off)?$"
+   match="^wchats echo( on| off)?$"
    enabled="y"
    regexp="y"
    sequence="100"
@@ -127,7 +127,7 @@ require "getworld"
 require "checkplugin"
 require "utils"
 
-echo = tonumber(GetVariable("echo")) or 1
+echo = tonumber(GetVariable("echo")) or 0
 
 function hasmore(text)
   _place = string.find(text, '}')
