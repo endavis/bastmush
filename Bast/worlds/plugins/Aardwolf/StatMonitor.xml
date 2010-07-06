@@ -488,7 +488,7 @@ end -- function OnPluginSaveState
 <![CDATA[
 
 
-phelper:set_default('cmd', 'statmon')
+phelper:set_default('cmd', 'statmn')
 phelper:set_default('plugin_colour', 'orange')
 
 phelper:add_setting('showminutes', {help="the number of minutes between StatMon output, -1 to disable", type="number", after=settimer, default=60})
