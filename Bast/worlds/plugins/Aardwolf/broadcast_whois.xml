@@ -150,13 +150,7 @@ whoisinfo = {}
    sequence="101"
   >
   </trigger>
-  <trigger
-   enabled="y"
-   match="Welcome to Aardwolf. May your adventures be mystical, challenging and rewarding."
-   name="check_whois"
-   script="check_whois"
-  >
-  </trigger>  
+
 </triggers>
 
 <aliases>
@@ -198,13 +192,6 @@ function whois_start(name, line, wildcards)
   phelper:enabletriggroup("whois", true)
   --SendNoEcho('nopretitle')
   Send(line)
-end
-
-function check_whois(name, line, wildcards)
-  if not verify_bool(phelper.seenwhois) then
-     Execute("whois")
-     phelper:set('seenwhois', true, {silent=true})     
-  end
 end
 
 function whois_line1(name, line, wildcards)
@@ -258,7 +245,6 @@ function whois_end(name, line, wildcards)
   whoisinfo['totallevels'] = (whoisinfo.remorts - 1) * 201 + whoisinfo.level
   var.whoisinfo = serialize.save( "whoisinfo", whoisinfo )
   phelper:broadcast(1, var.whoisinfo)
-  phelper:set('seenwhois', true, {silent=true})
 end
 
 ]]>
@@ -268,10 +254,7 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  if id == "aaa0ab9ed92f8fc614664bd1" and msg == 2 then
-    SendNoEcho("whois")
-  end
-  
+
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
@@ -287,7 +270,6 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin('broadcast_level')
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
@@ -321,8 +303,6 @@ end -- function OnPluginSaveState
 
 phelper:set_default('cmd', 'bwhois')
 phelper:set_default('plugin_colour', 'orange')
-
-phelper:add_setting('seenwhois', {help="have seen a whois for StatDB", type="bool", default=false, readonly=true})
 
 phelper:enable()
 

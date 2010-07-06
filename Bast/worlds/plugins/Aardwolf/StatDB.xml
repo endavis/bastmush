@@ -76,6 +76,7 @@ function savewhois()
   --get the whois stuff
   loadstring( pvar )()
   db:savewhois(  whoisinfo  )
+  phelper:set('seenwhois', true, {silent=true})  
 end
 
 function savemobkill()
@@ -245,6 +246,12 @@ function OnPluginBroadcast (msg, id, name, text)
     savemobkill()
   elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
     savegq()
+  elseif id == "aaa79afcb20fa11787c5a327" then
+    state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
+    statestring = GetPluginVariable ("aaa79afcb20fa11787c5a327", "statestring")
+    if statestring == 'active' and not verify_bool(phelper.seenwhois) then
+      Execute('whois')
+    end
   end
 
   phelper:OnPluginBroadcast(msg, id, name, text)
@@ -268,6 +275,7 @@ function OnPluginEnable ()
   ldplugin('broadcast_cp')
   ldplugin('broadcast_kills')
   ldplugin('broadcast_gq')
+  ldplugin('broadcast_state')
   
   phelper:OnPluginEnable()
 end -- OnPluginEnable
@@ -304,6 +312,8 @@ phelper:add_cmd('listmilestones', {func=ListMilestones, help="list all milestone
 
 phelper:set_default('cmd', 'statdb')
 phelper:set_default('plugin_colour', 'orange')
+
+phelper:add_setting('seenwhois', {help="have seen a whois for StatDB", type="bool", default=false, readonly=true})
 
 phelper:enable()
 
