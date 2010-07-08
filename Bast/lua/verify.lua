@@ -15,10 +15,14 @@ verify_colour
     arguments with " or ' in them are automatically invalid
   stuff to put in args table
     silent - if true, will not show PickColour dialog
+    window to lookup the colour in the window
 
 verify_string
   Accepts
     anything that can be turned into a string
+  stuff to put in args table
+    silent - if true, will not print any errors
+    msg to show a message in the input box
 
 verify_number
   Accepts
@@ -27,6 +31,7 @@ verify_number
     low  - the lowest value the data can be
     high - the highest value the data can be
     silent - if true, will not print any errors
+    msg to show a message in the input box
 
 verify_bool
   Accepts
@@ -39,6 +44,8 @@ verify_bool
 --- verify the colour
 -- if a nil value is passed, will load the Colour Chooser Dialog
 function verify_colour(colour, args)
+  -- set args.silent to true to not use the pickcolour dialog when the colour is nil
+  -- set args.window to lookup the colour in the window
   args = args or {}
   local low = 0
   local high = 16777215
@@ -82,6 +89,15 @@ function verify_colour(colour, args)
 end
 
 function verify_string(stringval, args)
+  -- set args.msg to show a message in the input box
+  if (stringval == nil or stringval == '') and not args.silent then
+     local msg = ''
+     if args.msg then
+       msg = args.msg .. '\n'
+     end
+     stringval = tostring(utils.inputbox(msg))
+  end
+
   -- check if we can turn it into a string
   if tostring(stringval) then
     return tostring(stringval)
@@ -90,17 +106,36 @@ function verify_string(stringval, args)
 end
 
 function verify_number(numberval, args)
+  -- set args.msg to show a message in the input box
+  -- set args.silent to not show inputbox when set to nil
+  -- set args.low to set the low threshhold
+  -- set args.high to set the high threshhold
   args = args or {}
   -- turn it into a number
   tvalue = tonumber(numberval)
 
+  if tvalue == nil and not args.silent then
+     local msg = ''
+     if args.msg then
+       msg = args.msg .. '\n'
+     end
+     if args.low and args.high then
+       msg = msg .. 'Must be between ' .. tostring(args.low) .. ' and ' .. tostring(args.high)
+     elseif args.low then
+       msg = msg .. 'Must be greater than or equal to' .. tostring(args.low)
+     elseif args.high then
+       msg = msg .. 'Must be less that or equal to '  .. tostring(args.high) 
+     end 
+     tvalue = tonumber(utils.inputbox(msg))
+  end
+  
   -- check if we were successful
-  if tvalue then
+  if tvalue ~= nil then
 
     -- check if it is lesser than the low argument
     if args.low and tvalue < args.low then
       if not args.silent then
-        ColourNote("red", "white", "Value must be greater than " .. args.low)
+        ColourNote("red", "white", "Value must be greater than or equal to " .. args.low)
       end
       return nil
     end
@@ -108,12 +143,12 @@ function verify_number(numberval, args)
     -- check if is greater than the high argument
     if args.high and tvalue > args.high then
       if not args.silent then
-        ColourNote("red", "white", "Value must be lower than " .. args.high)
+        ColourNote("red", "white", "Value must be lower than or equal to " .. args.high)
       end
       return nil
     end
 
-    return tonumber(numberval)
+    return tonumber(tvalue)
   end
 
   return nil
