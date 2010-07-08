@@ -35,12 +35,12 @@ require "ldplugin"
 
 statwin = Miniwin:new{name="Stats"}
 statwin:set_default('width_padding', 10)
+statwin:set_default('header_height', 0)
 
 function build_stat_window()
   stats = GetPluginVariableList("8a710e0783b431c06d61a54c")
 
   styles = {}
-  table.insert(styles, {{text = 'Stats', hjust='center'}})
   
   tstyle = format_stat('Strength', stats.str, stats.base_str, 13, 3)
   table.insert(tstyle, {text="   "})
