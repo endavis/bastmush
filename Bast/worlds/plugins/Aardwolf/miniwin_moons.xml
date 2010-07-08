@@ -70,7 +70,7 @@ require "verify"
 moonwin = Miniwin:new{name="Moons"}
 moonwin:set_default('windowpos', 4)
 moonwin:set_default('font_size', 8)
---moonwin:set_default('font', 'DejaVu Sans Mono')
+moonwin:set_default('header_height', 0)
 moonwin:set_default('text_colour', 'gold')
 moonwin:add_setting("black_colour", {help="the colour for the black moon", type="colour", default=verify_colour("midnightblue"), sortlev=35})
 moonwin:add_setting("white_colour", {help="the colour for the white moon", type="colour", default=verify_colour("white"), sortlev=35})
@@ -100,14 +100,6 @@ function styleplotdata()
   end
 
   -- heading
-
-  style = {}
-  style.text = "Moon Plot:  "
-  max_width = math.max (max_width, #style.text)
-  style.len = #style.text
-  --style.start = 20
-  style.style = 0
-  table.insert (texttable, {style})
 
   local tplotdata=buildplotdata(phelper.plotlength)
   for i,t in pairs(tplotdata) do
@@ -327,9 +319,12 @@ function moonbot_report(cmddict)
     return
   else
     if offset == 0 then
-      SendNoEcho(chan .. ' Three moons are up for ' .. duration .. ' ticks.')
+      durstring = convert_ticks(duration)
+      SendNoEcho(chan .. "3 moons are up for " .. tostring(duration) .. " ticks (" .. durstring.string .. ")!!")
     else
-      SendNoEcho(chan .. ' Three moons will be up in ' .. offset .. ' ticks for ' .. duration .. ' ticks.')
+      durstring = convert_ticks(duration)
+      offstring = convert_ticks(offset)
+      SendNoEcho(chan .. "Next Union in " .. tostring(offset) .. " ticks (" .. offstring.string .. ") for " .. tostring(duration) .. " ticks (" .. durstring.string .. ").")
     end
   end
 end
