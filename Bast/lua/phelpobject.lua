@@ -186,7 +186,7 @@ function Phelpobject:checkvalue(option, value)
   if value == 'default' then
     value = varstuff.default
   end
-  tvalue = verify(value, varstuff.type, {low=varstuff.low, high=varstuff.high, window=self})
+  tvalue = verify(value, varstuff.type, {low=varstuff.low, high=varstuff.high, window=self, msg=varstuff.msg})
   if tvalue == nil then
     self:plugin_header()
     ColourNote("red", "", "That is not a valid value for " .. option)
