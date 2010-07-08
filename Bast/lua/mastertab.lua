@@ -20,6 +20,7 @@ function Mastertabwin:initialize(args)
   self.tabcount = 0
   self.hotspots = {}
   self.alreadyhidden = false
+  self.notitletext = true
   self:add_setting( 'orientation', {type="number", help="orientation of the tabs, 0 = horizontal, 1 = vertical", low=0, high=1, default=1, sortlev=44})
 
   local td = {}
