@@ -283,11 +283,11 @@ end
 
 function formathour(type, stats)
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-10s -" , type),
-             RGBColourToName(var.plugin_colour), "black", string.format("%5d", stats.total or 0),
-             RGBColourToName(var.plugin_colour), "black", string.format("%5d", stats.xp or 0),
-             RGBColourToName(var.plugin_colour), "black", string.format("%5d", stats.qp or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%6d", stats.total or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%9d", stats.xp or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%7d", stats.qp or 0),
              RGBColourToName(var.plugin_colour), "black", string.format("%5d", stats.tp or 0),
-             RGBColourToName(var.plugin_colour), "black", string.format("%7d", stats.gold or 0)
+             RGBColourToName(var.plugin_colour), "black", string.format("%10d", stats.gold or 0)
              )
   hourtotals.qp = hourtotals.qp + (stats.qp or 0)
   hourtotals.gold = hourtotals.gold + (stats.gold or 0)
@@ -305,20 +305,20 @@ end
 function formathourcol()
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-10s -" , "Type"),
              RGBColourToName(var.plugin_colour), "black", string.format("%6s", "Tot"),
-             RGBColourToName(var.plugin_colour), "black", string.format("%10s", "XP"),
-             RGBColourToName(var.plugin_colour), "black", string.format("%10s", "QP"),
+             RGBColourToName(var.plugin_colour), "black", string.format("%9s", "XP"),
+             RGBColourToName(var.plugin_colour), "black", string.format("%7s", "QP"),
              RGBColourToName(var.plugin_colour), "black", string.format("%5s", "Tp"),
-             RGBColourToName(var.plugin_colour), "black", string.format("%15s", "Gold")
+             RGBColourToName(var.plugin_colour), "black", string.format("%10s", "Gold")
             )
 end
 
 function formattotals(totals)
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-10s -" , "Totals"),
              RGBColourToName(var.plugin_colour), "black", string.format("%6s", " "),
-             RGBColourToName(var.plugin_colour), "black", string.format("%10d", totals.xp or 0),
-             RGBColourToName(var.plugin_colour), "black", string.format("%10d", totals.qp or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%9d", totals.xp or 0),
+             RGBColourToName(var.plugin_colour), "black", string.format("%7d", totals.qp or 0),
              RGBColourToName(var.plugin_colour), "black", string.format("%5d", totals.tp or 0),
-             RGBColourToName(var.plugin_colour), "black", string.format("%15d", totals.gold or 0)
+             RGBColourToName(var.plugin_colour), "black", string.format("%10d", totals.gold or 0)
              )
 end
 
@@ -371,7 +371,7 @@ function StatReport(minutes)
   end
   ColourNote(RGBColourToName(var.plugin_colour), "black", "Stats for the Last " .. convert_time(minutes * 60))
   formathourcol()
-  ColourNote(RGBColourToName(var.plugin_colour), "black",   "---------------------------------------")
+  ColourNote(RGBColourToName(var.plugin_colour), "black",   "----------------------------------------------------")
   if queststats.total == nil then
     formatnodata("Quests")
   else
@@ -392,7 +392,7 @@ function StatReport(minutes)
   else
     formathour("Mobs", mobstats)
   end
-  ColourNote(RGBColourToName(var.plugin_colour), "black",   "---------------------------------------")
+  ColourNote(RGBColourToName(var.plugin_colour), "black",   "----------------------------------------------------")
   formattotals(hourtotals)
   ColourNote("", "", "")
 end
