@@ -145,6 +145,7 @@ function Miniwin:initialize(args)
   super(self, args)
   self.parent = args.parent or nil
   self.header = args.header or "None"
+  self.borderwinid = self.id .. ':border'
   self.text = {}
   self.children = {}
   self.hyperlink_functions = {}
@@ -213,7 +214,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'font_warn', {type="bool", help="have been warned about font", default=verify_bool(false), sortlev=55, readonly=true})
   self:add_setting( 'shaded', {type="bool", help="window is shaded", default=verify_bool(false), sortlev=55, readonly=true})
   self:add_setting( 'shade_with_header', {type="bool", help="when window is shaded, still show header", default=verify_bool(false), sortlev=55, longname = "Shade with header"})
-  self:add_setting( 'notitlebar', {type="bool", help="don't show the titlebar", default=verify_bool(false), sortlev=56, longname="Don't show the titlebar"})
+  self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar"})
 
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
@@ -890,14 +891,18 @@ function Miniwin:adjust_line(line, linenum)
   --print('-------------- convert line --------------')
   --tprint(line)
 
-    
-
   for i,v in ipairs (line.text) do
     local textlen = 0
     local tstart = v.start
     local ttop = line.top + 1
-    if self.header_height > 0 and linenum == 2 then
-      ttop = line.top + 2
+    if self.titlebar then
+      if self.header_height > 0 and linenum == 2 then
+        ttop = line.top + 2
+      end
+    else
+      if self.header_height > 0 and linenum == 1 then
+        ttop = line.top + 2
+      end
     end
     if v.vjust ~= nil then
       if v.vjust == 'center' then
@@ -961,12 +966,19 @@ function Miniwin:convert_line(linenum, line, top)
   local def_colour = self:get_colour('text_colour')
   local maxfontheight = 0
   local start = self.border_width + self.width_padding
-  if linenum == 1 then
+  if linenum == 1 and self.titlebar then
     start = self.border_width
   end
-  if linenum - 1 <= self.header_height and linenum > 1 then
-    def_font_id = self.default_font_id_bold
-    def_colour = self:get_colour("header_text_colour")
+  if self.titlebar then
+    if linenum - 1 <= self.header_height and linenum > 1 then
+      def_font_id = self.default_font_id_bold
+      def_colour = self:get_colour("header_text_colour")
+    end
+  else
+    if linenum <= self.header_height and linenum >= 1 then
+      def_font_id = self.default_font_id_bold
+      def_colour = self:get_colour("header_text_colour")
+    end
   end
   linet.text = {}
   if type(line) == 'table' then
@@ -1021,35 +1033,40 @@ function Miniwin:convert_line(linenum, line, top)
   return linet
 end
 
--- build the window and window data
-function Miniwin:buildwindow()
+function Miniwin:buildwindow_titlebar_header()
   local height = 0
-  self.window_data = {}
-  titlebar = self:buildtitlebar()
-
   local tempdata = {}
-  tempdata[1] = self:convert_line(1, titlebar, self.border_width)
+  self.window_data = {}
 
+  if self.titlebar then
+    titlebar = self:buildtitlebar()
+    tempdata[1] = self:convert_line(1, titlebar, self.border_width)
+    height = tempdata[1].height
+  else
+    height = self.border_width
+  end
   self.window_data.maxlinewidth = 0
 
-  height = tempdata[1].height
   if type(self.text) == 'table' then
     local maxwidth = 0
     for line,v in ipairs(self.text) do
-      linenum = line + 1
+      local linenum = line + 1
       local tbottom = tempdata[linenum - 1].bottom
+
       if linenum == 2 and self.header_height > 0 then
-        tbottom = tempdata[1].bottom + 1 -- spacing between titlebar and first line
-      elseif linenum == 2 then
-        tbottom = tempdata[linenum - 1].bottom + 2 -- spacing between titlebar and first line
+        tbottom = tempdata[1].bottom + 1           -- spacing between titlebar and header
+      elseif linenum == self.header_height + 1 then
+        tbottom = tempdata[linenum - 1].bottom + 2 -- spacing betwwen header and first line
       else
-        tbottom = tempdata[linenum - 1].bottom -- spacing between titlebar and first line
+        tbottom = tempdata[linenum - 1].bottom     -- spacing between lines
       end
+
       tline = self:convert_line(linenum, v, tbottom)
       if linenum > 1 and linenum == self.header_height + 1 then
         tline.bottom = tline.bottom + 4
         tline.height = tline.height + 3
-      end      
+      end  
+    
       tempdata[linenum] = tline
       height = height + tempdata[linenum].height + 1
       self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
@@ -1066,10 +1083,182 @@ function Miniwin:buildwindow()
       self.window_data.actualwindowheight = self.height
     else
       if self.header_height > 0 then
-        self.window_data.actualwindowheight = height + (self.height_padding * 2) + (self.border_width * 2) + 4
+          self.window_data.actualwindowheight = height + (self.height_padding * 2) + (self.border_width * 2) + 2
       else
         self.window_data.actualwindowheight = height + (self.height_padding * 2) + (self.border_width * 2) + 1
       end
+    end
+    self.window_data.linestart = self.border_width
+    self.window_data.lineend = self.window_data.actualwindowwidth - self.border_width 
+    self.window_data.textstart = self.border_width + self.width_padding
+    self.window_data.textend = self.window_data.actualwindowwidth - self.border_width - self.width_padding
+
+    for line, v in ipairs(tempdata) do  
+      if line == 1 then
+        self.window_data[line] = self:adjust_titlebar(v)
+      else
+        self.window_data[line] = self:adjust_line(v, line)
+      end
+    end
+
+  end
+end
+
+function Miniwin:buildwindow_titlebar_noheader()
+  local height = 0
+  local tempdata = {}
+  self.window_data = {}
+
+  if self.titlebar then
+    titlebar = self:buildtitlebar()
+    tempdata[1] = self:convert_line(1, titlebar, self.border_width)
+    height = tempdata[1].height
+  else
+    height = self.border_width
+  end
+  self.window_data.maxlinewidth = 0
+
+  if type(self.text) == 'table' then
+    local maxwidth = 0
+    for line,v in ipairs(self.text) do
+      local linenum = line + 1
+      local tbottom = tempdata[linenum - 1].bottom
+
+      tline = self:convert_line(linenum, v, tbottom)
+      if linenum > 1 and linenum == self.header_height + 1 then
+        tline.bottom = tline.bottom + 4
+        tline.height = tline.height + 3
+      end  
+    
+      tempdata[linenum] = tline
+      height = height + tempdata[linenum].height + 1
+      self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
+    end
+
+    if self.width > 0 then
+      self.window_data.actualwindowwidth = self.width
+    else
+      --self.window_data.actualwindowwidth = self.window_data.maxlinewidth + (self.width_padding * 2) + (self.border_width * 2)
+      self.window_data.actualwindowwidth = self.window_data.maxlinewidth + self.width_padding + self.border_width
+    end
+
+    if self.height > 0 then
+      self.window_data.actualwindowheight = self.height
+    else
+      self.window_data.actualwindowheight = height + (self.height_padding * 2) + (self.border_width * 2) + 1
+    end
+    self.window_data.linestart = self.border_width
+    self.window_data.lineend = self.window_data.actualwindowwidth - self.border_width 
+    self.window_data.textstart = self.border_width + self.width_padding
+    self.window_data.textend = self.window_data.actualwindowwidth - self.border_width - self.width_padding
+
+    for line, v in ipairs(tempdata) do  
+      if line == 1 then
+        self.window_data[line] = self:adjust_titlebar(v)
+      else
+        self.window_data[line] = self:adjust_line(v, line)
+      end
+    end
+  end
+
+end
+
+function Miniwin:buildwindow_notitlebar_header()
+  local height = 0
+  local tempdata = {}
+  self.window_data = {}
+
+  height = self.border_width
+  self.window_data.maxlinewidth = 0
+
+  if type(self.text) == 'table' then
+    for line,v in ipairs(self.text) do
+      local linenum = line
+      if linenum == 1 and linenum ~= self.header_height then
+        tbottom = height + 1        -- spacing between titlebar and header
+      elseif linenum == 1 and linenum == self.header_height then
+        tbottom = height + 1 -- spacing betwwen header and first line
+      elseif linenum == self.header_height then
+        tbottom = tempdata[linenum - 1].bottom + 1 -- spacing betwwen header and first line
+      else
+        if linenum == 1 then
+          tbottom = height
+        else
+          tbottom = tempdata[linenum - 1].bottom     -- spacing between lines
+        end
+      end
+      tline = self:convert_line(linenum, v, tbottom)
+      if linenum > 0 and linenum == self.header_height then
+        tline.bottom = tline.bottom + 2
+        tline.height = tline.height + 3
+      end  
+      tempdata[linenum] = tline
+      height = height + tempdata[linenum].height + 1
+      self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)            
+    end
+
+    if self.width > 0 then
+      self.window_data.actualwindowwidth = self.width
+    else
+      --self.window_data.actualwindowwidth = self.window_data.maxlinewidth + (self.width_padding * 2) + (self.border_width * 2)
+      self.window_data.actualwindowwidth = self.window_data.maxlinewidth + self.width_padding + self.border_width
+    end
+
+    if self.height > 0 then
+      self.window_data.actualwindowheight = self.height
+    else
+      self.window_data.actualwindowheight = height + (self.height_padding * 2) + (self.border_width * 2) - 3
+    end
+    self.window_data.linestart = self.border_width
+    self.window_data.lineend = self.window_data.actualwindowwidth - self.border_width 
+    self.window_data.textstart = self.border_width + self.width_padding
+    self.window_data.textend = self.window_data.actualwindowwidth - self.border_width - self.width_padding
+
+    for line, v in ipairs(tempdata) do  
+      if line == 1 then
+        self.window_data[line] = self:adjust_titlebar(v)
+      else
+        self.window_data[line] = self:adjust_line(v, line)
+      end
+    end
+  end
+
+end
+
+function Miniwin:buildwindow_notitlebar_noheader()
+  local height = 0
+  local tempdata = {}
+  self.window_data = {}
+
+  height = self.border_width + self.width_padding
+  self.window_data.maxlinewidth = 0
+
+  if type(self.text) == 'table' then
+    for line,v in ipairs(self.text) do
+      local linenum = line
+      if linenum == 1 then
+        tbottom = height
+      else
+        tbottom = tempdata[linenum - 1].bottom     -- spacing between lines
+      end
+      tline = self:convert_line(linenum, v, tbottom)
+
+      tempdata[linenum] = tline
+      height = height + tempdata[linenum].height + 1
+      self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)            
+    end
+
+    if self.width > 0 then
+      self.window_data.actualwindowwidth = self.width
+    else
+      --self.window_data.actualwindowwidth = self.window_data.maxlinewidth + (self.width_padding * 2) + (self.border_width * 2)
+      self.window_data.actualwindowwidth = self.window_data.maxlinewidth + self.width_padding + self.border_width
+    end
+
+    if self.height > 0 then
+      self.window_data.actualwindowheight = self.height
+    else
+      self.window_data.actualwindowheight = height + (self.height_padding * 2) + (self.border_width * 2) + 1
     end
 
     self.window_data.linestart = self.border_width
@@ -1077,14 +1266,32 @@ function Miniwin:buildwindow()
     self.window_data.textstart = self.border_width + self.width_padding
     self.window_data.textend = self.window_data.actualwindowwidth - self.border_width - self.width_padding
 
-   for line, v in ipairs(tempdata) do
-     
+    for line, v in ipairs(tempdata) do  
       if line == 1 then
         self.window_data[line] = self:adjust_titlebar(v)
       else
         self.window_data[line] = self:adjust_line(v, line)
       end
     end
+  end
+
+end
+
+
+-- build the window and window data
+function Miniwin:buildwindow()
+  local height = 0
+  local tempdata = {}
+  self.window_data = {}
+
+  if self.titlebar and self.header_height > 0 then
+    self:buildwindow_titlebar_header()
+  elseif self.titlebar and self.header_height <= 0 then
+    self:buildwindow_titlebar_noheader()
+  elseif not self.titlebar and self.header_height > 0 then
+    self:buildwindow_notitlebar_header()
+  else
+    self:buildwindow_notitlebar_noheader()
   end
 
 end
@@ -1222,8 +1429,11 @@ function Miniwin:displayline (linenum, styles)
   tborderwidth = styles.borderwidth or 1
   tborderstyle = styles.borderstyle or 0
    if styles.cellborder then
-         local bcolour = self:get_colour(v.backcolour, def_bg_colour)
-         WindowRectOp (self.id, tborderstyle, tstart, styles.top - 1, tstart + tlength, styles.bottom + 1, bcolour)
+       if tborderstyle == 0 then
+         tborderstyle = 1
+       end
+         WindowRectOp (self.id, tborderstyle, tstart, styles.top - 1, tstart + tlength, styles.bottom + 1, 
+                self:get_colour(v.bordercolour), self:get_colour(v.bordercolour2))
    else
 
     if styles.topborder then
@@ -1249,8 +1459,14 @@ end -- displayline
 -- get the header height, this could probably just be self.window_data[header_height + 1].bottom
 function Miniwin:calc_header_height()
    local height = self.height_padding
-   for i=2,self.header_height + 1 do
-    height = height + self.window_data[i].height
+   if self.titlebar then
+    for i=2,self.header_height + 1 do
+      height = height + self.window_data[i].height
+    end
+   else
+    for i=1,self.header_height do
+      height = height + self.window_data[i].height
+    end
    end
    return height
 end
@@ -1280,12 +1496,19 @@ function Miniwin:pre_create_window_internal(height, width)
   end
 
   if not self.shaded or self.shade_with_header then
+    local htop = self.window_data[2].top
+    local hbottom = htop + self:calc_header_height()
     if self.header_height > 0 then
-      local htop = self.window_data[2].top
-      local hbottom = htop + self:calc_header_height()
-      
+      if self.titlebar then
+        htop = self.window_data[2].top
+        hbottom = htop + self:calc_header_height()
+      else
+        htop = self.border_width
+        hbottom = htop + self:calc_header_height()
+      end
+
       -- header colour
-      check (WindowRectOp (self.id, 2, 2, htop + 1, -2, hbottom, self:get_colour("header_bg_colour"))) -- self:get_colour("header_bg_colour")))
+      check (WindowRectOp (self.id, 2, 3, htop + 1, -3, hbottom - 1, self:get_colour("header_bg_colour"))) -- self:get_colour("header_bg_colour")))
       --check (WindowRectOp (self.id, 1, 2, htop + 1, -2, hbottom, self:get_colour("black"))) -- self:get_colour("header_bg_colour")))
     end
   end
@@ -1293,9 +1516,11 @@ function Miniwin:pre_create_window_internal(height, width)
   --check (WindowRectOp (self.id, 2, 0, 0, 0, 0, 0x575757))
 
   -- titlebar background
-  check(WindowRectOp (self.id, 2, self.border_width, self.border_width, 
+  if self.titlebar then
+    check(WindowRectOp (self.id, 2, self.border_width, self.border_width, 
                             0 - self.border_width, self.window_data[1].bottom + 3, 
                             self:get_colour('title_bg_colour'))) --button background  
+  end
 
   WindowDeleteAllHotspots (self.id)
 
@@ -1305,16 +1530,30 @@ end
 function Miniwin:post_create_window_internal()
 
   if not self.shaded or self.shade_with_header then
-    if self.header_height > 0 then
-      local htop = self.window_data[2].top
-      local hbottom = htop + self:calc_header_height()
-      
-      -- header rectangle
-      check (WindowRectOp (self.id, 1, 2, htop, -2, hbottom, self:get_colour("black")))
-    end
-    
+      if self.header_height > 0 then
+        local htop = self.window_data[1].top
+        local hbottom = htop + self:calc_header_height()
+        if self.titlebar then
+          htop = self.window_data[2].top
+          hbottom = htop + self:calc_header_height()
+        else
+          htop = self.border_width
+          hbottom = htop + self:calc_header_height()
+        end      
+
+        -- header rectangle
+        check (WindowRectOp (self.id, 1, 2, htop, -2, hbottom - 1, self:get_colour("black")))
+      end
   end
 
+  if not self.titlebar then
+    self:addhotspot('mousemenu', self.border_width, self.border_width, self.border_width + 5, self.border_width + 5, 
+                   nil, nil, function (win, flags, hotspotid)
+                        win:menuclick()
+                      end,
+                   nil, nil, 'Show Menu')
+  end
+    
   -- DrawEdge rectangle
   --check (WindowRectOp (self.id, 5, 0, 0, 0, 0, 10, 15))
   check (WindowRectOp (self.id, 1, 0, 0, 0, 0, self:get_colour('title_bg_colour')))
@@ -1328,11 +1567,11 @@ function Miniwin:drawwin()
     return
   end
 
-  if self.shaded then
+  if self.shaded and self.titlebar then
     local sheight = self.window_data[1].bottom + self.border_width + 1
     if self.shade_with_header and self.header_height > 0 then 
       local htop = self.window_data[2].top
-      local hbottom = htop + self:calc_header_height() + 2
+      local hbottom = htop + self:calc_header_height() + 1
       sheight = hbottom
     end
     self:pre_create_window_internal(sheight, nil)
