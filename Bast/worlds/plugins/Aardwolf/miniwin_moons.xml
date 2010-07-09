@@ -320,11 +320,11 @@ function moonbot_report(cmddict)
   else
     if offset == 0 then
       durstring = convert_ticks(duration)
-      SendNoEcho(chan .. "3 moons are up for " .. tostring(duration) .. " ticks (" .. durstring.string .. ")!!")
+      SendNoEcho(chan .. " 3 moons are up for " .. tostring(duration) .. " ticks (" .. durstring.string .. ")!!")
     else
       durstring = convert_ticks(duration)
       offstring = convert_ticks(offset)
-      SendNoEcho(chan .. "Next Union in " .. tostring(offset) .. " ticks (" .. offstring.string .. ") for " .. tostring(duration) .. " ticks (" .. durstring.string .. ").")
+      SendNoEcho(chan .. " Next Union in " .. tostring(offset) .. " ticks (" .. offstring.string .. ") for " .. tostring(duration) .. " ticks (" .. durstring.string .. ").")
     end
   end
 end
