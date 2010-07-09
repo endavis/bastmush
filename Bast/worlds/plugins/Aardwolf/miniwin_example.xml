@@ -36,29 +36,29 @@ testwin = Miniwin:new{name="Example"}
 testwin:set_default('header_height', 1)
 testwin2 = Miniwin:new{name="Example_2"}
 testwin2:set_default('header_height', 1)
+testwin2:set_default('use_tabwin', false)
 styles = {}
 styles2 = {}
 
 -- Header Line, centered
 style = {}
-style.text = "Example Window"
+style.text = "Example Header"
 style.hjust = 'center'
-table.insert(styles, {style})
-stylet = {}
-stylet.hjust = 'center'
-stylet.text = "Example Window 2"
-table.insert(styles2, {stylet})
+style.font_size = 9
+tstyle = {style}
+table.insert(styles, tstyle)
 
 -- First Line
 style = {}
-style.text = "New Test Text Line 1 @yNew Test Text Line 1@x @CNew Test Text Line 1@x New Test Text Line 1"
+style.text = " New Test Text p Line 1 @yNew Test Text Line 1@x @CNew Test Text Line 1@x New Test Text Line 1 "
 style.hjust = 'center'
+style.cellborder = true
+style.bordercolour = 'green'
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 nstyle = {style}
-nstyle.backcolour = 'red'
+--nstyle.backcolour = 'red'
 table.insert(styles, nstyle)
---table.insert(styles2, {style})
 
 -- Second Line, several styles
 tstyle = {}
@@ -105,10 +105,7 @@ style = {}
 style.text = " Bottom Vertically (Bold) "
 style.vjust = 'bottom'
 style.bold = true
-style.leftborder = true
-style.rightborder = true
-style.topborder = true
-style.bottomborder = true
+style.cellborder = true
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(tstyle, style)
@@ -120,15 +117,26 @@ style.font_name = 'Arial'
 style.font_size = 15
 style.backcolour = "green"
 style.textcolour = "red"
-style.fillall = true
 style.vjust = 'center'
+style.hint = serialize.save_simple(style)
+style.mouseover = nofunc
+table.insert(tstyle, style)
+
+-- Fillall
+style = {}
+style.text = " FA "
+style.font_name = 'Arial'
+style.font_size = 15
+style.backcolour = "cyan"
+style.textcolour = "red"
+style.vjust = 'center'
+style.fillall = true
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(tstyle, style)
 
 -- insert the second line
 table.insert(styles, tstyle)
---table.insert(styles2, tstyle)
 
 -- New Line
 style = {}
@@ -137,7 +145,6 @@ style.strikeout = true
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(styles, {style})
---table.insert(styles2, {style})
 
 -- New Line, Center Horizontally
 style = {}
@@ -147,7 +154,6 @@ style.underline = true
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(styles, {style})
---table.insert(styles2, {style})
 
 -- New Line, Right Justify Horizontally
 style = {}
@@ -160,12 +166,15 @@ style.mouseover = nofunc
 table.insert(styles, {style})
 styles2 = copytable.deep(styles)
 
+
 style = {popup_style(testwin2, "Show Miniwin Example 2", "blue")}
 style[1].hjust='center'
-style.leftborder = true
-style.rightborder = true
-style.topborder = true
-style.bottomborder = true
+--style.leftborder = true
+--style.rightborder = true
+--style.topborder = true
+--style.bottomborder = true
+style.cellborder = true
+style.bordercolour = 'blue'
 style.backcolour = 'white'
 
 table.insert(styles, style)
