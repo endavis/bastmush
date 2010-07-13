@@ -36,7 +36,6 @@ require 'pluginhelper'
 require 'ldplugin'
 
 doublewin = Miniwin:new{name="Double"}
-doublewin:set_default('font', 'Comic Sans MS')
 doublewin:set_default('bg_colour', 'black')
 doublewin:set_default('text_colour', 'red')
 doublewin:set_default('windowpos', 7)

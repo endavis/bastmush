@@ -42,7 +42,6 @@ quest_timer = {}
 winbetweenquest = true
 
 questwin = Miniwin:new{name="Quest"}
-questwin:set_default('font', 'Comic Sans MS')
 questwin:set_default('bg_colour', 0xE7FFFF)
 questwin:set_default('text_colour', 0x000000)
 questwin:set_default('windowpos', 7)

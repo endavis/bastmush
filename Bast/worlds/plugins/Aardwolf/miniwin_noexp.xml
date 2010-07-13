@@ -37,7 +37,6 @@ require 'ldplugin'
 require 'verify'
 
 noexpwin = Miniwin:new{name="Noexp"}
-noexpwin:set_default('font', 'Comic Sans MS')
 noexpwin:set_default('bg_colour', 'black')
 noexpwin:set_default('text_colour', 'red')
 noexpwin:set_default('windowpos', 7)
