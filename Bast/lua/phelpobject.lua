@@ -25,6 +25,7 @@ function Phelpobject:initialize(args)
 
   --]]
   self:mdebug('phelpobject __init')
+  self.phelper = nil
   self.classinit = true
   self.shutdownf = false
   self.set_options = {}
@@ -273,7 +274,7 @@ function Phelpobject:print_setting_helper(setting, value, help, ttype, readonly)
   if readonly then
     help = help .. ' (readonly)'
   end
-  ColourNote( "white", "black", string.format("%-20s : ", setting),
+  ColourNote( "white", "black", string.format("%-30s : ", setting),
               RGBColourToName(colour), "black", string.format("%-20s", tostring(value)),
               "white", "black", " - " .. help)
 end
