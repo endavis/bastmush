@@ -48,6 +48,8 @@ commands already included (these do not need to be manually added)
   debug
   save
 
+TODO: help miniwin - add tab for each object
+
 --]]
 
 require "var"
@@ -59,6 +61,7 @@ require "tablefuncs"
 require "phelpobject"
 require "addxml"
 require "stringfuncs"
+require "miniwin"
 
 Pluginhelper = Phelpobject:subclass()
 
@@ -70,12 +73,22 @@ function Pluginhelper:initialize(args)
 
   self.pobjects = {}
   self.pobjects_by_id = {}
+  self.aardhelps = {}
+  self.aardcmds = {}
+  self.links = {}
 
   self:add_cmd('objects', {func="cmd_objects", help="list objects associated with this plugin"})
 
   self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1})
   self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb"})
 
+  self:addlink('Plugin', "Bast's MUSHclient plugins homepage", "http://code.google.com/p/bastmush",
+                        "Go to Bast's MUSHclient plugins homepage")
+  self:addlink('MUSHclient', "Get Dina a monospace bitmap font. (recommended)", "http://www.donationcoder.com/Software/Jibz/Dina/index.html",
+                        "Follow the instruction on the site to install the font.")
+  self:addlink('MUSHclient', "Latest version of MUSHclient.", "http://www.gammon.com.au/forum/bbshowpost.php?bbtopic_id=1",
+                        "Download the latest version of MUSH.")
+  self.helpwin = nil
 end
 
 function Pluginhelper:cmd_objects()
@@ -148,6 +161,14 @@ function Pluginhelper:enable()
                     expand_variables = true
                }
   self:init_vars()
+  self.helpwin = Miniwin:new{name=GetPluginName() .. '_help'}
+  self.helpwin:set_default('header_height', 0)
+  self.helpwin:set_default('use_tabwin', false)
+  self.helpwin:set_default('windowpos', 12)
+  self.helpwin:set_default('width_padding', 6)
+  self.helpwin.titlebartext = GetPluginName() .. ' Help'
+  self.helpwin.id = 'z_' .. self.helpwin.id
+  self:add_pobject('win', self.helpwin)
 end
 
 function Pluginhelper:set_plugin_alias()
@@ -205,6 +226,7 @@ function Pluginhelper:add_pobject(name, object)
    print(name, "is nil in add_pobject")
    return
  end
+ object.phelper = self
  self.pobjects[object.cname] = object
  self.pobjects_by_id[object.id] = object
 end
@@ -292,6 +314,10 @@ function Pluginhelper:OnPluginEnable()
     OnPluginConnect ()
   end -- if already connected
   self:broadcast(-2)
+
+  self.helpwin:enable()
+  self.helpwin:createwin(self:createhelp())
+  self.helpwin:show(false)
 end
 
 function Pluginhelper:OnPluginDisable()
@@ -330,6 +356,255 @@ function Pluginhelper:OnPluginSaveState()
     end
   end
 
+end
+
+function Pluginhelper:cmd_help(cmddict)
+
+  self.helpwin:show(true) 
+  
+  return true
+end
+
+function Pluginhelper:createhelp()
+  local ttext = {}
+
+  local style = {}
+  style.text = ' '
+  table.insert(ttext, {style, backcolour=var.plugin_colour})
+
+  local style = {}
+  style.text = '  '
+  table.insert(ttext, {style})
+
+  local style = {}
+  style.text = 'This is the help for ' .. GetPluginName()
+  style.hjust = 'center'                                      
+  table.insert(ttext, {style})
+
+  local style = {}
+  style.text = 'Plugin Alias: '                                     
+  table.insert(ttext, {style, {text=self.cmd, textcolour=var.plugin_colour}})
+
+  local style = {}
+  style.text = '  '
+  table.insert(ttext, {style})
+
+  local style = {}
+  style.text = 'Commands '
+  table.insert(ttext, {style})
+
+  for i,v in tableSort(self.cmds_table) do
+    if v.help ~= '' then
+      local tline = {}
+      local style2 = {}
+      style2.text = string.format("%-15s", i)
+      style2.textcolour = 'white'
+      style2.mouseup = function ()
+                        Execute(self.cmd .. ' ' .. i)
+                       end
+      table.insert(tline, style2)
+
+      local style2 = {}
+      style2.text = v.help
+      style2.textcolour = var.plugin_colour
+      table.insert(tline, style2)
+      
+      table.insert(ttext, tline)
+    end
+  end
+
+  local style = {}
+  style.text = '  '
+  table.insert(ttext, {style})
+
+  local objectline = {}
+  table.insert(objectline, {text='Objects: '})
+  for i,v in pairs(self.pobjects) do
+    local style2 = {}
+    style2.text = ' ' .. i .. ' '
+    style2.mouseup = function ()
+                       Execute(self.cmd .. ' ' .. i)
+                     end
+    style2.hint = 'Run "' .. self.cmd .. ' ' .. i .. '"'
+    table.insert(objectline, style2)
+  end
+
+  table.insert(ttext, objectline)
+
+  local style = {}
+  style.text = '  '
+  table.insert(ttext, {style})
+
+  tableExtend(ttext, format_aard_helps(self.aardhelps))
+
+  local style = {}
+  style.text = '  '
+  table.insert(ttext, {style})
+
+  tableExtend(ttext, format_aard_cmds(self.aardcmds))
+
+  tableExtend(ttext, format_hyperlinks(self.links))
+
+  local style = {}
+  style.text = '  '
+  table.insert(ttext, {style})
+
+  local style = {}
+  style.text = ' '
+  table.insert(ttext, {style, backcolour=var.plugin_colour})
+
+  --tprint(ttext)
+
+  return ttext
+end
+
+function Pluginhelper:addaardhelps(args)
+  for i,v in ipairs(args) do
+    table.insert(self.aardhelps, v)
+  end
+end
+
+function Pluginhelper:addaardcmds(args)
+  for i,v in ipairs(args) do
+    table.insert(self.aardcmds, v)
+  end
+end
+
+function Pluginhelper:addlink(ltype, text, url, tip)
+  table.insert(self.links, {ltype=ltype, text=text, url=url, tip=tip})
+end
+
+function format_hyperlinks(t)
+  local tlines = {}
+
+  --table.insert(tlines, {{text=' '}})  
+
+  local count = 0
+
+  local printed = {}
+  for i,v in tableSort(t, 'ltype', 'Other') do
+    count = count + 1
+    if not printed[v.ltype] then
+          table.insert(tlines, {{text=' '}})  
+          table.insert(tlines, {{text=v.ltype .. ' Links', textcolour='magenta'}})
+          printed[v.ltype] = true
+    end
+    local linkline = {}
+    table.insert(linkline, {text='[', textcolour='white'})
+
+    local style2 = {}
+    style2.text = 'Link'
+    style2.mouseup = function (win, flags, hotspotid)
+                        OpenBrowser(v.url)
+                     end
+    style2.hint = v.tip
+    style2.underline = true
+    style2.textcolour = verify_colour(0xE16941)
+    table.insert(linkline, style2)
+
+    table.insert(linkline, {text=']', textcolour='white'})
+
+    local style2 = {}
+    style2.text = ' ' .. v.text
+    style2.textcolour = 'white'
+    table.insert(linkline, style2)
+
+    table.insert(tlines, linkline)
+  end
+
+  if count == 0 then
+    return {}
+  end
+
+  return tlines
+end
+
+function format_aard_cmds(t)
+  local tlines = {}
+  
+  local style = {}
+  style.text = "Aardwolf Commands related to the plugin:"
+  style.textcolour = 'magenta'
+  table.insert(tlines, {style})
+
+  local helpline = {}
+
+  local style = {}
+  style.text = "  "
+  table.insert(helpline, style)
+
+  local count = 0
+
+  for i,v in ipairs(t) do --loop table and make help links
+    count = count + 1
+    local style2 = {}
+    style2.text = v
+    style2.mouseup = function (win, flags, hotspotid)
+                        SetCommand(v)
+                     end
+    style2.hint = 'Paste Command ' .. v .. ' to Input Box'
+    style2.textcolour = verify_colour(0xE16941)
+    style2.underline = true
+    table.insert(helpline, style2)
+    if i < #t then
+      local style3 = {}
+      style3.text = ', '
+      style3.textcolour = 'white'
+      table.insert(helpline, style3)
+    end
+  end
+
+  if count == 0 then
+    return {}
+  end
+
+  table.insert(tlines, helpline)
+  --tprint(tlines)
+  return tlines
+end
+
+function format_aard_helps(t)
+  local tlines = {}
+  
+  local style = {}
+  style.text = "Aardwolf help files related to the plugin:"
+  style.textcolour = 'magenta'
+  table.insert(tlines, {style})
+
+  local helpline = {}
+
+  local style = {}
+  style.text = "  "
+  table.insert(helpline, style)
+
+  local count = 0
+
+  for i,v in ipairs(t) do --loop table and make help links
+    count = count + 1
+    local style2 = {}
+    style2.text = v
+    style2.mouseup = function (win, flags, hotspotid)
+                        SendNoEcho('help ' .. v)
+                     end
+    style2.hint = 'Show help for ' .. v
+    style2.textcolour = verify_colour(0xE16941)
+    style2.underline = true
+    table.insert(helpline, style2)
+    if i < #t then
+      local style3 = {}
+      style3.text = ', '
+      style3.textcolour = 'white'
+      table.insert(helpline, style3)
+    end
+  end
+
+  if count == 0 then
+    return {}
+  end
+
+  table.insert(tlines, helpline)
+  --tprint(tlines)
+  return tlines
 end
 
 function do_cmd()
