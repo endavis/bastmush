@@ -25,6 +25,31 @@ wearlocs table
   - table of wear locations
 --]]
 
+function hasmore(text)
+  _place = string.find(text, '}')
+  _stlen = string.len(text)
+  if _place == _stlen then
+    return false
+  else
+    return true
+  end
+end
+
+function removetag(styles)
+  if styles[1] then
+    if not hasmore(styles[1].text) then
+      table.remove (styles, 1)  -- get rid of tag
+    else
+      ttext = styles[1].text
+      _place = string.find(ttext, '}')
+      if _place then
+        styles[1].text = string.sub(ttext, _place + 1)
+      end
+    end
+  end
+  return styles
+end
+
 function findkeyword(item)
   wlist = utils.split(item, " ")
   badwords = {
