@@ -57,7 +57,7 @@ Button Notes:
 
 
 TODO: add footer, this could be used for resizing, tabs, status bar type things
-TODO: notitlebar
+TODO: resize flag that would make the border be used for resizing
 
 windowwidth = self.windowborderwidth 
               + self.width_padding 
@@ -1471,14 +1471,16 @@ function Miniwin:calc_header_height()
 end
 
 -- create the window and do things before text is drawn
-function Miniwin:pre_create_window_internal(height, width)
+function Miniwin:pre_create_window_internal(height, width, x, y)
   local height = height or self.window_data.actualwindowheight 
   local width = width or self.window_data.actualwindowwidth
 
   -- recreate the window the correct size
-  if self.x ~= -1 and self.y ~= -1 then
+  local tx = x or self.x
+  local ty = y or self.y 
+  if tx >= 0 and ty >= 0 then
     check (WindowCreate (self.id,
-                 self.x, self.y,   -- left, top (auto-positions)
+                 tx, ty,   -- left, top (auto-positions)
                  width,     -- width
                  height,  -- height
                  0,
@@ -1567,13 +1569,16 @@ function Miniwin:drawwin()
   end
 
   if self.shaded and self.titlebar then
+    local tx = WindowInfo(self.id, 10)
+    local ty = WindowInfo(self.id, 11)
+    -- look at shaded stuff
     local sheight = self.window_data[1].bottom + self.border_width + 1
     if self.shade_with_header and self.header_height > 0 then 
       local htop = self.window_data[2].top
       local hbottom = htop + self:calc_header_height() + 1
       sheight = hbottom
     end
-    self:pre_create_window_internal(sheight, nil)
+    self:pre_create_window_internal(sheight, nil, tx, ty)
     self:displayline(1, self.window_data[1])
     if self.shade_with_header then
       for i=1,self.header_height do
