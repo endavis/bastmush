@@ -84,9 +84,6 @@ require 'serialize'
 require 'copytable'
 require 'commas'
 
-TRANSPARENCY_COLOUR = 0x080808
-BORDER_WIDTH = 2
-
 local BLACK = 1
 local RED = 2
 local GREEN = 3
@@ -191,6 +188,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'y', {type="number", help="y location of this window, -1 = auto", default=-1, sortlev=2})
   self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x0D0D0D, sortlev=3, longname="Background Colour"})
   self:add_setting( 'text_colour', {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=3, longname="Text Colour"})
+  self:add_setting( 'window_border_colour', {type="colour", help="border colour for window", default=0x575757, sortlev=3, longname="Window Border Colour"})
   self:add_setting( 'title_bg_colour', {type="colour", help="background colour for the titlebar", default=0x575757, sortlev=3, longname="Title Background Colour"})
   self:add_setting( 'button_text_colour', {type="colour", help="text colour for the buttons in the titlebar", default=0x70CBB9, sortlev=10, longname="Button Text Colour"})
   self:add_setting( 'button_text_highlight_colour', {type="colour", help="text colour for the buttons in the titlebar", default='black', sortlev=10, longname="Button Text Highlight Colour"})
@@ -526,7 +524,7 @@ function Miniwin:buildtitlebar()
       if (not addedtitle) and (not self.notitletext) then
         addedtitle = true
         local hstyle = {}
-        hstyle.text = self.cname
+        hstyle.text = self.titlebartext or self.cname 
         hstyle.bold = true
         hstyle.textcolour = "button_text_colour"
         hstyle.hjust = 'center'
@@ -547,16 +545,16 @@ end
 
 -- sets the font from the mouse menu
 function Miniwin:menusetfont()
-        if self.font_warn == "true" then --display msg about fixed width fonts
+        if self.font_warn == false then --display msg about fixed width fonts
                 local msg = "This miniwindow may not display properly without a fixed width font.".. --font msg text
-                                "\n\nUse menu option \"Reset Defaults\" or command \"map reset\" to reset font\n"..
-                                "if the map becomes unreadable.\n"..
+                                "\n\nUse menu option \"Reset Defaults\" or command '" .. phelper.cmd .. ' ' .. self.cname .. " reset' to reset font\n"..
+                                "if the window becomes unreadable.\n"..
                                 "\nYes to proceed.\nNo to to proceed and stop displaying this message.\nCancel to cancel."
                 local s = utils.umsgbox ( msg, "Font selection", "yesnocancel", "!", 1 ) --font msg box
                 if s == "cancel" then --process msg box response
                         return
                 elseif s == "no" then
-                        self:set('font_warn', false)
+                        self:set('font_warn', true)
                 end
         end
         tfont = self.fonts[self.default_font_id]
@@ -596,7 +594,7 @@ function Miniwin:buildmousemenu()
       menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring(self[name])
     end
   end
-  menu = menu .. ' | < | Restore Defaults'
+  menu = menu .. ' | < || Restore Defaults || Help'
   return menu
 end
 
@@ -617,10 +615,12 @@ function Miniwin:menuclick ()
           elseif result == "Decrease font size" then
             self:set('font_size', self.font_size - 1)
           elseif result == "Default Font" then
-            print("setting default font")
-            --self:cmd_reset()  
+            self:set('font_size', 'default')
+            self:set('font', 'default')
           elseif result:match("Restore Defaults") then
             self:cmd_reset()   
+          elseif result == "Help" then
+            self.phelper.helpwin:show(true)
           else
             for name,setting in tableSort(self.set_options, 'type', 'unknown') do
               if result == setting.longname then
@@ -1123,12 +1123,11 @@ function Miniwin:buildwindow_titlebar_noheader()
     for line,v in ipairs(self.text) do
       local linenum = line + 1
       local tbottom = tempdata[linenum - 1].bottom
+      if linenum == 2 then
+        tbottom = tempdata[linenum - 1].bottom + 2
+      end
 
       tline = self:convert_line(linenum, v, tbottom)
-      if linenum > 1 and linenum == self.header_height + 1 then
-        tline.bottom = tline.bottom + 4
-        tline.height = tline.height + 3
-      end  
     
       tempdata[linenum] = tline
       height = height + tempdata[linenum].height + 1
@@ -1496,8 +1495,8 @@ function Miniwin:pre_create_window_internal(height, width)
   end
 
   if not self.shaded or self.shade_with_header then
-    local htop = self.window_data[2].top
-    local hbottom = htop + self:calc_header_height()
+    local htop = 0
+    local hbottom = 0
     if self.header_height > 0 then
       if self.titlebar then
         htop = self.window_data[2].top
@@ -1556,8 +1555,8 @@ function Miniwin:post_create_window_internal()
     
   -- DrawEdge rectangle
   --check (WindowRectOp (self.id, 5, 0, 0, 0, 0, 10, 15))
-  check (WindowRectOp (self.id, 1, 0, 0, 0, 0, self:get_colour('title_bg_colour')))
-  check (WindowRectOp (self.id, 1, 1, 1, -1, -1, self:get_colour('title_bg_colour')))
+  check (WindowRectOp (self.id, 1, 0, 0, 0, 0, self:get_colour('window_border_colour')))
+  check (WindowRectOp (self.id, 1, 1, 1, -1, -1, self:get_colour('window_border_colour')))
 end
 
 -- draw the window
