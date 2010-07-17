@@ -44,7 +44,6 @@ require 'verify'
 
 cpwin = Miniwin:new{name="CP"}
 cpwin:set_default('windowpos', 7)
-cpwin:set_default('font_size', 7)
 cpwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
 cpwin:add_setting("mobdead_colour", {help="the colour for when a mob is dead", type="colour", default=verify_colour("red"), sortlev=1})
 cpwin:add_setting("notlevel_colour", {help="the colour for when this cp is no longer from this level", type="colour", default=verify_colour("cyan"), sortlev=1})
@@ -68,13 +67,13 @@ function show_cp_text ()
   -- heading
 
   style = {}
-  style.text = string.format("Campaign mobs left:", level.level)
+  style.text = string.format("Campaign mobs left: %s", #cpmobs)
   table.insert (texttable, {style})
 
   -- list of mobs
   for i, v in ipairs (cpmobs) do
     style = {}
-    style.text = v.name .. " (" .. v.room .. ")"
+    style.text = string.format("%-30s %s", v.name, " (" .. v.room .. ")")
     if verify_bool(v.mobdead) then
       style.textcolour = "mobdead_colour"
     end
