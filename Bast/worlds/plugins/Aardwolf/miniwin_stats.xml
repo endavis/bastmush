@@ -9,7 +9,7 @@
    language="Lua"
    purpose="display stats in a miniwindow"
    date_written="2008-07-18"
-   requires="4.34"
+   requires="4.52"
    version="2.0"
    save_state="y"
    >

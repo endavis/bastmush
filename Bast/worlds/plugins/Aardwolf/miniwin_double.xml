@@ -9,7 +9,7 @@
    language="Lua"
    purpose="Shows double in a miniwin"
    date_written="2008-07-24"
-   requires="4.34"
+   requires="4.52"
    version="2.0"
    save_state="y"
    >
