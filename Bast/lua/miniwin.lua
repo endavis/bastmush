@@ -220,8 +220,11 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'y', {type="number", help="y location of this window, -1 = auto", default=-1, sortlev=2})
   self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x0D0D0D, sortlev=3, longname="Background Colour"})
   self:add_setting( 'text_colour', {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=3, longname="Text Colour"})
-  self:add_setting( 'window_border_colour', {type="colour", help="border colour for window", default=0x575757, sortlev=3, longname="Window Border Colour"})
+  self:add_setting( 'window_border_colour', {type="colour", help="border colour for window", default=0x303030, sortlev=3, longname="Window Border Colour"})
   self:add_setting( 'title_bg_colour', {type="colour", help="background colour for the titlebar", default=0x575757, sortlev=3, longname="Title Background Colour"})
+  self:add_setting( 'tab_bg_colour', {type="colour", help="background colour for a tab", default=0xDCDCDC, sortlev=6, longname="Tab Background Colour"})
+  self:add_setting( 'tab_text_colour', {type="colour", help="text colour for a tab", default=0x0D0D0D, sortlev=6, longname="Tab Text Colour"})
+  self:add_setting( 'tab_border_colour', {type="colour", help="border colour for a tab", default=0xDCDCDC, sortlev=6, longname="Tab Border Colour"})
   self:add_setting( 'button_text_colour', {type="colour", help="text colour for the buttons in the titlebar", default=0x70CBB9, sortlev=10, longname="Button Text Colour"})
   self:add_setting( 'button_text_highlight_colour', {type="colour", help="text colour for the buttons in the titlebar", default='black', sortlev=10, longname="Button Text Highlight Colour"})
   self:add_setting( 'button_bg_highlight_colour', {type="colour", help="text colour for the buttons in the titlebar", default=0x70CBB9, sortlev=10, longname="Button Background Colour"})
@@ -265,16 +268,19 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
                       end, hint="Click to close", place=99})
 
   self.defaulttab = None
+  self.activetab = None
   self.tabs = {} -- key will be tabname, data will be text
   self.tabstyles = {}
 
 end
 
-function Miniwin:addtab(tabname, text)
+function Miniwin:addtab(tabname, text, place)
  if self:counttabs() == 0 then
    self.defaulttab = tabname
  end
- self.tabs[tabname] = text
+ self.tabs[tabname] = {}
+ self.tabs[tabname].text = text
+ self.tabs[tabname].place = place
 end
 
 function Miniwin:removetab(tabname)
@@ -292,14 +298,14 @@ end
 function Miniwin:changetotab(tabname)
   if self.tabs[tabname] then
     self.activetab = tabname
-    self:createwin(self.tabs[tabname])
+    self:createwin(self.tabs[tabname].text)
   end
 end
 
 function Miniwin:buildtabline()
   if self:counttabs() > 1 then
     local tabline = {}
-    for i,v in pairs(self.tabs) do
+    for i,v in tableSort(self.tabs, 'place', 50) do
       local style = {}
       style.text = ' ' .. i .. ' '
       style.tab = i
@@ -309,6 +315,18 @@ function Miniwin:buildtabline()
       style.mouseover = function(flags, hotspot_id)
 
                         end
+      style.topborder = true
+      style.leftborder = true
+      style.rightborder = true
+      style.bottomborder = true
+      style.bordercolour = 'text_colour'
+      --style.font = 'Dina'
+      if i == self.activetab then
+        style.textcolour = 'bg_colour'
+        style.backcolour = 'text_colour'
+        style.bordercolour = 'text_colour'
+        style.fillall = true
+      end
       table.insert(tabline, style)
     end
     return tabline
@@ -618,9 +636,9 @@ function Miniwin:buildtitlebar()
    
   end
 
-  tstyle.bordercolour = 'black'
+  --tstyle.bordercolour = 'black'
   tstyle.backcolour = 'title_bg_colour'
-  tstyle.cellborder = true
+  --tstyle.cellborder = true
   --tstyle.backcolour = 'black'
   return tstyle
 end
@@ -730,13 +748,15 @@ end
 function Miniwin:createwin (text)
   if text == nil then
     if self:counttabs() > 0 then
-      text = self.tabs[self.defaulttab]
+      text = self.tabs[self.defaulttab].text
+      self.activetab = self.defaulttab
     else
       return
     end
   elseif text and not next(text) then
     if self:counttabs() > 0 then
-      text = self.tabs[self.defaulttab]
+      text = self.tabs[self.defaulttab].text
+      self.activetab = self.defaulttab
     else
       return
     end
@@ -915,7 +935,7 @@ function Miniwin:mouseup (flags, hotspotid)
   return false
 end -- mousedown
 
--- adjust a line after finding out window width and height
+-- adjust a line after finding out window width and height for justifying text
 function Miniwin:adjust_line(line, linenum)
   --print('-------------- convert line --------------')
   --tprint(line)
@@ -944,6 +964,9 @@ function Miniwin:adjust_line(line, linenum)
         
         local twidth = line.width
         local wwidth = self.window_data.actualwindowwidth - self.border_width - self.width_padding
+        if self.titlebar and linenum == self.titlebarlinenum then
+          wwidth = self.window_data.actualwindowwidth - self.border_width - 2
+        end
         local restt = twidth - tstart
         local restw = wwidth - tstart
         tstart = tstart + restw - restt
@@ -958,14 +981,22 @@ function Miniwin:adjust_line(line, linenum)
         v.stylelen = self:colourtext(v.font_id, v.text, v.tstart, v.ttop, 0, 0, nil, true)
     end
 
+
     if tstart + v.stylelen >= self.window_data.textend then
-      v.tend = self.window_data.textend
+      if self.titlebar and linenum == self.titlebarlinenum then
+        v.tend = self.window_data.actualwindowwidth - self.border_width - 2
+      else
+        v.tend = self.window_data.textend
+      end
     else
       v.tend = v.tstart + v.stylelen
     end
 
     if v.button then
       self.buttonstyles[v.button] = v
+    end
+    if v.tab then
+      self.tabstyles[v.tab] = v
     end
   end -- for each style run
   --print('--------------- adjusted line ---------------')
@@ -992,7 +1023,7 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding)
   local maxfontheight = 0
   local start = self.border_width + self.width_padding
   if self.titlebar and linenum == self.titlebarlinenum then
-    start = self.border_width
+    start = self.border_width + 2
   end
   if self:is_header_line(linenum) then
       def_font_id = self.default_font_id_bold
@@ -1047,6 +1078,7 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding)
       local tlength = WindowTextWidth (self.id, self.default_font_id, linet.text[1].text)
       start = start + tlength
   end
+  linet.cellborder = line.cellborder
   linet.width = start -- + self.width_padding
   linet.height = maxfontheight
   linet.top = top 
@@ -1070,7 +1102,7 @@ function Miniwin:buildwindow()
     linenum = linenum + 1
     titlebar = self:buildtitlebar()
     self.titlebarlinenum = linenum
-    tempdata[linenum] = self:convert_line(linenum, titlebar, 1, 2, 1)
+    tempdata[linenum] = self:convert_line(linenum, titlebar, self.border_width + 1, 2, 1)
     height = tempdata[linenum].bottom + 3
   end
 
@@ -1078,7 +1110,7 @@ function Miniwin:buildwindow()
     linenum = linenum + 1
     tabline = self:buildtabline()
     self.tablinenum = linenum
-    tempdata[linenum] = self:convert_line(linenum, tabline, height)
+    tempdata[linenum] = self:convert_line(linenum, tabline, height, 2, 2)
     height = tempdata[linenum].bottom
   end
 
@@ -1275,8 +1307,8 @@ function Miniwin:displayline (linenum, styles)
        if tborderstyle == 0 then
          tborderstyle = 1
        end
-         WindowRectOp (self.id, tborderstyle, tstart, styles.top - 1, tstart + tlength, styles.bottom + 1, 
-                self:get_colour(v.bordercolour), self:get_colour(v.bordercolour2))
+         WindowRectOp (self.id, tborderstyle, self.border_width, styles.top, self.window_data.actualwindowwidth - self.border_width, styles.bottom + 1, 
+                self:get_colour(styles.bordercolour), self:get_colour(styles.bordercolour2))
    else
 
     if styles.topborder then
