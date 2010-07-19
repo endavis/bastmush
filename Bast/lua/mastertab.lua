@@ -13,7 +13,7 @@ Mastertabwin = Miniwin:subclass()
 
 function Mastertabwin:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
-  self.tabs = {}
+  self.wtabs = {}
   --self.tab_padding = 10
   self.tab_padding = 0
   self.text = {}
@@ -45,7 +45,7 @@ end
 function Mastertabwin:hideall()
   if not self.alreadyhidden then
     self.alreadyhidden = true
-    for i,v in pairs(self.tabs) do
+    for i,v in pairs(self.wtabs) do
       v.last = WindowInfo(v.win, 5)
       WindowShow(v.win, false)
     end
@@ -53,7 +53,7 @@ function Mastertabwin:hideall()
 end
 
 function Mastertabwin:showall()
-  for i,v in pairs(self.tabs) do
+  for i,v in pairs(self.wtabs) do
     if v.last ~= nil then
       WindowShow(v.win, v.last)
     end
@@ -63,20 +63,22 @@ end
 
 function Mastertabwin:counttabs()
   local count = 0
-  for i,v in pairs(self.tabs) do
+  for i,v in pairs(self.wtabs) do
     count = count + 1
   end
   return count
 end
 
 function Mastertabwin:addtab(args)
-  self:mdebug('addtab: ', args)
-  self.tabs[args.win] = args
-  self:drawtabs()
+  if args.win ~= self.win then
+    self:mdebug('addtab: ', args)
+    self.wtabs[args.win] = args
+    self:drawtabs()
+  end
 end
 
 function Mastertabwin:removetab(args)
-  self.tabs[args.win] = nil
+  self.wtabs[args.win] = nil
   self:drawtabs()
 end
 
@@ -85,9 +87,9 @@ function Mastertabwin:createtabstyle(start, key, newstyle)
   tstyle.start = start
   tstyle.text = newstyle.text
   tstyle.length = WindowTextWidth (self.id, self.default_font_id, strip_colours(tstyle.text))
-  if self.tabs[key].win then
-    tstyle.mousedown = self.tabs[key].func or self.toggletab
-    tstyle.hint = self.tabs[key].popup or "Toggle " .. self.tabs[key].name
+  if self.wtabs[key].win then
+    tstyle.mousedown = self.wtabs[key].func or self.toggletab
+    tstyle.hint = self.wtabs[key].popup or "Toggle " .. self.wtabs[key].name
     tstyle.hotspot_id = key .. start
     self.hotspots[key .. start] = key
   end
@@ -111,7 +113,7 @@ end
 function Mastertabwin:drawtabs_vertical()
   --self:mdebug('drawtabs_vertical')
   local ttext = {}
-  for i,v in tableSort(self.tabs, 'name', 'Default') do
+  for i,v in tableSort(self.wtabs, 'name', 'Default') do
     --self:mdebug('v in drawtab_vertical', v)
     --local tabcolour = v.tabcolour or self.bg_colour
     local start = self.width_padding
@@ -129,10 +131,11 @@ function Mastertabwin:drawtabs_vertical()
       table.insert(tstyle, style)
       v['end'] = nil
     end
-    tstyle.leftborder = true
-    tstyle.rightborder = true
-    tstyle.topborder = true
-    tstyle.bottomborder = true
+--     tstyle.leftborder = true
+--     tstyle.rightborder = true
+--     tstyle.topborder = true
+--     tstyle.bottomborder = true
+    tstyle.cellborder = true
     tstyle.bordercolour = self.border_colour
     tstyle.backcolour = v.tabcolour or nil
     --self:mdebug('style being added', tstyle)
@@ -149,7 +152,7 @@ function Mastertabwin:drawtabs_horizontal()
   local ttext = {}
   local start = self.width_padding
    
-  for i,v in tableSort(self.tabs, 'name', 'Default') do
+  for i,v in tableSort(self.wtabs, 'name', 'Default') do
     start = start + self.tab_padding / 2
     v.start = start
     local tstyle = {}
