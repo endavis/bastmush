@@ -168,7 +168,6 @@ function Miniwin:initialize(args)
   --]]
   super(self, args)
   self.parent = args.parent or nil
-  self.header = args.header or "None"
   self.borderwinid = self.id .. ':border'
   self.text = {}
   self.children = {}
@@ -315,20 +314,23 @@ function Miniwin:buildtabline()
       style.mouseover = function(flags, hotspot_id)
 
                         end
-      style.topborder = true
+      --style.topborder = true
       style.leftborder = true
       style.rightborder = true
-      style.bottomborder = true
-      style.bordercolour = 'text_colour'
+      --style.bottomborder = true
+      style.bordercolour = 'tab_border_colour'
       --style.font = 'Dina'
       if i == self.activetab then
-        style.textcolour = 'bg_colour'
-        style.backcolour = 'text_colour'
-        style.bordercolour = 'text_colour'
+        style.textcolour = 'tab_text_colour'
+        style.backcolour = 'tab_bg_colour'
+        style.bordercolour = 'tab_border_colour'
         style.fillall = true
       end
       table.insert(tabline, style)
     end
+    --tabline.bottomborder = true
+    --tabline.topborder = true
+    tabline.bordercolour = 'tab_border_colour'
     return tabline
   end 
   return {}
@@ -548,7 +550,7 @@ function Miniwin:buttonmouseover(name)
 
    self.buttonstyles[name].textcolour = 'button_text_highlight_colour'
    self.buttonstyles[name].backcolour = 'button_bg_highlight_colour'
-   self:displayline(1, self.window_data[1])
+   self:displayline(self.window_data[1])
    Repaint()
    --0x6DEFC8
    --v = self.buttonstyles[name]
@@ -562,7 +564,7 @@ function Miniwin:buttoncancelmouseover(name)
    --tprint(self.buttonstyles[name])
    self.buttonstyles[name].textcolour = 'button_text_colour'
    self.buttonstyles[name].backcolour = nil
-   self:displayline(1, self.window_data[1])
+   self:displayline(self.window_data[1])
    Repaint()
 
    --v = self.buttonstyles[name]
@@ -1016,11 +1018,12 @@ end
 -- maybe need a top (for line top), a toppadding (for where the text's top should start), bottompadding (for the bottom padding)
 function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding)
   bottompadding = bottompadding or 0
-  toppadding = toppadding or 1
+  toppadding = toppadding or 0
   local linet = {}
   local def_font_id = self.default_font_id
   local def_colour = self:get_colour('text_colour')
   local maxfontheight = 0
+  local start = linepadding
   local start = self.border_width + self.width_padding
   if self:counttabs() > 0 and linenum == self.tablinenum then
     start = self.border_width
@@ -1084,10 +1087,18 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding)
   linet.cellborder = line.cellborder
   linet.width = start -- + self.width_padding
   linet.height = maxfontheight
-  linet.top = top 
-  linet.ttop = linet.top + toppadding
-  linet.tbottom = linet.top + toppadding + linet.height
-  linet.bottom = linet.top + toppadding + linet.height + bottompadding
+  linet.top = top
+  linet.ttop = linet.top + toppadding - 1
+  linet.tbottom = linet.ttop + linet.height
+  linet.bottom = linet.tbottom + bottompadding + 2
+ -- if linenum == 1 or linenum == 2 then
+ --   print('------------------')
+ --   print('linenum : ', linenum)
+ --   print('top     : ', linet.top)
+ --   print('ttop    : ', linet.ttop)
+ --   print('tbottom : ', linet.tbottom)
+ --   print('bottom  : ', linet.bottom)
+ -- end
   --print('----- converted -------')
   --tprint(linet)
   --self:mdebug('converted line', linet)
@@ -1099,14 +1110,20 @@ function Miniwin:buildwindow()
   local tempdata = {}
   self.window_data = {}
 
+  local header = {}
+  local text = {}
+
   local linenum = 0
+
+  self.window_data.maxlinewidth = 0
 
   if self.titlebar then
     linenum = linenum + 1
     titlebar = self:buildtitlebar()
     self.titlebarlinenum = linenum
-    tempdata[linenum] = self:convert_line(linenum, titlebar, self.border_width + 1, 2, 1)
-    height = tempdata[linenum].bottom + 3
+    tempdata[linenum] = self:convert_line(linenum, titlebar, self.border_width + 3, 2, 2)
+    height = tempdata[linenum].bottom + 2
+    --print(height)
   end
 
   if self:counttabs() > 1 then
@@ -1115,30 +1132,50 @@ function Miniwin:buildwindow()
     self.tablinenum = linenum
     tempdata[linenum] = self:convert_line(linenum, tabline, height, 2, 2)
     height = tempdata[linenum].bottom
+    self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
   end
 
-  self.window_data.maxlinewidth = 0
-
   if type(self.text) == 'table' then
-    local maxwidth = 0
-    for line,v in ipairs(self.text) do
+    -- breakout header_stuff
+    for i=1,self.header_height do
+      table.insert(header, self.text[i])
+    end
+
+    -- breakout line stuff
+    for i=1+self.header_height, #self.text do
+      table.insert(text, self.text[i])
+    end
+
+
+    -- do header stuff
+    for line, v in ipairs(header) do
       linenum = linenum + 1
-      local tbottom = height
-
-      if line == 1 and self.header_height > 0 then
+      if line == 1 then
         self.actual_header_start_line = linenum
-        self.actual_header_end_line = linenum + self.header_height - 1
+        self.actual_header_end_line = linenum + #header - 1
       end
 
-      if line == 1 and self.header_height == 1 then
-        tline = self:convert_line(linenum, v, tbottom, 3, 4)
-      elseif line == 1 and self.header_height > 1 then
-        tline = self:convert_line(linenum, v, tbottom, 3, 0)
-      elseif line == self.header_height then
-        tline = self:convert_line(linenum, v, tbottom, 0, 5)
-      else
-        tline = self:convert_line(linenum, v, tbottom)
+      if line == 1 and #header == 1 then
+        tline = self:convert_line(linenum, v, height, 5, 0)
+      elseif line == 1 and #header > 1 then
+        tline = self:convert_line(linenum, v, height, 5, 1)
+      elseif line == #header then
+        tline = self:convert_line(linenum, v, height, 0, 0)
       end
+      --tline.backcolour = 'header_bg_colour'
+
+      tempdata[linenum] = tline
+      height = tempdata[linenum].bottom
+      self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
+    end
+
+    height = height + self.height_padding
+
+    -- do text stuff
+    for line,v in ipairs(text) do
+      linenum = linenum + 1
+
+      tline = self:convert_line(linenum, v, height, 1)
     
       tempdata[linenum] = tline
       height = tempdata[linenum].bottom
@@ -1148,7 +1185,6 @@ function Miniwin:buildwindow()
     if self.width > 0 then
       self.window_data.actualwindowwidth = self.width
     else
-      --self.window_data.actualwindowwidth = self.window_data.maxlinewidth + (self.width_padding * 2) + (self.border_width * 2)
       self.window_data.actualwindowwidth = self.window_data.maxlinewidth + self.width_padding + self.border_width
     end
 
@@ -1231,7 +1267,7 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
 end -- colourtext
 
 -- display a single line that has been converted and adjusted
-function Miniwin:displayline (linenum, styles)
+function Miniwin:displayline (styles)
   self:mdebug('Displaying', styles)
   local def_font_id = self.default_font_id
   local def_colour = self:get_colour("text_colour")
@@ -1241,19 +1277,19 @@ function Miniwin:displayline (linenum, styles)
     styles.bottom = WindowInfo(self.id, 4) - self.border_width - self.height_padding
   end
 
-   if styles.backcolour then
-      WindowRectOp (self.id, 2, self.window_data.linestart, styles.top, self.window_data.lineend, styles.bottom, self:get_colour(styles.backcolour) )
-   end
+  if styles.backcolour then
+    WindowRectOp (self.id, 2, self.window_data.linestart, styles.top, self.window_data.lineend, styles.bottom - 1, self:get_colour(styles.backcolour) )
+  end
   for i,v in ipairs (styles.text) do
 
     if v.backcolour and not (v.backcolour == 'bg_colour') then
       -- draw background rectangle
       local bcolour = self:get_colour(v.backcolour, def_bg_colour)
-      if v.fillall then
-        WindowRectOp (self.id, 2, v.tstart, styles.top, v.tstart + v.stylelen, styles.bottom + 1, bcolour)
-      else
-        WindowRectOp (self.id, 2, v.tstart, v.ttop - 1, v.tstart + v.stylelen, v.ttop + self.fonts[v.font_id].height, bcolour)
-      end
+      --if v.fillall then
+        WindowRectOp (self.id, 2, v.tstart, styles.top, v.tstart + v.stylelen, styles.bottom, bcolour)
+      --else
+        --WindowRectOp (self.id, 2, v.tstart, v.ttop, v.tstart + v.stylelen, v.ttop + self.fonts[v.font_id].height, bcolour)
+      --end
     end
     if v.image and v.image.name then
       print('displayline: Got Image')
@@ -1274,7 +1310,7 @@ function Miniwin:displayline (linenum, styles)
        if tborderstyle == 0 then
          tborderstyle = 1
        end
-         WindowRectOp (self.id, tborderstyle, v.tstart, styles.ttop - 1, v.tend, styles.bottom + 1, 
+         WindowRectOp (self.id, tborderstyle, v.tstart, styles.top, v.tend, styles.bottom, 
                           self:get_colour(v.bordercolour), self:get_colour(v.bordercolour2))
     else
 
@@ -1310,23 +1346,23 @@ function Miniwin:displayline (linenum, styles)
        if tborderstyle == 0 then
          tborderstyle = 1
        end
-         WindowRectOp (self.id, tborderstyle, self.border_width, styles.top, self.window_data.actualwindowwidth - self.border_width, styles.bottom + 1, 
+         WindowRectOp (self.id, tborderstyle, self.border_width, styles.top, self.window_data.actualwindowwidth - self.border_width, styles.bottom, 
                 self:get_colour(styles.bordercolour), self:get_colour(styles.bordercolour2))
    else
 
     if styles.topborder then
-        WindowLine (self.id, self.window_data.linestart, styles.top - 1, self.window_data.lineend, styles.top - 1, 
+        WindowLine (self.id, self.window_data.linestart, styles.top, self.window_data.lineend, styles.top, 
                                              self:get_colour (tbordercolour), tborderstyle, tborderwidth)
     end
     if styles.bottomborder then
-        WindowLine (self.id, self.window_data.linestart, styles.bottom + 1, self.window_data.lineend, styles.bottom + 1, 
+        WindowLine (self.id, self.window_data.linestart, styles.bottom, self.window_data.lineend, styles.bottom, 
                                              self:get_colour (tbordercolour), tborderstyle, tborderwidth)
     end
     if styles.leftborder then
-        WindowLine (self.id, self.window_data.linestart, styles.top - 1, self.window_data.linestart, styles.bottom + 1, self:get_colour (tbordercolour), tborderstyle, tborderwidth)
+        WindowLine (self.id, self.window_data.linestart, styles.top, self.window_data.linestart, styles.bottom, self:get_colour (tbordercolour), tborderstyle, tborderwidth)
     end
     if styles.rightborder then
-        WindowLine (self.id, self.window_data.lineend - 1, styles.top - 1, self.window_data.lineend - 1, styles.bottom + 1, self:get_colour (tbordercolour), tborderstyle, tborderwidth)
+        WindowLine (self.id, self.window_data.lineend - 1, styles.top, self.window_data.lineend - 1, styles.bottom, self:get_colour (tbordercolour), tborderstyle, tborderwidth)
     end
   end
 
@@ -1364,7 +1400,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
     local htop = 0
     local hbottom = 0
     if self.header_height > 0 then
-        htop = self.window_data[self.actual_header_start_line].top
+        htop = self.window_data[self.actual_header_start_line].top + 1
         hbottom = self.window_data[self.actual_header_end_line + 1].top - 1
 
       -- header colour
@@ -1413,23 +1449,28 @@ function Miniwin:drawwin()
   if self.shaded and self.titlebar then
     local tx = WindowInfo(self.id, 10)
     local ty = WindowInfo(self.id, 11)
+
+    if self.x or self.y then
+      local tx = x or self.x
+      local ty = y or self.y 
+    end
     -- look at shaded stuff
-    local sheight = self.window_data[1].bottom + self.border_width + 3
+    local sheight = self.window_data[2].top + 3
     if self.shade_with_header and self.header_height > 0 then 
-      local hbottom = self.window_data[self.actual_header_end_line + 1].top + 2
+      local hbottom = self.window_data[self.actual_header_end_line + 1].top 
       sheight = hbottom
     end
     self:pre_create_window_internal(sheight, nil, tx, ty)
-    self:displayline(1, self.window_data[1])
+    self:displayline(self.window_data[1])
     if self.shade_with_header then
       for i=1,self.actual_header_end_line do
-        self:displayline(i + 1, self.window_data[i + 1])
+        self:displayline(self.window_data[i + 1])
       end
     end
   else
     self:pre_create_window_internal()
     for i, v in ipairs (self.window_data) do
-      self:displayline (i, self.window_data[i])
+      self:displayline (self.window_data[i])
     end -- for
   end
 
