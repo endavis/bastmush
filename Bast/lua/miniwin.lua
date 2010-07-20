@@ -1022,6 +1022,9 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding)
   local def_colour = self:get_colour('text_colour')
   local maxfontheight = 0
   local start = self.border_width + self.width_padding
+  if self:counttabs() > 0 and linenum == self.tablinenum then
+    start = self.border_width
+  end
   if self.titlebar and linenum == self.titlebarlinenum then
     start = self.border_width + 2
   end
@@ -1092,7 +1095,7 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding)
 end
 
 function Miniwin:buildwindow()
-  local height = self.border_width
+  local height = 0
   local tempdata = {}
   self.window_data = {}
 
@@ -1411,7 +1414,7 @@ function Miniwin:drawwin()
     local tx = WindowInfo(self.id, 10)
     local ty = WindowInfo(self.id, 11)
     -- look at shaded stuff
-    local sheight = self.window_data[1].bottom + self.border_width + 1
+    local sheight = self.window_data[1].bottom + self.border_width + 3
     if self.shade_with_header and self.header_height > 0 then 
       local hbottom = self.window_data[self.actual_header_end_line + 1].top + 2
       sheight = hbottom
