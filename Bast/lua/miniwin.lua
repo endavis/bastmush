@@ -240,8 +240,8 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'font', {type="string", help="change the font for this window", default=self:getdefaultfont(), sortlev=35})
   self:add_setting( 'width', {type="number", help="width of this window, 0 = auto", low=0, high=100, default=0, sortlev=40})
   self:add_setting( 'height', {type="number", help="height of this window, 0 = auto", low=0, high=140, default=0, sortlev=40})
-  self:add_setting( 'height_padding', {type="number", help="height padding for this window", low=1, high=30, default=2, sortlev=45})
-  self:add_setting( 'width_padding', {type="number", help="width padding for this window", low=1, high=30, default=2, sortlev=45})
+  self:add_setting( 'height_padding', {type="number", help="height padding for this window", low=0, high=30, default=2, sortlev=45})
+  self:add_setting( 'width_padding', {type="number", help="width padding for this window", low=0, high=30, default=2, sortlev=45})
   self:add_setting( 'use_tabwin', {type="bool", help="toggle to use tabwin", default=verify_bool(true), sortlev=50})
   self:add_setting( 'font_warn', {type="bool", help="have been warned about font", default=verify_bool(false), sortlev=55, readonly=true})
   self:add_setting( 'shaded', {type="bool", help="window is shaded", default=verify_bool(false), sortlev=55, readonly=true})
@@ -937,10 +937,9 @@ function Miniwin:mouseup (flags, hotspotid)
   return false
 end -- mousedown
 
--- adjust a line after finding out window width and height for justifying text
-function Miniwin:adjust_line(line, linenum)
-  --print('-------------- convert line --------------')
-  --tprint(line)
+-- horizontal and vertical justify styles in a line after we have found out height and width of window
+-- and all styles in the line
+function Miniwin:justify_styles(line, linenum)
 
   for i,v in ipairs (line.text) do
     local stylelen = 0
@@ -1001,8 +1000,6 @@ function Miniwin:adjust_line(line, linenum)
       self.tabstyles[v.tab] = v
     end
   end -- for each style run
-  --print('--------------- adjusted line ---------------')
-  --tprint(line)
   return line
 end
 
@@ -1015,7 +1012,6 @@ function Miniwin:is_header_line(linenum)
 end
 
 -- convert a line, go through and figure out colours, fonts, start positions, end positions, and borders for every line
-
 -- toppadding = extra spacing between top of line and top of text cell
 -- bottompadding = extra spacing between bottom of line and bottom of text cell
 -- textpadding = extra spacing between cell wall and text
@@ -1097,17 +1093,7 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding, tex
   linet.textbottom = linet.texttop + linet.height + 1
   linet.cellbottom = linet.textbottom + textpadding
   linet.linebottom = linet.cellbottom + bottompadding
---  if linenum == 1 or linenum == 2 then
---    print('------------------')
---    print('linenum : ', linenum)
---    print('top     : ', linet.top)
---    print('ttop    : ', linet.ttop)
---    print('tbottom : ', linet.tbottom)
---    print('bottom  : ', linet.bottom)
---  end
-  --print('----- converted -------')
-  --tprint(linet)
-  --self:mdebug('converted line', linet)
+
   return linet
 end
 
@@ -1128,11 +1114,7 @@ function Miniwin:buildwindow()
     titlebar = self:buildtitlebar()
     self.titlebarlinenum = linenum
     tempdata[linenum] = self:convert_line(linenum, titlebar, self.border_width, 2, 2, 1)
---     print('\n', '---------------------')
---     print('titlebar in buildwindow')
---     tprint(tempdata[linenum])
     height = tempdata[linenum].linebottom
-    --print(height)
   end
 
   if self:counttabs() > 1 then
@@ -1150,7 +1132,7 @@ function Miniwin:buildwindow()
       table.insert(header, self.text[i])
     end
 
-    -- breakout line stuff
+    -- breakout text stuff
     for i=1+self.header_height, #self.text do
       table.insert(text, self.text[i])
     end
@@ -1209,12 +1191,7 @@ function Miniwin:buildwindow()
     self.window_data.textend = self.window_data.actualwindowwidth - self.border_width - self.width_padding
 
     for line, v in ipairs(tempdata) do  
-        self.window_data[line] = self:adjust_line(v, line)
---         if line == 1 then
---            print('\n', '---------------------')
---            print('titlebar after adjust')
---            tprint(self.window_data[line])
---         end
+        self.window_data[line] = self:justify_styles(v, line)
     end
 
   end
@@ -1462,9 +1439,9 @@ function Miniwin:drawwin()
       local ty = y or self.y 
     end
     -- look at shaded stuff
-    local sheight = self.window_data[2].linetop + 3
+    local sheight = self.window_data[1].linebottom + self.border_width
     if self.shade_with_header and self.header_height > 0 then 
-      local hbottom = self.window_data[self.actual_header_end_line + 1].linetop + 2
+      local hbottom = self.window_data[self.actual_header_end_line].linebottom + self.border_width + 2
       sheight = hbottom
     end
     self:pre_create_window_internal(sheight, nil, tx, ty)
