@@ -135,7 +135,7 @@ function Mastertabwin:drawtabs_vertical()
 --     tstyle.rightborder = true
 --     tstyle.topborder = true
 --     tstyle.bottomborder = true
-    tstyle.cellborder = true
+    tstyle.lineborder = true
     tstyle.bordercolour = self.border_colour
     tstyle.backcolour = v.tabcolour or nil
     --self:mdebug('style being added', tstyle)
