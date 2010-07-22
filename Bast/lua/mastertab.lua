@@ -21,7 +21,7 @@ function Mastertabwin:initialize(args)
   self.hotspots = {}
   self.alreadyhidden = false
   self.notitletext = true
-  self:add_setting( 'orientation', {type="number", help="orientation of the tabs, 0 = horizontal, 1 = vertical", low=0, high=1, default=1, sortlev=44})
+  self:add_setting( 'orientation', {type="number", help="orientation of the tabs, 0 = horizontal, 1 = vertical", low=0, high=1, default=1, sortlev=44, longname="Change Orientation"})
 
   local td = {}
   td.id = GetPluginID()

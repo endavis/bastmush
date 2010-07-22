@@ -92,6 +92,9 @@ function verify_string(stringval, args)
   -- set args.msg to show a message in the input box
   if (stringval == nil or stringval == '') and not args.silent then
      local msg = ''
+     if args.help then
+       msg = args.help .. '\n'
+     end
      if args.msg then
        msg = args.msg .. '\n'
      end
@@ -116,6 +119,9 @@ function verify_number(numberval, args)
 
   if tvalue == nil and not args.silent then
      local msg = ''
+     if args.help then
+       msg = args.help .. '\n'
+     end
      if args.msg then
        msg = args.msg .. '\n'
      end
