@@ -254,15 +254,15 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
 
   self.buttons = {}
   self.buttonstyles = {}
-  self:add_button('minimize', {text=" - ", upfunction=function (win, tflags, hotspotid)
+  self:add_button('minimize', {text=" - ", mouseup=function (win, tflags, hotspotid)
                         win:shade()
                       end, hint="Click to shade", place=1})
-  self:add_button('menu', {text=" M ", upfunction=function (win, flags, hotspotid)
-                        win:menuclick()
-                      end, hint="Click to show menu", place=2})
-  self:add_button('drag', {text=" + ", upfunction=empty, hint="Click and hold, then drag to move", cursor=10, place=98, 
-                            mousedown=true, drag_hotspot=true})
-  self:add_button('close', {text=" X ", upfunction=function (win, tflags, hotspotid)
+  self:add_button('menu', {text=" M ", mouseup=function (win, flags, hotspotid)
+                        win:menuclick(flags)
+                      end, hint="Right Click to show Window menu\nLeft Click to show Plugin menu", place=2})
+  self:add_button('drag', {text=" + ", mousedown=empty, hint="Click and hold, then drag to move", cursor=10, place=98, 
+                            drag_hotspot=true})
+  self:add_button('close', {text=" X ", mouseup=function (win, tflags, hotspotid)
                         win:show(false)
                       end, hint="Click to close", place=99})
 
@@ -544,33 +544,17 @@ function Miniwin:add_button(button, buttoninfo)
 end
 
 function Miniwin:buttonmouseover(name)
-   --print('--------- buttonmouseover -------------')
-   --print(name)
-   --tprint(self.buttonstyles[name])
-
    self.buttonstyles[name].textcolour = 'button_text_highlight_colour'
    self.buttonstyles[name].backcolour = 'button_bg_highlight_colour'
    self:displayline(self.window_data[1])
    Repaint()
-   --0x6DEFC8
-   --v = self.buttonstyles[name]
-   --WindowRectOp (self.id, 2, v.tstart, v.ttop, v.tstart + v.textlength, v.ttop + WindowFontInfo(self.id, v.font_id, 1), verify_colour(0x6DEFC8))
-   --Repaint()
 end
 
 function Miniwin:buttoncancelmouseover(name)
-   --print('--------- buttoncancelmouseover -------------')
-   --print(name)
-   --tprint(self.buttonstyles[name])
    self.buttonstyles[name].textcolour = 'button_text_colour'
    self.buttonstyles[name].backcolour = nil
    self:displayline(self.window_data[1])
    Repaint()
-
-   --v = self.buttonstyles[name]
-   --WindowRectOp (self.id, 2, v.tstart, v.ttop, v.tstart + v.textlength, v.ttop + WindowFontInfo(self.id, v.font_id, 1), 
-   --                           self:get_colour('title_bg_colour'))
-   --Repaint()
 end
 
 -- build the titlebar with buttons and text
@@ -595,11 +579,8 @@ function Miniwin:buildtitlebar()
     style.bordercolour = 'button_border_light'
     style.bordercolour2 = 'button_border_dark'
     style.borderstyle = 4
-    if button.mousedown then
-      style.mousedown = button.upfunction
-    else
-      style.mouseup = button.upfunction
-    end
+    style.mousedown = button.mousedown
+    style.mouseup = button.mouseup
 
     style.mouseover = function (win, hotspotid, flags)
         win:buttonmouseover(name)
@@ -696,14 +677,46 @@ function Miniwin:buildmousemenu()
       menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring(self[name])
     end
   end
-  menu = menu .. ' | < || Restore Defaults || Help'
+  menu = menu .. ' | < || Restore Window Defaults || Help'
+  return menu
+end
+
+function Miniwin:buildpluginmousemenu()
+  menu = " >Colours "
+  --local colours = {}
+  for name,setting in tableSort(self.phelper.set_options, 'sortlev', 50) do
+    if setting.longname ~= nil and setting.type == 'colour' then
+      --table.append(colours, name, true)
+      menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring( RGBColourToName(self.phelper[name]))
+    end
+  end
+  --for name,value in table.sort(colours, 
+  menu = menu .. ' | < | >Toggle '
+  for name,setting in tableSort(self.phelper.set_options, 'sortlev', 50) do
+    if setting.longname ~= nil and setting.type == 'bool' then
+      menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring(self.phelper[name])
+    end
+  end
+  menu = menu .. ' | < | >Other '
+  for name,setting in tableSort(self.phelper.set_options, 'sortlev', 50) do
+    if setting.longname ~= nil and setting.type ~= 'bool' and setting.type ~= 'colour' then
+      menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring(self.phelper[name])
+    end
+  end
+  menu = menu .. ' | < || Restore Plugin Defaults || Help'
   return menu
 end
 
 -- the function called when the mouse is clicked in the menu button
-function Miniwin:menuclick ()
+function Miniwin:menuclick (flags)
+  local menu = ''
   --make text for menu options
-  local menu = self:buildmousemenu()
+  -- right click for window menu, left click for plugin menu
+  if bit.band(flags, 0x10) ~= 0 then
+    menu = self:buildmousemenu()
+  elseif bit.band(flags, 0x20) ~= 0 then
+    menu = self:buildpluginmousemenu()    
+  end
   local result = WindowMenu (self.id, WindowInfo (self.id, 14), WindowInfo (self.id, 15), menu) --do menu
   if result:match(' - ') then
     tresult = utils.split(result, '-')
@@ -719,8 +732,10 @@ function Miniwin:menuclick ()
           elseif result == "Default Font" then
             self:set('font_size', 'default')
             self:set('font', 'default')
-          elseif result:match("Restore Defaults") then
+          elseif result:match("Restore Window Defaults") then
             self:cmd_reset()   
+          elseif result:match("Restore Plugin Defaults") then
+            self.phelper:cmd_reset()  
           elseif result == "Help" then
             self.phelper.helpwin:show(true)
           else
@@ -728,9 +743,19 @@ function Miniwin:menuclick ()
               if result == setting.longname then
                 --print("changing settings " .. setting.longname)
                 if setting.type == 'bool' then
-                  self:set(name, not self[name])
+                  return self:set(name, not self[name])
                 else
-                  self:set(name, nil)
+                  return self:set(name, nil)
+                end
+              end
+            end
+            for name,setting in tableSort(self.phelper.set_options, 'type', 'unknown') do
+              if result == setting.longname then
+                --print("changing settings " .. setting.longname)
+                if setting.type == 'bool' then
+                  return self.phelper:set(name, not self[name])
+                else
+                  return self.phelper:set(name, nil)
                 end
               end
             end
@@ -1118,6 +1143,9 @@ function Miniwin:buildwindow()
   end
 
   if self:counttabs() > 1 then
+    if height == 0 then
+      height = 1
+    end
     linenum = linenum + 1
     tabline = self:buildtabline()
     self.tablinenum = linenum
@@ -1413,7 +1441,7 @@ function Miniwin:post_create_window_internal()
   if not self.titlebar then
     self:addhotspot('mousemenu', self.border_width, self.border_width, self.border_width + 5, self.border_width + 5, 
                    nil, nil, function (win, flags, hotspotid)
-                        win:menuclick()
+                        win:menuclick(flags)
                       end,
                    nil, nil, 'Show Menu')
   end
