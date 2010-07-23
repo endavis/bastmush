@@ -79,8 +79,8 @@ function Pluginhelper:initialize(args)
 
   self:add_cmd('objects', {func="cmd_objects", help="list objects associated with this plugin"})
 
-  self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1})
-  self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb"})
+  self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1, longname="Plugin Colour"})
+  self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb", longname="Plugin Command"})
 
   self:addlink('Plugin', "Bast's MUSHclient plugins homepage", "http://code.google.com/p/bastmush",
                         "Go to Bast's MUSHclient plugins homepage")
