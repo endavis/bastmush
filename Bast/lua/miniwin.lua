@@ -1459,14 +1459,10 @@ function Miniwin:drawwin()
   end
 
   if self.shaded and self.titlebar then
-    local tx = WindowInfo(self.id, 10)
-    local ty = WindowInfo(self.id, 11)
+    local tx = self.x or WindowInfo(self.id, 10)
+    local ty = self.y or WindowInfo(self.id, 11)
 
-    if self.x or self.y then
-      local tx = x or self.x
-      local ty = y or self.y 
-    end
-    -- look at shaded stuff
+    -- create the window shaded
     local sheight = self.window_data[1].linebottom + self.border_width
     if self.shade_with_header and self.header_height > 0 then 
       local hbottom = self.window_data[self.actual_header_end_line].linebottom + self.border_width + 2
