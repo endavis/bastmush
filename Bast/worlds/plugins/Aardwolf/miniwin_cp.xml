@@ -98,6 +98,10 @@ function show_cp_text ()
   cpwin:enable()
   cpwin:createwin(texttable)
 
+  style = {}
+  style.text = " CP: " .. #cpmobs
+  cpwin:tabbroadcast(true, {style})
+  
 end -- show_cp_text
 
 ]]>
