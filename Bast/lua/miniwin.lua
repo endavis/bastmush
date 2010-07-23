@@ -69,12 +69,12 @@ styles can have the following
 
 Button Notes:
 -------------------------------------
-  self:add_button('minimize', {text=" - ", upfunction=function (win, tflags, hotspotid)
+  self:add_button('minimize', {text=" - ", mousedown|mouseup=function (win, tflags, hotspotid)
                         win:shade()
                       end, hint="Click to shade", place=1})
 
   text = text for the button
-  upfunction = function when mouseup on this button
+  mousedown|mouseup = function when mousedown|mouseup on this button
   hint = the hint for the button
   place = place of the button in the titlebar, anything <= 50 is on the left side of the bar, anything > 50 is on the right side
 
