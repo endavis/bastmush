@@ -265,6 +265,11 @@ function Pluginhelper:dragmove(flags, hotspotid)
   self.pobjects_by_id[object_id]:dragmove(flags, hotspotid)
 end -- dragmove
 
+function Pluginhelper:wheelmove(flags, hotspotid)
+  object_id, hotspotid = fix_hotspotid(hotspotid)
+  self.pobjects_by_id[object_id]:wheelmove(flags, hotspotid)
+end -- wheelmove
+
 function Pluginhelper:dragrelease(flags, hotspotid)
   object_id, hotspotid = fix_hotspotid(hotspotid)
   self.pobjects_by_id[object_id]:dragrelease(flags, hotspotid)
@@ -584,7 +589,7 @@ function format_aard_helps(t)
     local style2 = {}
     style2.text = v
     style2.mouseup = function (win, flags, hotspotid)
-                        SendNoEcho('help ' .. v)
+                        Execute('help ' .. v)
                      end
     style2.hint = 'Show help for ' .. v
     style2.textcolour = verify_colour(0xE16941)
@@ -714,6 +719,10 @@ end -- dragmove
 
 function dragrelease(flags, hotspotid)
   phelper:dragrelease(flags, hotspotid)
+end
+
+function wheelmove(flags, hotspotid)
+  phelper:wheelmove(flags, hotspotid)
 end
 
 function fix_hotspotid(hotspotid)

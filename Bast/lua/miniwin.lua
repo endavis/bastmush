@@ -85,6 +85,8 @@ TODO: add scrollbar for windows that only show a certain amount of text, see the
 TODO: add a specific line width that can be used to wrap lines - see "help statmon" and the chat miniwindow
 TODO: add ability to add shapes as styles - see Bigmap_Graphical plugin and WindowCircleOp
 TODO: plugin to set colours on all my miniwindows, maybe a theme
+TODO: addline function that adds a single line to the text addline(line, tab) tab is optional, then I could just convert_line and adjust_line
+TODO: addheader function that adds a header, header_height will go away
 
 windowwidth = self.windowborderwidth 
               + self.width_padding 
@@ -247,6 +249,8 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'shaded', {type="bool", help="window is shaded", default=verify_bool(false), sortlev=55, readonly=true})
   self:add_setting( 'shade_with_header', {type="bool", help="when window is shaded, still show header", default=verify_bool(false), sortlev=55, longname = "Shade with header"})
   self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar"})
+  self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines"})
+  self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=0, low=0, sortlev=57, longname="Max Tabs"})
 
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
@@ -266,32 +270,48 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
                         win:show(false)
                       end, hint="Click to close", place=99})
 
-  self.defaulttab = None
   self.activetab = None
   self.tabs = {} -- key will be tabname, data will be text
   self.tabstyles = {}
+  self.tablist = {}
+  self.startline = 1 -- start at text line
 
 end
 
-function Miniwin:addtab(tabname, text, place)
- if self:counttabs() == 0 then
-   self.defaulttab = tabname
+function Miniwin:addtab(tabname, text)
+ if self.tabs[tabname] == nil then
+   self.tabs[tabname] = {}
+   self.tabs[tabname].text = text
+   self.tabs[tabname].tabname = tabname
+   table.insert(self.tablist, tabname)
+ else
+   self.tabs[tabname].text = text
  end
- self.tabs[tabname] = {}
- self.tabs[tabname].text = text
- self.tabs[tabname].place = place
+ if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
+   tabremoved = table.remove(self.tablist, 1)
+   self.tabs[tabremoved] = nil
+ end
 end
 
 function Miniwin:removetab(tabname)
+  for i,v in pairs(self.tablist) do
+   if v.tabname == tabname then
+     table.remove(self.tablist, i)
+   end
+  end
   self.tabs[tabname] = nil
 end
 
 function Miniwin:counttabs()
-  local count = 0
-  for i,v in pairs(self.tabs) do
-    count = count + 1
+  return #self.tablist
+end
+
+function Miniwin:hastab(tabname)
+  if self.tabs[tabname] then
+    return true
+  else
+    return false
   end
-  return count
 end
 
 function Miniwin:changetotab(tabname)
@@ -304,12 +324,13 @@ end
 function Miniwin:buildtabline()
   if self:counttabs() > 1 then
     local tabline = {}
-    for i,v in tableSort(self.tabs, 'place', 50) do
+    for i,v in ipairs(self.tablist) do
+      v = self.tabs[v]
       local style = {}
-      style.text = ' ' .. i .. ' '
-      style.tab = i
+      style.text = ' ' .. v.tabname .. ' '
+      style.tab = v.tabname
       style.mouseup = function(flags, hotspot_id)
-                        self:changetotab(i)
+                        self:changetotab(v.tabname)
                       end
       style.mouseover = function(flags, hotspot_id)
 
@@ -320,7 +341,7 @@ function Miniwin:buildtabline()
       --style.bottomborder = true
       style.bordercolour = 'tab_border_colour'
       --style.font = 'Dina'
-      if i == self.activetab then
+      if v.tabname == self.activetab then
         style.textcolour = 'tab_text_colour'
         style.backcolour = 'tab_bg_colour'
         style.bordercolour = 'tab_border_colour'
@@ -775,20 +796,21 @@ end
 function Miniwin:createwin (text)
   if text == nil then
     if self:counttabs() > 0 then
-      text = self.tabs[self.defaulttab].text
-      self.activetab = self.defaulttab
+      text = self.tabs[self.tablist[1]].text
+      self.activetab = self.tablist[1]
     else
       return
     end
   elseif text and not next(text) then
     if self:counttabs() > 0 then
-      text = self.tabs[self.defaulttab].text
-      self.activetab = self.defaulttab
+      text = self.tabs[self.tablist[1]].text
+      self.activetab = self.tablist[1]
     else
       return
     end
   end
   self.text = text
+  self.startline = 1
   self:buildwindow()
   tshow = WindowInfo(self.id, 5)
   if tshow == nil then
@@ -1160,11 +1182,22 @@ function Miniwin:buildwindow()
       table.insert(header, self.text[i])
     end
 
-    -- breakout text stuff
-    for i=1+self.header_height, #self.text do
-      table.insert(text, self.text[i])
+    local starttext = 1 + self.header_height
+    local endtext = #self.text
+
+    if self.maxlines > 0 then
+      starttext = self.startline + self.header_height
+      endtext = self.startline + self.maxlines + self.header_height
+      if endtext > #self.text then
+        endtext = #self.text 
+        starttext = endtext - self.maxlines
+      end
     end
 
+    -- breakout text stuff
+    for i=starttext, endtext do
+      table.insert(text, self.text[i])
+    end
 
     -- do header stuff
     for line, v in ipairs(header) do
@@ -1192,8 +1225,14 @@ function Miniwin:buildwindow()
     height = height + self.height_padding
 
     -- do text stuff
+    local textstartline = -1
+    local textendline = -1
     for line,v in ipairs(text) do
+      
       linenum = linenum + 1
+      if textstartline == -1 then
+         textstartline = linenum
+      end
 
       tline = self:convert_line(linenum, v, height, 0, 0, 0)
     
@@ -1201,6 +1240,8 @@ function Miniwin:buildwindow()
       height = tempdata[linenum].linebottom
       self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
     end
+
+    textendline = linenum
 
     if self.width > 0 then
       self.window_data.actualwindowwidth = self.width
@@ -1222,6 +1263,11 @@ function Miniwin:buildwindow()
         self.window_data[line] = self:justify_styles(v, line)
     end
 
+    self.window_data.textarea = {}
+    self.window_data.textarea.top = self.window_data[textstartline].linetop
+    self.window_data.textarea.bottom = self.window_data[textendline].linebottom
+    self.window_data.textarea.left = 0 + self.border_width + self.width_padding
+    self.window_data.textarea.right = self.window_data.actualwindowwidth - self.border_width - self.width_padding
   end
 end
 
@@ -1445,7 +1491,15 @@ function Miniwin:post_create_window_internal()
                       end,
                    nil, nil, 'Show Menu')
   end
-    
+
+  if self.window_data.textarea.left and self.window_data.textarea.top and
+     self.window_data.textarea.right and self.window_data.textarea.bottom then
+     self:addhotspot("ztextarea", self.window_data.textarea.left, self.window_data.textarea.top, 
+                              self.window_data.textarea.right, self.window_data.textarea.bottom, 
+                              empty, empty, empty, empty, empty, "", 0)
+     WindowScrollwheelHandler(self.id, self.id .. ':' .. "ztextarea", "wheelmove")
+  end    
+
   -- DrawEdge rectangle
   check (WindowRectOp (self.id, 1, 0, 0, 0, 0, self:get_colour('window_border_colour')))
   check (WindowRectOp (self.id, 1, 1, 1, -1, -1, self:get_colour('window_border_colour')))
@@ -1540,6 +1594,29 @@ function Miniwin:set(option, value, args)
 
   return true
 end
+
+function Miniwin:wheelmove (flags, hotspot_id)
+  if bit.band (flags, 0x100) ~= 0 then
+    -- wheel scrolled down (towards you)
+    if self.startline + self.maxlines + 1 > #self.text then
+ 
+    else
+      if self.startline >= 1 then
+      self.startline = self.startline + 1
+      self:redraw()
+      end
+    end
+     
+  else
+    -- wheel scrolled up (away from you)
+    if self.startline > 1 then
+     self.startline = self.startline - 1
+     self:redraw()
+    end
+  end -- if
+
+  return 0  -- needed for some languages
+end -- drag_move
 
 -- the function to drag and move the window
 function Miniwin:dragmove(flags, hotspot_id)
