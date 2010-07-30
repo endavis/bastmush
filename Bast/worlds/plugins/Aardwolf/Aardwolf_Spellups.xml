@@ -422,7 +422,7 @@ function parse_spell_line (line)
   local sn, name, target, duration, percent, recovery, skilltype =
     string.match (line, "^(%d+)%,([A-Za-z0-9 ]+)%,(%d+)%,(%d+)%,(%d+),(-?%d+),(%d+)$")
   if not sn then
-    ColourNote ("white", "re,d", "Invalid spellheaders line: " .. line)
+    ColourNote ("white", "red", "Invalid spellheaders line: " .. line)
     return nil
   end -- not a valid spell name
 
@@ -590,7 +590,7 @@ function spellups_redirect (name, line, wildcards, styles)
 
   if line == "{/spellheaders}" then
     EnableTrigger ("multi_line_spellups", false)  -- no more lines to go
-    have_slist = true  -- we now know all we need to
+    have_slist = true  -- we now know all we need to   
     make_xrefs ()
     SaveState ()
     resume_buff_loop("have_slist")
@@ -1725,7 +1725,9 @@ end -- heartbeat
 
 -- redisplay our status every second
 function display_timer (timername)
-  show_current_buffs ()
+  if have_slist then
+    show_current_buffs ()
+  end
 end -- heartbeat
 
 ]]>
