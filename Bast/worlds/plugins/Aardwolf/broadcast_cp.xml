@@ -435,7 +435,7 @@ function cp_time (name, line, wildcards)
   phelper:enabletriggroup("campaigncheck", false)
   phelper:enabletriggroup("campaignin", true)
 
-  if not next(cp_info['mobs']) then
+  if cp_info['mobs'] == nil or (type(cp_info['mobs']) == 'table' and not next(cp_info['mobs'])) then
     cp_info['mobs'] = copytable.shallow(mobsleft)
     SaveState()
   end
