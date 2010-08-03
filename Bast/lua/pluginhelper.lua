@@ -125,9 +125,20 @@ function Pluginhelper:run_cmd(cmddict)
       table.remove(tcmddict, 1)
       pobj:run_cmd(tcmddict)
     else
-      ColourNote("", "", "")
-      ColourNote("white", "black", "That is not a valid command")
-      self:cmd_help(cmddict)
+      local tcmd = self:find_default_cmd()      
+      if tcmd == "" then
+        ColourNote("", "", "")
+        ColourNote("white", "black", "That is not a valid command")
+        self:cmd_help(cmddict)
+	return false
+      else
+        local tcmddict = parse_cmdline(cmddict.line or '')
+	table.remove(tcmddict, 1)
+        tcmddict.line = cmddict.line
+        tcmddict.action = tcmd
+	retcode = super(self, tcmddict, true)
+	return retcode
+      end
       return false
     end
   else
@@ -321,7 +332,8 @@ function Pluginhelper:OnPluginEnable()
   self:broadcast(-2)
 
   self.helpwin:enable()
-  self.helpwin:createwin(self:createhelp())
+  self.helpwin:addtab('default', self:createhelp())
+  self.helpwin:changetotab('default')
   self.helpwin:show(false)
 end
 
