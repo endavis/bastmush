@@ -57,7 +57,7 @@ curlevel = nil
 function show_cp_text ()
 
   local texttable = {}
-
+  local header = {}
   local style = {}
 
   -- do nothing if no campaign
@@ -68,7 +68,7 @@ function show_cp_text ()
 
   style = {}
   style.text = string.format("Campaign mobs left: %s", #cpmobs)
-  table.insert (texttable, {style})
+  table.insert (header, {style})
 
   -- list of mobs
   for i, v in ipairs (cpmobs) do
@@ -85,18 +85,21 @@ function show_cp_text ()
   style.text = string.format ("Time to go: %sd %sh %sm ", cptimer.days, cptimer.hours, cptimer.mins)
   style.textcolour = "time_colour"
   table.insert(tstyle, style)
-  style = {}
-  style.text = "- Level: " .. tostring(level.level)
-  if tonumber(level.level) == tonumber(curlevel) then
-    style.textcolour = cpwin.text_colour
-  else
-    style.textcolour = "notlevel_colour"
+  if level and level.level > 0 then
+    style = {}
+    style.text = "- Level: " .. tostring(level.level)
+    if tonumber(level.level) == tonumber(curlevel) then
+      style.textcolour = cpwin.text_colour
+    else
+      style.textcolour = "notlevel_colour"
+    end
+    table.insert(tstyle, style)
   end
-  table.insert(tstyle, style)
   table.insert (texttable, tstyle)
 
   cpwin:enable()
-  cpwin:createwin(texttable)
+  cpwin:addtab('default', texttable, header)
+  cpwin:changetotab('default')
 
   style = {}
   style.text = " CP: " .. #cpmobs
@@ -121,7 +124,11 @@ function OnPluginBroadcast (msg, id, name, text)
 
       local pvar2 = GetPluginVariable(  "aaa66f81c50828bbbfda7100", "cp_info")
       loadstring(pvar2)()
-      level = convertlevel(cp_info.level)
+      if cp_info.level then
+        level = convertlevel(cp_info.level)
+      else
+        level = convertlevel(-1)
+      end
 
       show_cp_text()
     elseif msg == 2 then
