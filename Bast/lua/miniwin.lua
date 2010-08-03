@@ -44,6 +44,7 @@ styles can have the following
   style.borderstyle (default 0)
   style.borderwidth (default 1)
 
+  -- images and circleOp are not coded yet
   style.image = {}
   style.image.name
   style.image.width
@@ -87,6 +88,7 @@ TODO: add ability to add shapes as styles - see Bigmap_Graphical plugin and Wind
 TODO: plugin to set colours on all my miniwindows, maybe a theme
 TODO: addline function that adds a single line to the text addline(line, tab) tab is optional, then I could just convert_line and adjust_line
 TODO: addheader function that adds a header, header_height will go away
+TODO: automatically detect urls: (.*)(http\:\/\/(?:[A-Za-z0-9\.\\\/\?])+)(.*)
 
 windowwidth = self.windowborderwidth 
               + self.width_padding 
@@ -190,11 +192,11 @@ function Miniwin:initialize(args)
   self.firstdrawn = true
   self.drag_hotspot = "_drag_hotspot"
   self.border_width = 2
-  self.actual_header_start_line = 1
-  self.actual_header_end_line = 1
+  self.actual_header_start_line = nil
+  self.actual_header_end_line = nil
 
-  self.titlebarlinenum = 1
-  self.tablinenum = 2
+  self.titlebarlinenum = -1
+  self.tablinenum = -1
 
   -- below are things that can be kept as settings
   self.header_padding = 2
@@ -278,14 +280,26 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
 
 end
 
-function Miniwin:addtab(tabname, text)
+function Miniwin:updateheader(tabname, header)
+  if self.tabs[tabname] ~= nil then
+   self.tabs[tabname].header = header     
+  end
+end
+
+function Miniwin:addline(tabname, line)
+ -- add a line to the end of the text
+end
+
+function Miniwin:addtab(tabname, text, header)
  if self.tabs[tabname] == nil then
    self.tabs[tabname] = {}
    self.tabs[tabname].text = text
    self.tabs[tabname].tabname = tabname
+   self.tabs[tabname].header = header
    table.insert(self.tablist, tabname)
  else
    self.tabs[tabname].text = text
+   self.tabs[tabname].header = header
  end
  if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
    tabremoved = table.remove(self.tablist, 1)
@@ -316,8 +330,7 @@ end
 
 function Miniwin:changetotab(tabname)
   if self.tabs[tabname] then
-    self.activetab = tabname
-    self:createwin(self.tabs[tabname].text)
+    self:createwin(tabname)
   end
 end
 
@@ -787,31 +800,28 @@ end -- ListMenu
 -- redraw the window
 function Miniwin:redraw()
    local shown = WindowInfo(self.id, 5)
-   self:buildwindow()
+   self:buildwindow(self.activetab)
    self:drawwin()
    WindowShow(self.id, shown)
 end
 
 -- create the window
-function Miniwin:createwin (text)
-  if text == nil then
+function Miniwin:createwin (tabname)
+  if tabname == nil then
     if self:counttabs() > 0 then
-      text = self.tabs[self.tablist[1]].text
-      self.activetab = self.tablist[1]
-    else
-      return
-    end
-  elseif text and not next(text) then
-    if self:counttabs() > 0 then
-      text = self.tabs[self.tablist[1]].text
-      self.activetab = self.tablist[1]
+      tabname = self.tablist[1]
+      self.activetab = tabname
     else
       return
     end
   end
-  self.text = text
+  if self.tabs[tabname] then
+    self.activetab = tabname
+  else
+    return
+  end
   self.startline = 1
-  self:buildwindow()
+  self:buildwindow(self.activetab)
   tshow = WindowInfo(self.id, 5)
   if tshow == nil then
     tshow = false
@@ -1051,8 +1061,8 @@ function Miniwin:justify_styles(line, linenum)
 end
 
 function Miniwin:is_header_line(linenum)
-  if self.actual_header_start_line ~= nul and self.actual_header_end_line ~= nil then
-    return self.header_height > 0 and linenum >= self.actual_header_start_line  and linenum <= self.actual_header_end_line
+  if self.actual_header_start_line ~= nil and self.actual_header_end_line ~= nil then
+    return linenum >= self.actual_header_start_line  and linenum <= self.actual_header_end_line
   else
     return false
   end
@@ -1144,15 +1154,24 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding, tex
   return linet
 end
 
-function Miniwin:buildwindow()
+function Miniwin:buildwindow(tabname)
+  if tabname == nil then
+    return
+  end
+
+  self.window_data = {}
+  self.actual_header_start_line = nil
+  self.actual_header_end_line = nil
+  self.titlebarlinenum = -1
+  self.tablinenum = -1
+
   local height = 0
   local tempdata = {}
-  self.window_data = {}
-
   local header = {}
   local text = {}
-
   local linenum = 0
+  local textstartline = -1
+  local textendline = -1
 
   self.window_data.maxlinewidth = 0
 
@@ -1176,69 +1195,64 @@ function Miniwin:buildwindow()
     self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
   end
 
-  if type(self.text) == 'table' then
-    -- breakout header_stuff
-    for i=1,self.header_height do
-      table.insert(header, self.text[i])
-    end
-
-    local starttext = 1 + self.header_height
-    local endtext = #self.text
-
-    if self.maxlines > 0 then
-      starttext = self.startline + self.header_height
-      endtext = self.startline + self.maxlines + self.header_height
-      if endtext > #self.text then
-        endtext = #self.text 
-        starttext = endtext - self.maxlines
-      end
-    end
-
-    -- breakout text stuff
-    for i=starttext, endtext do
-      table.insert(text, self.text[i])
-    end
-
+  if self.tabs[tabname].header and type(self.tabs[tabname].header) == 'table' then
     -- do header stuff
-    for line, v in ipairs(header) do
+    for line, v in ipairs(self.tabs[tabname].header) do
       linenum = linenum + 1
       if line == 1 then
         height = height - 1
         self.actual_header_start_line = linenum
-        self.actual_header_end_line = linenum + #header - 1
+        self.actual_header_end_line = linenum + #self.tabs[tabname].header - 1
       end
 
-      if line == 1 and #header == 1 then
+      if line == 1 and #self.tabs[tabname].header == 1 then
         tline = self:convert_line(linenum, v, height, 3, 0)
-      elseif line == 1 and #header > 1 then
+      elseif line == 1 and #self.tabs[tabname].header > 1 then
         tline = self:convert_line(linenum, v, height, 3, 0)
-      elseif line == #header then
+      elseif line == #self.tabs[tabname].header then
+        tline = self:convert_line(linenum, v, height, 0, 0)
+      else
         tline = self:convert_line(linenum, v, height, 0, 0)
       end
-      --tline.backcolour = 'header_bg_colour'
 
       tempdata[linenum] = tline
       height = tempdata[linenum].linebottom
       self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
     end
+  end
+  if height == 0 then
+    height = self.border_width
+  end
+  if type(self.tabs[tabname].text) == 'table' then
 
+    local starttext = 1
+    local endtext = #self.tabs[tabname].text
+
+    if self.maxlines > 0 then
+      starttext = self.startline
+      endtext = self.startline + self.maxlines
+      if endtext > #self.tabs[tabname].text then
+        endtext = #self.tabs[tabname].text 
+        starttext = endtext - self.maxlines
+      end
+    end
+ 
     height = height + self.height_padding
 
     -- do text stuff
-    local textstartline = -1
-    local textendline = -1
-    for line,v in ipairs(text) do
-      
-      linenum = linenum + 1
-      if textstartline == -1 then
-         textstartline = linenum
-      end
+    for i=starttext,endtext do
+      if self.tabs[tabname].text[i]  ~= nil then      
+        linenum = linenum + 1
+        if textstartline == -1 then
+          textstartline = linenum
+        end
 
-      tline = self:convert_line(linenum, v, height, 0, 0, 0)
-    
-      tempdata[linenum] = tline
-      height = tempdata[linenum].linebottom
-      self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
+        tline = self:convert_line(linenum, self.tabs[tabname].text[i], height, 0, 0, 0)
+      
+        tempdata[linenum] = tline
+        height = tempdata[linenum].linebottom
+        self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
+      end
     end
 
     textendline = linenum
@@ -1334,7 +1348,7 @@ end -- colourtext
 
 -- display a single line that has been converted and adjusted
 function Miniwin:displayline (styles)
-  self:mdebug('Displaying', styles)
+  --self:mdebug('Displaying', styles)
   local def_font_id = self.default_font_id
   local def_colour = self:get_colour("text_colour")
   local def_bg_colour = self:get_colour("bg_colour")
@@ -1465,7 +1479,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
   if not self.shaded or self.shade_with_header then
     local htop = 0
     local hbottom = 0
-    if self.header_height > 0 then
+    if self.actual_header_start_line ~= nil and self.actual_header_end_line ~= nil then
         htop = self.window_data[self.actual_header_start_line].linetop + 1
         hbottom = self.window_data[self.actual_header_end_line + 1].linetop - 1
 
@@ -1507,10 +1521,6 @@ end
 
 -- draw the window
 function Miniwin:drawwin()
-  --print("Got past text check")
-  if not next(self.text) then
-    return
-  end
 
   if self.shaded and self.titlebar then
     local tx = self.x or WindowInfo(self.id, 10)
@@ -1518,15 +1528,15 @@ function Miniwin:drawwin()
 
     -- create the window shaded
     local sheight = self.window_data[1].linebottom + self.border_width
-    if self.shade_with_header and self.header_height > 0 then 
+    if self.shade_with_header and self.actual_header_start_line ~= nil and self.actual_header_end_line ~= nil then 
       local hbottom = self.window_data[self.actual_header_end_line].linebottom + self.border_width + 2
       sheight = hbottom
     end
     self:pre_create_window_internal(sheight, nil, tx, ty)
     self:displayline(self.window_data[1])
     if self.shade_with_header then
-      for i=1,self.actual_header_end_line do
-        self:displayline(self.window_data[i + 1])
+      for i=self.actual_header_start_line,self.actual_header_end_line do
+        self:displayline(self.window_data[i])
       end
     end
   else
@@ -1598,12 +1608,12 @@ end
 function Miniwin:wheelmove (flags, hotspot_id)
   if bit.band (flags, 0x100) ~= 0 then
     -- wheel scrolled down (towards you)
-    if self.startline + self.maxlines + 1 > #self.text then
+    if self.startline + self.maxlines + 1 > #self.tabs[self.activetab].text then
  
     else
       if self.startline >= 1 then
-      self.startline = self.startline + 1
-      self:redraw()
+        self.startline = self.startline + 1
+        self:redraw()
       end
     end
      
