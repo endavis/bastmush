@@ -11,7 +11,7 @@
    purpose="test miniwin functionality"
    save_state="y"
    date_written="2009-02-13 09:28:14"
-   requires="4.37"
+   requires="4.52"
    version="2.0"
    >
 </plugin>
@@ -38,15 +38,14 @@ testwin2 = Miniwin:new{name="Example_2"}
 testwin2:set_default('header_height', 1)
 testwin2:set_default('use_tabwin', false)
 styles = {}
-styles2 = {}
-
+header = {}
 -- Header Line, centered
 style = {}
 style.text = "Example Header"
 style.hjust = 'center'
 style.font_size = 9
 tstyle = {style}
-table.insert(styles, tstyle)
+table.insert(header, tstyle)
 
 -- First Line
 style = {}
@@ -54,10 +53,11 @@ style.text = " New Test Text p Line 1 @yNew Test Text Line 1@x @CNew Test Text L
 style.hjust = 'center'
 style.cellborder = true
 style.bordercolour = 'green'
-style.hint = serialize.save_simple(style)
-style.mouseover = nofunc
 nstyle = {style}
---nstyle.backcolour = 'red'
+nstyle.lineborder = true
+nstyle.bordercolour = 'blue'
+nstyle[1].hint = serialize.save_simple(nstyle)
+nstyle[1].mouseover = nofunc
 table.insert(styles, nstyle)
 
 -- Second Line, several styles
@@ -73,7 +73,7 @@ style.leftborder = true
 style.rightborder = true
 style.topborder = true
 style.bottomborder = true
-style.borderstyle = 1
+--style.borderstyle = 1
 style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 table.insert(tstyle, style)
@@ -164,20 +164,77 @@ style.hint = serialize.save_simple(style)
 style.mouseover = nofunc
 
 table.insert(styles, {style})
+
+local tstyle = {}
+-- Justify larger text, Arial Font, red text, green background
+style = {}
+style.image = {}
+style.image.name = 'test'
+style.image.width = 8
+style.image.height = 8
+style.image.mode = miniwin.image_stretch
+style.image.srcleft = nil
+style.image.srctop = nil
+style.image.srcright = nil
+style.image.srcbottom = nil
+style.backcolour = "green"
+style.textcolour = "red"
+style.vjust = 'center'
+style.hint = serialize.save_simple(style)
+style.mouseover = nofunc
+table.insert(tstyle, style)
+
+-- Fillall
+style = {}
+style.circleOp = {}
+style.circleOp.width = 8 
+style.circleOp.height = 8
+style.circleOp.pencolour = 'blue' -- fore_colour
+style.circleOp.penstyle = miniwin.pen_null
+style.circleOp.penwidth = 0 
+style.circleOp.brushcolour = 'red' -- back_colour
+style.circleOp.brushstyle = miniwin.brush_waves_vertical
+style.circleOp.extra1 = null
+style.circleOp.extra2 = null
+style.circleOp.extra3 = null
+style.circleOp.extra4 = null
+style.backcolour = "cyan"
+style.textcolour = "red"
+style.vjust = 'center'
+style.fillall = true
+style.hint = serialize.save_simple(style)
+style.mouseover = nofunc
+table.insert(tstyle, style)
+
+-- insert the second line
+--table.insert(styles, tstyle)
+
 styles2 = copytable.deep(styles)
 
+header2 = copytable.deep(header)
+header2[1][1].text = 'Header for tab 2'
+
+header3 = copytable.deep(header)
+header3[1][1].text = 'Header for tab 3'
+
+header4 = copytable.deep(header)
+header4[1][1].text = 'Header for tab 4'
+
+header5 = copytable.deep(header)
+header5[1][1].text = 'Header for tab 5'
+
+header6 = copytable.deep(header)
+header6[1][1].text = 'Header for tab 6'
 
 style = {popup_style(testwin2, "Show Miniwin Example 2", "blue")}
 style[1].hjust='center'
---style.leftborder = true
---style.rightborder = true
---style.topborder = true
---style.bottomborder = true
 style.cellborder = true
 style.bordercolour = 'blue'
 style.backcolour = 'white'
 
 table.insert(styles, style)
+
+
 ]]>
 </script>
 
@@ -206,9 +263,18 @@ function OnPluginEnable ()
   phelper:OnPluginEnable()
   -- always create windows after OnPluginEnable due to default variable handling
   testwin:enable()
-  testwin:createwin(styles)
   testwin2:enable()
-  testwin2:createwin(styles2)
+
+  testwin:addtab('tab1', styles, header)
+  testwin:addtab('tab2', styles2, header2)
+  testwin:addtab('tab3', styles2, header3)
+  testwin:addtab('tab4', styles2, header4)
+  testwin:addtab('tab5', styles2, header5)
+
+  testwin2:addtab('tab1', styles2, header)
+
+  testwin:createwin()
+  testwin2:createwin()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
@@ -244,6 +310,10 @@ phelper:add_pobject('win', testwin)
 phelper:add_pobject('win2', testwin2)
 
 phelper:enable()
+
+phelper:addaardhelps{"Map", "Automap", "Maprun", "Maptags", "Speedwalks", "Academy-Geography", "Runto"}
+
+phelper:addaardcmds{"map", "automap", "maprun", "tags", "runto"}
 
 ]]>
 </script>
