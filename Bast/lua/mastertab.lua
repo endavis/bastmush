@@ -30,7 +30,7 @@ function Mastertabwin:initialize(args)
   td.name = 'z1Show all'
   td.win = self.id .. 'ShowAll'
   td.popup = " Show Windows "
-  self:addtab(td)
+  self:addwtab(td)
   td = {}
   td.id = GetPluginID()
   td.text = " Hide Windows "
@@ -38,7 +38,7 @@ function Mastertabwin:initialize(args)
   td.name = 'z2Hide all'
   td.win = self.id .. 'HideAll'
   td.popup = " Hide Windows "
-  self:addtab(td)
+  self:addwtab(td)
 
 end
 
@@ -61,15 +61,7 @@ function Mastertabwin:showall()
   self.alreadyhidden = false
 end
 
-function Mastertabwin:counttabs()
-  local count = 0
-  for i,v in pairs(self.wtabs) do
-    count = count + 1
-  end
-  return count
-end
-
-function Mastertabwin:addtab(args)
+function Mastertabwin:addwtab(args)
   if args.win ~= self.win then
     self:mdebug('addtab: ', args)
     self.wtabs[args.win] = args
@@ -77,7 +69,7 @@ function Mastertabwin:addtab(args)
   end
 end
 
-function Mastertabwin:removetab(args)
+function Mastertabwin:removewtab(args)
   self.wtabs[args.win] = nil
   self:drawtabs()
 end
@@ -142,7 +134,8 @@ function Mastertabwin:drawtabs_vertical()
     table.insert(ttext, tstyle)
   end
   --self:mdebug('ttext in drawtabs_vertical', ttext)
-  self:createwin(ttext)
+  self:addtab('default', ttext)
+  self:changetotab('default')
 end
 
 function Mastertabwin:drawtabs_horizontal()
@@ -187,7 +180,9 @@ function Mastertabwin:drawtabs_horizontal()
   table.insert(alltext, ttext)
   --self:mdebug('ttext in drawtabs_horizontal', ttext)
   self:mdebug('alltext in drawtabs_horizontal', alltext)
-  self:createwin(alltext)
+  self:addtab('default', ttext)
+  self:changetotab('default')
+
 end
 
 function Mastertabwin:set(option, value, args)
