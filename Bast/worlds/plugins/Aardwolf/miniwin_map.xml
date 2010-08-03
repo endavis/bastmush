@@ -258,6 +258,35 @@ function convert_exits(styles)
   return tstyles
 end
 
+function parse_map(map)
+  local header = {}
+  local text = {}
+  if #map > 19 then
+    if trim(map[2][1].text) == "" then
+      table.remove(map, 2)
+    elseif trim(map[3][1].text) == "" then
+      table.remove(map, 3)
+    end
+  end  
+  for i,line in ipairs(map) do
+    for i,v in ipairs(line) do
+      v.backcolour = "bg_colour"
+    end  
+    if i <= 2 then
+      table.insert(header, line)
+    else
+      if #line > 2 and line[2].text:find('Exits') then
+        line = convert_exits(line)
+      end
+      table.insert(text, line)
+    end
+  end
+  if coords then
+    text[#text - 1] = coords
+  end  
+  return header, text
+end
+
 -- map redirector
 function map_redirect (name, line, wildcards, styles)
   EnableTrigger ("multi_line_map", true)  -- capture subsequent lines
@@ -265,36 +294,26 @@ function map_redirect (name, line, wildcards, styles)
   if name == "map_start" then
     map_lines = {}
   elseif name == "map_end" then
-    if coords then
-      map_lines[#map_lines - 1] = coords
-    end
+
     EnableTrigger ("multi_line_map", false)  -- no more lines to go
-    if #map_lines > 19 then
-      if trim(map_lines[2][1].text) == "" then
-        table.remove(map_lines, 2)
-      elseif trim(map_lines[3][1].text) == "" then
-        table.remove(map_lines, 3)
-      end
-    end
 
     if map_lines[1][1].textcolour == 255 then
       PKroom = true
     else
       PKroom = false
     end
+    local header = {}
+    local text = {}
+    header, text = parse_map(map_lines)
     
     mapwin:enable()
-    mapwin:createwin(map_lines)
+    mapwin:addtab('default', text, header)
+    mapwin:createwin()
     
     legwin:enable()
-    legwin:createwin(info)
+    legwin:addtab('default', info)
+    legwin:createwin()
   else
-    if line:find('Exits') then
-       styles = convert_exits(styles)
-    end
-    for i,v in ipairs(styles) do
-      v.backcolour = "bg_colour"
-    end
     table.insert (map_lines, styles)
   end -- if
 
