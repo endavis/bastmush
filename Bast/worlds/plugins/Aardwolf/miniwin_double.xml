@@ -51,7 +51,8 @@ function show_double (ttimer)
   style.text = 'Double: ' .. ttimer.text
   table.insert(styles, {style})
   doublewin:enable()
-  doublewin:createwin(styles)
+  doublewin:addtab('default', styles)
+  doublewin:changetotab('default')
   style = {}
   style.text = ' Double: ' .. ttimer.text .. ' '
   style.textcolour = doublewin.text_colour

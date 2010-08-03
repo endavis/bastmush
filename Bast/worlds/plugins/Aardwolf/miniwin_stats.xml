@@ -90,7 +90,8 @@ function build_stat_window()
   table.insert(styles, tstyle)  
   
   statwin:enable()
-  statwin:createwin(styles)
+  statwin:addtab('default', styles)
+  statwin:changetotab('default')
 end
 
 function format_stat(statname, statcur, statother, colwidth, statlength, color)

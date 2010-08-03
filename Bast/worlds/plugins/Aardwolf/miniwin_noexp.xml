@@ -56,7 +56,8 @@ function show_noexp ()
     style.len = #style.text
     table.insert(styles, {style})
     noexpwin:enable()
-    noexpwin:createwin(styles)
+    noexpwin:addtab('default', styles)
+    noexpwin:changetotab('default')
     style = {}
     style.text = " ** NOEXP ** "
     style.textcolour = noexpwin.text_colour
