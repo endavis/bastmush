@@ -168,7 +168,8 @@ function styleplotdata()
   table.insert (texttable, {style})
 
   moonwin:enable()
-  moonwin:createwin(texttable)
+  moonwin:addtab('default', texttable)
+  moonwin:changetotab('default')
 
 end -- plotdatastyle
 

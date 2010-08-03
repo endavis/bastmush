@@ -89,7 +89,8 @@ function show_quest ()
   end -- if
 
   questwin:enable()
-  questwin:createwin(quest_text)
+  questwin:addtab('default', quest_text)
+  questwin:changetotab('default')
   questwin:show(winbetweenquest)
 end -- show_quest_text
 
