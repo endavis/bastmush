@@ -20,7 +20,7 @@ function Sqlitedb:open()
   --phelper:mdebug('open - conns:', self.conns)
   if self.db == nil then
     --phelper:mdebug("opening db")
-    print('db dir', self.dbloc)
+    --print('db dir', self.dbloc)
     self.db = assert(sqlite3.open(self.dbloc .. self.dbname))
   end
   self.conns = self.conns + 1
