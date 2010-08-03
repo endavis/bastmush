@@ -41,49 +41,56 @@ gqwin:set_default('header_height', 0)
 --gqwin:disable()
 
 gqmobs = {}
-gq_text = {}
+mobcount = 0
 
 function build_gq ()
 
   local texttable = {}
-
   local style = {}
-
+  local header = {}
   -- do nothing if no gquest
   if #gqmobs == 0 then
     return
   end -- if
 
-  -- heading
-  style = {}
-  style.text = "GQuest: You need to kill:  "
-  style.len = #style.text
-  style.style = 0
-  table.insert (texttable, {style})
 
   -- list of mobs
+  mobcount = 0
   for i, v in ipairs (gqmobs) do
+    mobcount = mobcount + v.num
     style = {}
-    style.text = v.num .. " : " .. v.name .. " (" .. v.room .. ")"
+    style.text = string.format("%3s: %-30s %s", v.num, v.name, " (" .. v.room .. ")")
     style.len = #style.text
     style.style = 0
     table.insert (texttable, {style})
   end -- for
 
+  -- heading
+  style = {}
+  style.text = string.format("GQuest mobs left: %s", mobcount)
+  style.len = #style.text
+  style.style = 0
+  table.insert (header, {style})
+
   gq_text = texttable
   gqwin.header_height = 1
-  show_gq()
-
+  show_gq(texttable, header)
+  
+  style = {}
+  style.text = " GQ: " .. mobcount
+  gqwin:tabbroadcast(true, {style})
+  
 end -- build_gq
 
-function show_gq ()
+function show_gq (text, header)
   -- do nothing if no gq
-  if #gq_text == 0 then
+  if #text == 0 then
     return
   end -- if
 
   gqwin:enable()
-  gqwin:createwin(gq_text)
+  gqwin:addtab('default', text, header)
+  gqwin:changetotab('default')
   gqwin:show(true)
 end -- show_quest_text
 
@@ -97,18 +104,16 @@ function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa77f81c5408278ccda7100" then
     if msg == 1 then
       -- gquest available
-      gqwin.header_height = 0
-      gq_text = {"GQuest Available"}
-      show_gq()
+      local style = {}
+      style.text = " GQ "
+      style.textcolour = "red"
+      gqwin:tabbroadcast(true, {style})      
+      show_gq({"GQuest Available"})
     elseif msg == 2 then
-      print("gquest joined")
       -- gquest joined
-      gqwin.header_height = 0
-      gq_text = {"GQuest Joined - Waiting"}
-      show_gq()
+      show_gq({"GQuest Joined - Waiting"})
     elseif msg == 3 then
       local pvar = GetPluginVariable(  "aaa77f81c5408278ccda7100", "mobs" )
-
       -- get the mobs
       loadstring( pvar )()
       gqmobs = mobs
