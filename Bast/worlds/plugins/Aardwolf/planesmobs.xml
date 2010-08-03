@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: pluginlist.xml 596 2010-06-24 19:59:25Z endavis $ -->
+
+<muclient>
+<plugin
+   name="AardwolfPlanesMobs"
+   author="Bast"
+   id="c4510331407cb4281bea544e"
+   language="Lua"
+   purpose="lookup planes mobs"
+   save_state="y"
+   date_written="2009-02-28 20:14:46"
+   requires="4.40"
+   version="2.0"
+   >
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<script>
+<![CDATA[
+
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "verify"
+require "tprint"
+require "ldplugin"
+require "aarddb"
+
+aarddb = Aarddb:new{}
+
+function planeslookup(mob)
+  local mobs = aarddb:planeslookup(mob)
+  phelper:plugin_header('Planes Mobs')
+  if next(mobs) then
+    local tformat = '%-30s   %-16s   %-5s'
+    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format(tformat, 'Name', 'Pool', 'Pool#'))
+    ColourNote("white", "black", "-----------------------------------------------------------------------")
+    for i,v in ipairs(mobs) do
+      ColourNote(RGBColourToName(var.plugin_colour), "black", string.format(tformat, v['mobname'], v['poollayer'], v['poolnum']))
+    end
+  else
+    ColourNote(RGBColourToName(var.plugin_colour), "black", 'None')
+  end
+  Note("")
+end
+
+function cmd_find(cmddict)
+  local mob = cmddict[1]
+  planeslookup(mob)
+end
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'plookup')
+phelper:set_default('plugin_colour', 'red')
+
+phelper:add_cmd('find', {func=cmd_find, help="find a planes mob", default=true})
+
+
+phelper:enable()
+
+]]>
+</script>
+
+</muclient>
