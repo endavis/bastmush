@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: miniwin_example.xml 673 2010-07-09 01:43:26Z endavis $ -->
+<!--
+
+TODO:
+- make miniwindow only show certain # of lines at a time
+    with footer to go to next page or with scrollbar like
+    in the chat miniwindow
+    
+-->
+<muclient>
+<plugin
+   name="miniwin_help"
+   author="Bast"
+   id="eee17af5a15c1bbb534ef093"
+   language="Lua"
+   purpose="show helps in miniwindow"
+   save_state="y"
+   date_written="2009-02-13 09:28:14"
+   requires="4.52"
+   version="2.0"
+   >
+</plugin>
+
+<!--  Get our standard constants -->
+<include name="constants.lua"/>
+
+<!--  Triggers  -->
+
+<triggers>
+
+  <trigger
+   enabled="n"
+   match="{help}"
+   script="help_redirect"
+   omit_from_output="y"
+   name="help_start"
+   sequence="100"
+   group="HelpGroup"
+  >
+  </trigger>
+  
+  <trigger
+   enabled="n"
+   match="{/help}"
+   script="help_redirect"
+   omit_from_output="y"
+   name="help_end"
+   sequence="200"
+   group="HelpGroup"
+  >
+  </trigger>
+  
+ <trigger
+   enabled="n"
+   match="There is no help with that keyword."
+   custom_colour="2"
+   script="no_such_help"
+   name="no_such_help"
+   sequence="5"
+   group="HelpGroup"
+  >
+  </trigger>  
+  
+  <trigger
+   enabled="n"
+   match="*"
+   script="help_redirect"
+   name="multi_line_help"
+   omit_from_output="y"
+   sequence="10"
+  >
+  </trigger>
+
+</triggers>
+
+<aliases>
+  <alias
+   name="help_alias"
+   script="help_alias"
+   match="^help( .*)?$"
+   enabled="y"
+   sequence="100"
+   regexp="y"
+   ignore_case="y"
+  >
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+-- pull in telnet option handling
+dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+
+require 'var'
+require 'pluginhelper'
+require "miniwin"
+require "tprint"
+require "commas"
+require "serialize"
+require "copytable"
+require "aardutils"
+require "aarddb"
+
+HELP_EXPIRY_TIME = 60 * 60 * 24 * 2 -- time to expire help in seconds (2 days)
+TOPIC_REGEXP = "[-%a%d]+"
+
+helpdb = Aarddb:new{}
+
+helpwin = Miniwin:new{name="AardHelp"}
+helpwin.id = 'y' .. helpwin.id
+helpwin:set_default('header_height', 0)
+helpwin:set_default('width_padding', 4)
+helpwin:set_default('bg_colour', 'black')
+helpwin:set_default('header_bg_colour', 'black')
+helpwin:set_default('windowpos', 12)
+helpwin:set_default('maxlines', 30)
+helpwin:set_default("maxtabs", 5)
+
+helps = {}
+help_text = {}
+help_lookup = {}
+
+line_count = 0
+header_endline = 0
+
+tabnum = 0
+
+function capitalize (s)
+  return string.sub (s, 1, 1):upper () .. string.sub (s, 2):lower ()
+end -- capitalize 
+
+function show_help (help)
+  helpwin:enable()
+  header, text = convert_help(help.helptext)
+  helpwin:addtab(help.keyword, text, header )
+  helpwin:changetotab(help.keyword)
+  helpwin:show(true)
+
+end -- show_help
+
+ -- convert this to a sqlite3 db
+function add_help(topic, help)
+ phelper:mdebug('adding topic', topic)
+ topics = parse_cmdline(topic)
+ newtopic = topics[1]
+ newtopic = newtopic:lower()
+ 
+ local thelp = {}
+ thelp.keyword = newtopic
+ thelp.helptext = help
+ thelp.added = os.time()
+ helpdb:addhelp(thelp)
+ 
+ --helps[newtopic:lower()] = help
+ for i,v in ipairs(topics) do
+   local tlookup = {}
+   tlookup.lookup = v:lower()
+   tlookup.topic = newtopic
+   helpdb:addhelplookup(tlookup)
+   --help_lookup[v:lower()] = newtopic:lower()
+ end
+ return newtopic
+end
+
+-- convert this to a sqlite3 db
+function lookup_help(topic)
+  rval = helpdb:gethelp(topic)
+  return rval  
+end
+
+function convert_related_helps(styles)
+  local newstyle = {}
+  backcolour = styles[2].backcolour  
+  textcolour = styles[2].textcolour  
+  table.insert(newstyle, styles[1])
+  table.insert(newstyle, {text = " : ", backcolour=backcolour, textcolour=textcolour})
+  tdict1 = utils.split(styles[2].text, ':')
+  tdict2 = utils.split(tdict1[2], ",")
+  for i=1,#tdict2 do
+    local style2 = {}
+    local text = tdict2[i]:gsub('[\.]', '')
+    if i == #tdict2 then
+      style2.text = trim(text)
+    else
+      style2.text = trim(text) .. ', '
+    end
+    style2.backcolour = styles[2].backcolour
+    style2.textcolour = styles[2].textcolour    
+    style2.mouseup = function (win, flags, hotspotid)
+                    Execute('help ' .. text)
+                  end
+    table.insert(newstyle, style2)
+  end
+  return newstyle
+end
+
+function convert_categories(styles)
+  local newstyle = {}
+  backcolour = styles[2].backcolour  
+  textcolour = styles[2].textcolour  
+  table.insert(newstyle, styles[1])
+  table.insert(newstyle, {text = " : ", backcolour=backcolour, textcolour=textcolour})
+  tdict1 = utils.split(styles[2].text, ':')
+  tdict2 = utils.split(tdict1[2], ",")
+  for i=1,#tdict2 do
+    local style2 = {}
+    local text = tdict2[i]:gsub('[\.]', '')
+    if i == #tdict2 then
+      style2.text = trim(text)
+    else
+      style2.text = trim(text) .. ', '
+    end
+    style2.backcolour = styles[2].backcolour
+    style2.textcolour = styles[2].textcolour
+    style2.mouseup = function (win, flags, hotspotid)
+                    Execute('contents ' .. text)
+                  end
+    table.insert(newstyle, style2)
+  end
+  return newstyle    
+end
+
+function convert_help(help)
+  local newhelp = {}
+  count = 0
+  local header = {}
+  local text = {}
+  inheader = true
+  for line,styles in ipairs(help) do
+    local tstyle = styles
+    if styles[1].text:sub(0,13) == 'Help Category' then
+      tstyle = convert_categories(styles)
+    elseif styles[1].text:sub(0,13) == 'Related Helps' then
+      tstyle = convert_related_helps(styles)
+    end
+    if styles[1].text:sub(0, 10) == '----------' then
+      count = count + 1
+      if count < 2 then
+        table.insert(header, tstyle)
+      elseif count == 2 then
+        inheader = false
+        table.insert(header, tstyle)
+      else
+        table.insert(text, tstyle)
+      end
+    else     
+      if inheader then
+        table.insert(header, tstyle)
+      else
+        table.insert(text, tstyle)
+      end  
+    end
+  end
+  return header, text
+end
+
+function help_redirect (name, line, wildcards, styles)
+  EnableTrigger ("multi_line_help", true)  -- capture subsequent lines
+
+  -- should only get this on an error
+  if name == "help_end" then
+    current_help_topic = nil
+    requested_topic = nil
+    EnableTrigger ("multi_line_help", false)  -- no more lines to go
+    return      
+  end -- if help_end
+  
+  if name == "help_start" then
+    current_help_topic = nil
+    line_count = 0
+    header_endline = 0
+    help_text = {}
+  elseif line == "{/help}" then
+    EnableTrigger ("multi_line_help", false)  -- no more lines to go
+    if current_help_topic then
+      newtopic = add_help(current_help_topic, help_text)
+      --cache_help () 
+      get_help(newtopic)
+    else
+      printstyles(help_text)
+    end
+  else
+    -- exclude tag lines
+    if not string.match (line, "^%{/?%a+%}$") then
+      line = string.gsub (line, "^{helpkeywords}", "")
+
+      local keywords = string.match (line, "^Help Keywords %: (.+)%.$")
+      if keywords then
+        styles = removetag(styles)
+        current_help_topic = string.gsub (keywords, TOPIC_REGEXP, capitalize)
+        current_help_topic = current_help_topic:lower()
+      end  -- have keywords line
+      
+      if line == "" then
+        styles = {{text=" "}}
+      end
+      line_count = line_count + 1
+      if styles[1].text:sub(0, 10) == '----------' then
+          if line_count > 1 and header_endline == 0 then
+          -- found one of those bar lines
+            header_endline = line_count
+          end
+      end
+      table.insert (help_text, styles)
+    end -- not a tag
+  end -- if
+
+end -- function help_redirect 
+
+function no_such_help (name, line, wildcards)
+  current_help_topic = nil
+  requested_topic = nil
+  EnableTrigger ("multi_line_help", false)  -- no more lines to go
+end -- no_such_help
+
+-- here if they type HELP <something>
+function get_help (topic)
+  
+  -- lower-case for comparisons
+  topic = topic:lower ()
+  help = lookup_help(topic)  
+  
+  -- check for expiration here also
+  if not help then
+  
+    phelper:mdebug(topic, 'not found in db')
+    if statestring ~= 'active' then
+      ColourNote ("red", "", "Not currently able to request help from Aardwolf.")
+      return
+    else
+      phelper:mdebug('help', topic, 'not found')
+      phelper:enabletriggroup("HelpGroup")
+      SendNoEcho ("help " .. topic)
+    end -- if
+  else
+    if tonumber(help.added) + (phelper.expiretime * 60 * 60)  < os.time () then
+      phelper:mdebug('help', help.keyword, 'expired')
+      phelper:enabletriggroup("HelpGroup")
+      SendNoEcho ("help " .. topic)      
+    else
+      phelper:mdebug('help', topic, 'found in cache')
+      show_help(help)
+    end
+  end
+  
+end -- get_help
+
+function help_alias(name, line, wildcards)
+  -- muck around finding what they want help on
+  
+  -- eg. help 'hand to hand'
+  local topic = ""
+  
+  if wildcards [1] then
+    topic = string.match (wildcards [1], "'(.-)'")
+    
+    -- eg. help hand to hand
+    if not topic then
+      topic = trim (wildcards [1])
+    end -- no quotes
+  end -- some wildcard
+    
+  -- eg. help
+  if topic == "" then
+    topic = "help"
+  end -- help on its own
+  
+  get_help(topic)
+end
+
+function PrefixCheck (t, s)
+
+   for k, v in pairs (t) do
+      if string.match (k, "^" .. s) then -- prefix match, so "swo" matches "sword"
+        return k, v
+      end -- if name matches
+    end -- checking table
+
+   return nil  -- not found
+end -- PrefixCheck
+
+function cmd_cacheremove (cmddict)
+  -- convert this to clear the db
+  helpdb:clearhelptable()
+  ColourNote ("white", "blue", "Help topics removed from cache.")
+end -- remove_cache
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  -- playing status
+  if id == "aaa79afcb20fa11787c5a327" then
+      state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
+      statestring = GetPluginVariable ("aaa79afcb20fa11787c5a327", "statestring")
+  end -- playing status changed
+  
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  if IsConnected () then
+    state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
+    statestring = GetPluginVariable ("aaa79afcb20fa11787c5a327", "statestring")
+  end -- if already connected
+
+  phelper:OnPluginEnable()
+  -- always create windows after OnPluginEnable due to default variable handling
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+  if GetPluginInfo (GetPluginID (), 17) then
+    TelnetOptionOff (TELOPT_HELPS)
+  end -- if enabled
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+  TelnetOptionOn (TELOPT_HELPS)
+  
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'mnhelp')
+phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:add_pobject('win', helpwin)
+
+phelper:add_cmd('cacheremove', {func=cmd_cacheremove, help="remove the cache"})
+
+phelper:add_setting('expiretime', {help="the time before a help expires (in hours)", type="number", default=48, longname="Help Expire (in hours)"})
+
+phelper:enable()
+
+phelper:addaardhelps{"Help"}
+
+
+]]>
+</script>
+</muclient>
