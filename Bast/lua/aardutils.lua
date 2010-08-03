@@ -4,6 +4,11 @@ http://code.google.com/p/bastmush
  - Documentation and examples
 
 functions in this module
+removetag - usage:removetag(stylerun)
+  remove the tag in a style run
+
+printstyles - usage:printstyles(stylerun)
+  use colourtell to print a style run
 
 findkeyword - usage: findkeyword(item)
   return the first keyword of the item that is not an article
@@ -80,7 +85,7 @@ end
 function convertlevel(level)
   level = tonumber(level)
   if level < 1 then
-    return -1, -1, -1
+    return {tier = -1, remort = -1, level = -1}
   end
   if level % (7 * 201) == 0 then
     tier = math.floor(level / (7 * 201)) - 1
@@ -94,6 +99,23 @@ function convertlevel(level)
     alevel = level % 201
   end
   return {tier = tier, remort = remort, level = alevel}
+end
+
+function printstyles(styles)
+  if styles then
+    for _, v in ipairs (styles) do
+      if next(v) then
+        for _, v2 in ipairs (v) do
+            ColourTell (RGBColourToName (v2.textcolour), 
+                    RGBColourToName (v2.backcolour), 
+                    v2.text)  
+        end
+        Note("")
+      end
+    end -- for each style run
+    Note ("")  -- wrap up line
+
+  end
 end
 
 classabb = {
@@ -168,3 +190,5 @@ wearlocs = {
  'portal',
  'sleeping',
 }
+
+ 
