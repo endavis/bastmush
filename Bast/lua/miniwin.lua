@@ -79,6 +79,11 @@ Button Notes:
   hint = the hint for the button
   place = place of the button in the titlebar, anything <= 50 is on the left side of the bar, anything > 50 is on the right side
 
+quickest way to create a window
+ mwin =  Miniwin:new{name="NewWin"}
+ mwin:addtab('default', {"Window Body"}, {"Window Header"} )
+ mwin:changetotab('default')
+ mwin:show(true)
 
 TODO: add footer, this could be used for resizing, tabs, status bar type things
 TODO: resize flag that would make the border be used for resizing, the border will need to be a seperate miniwindow
@@ -194,7 +199,11 @@ function Miniwin:initialize(args)
   self.border_width = 2
   self.actual_header_start_line = nil
   self.actual_header_end_line = nil
-
+  self.actual_text_start_line = nil
+  self.actual_text_end_line = nil
+  self.drawscrollbar = false
+  self.scrollbarwidth = 15
+  
   self.titlebarlinenum = -1
   self.tablinenum = -1
 
@@ -252,7 +261,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'shade_with_header', {type="bool", help="when window is shaded, still show header", default=verify_bool(false), sortlev=55, longname = "Shade with header"})
   self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar"})
   self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines"})
-  self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=0, low=0, sortlev=57, longname="Max Tabs"})
+  self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=1, low=0, sortlev=57, longname="Max Tabs"})
 
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
@@ -798,10 +807,14 @@ function Miniwin:menuclick (flags)
 end -- ListMenu
 
 -- redraw the window
-function Miniwin:redraw()
+function Miniwin:redraw(justtext)
    local shown = WindowInfo(self.id, 5)
-   self:buildwindow(self.activetab)
-   self:drawwin()
+   if justtext then
+     self:redrawtext(self.activetab)
+   else
+     self:buildwindow(self.activetab)
+     self:drawwin()
+   end
    WindowShow(self.id, shown)
 end
 
@@ -1164,6 +1177,7 @@ function Miniwin:buildwindow(tabname)
   self.actual_header_end_line = nil
   self.titlebarlinenum = -1
   self.tablinenum = -1
+  self.drawscrollbar = false
 
   local height = 0
   local tempdata = {}
@@ -1229,6 +1243,9 @@ function Miniwin:buildwindow(tabname)
     local endtext = #self.tabs[tabname].text
 
     if self.maxlines > 0 then
+      if endtext > self.maxlines then
+        self.drawscrollbar = true
+      end
       starttext = self.startline
       endtext = self.startline + self.maxlines
       if endtext > #self.tabs[tabname].text then
@@ -1262,7 +1279,9 @@ function Miniwin:buildwindow(tabname)
     else
       self.window_data.actualwindowwidth = self.window_data.maxlinewidth + self.width_padding + self.border_width
     end
-
+    if self.drawscrollbar then
+      self.window_data.actualwindowwidth = self.window_data.actualwindowwidth + self.scrollbarwidth + 1
+    end
     if self.height > 0 then
       self.window_data.actualwindowheight = self.height
     else
@@ -1514,6 +1533,60 @@ function Miniwin:post_create_window_internal()
      WindowScrollwheelHandler(self.id, self.id .. ':' .. "ztextarea", "wheelmove")
   end    
 
+  if self.drawscrollbar then
+        
+    local upbutton = {}
+    upbutton.top = self.window_data.textarea.top
+    upbutton.bottom = upbutton.top + self.scrollbarwidth
+    upbutton.left = self.window_data.actualwindowwidth - self.scrollbarwidth - self.border_width
+    upbutton.right = self.window_data.actualwindowwidth - self.border_width
+    
+    local downbutton = {}
+    downbutton.bottom = self.window_data.textarea.bottom
+    downbutton.top = downbutton.bottom - self.scrollbarwidth
+    downbutton.left = self.window_data.actualwindowwidth - self.scrollbarwidth - self.border_width
+    downbutton.right = self.window_data.actualwindowwidth - self.border_width
+    
+    WindowRectOp(self.id, 2, upbutton.left, upbutton.bottom, downbutton.right, downbutton.top, ColourNameToRGB ("#E8E8E8")) -- scroll bar background
+    WindowRectOp(self.id, 1, upbutton.left + 1, upbutton.bottom + 1, downbutton.right - 1, downbutton.top - 1, ColourNameToRGB ("black")) -- scroll bar background inset rectangle    
+    
+    WindowRectOp(self.id, 5, upbutton.left, upbutton.top, upbutton.right, upbutton.bottom, 5, 15 + 0x800) -- top scroll button
+    WindowRectOp(self.id, 5, downbutton.left, downbutton.top, downbutton.right, downbutton.bottom, 5,  15 + 0x800) -- bottom scroll button    
+
+    -- draw triangle in up button
+    points = string.format ("%i,%i,%i,%i,%i,%i", upbutton.left + 3, upbutton.top + 9, 
+	                      upbutton.left + 7, upbutton.top + 5, upbutton.left + 11, upbutton.top + 9)
+    WindowPolygon (self.id, points,
+        ColourNameToRGB("black"), 0, 1,   -- pen (solid, width 1)
+        ColourNameToRGB("black"), 0, --brush (solid)
+        true, --close
+        false)  --alt fill
+
+    -- draw triangle in down button    
+    points = string.format ("%i,%i,%i,%i,%i,%i", downbutton.left + 3, downbutton.bottom - 11,
+	                   downbutton.left + 7, downbutton.bottom - 7, downbutton.left + 11,
+			   downbutton.bottom - 11)
+    WindowPolygon (self.id, points,
+        ColourNameToRGB("black"), 0, 1,   -- pen (solid, width 1)
+        ColourNameToRGB("black"), 0, --brush (solid)
+        true, --close
+        false) --alt fill  
+    
+    -- scroll bar up/down buttons
+    self:addhotspot('upbutton', upbutton.left, upbutton.top, upbutton.right, upbutton.bottom, 
+                   nil, nil, function (win, flags, hotspotid)
+                        win:scrollup()
+                      end,
+                   nil, nil, 'Scroll Up')
+
+    self:addhotspot('downbutton', downbutton.left, downbutton.top, downbutton.right, downbutton.bottom, 
+                   nil, nil, function (win, flags, hotspotid)
+                        win:scrolldown()
+                      end,
+                   nil, nil, 'Scroll Down')
+  
+  end
+  
   -- DrawEdge rectangle
   check (WindowRectOp (self.id, 1, 0, 0, 0, 0, self:get_colour('window_border_colour')))
   check (WindowRectOp (self.id, 1, 1, 1, -1, -1, self:get_colour('window_border_colour')))
@@ -1535,7 +1608,7 @@ function Miniwin:drawwin()
     self:pre_create_window_internal(sheight, nil, tx, ty)
     self:displayline(self.window_data[1])
     if self.shade_with_header then
-      for i=self.actual_header_start_line,self.actual_header_end_line do
+      for i=2,self.actual_header_end_line do
         self:displayline(self.window_data[i])
       end
     end
@@ -1605,27 +1678,37 @@ function Miniwin:set(option, value, args)
   return true
 end
 
+function Miniwin:scrollup(numlines)
+  numlines = numlines or 1
+  if self.startline > numlines then
+    self.startline = self.startline - numlines
+    self:redraw(true)
+  end  
+end
+
+function Miniwin:scrolldown(numlines)
+  -- scrolled down
+  numlines = numlines or 1
+  if self.startline + self.maxlines + numlines > #self.tabs[self.activetab].text then
+    self.startline = #self.tabs[self.activetab].text - self.maxlines
+  else
+    if self.startline >= 1 then
+      self.startline = self.startline + numlines
+      self:redraw(true)
+    end
+  end
+end
+
 function Miniwin:wheelmove (flags, hotspot_id)
   if bit.band (flags, 0x100) ~= 0 then
     -- wheel scrolled down (towards you)
-    if self.startline + self.maxlines + 1 > #self.tabs[self.activetab].text then
- 
-    else
-      if self.startline >= 1 then
-        self.startline = self.startline + 1
-        self:redraw()
-      end
-    end
-     
+    self:scrolldown()     
   else
     -- wheel scrolled up (away from you)
-    if self.startline > 1 then
-     self.startline = self.startline - 1
-     self:redraw()
-    end
+    self:scrollup()
   end -- if
 
-  return 0  -- needed for some languages
+  return 0
 end -- drag_move
 
 -- the function to drag and move the window
