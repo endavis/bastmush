@@ -37,7 +37,12 @@ require "aarddb"
 aarddb = Aarddb:new{}
 
 function planeslookup(mob)
-  local mobs = aarddb:planeslookup(mob)
+  return aarddb:planeslookup(mob)
+end
+
+function cmd_find(cmddict)
+  local mob = cmddict[1]
+  mobs = planeslookup(mob)
   phelper:plugin_header('Planes Mobs')
   if next(mobs) then
     local tformat = '%-30s   %-16s   %-5s'
@@ -49,12 +54,7 @@ function planeslookup(mob)
   else
     ColourNote(RGBColourToName(var.plugin_colour), "black", 'None')
   end
-  Note("")
-end
-
-function cmd_find(cmddict)
-  local mob = cmddict[1]
-  planeslookup(mob)
+  Note("")  
 end
 ]]>
 </script>
