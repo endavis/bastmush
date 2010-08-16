@@ -129,35 +129,37 @@ function formatlevel()
     table.insert( tmsg, levelstats )
     table.insert( tmsg, "bonus " )
   end
-  oldlevel = level - 1
-  if db:open() then
-    if db:checkfortable('levels') and level % 201 > 2 then
-      for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level = %d;", oldlevel)) do
-        starttime = a[1]
-        finishtime = a[2]
+  if level ~= nil then
+    oldlevel = level - 1
+    if db:open() then
+      if db:checkfortable('levels') and level % 201 > 2 then
+        for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level = %d;", oldlevel)) do
+          starttime = a[1]
+          finishtime = a[2]
+        end
+        if starttime > 0 and finishtime > 0 then
+          length = finishtime - starttime
+          days, hours, mins, secs = SecondsToDHMS(length)
+          table.insert( tmsg, string.format( "%02d", days ) )
+          table.insert( tmsg, "d:" )
+          table.insert( tmsg, string.format( "%02d", hours) )
+          table.insert( tmsg, "h:" )
+          table.insert( tmsg, string.format( "%02d", mins ) )
+          table.insert( tmsg, "m " )
+        end
       end
-      if starttime > 0 and finishtime > 0 then
-        length = finishtime - starttime
-        days, hours, mins, secs = SecondsToDHMS(length)
-        table.insert( tmsg, string.format( "%02d", days ) )
-        table.insert( tmsg, "d:" )
-        table.insert( tmsg, string.format( "%02d", hours) )
-        table.insert( tmsg, "h:" )
-        table.insert( tmsg, string.format( "%02d", mins ) )
-        table.insert( tmsg, "m " )
+      if db:checkfortable('mobkills') then
+        for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where level = %s and xp > 0", oldlevel)) do
+          mobskilled = a[1]
+          mobsavexp = a[2]
+        end
+        table.insert( tmsg, mobskilled )
+        table.insert( tmsg, " mobs killed (" )
+        table.insert( tmsg, string.format( "%02.02f", mobsavexp ) )
+        table.insert( tmsg, "xp/mob)" )
       end
+      db:close()
     end
-    if db:checkfortable('mobkills') then
-      for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where level = %s and xp > 0", oldlevel)) do
-        mobskilled = a[1]
-        mobsavexp = a[2]
-      end
-      table.insert( tmsg, mobskilled )
-      table.insert( tmsg, " mobs killed (" )
-      table.insert( tmsg, string.format( "%02.02f", mobsavexp ) )
-      table.insert( tmsg, "xp/mob)" )
-    end
-    db:close()
   end
   DisplayInfo( tmsg )
 end
@@ -403,7 +405,7 @@ function settimer()
    else
      SetTimerOption ("StatReport", "minute", var.showminutes)
      if not GetTimerInfo ("StatReport", 6) then
-       EnableTimer("StatReport", true)        
+       EnableTimer("StatReport", true)
      end
    end
 end
@@ -456,7 +458,7 @@ function OnPluginEnable ()
   ldplugin('broadcast_quest')
   ldplugin('broadcast_level')
   ldplugin('broadcast_cp')
-  ldplugin('broadcast_gq')  
+  ldplugin('broadcast_gq')
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
