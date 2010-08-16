@@ -208,7 +208,7 @@ function Phelpobject:set(option, value, args)
     if args.putvar then
       var[option] = tvalue
     end
-    if afterf then
+    if afterf ~= nil then
       self:run_func(afterf)
     end
     SaveState()
