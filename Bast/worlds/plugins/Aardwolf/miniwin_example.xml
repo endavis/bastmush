@@ -187,11 +187,11 @@ table.insert(tstyle, style)
 -- Fillall
 style = {}
 style.circleOp = {}
-style.circleOp.width = 8 
+style.circleOp.width = 8
 style.circleOp.height = 8
 style.circleOp.pencolour = 'blue' -- fore_colour
 style.circleOp.penstyle = miniwin.pen_null
-style.circleOp.penwidth = 0 
+style.circleOp.penwidth = 0
 style.circleOp.brushcolour = 'red' -- back_colour
 style.circleOp.brushstyle = miniwin.brush_waves_vertical
 style.circleOp.extra1 = null
@@ -273,8 +273,6 @@ function OnPluginEnable ()
 
   testwin2:addtab('tab1', styles2, header)
 
-  testwin:createwin()
-  testwin2:createwin()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
