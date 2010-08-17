@@ -210,6 +210,7 @@ function Miniwin:initialize(args)
   self.keepscrolling = false
   self.clickdelta = -1
   self.dragscrolling = false
+  self.menuname = 'unknown'
 
   self.titlebarlinenum = -1
   self.tablinenum = -1
@@ -222,10 +223,10 @@ function Miniwin:initialize(args)
   --self.tabstyles = {}
   self.tablist = {}
 
-  self:add_cmd('toggle', {func="cmd_toggle", help="toggle window"})
+  self:add_cmd('toggle', {func="cmd_toggle", help="toggle window", nomenu=true})
   self:add_cmd('fonts', {func="cmd_fonts", help="show fonts loaded in this miniwin"})
-  self:add_cmd('shade', {func="shade", help="shade the miniwin"})
-  self:add_cmd('snapshot', {func="cmd_snapshot", help="make a snapshot of the miniwin, first argument is file name, it will be saved in the Documents folder"})
+  self:add_cmd('shade', {func="shade", help="shade the miniwin", nomenu=true})
+  self:add_cmd('snapshot', {func="cmd_snapshot", help="make a snapshot of the miniwin"})
   self:add_cmd('info', {func="cmd_info", help="show some info about the window"})
 
   self:add_setting( 'disabled', {type="bool", help="is this window disabled", default=verify_bool(false), sortlev=1, readonly=true})
@@ -411,7 +412,18 @@ end
 
 -- Command to take snapshot of this window
 function Miniwin:cmd_snapshot(cmddict)
-  WindowWrite(self.id, cmddict[1])
+  tfile = cmddict[1]
+  tdir = GetInfo(64)
+  if tfile == nil then
+     tfile = tostring(utils.inputbox("Enter a filename, will be saved in " .. tdir))
+  end
+  if tfile then
+    WindowWrite(self.id, tfile)
+  else
+    phelper:plugin_header("Snapshot")
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "No filename specified")
+  end
+
 end
 
 -- Command to show info
@@ -729,7 +741,7 @@ end
 
 -- build the mousemenu, looks for anything in the settings table with a longname
 function Miniwin:buildmousemenu()
-  menu = " >Font | Set font - Currently: " .. tostring(self.font) .. ', ' .. tostring(self.font_size) .. " | Increase font size | Decrease font size | Default Font | < | >Colours "
+  menu = "Window Menu || >Font | Set font - Currently: " .. tostring(self.font) .. ', ' .. tostring(self.font_size) .. " | Increase font size | Decrease font size | Default Font | < | >Colours "
   --local colours = {}
   for name,setting in tableSort(self.set_options, 'sortlev', 50) do
     if setting.longname ~= nil and setting.type == 'colour' then
@@ -750,12 +762,18 @@ function Miniwin:buildmousemenu()
       menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring(self[name])
     end
   end
-  menu = menu .. ' | < || Restore Window Defaults || Help'
+  menu = menu .. ' | < || Restore Window Defaults || >Commands '
+  for name,cmd in pairs(self.cmds_table) do
+    if cmd.nomenu ~= true then
+      menu = menu .. '|' .. name .. ' - ' .. cmd.help
+    end
+  end
+  menu = menu .. '| < || Help'
   return menu
 end
 
 function Miniwin:buildpluginmousemenu()
-  menu = " >Colours "
+  menu = "Plugin Menu || >Colours "
   --local colours = {}
   for name,setting in tableSort(self.phelper.set_options, 'sortlev', 50) do
     if setting.longname ~= nil and setting.type == 'colour' then
@@ -776,64 +794,94 @@ function Miniwin:buildpluginmousemenu()
       menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring(self.phelper[name])
     end
   end
-  menu = menu .. ' | < || Restore Plugin Defaults || Help'
+  menu = menu .. ' | < || Restore Plugin Defaults || >Commands'
+  for name,cmd in pairs(phelper.cmds_table) do
+    if cmd.nomenu ~= true then
+      menu = menu .. '|' .. name .. ' - ' .. cmd.help
+    end
+  end
+  menu = menu .. '| < || Help'
   return menu
 end
 
 -- the function called when the mouse is clicked in the menu button
-function Miniwin:menuclick (flags)
+function Miniwin:windowmenu(result)
+  if result:match("Set font") then
+    self:menusetfont()
+  elseif result == "Increase font size" then
+    self:set('font_size', self.font_size + 1)
+  elseif result == "Decrease font size" then
+    self:set('font_size', self.font_size - 1)
+  elseif result == "Default Font" then
+    self:set('font_size', 'default')
+    self:set('font', 'default')
+  elseif result:match("Restore Window Defaults") then
+    self:cmd_reset()
+  elseif result == "Help" then
+    self.phelper.helpwin:show(true)
+  else
+    for name,setting in tableSort(self.set_options, 'type', 'unknown') do
+      if result == setting.longname then
+        --print("changing settings " .. setting.longname)
+        if setting.type == 'bool' then
+          return self:set(name, not self[name])
+        else
+          return self:set(name, nil)
+        end
+      end
+    end
+    if self.cmds_table[result] ~= nil then
+      self:run_cmd({action=result})
+    end
+  end
+
+end
+
+function Miniwin:pluginmenu(result)
+  if result:match("Restore Plugin Defaults") then
+    self.phelper:cmd_reset()
+  elseif result == "Help" then
+    self.phelper.helpwin:show(true)
+  else
+    for name,setting in tableSort(self.phelper.set_options, 'type', 'unknown') do
+      if result == setting.longname then
+        --print("changing settings " .. setting.longname)
+        if setting.type == 'bool' then
+          return self.phelper:set(name, not self[name])
+        else
+          return self.phelper:set(name, nil)
+        end
+      end
+    end
+    if phelper.cmds_table[result] ~= nil then
+      phelper:run_cmd({action=result})
+    end
+  end
+end
+
+function Miniwin:menuclick(flags)
   local menu = ''
   --make text for menu options
   -- right click for window menu, left click for plugin menu
   if bit.band(flags, 0x10) ~= 0 then
     menu = self:buildmousemenu()
+    menutype = 'window'
   elseif bit.band(flags, 0x20) ~= 0 then
     menu = self:buildpluginmousemenu()
+    menutype = 'plugin'
   end
   local result = WindowMenu (self.id, WindowInfo (self.id, 14), WindowInfo (self.id, 15), menu) --do menu
   if result:match(' - ') then
     tresult = utils.split(result, '-')
     result = trim(tresult[1])
   end
-  if result ~= "" then --if we get a menu item clicked
-          if result:match("Set font") then
-            self:menusetfont()
-          elseif result == "Increase font size" then
-            self:set('font_size', self.font_size + 1)
-          elseif result == "Decrease font size" then
-            self:set('font_size', self.font_size - 1)
-          elseif result == "Default Font" then
-            self:set('font_size', 'default')
-            self:set('font', 'default')
-          elseif result:match("Restore Window Defaults") then
-            self:cmd_reset()
-          elseif result:match("Restore Plugin Defaults") then
-            self.phelper:cmd_reset()
-          elseif result == "Help" then
-            self.phelper.helpwin:show(true)
-          else
-            for name,setting in tableSort(self.set_options, 'type', 'unknown') do
-              if result == setting.longname then
-                --print("changing settings " .. setting.longname)
-                if setting.type == 'bool' then
-                  return self:set(name, not self[name])
-                else
-                  return self:set(name, nil)
-                end
-              end
-            end
-            for name,setting in tableSort(self.phelper.set_options, 'type', 'unknown') do
-              if result == setting.longname then
-                --print("changing settings " .. setting.longname)
-                if setting.type == 'bool' then
-                  return self.phelper:set(name, not self[name])
-                else
-                  return self.phelper:set(name, nil)
-                end
-              end
-            end
-          end
-  end -- if result
+  if result ~= "" then
+    if menutype == 'plugin' then
+      self:pluginmenu(result)
+    else
+      self:windowmenu(result)
+    end
+  end
 end -- ListMenu
 
 -- redraw the window

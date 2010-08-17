@@ -38,7 +38,7 @@ function Phelpobject:initialize(args)
 
   self:add_cmd('help', {func="cmd_help", help="show help"})
   self:add_cmd('debug', {func="cmd_debug", help="toggle debugging"})
-  self:add_cmd('set', {func="cmd_set", help="set settings"})
+  self:add_cmd('set', {func="cmd_set", help="set settings", nomenu=true})
   self:add_cmd('reset', {func="cmd_reset", help="reset settings to default values"})
   self:add_cmd('save', {func=SaveState, help="save plugin variables"})
 
