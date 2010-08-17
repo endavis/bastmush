@@ -1657,12 +1657,14 @@ function Miniwin:post_create_window_internal()
                    nil, nil, 'Show Menu')
   end
 
-  if self.activetab.build_data.textarea.left and self.activetab.build_data.textarea.top and
-     self.activetab.build_data.textarea.right and self.activetab.build_data.textarea.bottom then
-     self:addhotspot("ztextarea", self.activetab.build_data.textarea.left, self.activetab.build_data.textarea.top,
-                              self.activetab.build_data.textarea.right, self.activetab.build_data.textarea.bottom,
-                              empty, empty, empty, empty, empty, "", 0)
-     self:addscrollwheelhandler("ztextarea", self.wheelmove)
+    if self.maxlines > 0 and #self.activetab.convtext > self.maxlines then
+    if self.activetab.build_data.textarea.left and self.activetab.build_data.textarea.top and
+      self.activetab.build_data.textarea.right and self.activetab.build_data.textarea.bottom then
+      self:addhotspot("ztextarea", self.activetab.build_data.textarea.left, self.activetab.build_data.textarea.top,
+                                self.activetab.build_data.textarea.right, self.activetab.build_data.textarea.bottom,
+                                empty, empty, empty, empty, empty, "", 0)
+      self:addscrollwheelhandler("ztextarea", self.wheelmove)
+    end
   end
 
   if self.activetab.build_data.drawscrollbar then
