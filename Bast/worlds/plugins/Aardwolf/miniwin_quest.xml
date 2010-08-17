@@ -89,8 +89,7 @@ function show_quest ()
   end -- if
 
   questwin:enable()
-  questwin:addtab('default', quest_text)
-  questwin:changetotab('default')
+  questwin:addtab('default', quest_text, nil, true)
   questwin:show(winbetweenquest)
 end -- show_quest_text
 
@@ -169,7 +168,7 @@ function OnPluginBroadcast (msg, id, name, text)
       style = {}
       style.text = ' Quest: ' .. timer.text .. ' '
       style.textcolour = questwin.time_colour
-      style.backcolour = questwin.bg_colour      
+      style.backcolour = questwin.bg_colour
       tstyle = {style}
       questwin.tabcolour = questwin.bg_colour
       questwin:tabbroadcast(true, tstyle)

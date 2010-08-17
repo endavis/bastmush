@@ -41,12 +41,12 @@ function build_stat_window()
   stats = GetPluginVariableList("8a710e0783b431c06d61a54c")
 
   styles = {}
-  
+
   tstyle = format_stat('Strength', stats.str, stats.base_str, 13, 3)
   table.insert(tstyle, {text="   "})
   tableExtend(tstyle, format_stat('HP', stats.hp, stats.max_hp, 5, #tostring(stats.max_hp)))
   table.insert(styles, tstyle)
-  
+
   tstyle = format_stat('Intelligence', stats.int, stats.base_int, 13, 3)
   table.insert(tstyle, {text="   "})
   tableExtend(tstyle, format_stat('Mana', stats.mana, stats.max_mana, 5, #tostring(stats.max_mana)))
@@ -59,7 +59,7 @@ function build_stat_window()
   table.insert(styles, tstyle)
 
   table.insert(styles, format_stat('Dexterity', stats.dex, stats.base_dex, 13, 3))
-  
+
   tstyle = format_stat('Constitution', stats.con, stats.base_con, 13, 3)
   table.insert(tstyle, {text="   "})
   tableExtend(tstyle, format_stat('HR', stats.hitroll, nil, 5, #tostring(stats.hitroll)))
@@ -69,36 +69,36 @@ function build_stat_window()
   table.insert(tstyle, {text="   "})
   tableExtend(tstyle, format_stat('DR', stats.damroll, nil, 5, #tostring(stats.damroll)))
   table.insert(styles, tstyle)
-  
+
   table.insert(styles, {{text = ''}})
-  
+
   tstyle = format_stat('XP to Level', stats.to_level, nil, 13, 7)
   table.insert(tstyle, {text="   "})
   tableExtend(tstyle, format_stat('Level', stats.level, nil, 5, #tostring(stats.level), "#00EE00"))
   table.insert(styles, tstyle)
-  
+
   tstyle = format_stat('Alignment', stats.align, nil, 13, 7)
   table.insert(tstyle, {text="   "})
   tableExtend(tstyle, format_stat('Gold', stats.gold, nil, 5, #tostring(stats.gold), 'gold'))
   table.insert(styles, tstyle)
 
   table.insert(styles, {{text = ''}})
-  
+
   tstyle = format_stat('QP', stats.qp, nil, 13, 7)
   table.insert(tstyle, {text="   "})
   tableExtend(tstyle, format_stat('TP', stats.tp, nil, 5, #tostring(stats.tp)))
-  table.insert(styles, tstyle)  
-  
+  table.insert(styles, tstyle)
+
   statwin:enable()
-  statwin:addtab('default', styles)
-  statwin:changetotab('default')
+  statwin:addtab('default', styles, nil, true)
+
 end
 
 function format_stat(statname, statcur, statother, colwidth, statlength, color)
     allstyle = {}
-    
-    style = {}    
-    style.text = string.format( "%-" .. tostring(colwidth) .. "s", statname ) 
+
+    style = {}
+    style.text = string.format( "%-" .. tostring(colwidth) .. "s", statname )
     style.textcolour = "lightseagreen"
     table.insert(allstyle, style)
 
@@ -116,13 +116,13 @@ function format_stat(statname, statcur, statother, colwidth, statlength, color)
       style.textcolour = 'white'
     end
     table.insert(allstyle, style)
-    
+
     if statother then
       style = {}
       style.text = '/'
       style.textcolour = "lightseagreen"
       table.insert(allstyle, style)
-      
+
       style = {}
       style.text = string.format( "%-" .. tostring(statlength) .. "s",  statother)
       style.textcolour = 'white'
@@ -159,7 +159,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("Stats_Detector")
-  
+
   phelper:OnPluginEnable()
 end -- OnPluginEnable
 

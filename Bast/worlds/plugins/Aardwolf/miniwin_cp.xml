@@ -98,13 +98,13 @@ function show_cp_text ()
   table.insert (texttable, tstyle)
 
   cpwin:enable()
-  cpwin:addtab('default', texttable, header)
-  cpwin:changetotab('default')
+  cpwin:addtab('default', texttable, header, true)
+  --cpwin:changetotab('default')
 
   style = {}
   style.text = " CP: " .. #cpmobs
   cpwin:tabbroadcast(true, {style})
-  
+
 end -- show_cp_text
 
 ]]>

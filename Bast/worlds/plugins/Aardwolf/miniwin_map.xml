@@ -190,7 +190,7 @@ function process_coords ( name, line, wildcards, styles )
   style.style = 0
   table.insert (tstyle, style)
 
-  
+
   coords = tstyle
 end
 
@@ -251,7 +251,7 @@ function convert_exits(styles)
       table.insert(tstyles, v)
     end
   end
-  
+
   style = popup_style(legwin, "LG", "yellow")
   style.hjust = "right"
   table.insert (tstyles, style)
@@ -267,11 +267,11 @@ function parse_map(map)
     elseif trim(map[3][1].text) == "" then
       table.remove(map, 3)
     end
-  end  
+  end
   for i,line in ipairs(map) do
     for i,v in ipairs(line) do
       v.backcolour = "bg_colour"
-    end  
+    end
     if i <= 2 then
       table.insert(header, line)
     else
@@ -283,7 +283,7 @@ function parse_map(map)
   end
   if coords then
     text[#text - 1] = coords
-  end  
+  end
   return header, text
 end
 
@@ -305,14 +305,16 @@ function map_redirect (name, line, wildcards, styles)
     local header = {}
     local text = {}
     header, text = parse_map(map_lines)
-    
+
     mapwin:enable()
-    mapwin:addtab('default', text, header)
-    mapwin:createwin()
-    
+    mapwin:addtab('default', text, header, true)
+    --mapwin:changetotab('default')
+    --mapwin:createwin()
+
     legwin:enable()
-    legwin:addtab('default', info)
-    legwin:createwin()
+    legwin:addtab('default', info, nil, true)
+   -- legwin:changetotab('default')
+    --legwin:createwin()
   else
     table.insert (map_lines, styles)
   end -- if

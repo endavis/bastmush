@@ -75,11 +75,11 @@ function build_gq ()
   gq_text = texttable
   gqwin.header_height = 1
   show_gq(texttable, header)
-  
+
   style = {}
   style.text = " GQ: " .. mobcount
   gqwin:tabbroadcast(true, {style})
-  
+
 end -- build_gq
 
 function show_gq (text, header)
@@ -89,8 +89,8 @@ function show_gq (text, header)
   end -- if
 
   gqwin:enable()
-  gqwin:addtab('default', text, header)
-  gqwin:changetotab('default')
+  gqwin:addtab('default', text, header, true)
+  --gqwin:changetotab('default')
   gqwin:show(true)
 end -- show_quest_text
 
@@ -107,7 +107,7 @@ function OnPluginBroadcast (msg, id, name, text)
       local style = {}
       style.text = " GQ "
       style.textcolour = "red"
-      gqwin:tabbroadcast(true, {style})      
+      gqwin:tabbroadcast(true, {style})
       show_gq({"GQuest Available"})
     elseif msg == 2 then
       -- gquest joined
