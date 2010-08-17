@@ -7,7 +7,7 @@ TODO:
 - make miniwindow only show certain # of lines at a time
     with footer to go to next page or with scrollbar like
     in the chat miniwindow
-    
+
 -->
 <muclient>
 <plugin
@@ -40,7 +40,7 @@ TODO:
    group="HelpGroup"
   >
   </trigger>
-  
+
   <trigger
    enabled="n"
    match="{/help}"
@@ -51,7 +51,7 @@ TODO:
    group="HelpGroup"
   >
   </trigger>
-  
+
  <trigger
    enabled="n"
    match="There is no help with that keyword."
@@ -61,8 +61,8 @@ TODO:
    sequence="5"
    group="HelpGroup"
   >
-  </trigger>  
-  
+  </trigger>
+
   <trigger
    enabled="n"
    match="*"
@@ -103,7 +103,6 @@ require "copytable"
 require "aardutils"
 require "aarddb"
 
-HELP_EXPIRY_TIME = 60 * 60 * 24 * 2 -- time to expire help in seconds (2 days)
 TOPIC_REGEXP = "[-%a%d]+"
 
 helpdb = Aarddb:new{}
@@ -129,13 +128,12 @@ tabnum = 0
 
 function capitalize (s)
   return string.sub (s, 1, 1):upper () .. string.sub (s, 2):lower ()
-end -- capitalize 
+end -- capitalize
 
 function show_help (help)
   helpwin:enable()
   header, text = convert_help(help.helptext)
-  helpwin:addtab(help.keyword, text, header )
-  helpwin:changetotab(help.keyword)
+  helpwin:addtab(help.keyword, text, header, true)
   helpwin:show(true)
 
 end -- show_help
@@ -146,13 +144,13 @@ function add_help(topic, help)
  topics = parse_cmdline(topic)
  newtopic = topics[1]
  newtopic = newtopic:lower()
- 
+
  local thelp = {}
  thelp.keyword = newtopic
  thelp.helptext = help
  thelp.added = os.time()
  helpdb:addhelp(thelp)
- 
+
  --helps[newtopic:lower()] = help
  for i,v in ipairs(topics) do
    local tlookup = {}
@@ -167,13 +165,13 @@ end
 -- convert this to a sqlite3 db
 function lookup_help(topic)
   rval = helpdb:gethelp(topic)
-  return rval  
+  return rval
 end
 
 function convert_related_helps(styles)
   local newstyle = {}
-  backcolour = styles[2].backcolour  
-  textcolour = styles[2].textcolour  
+  backcolour = styles[2].backcolour
+  textcolour = styles[2].textcolour
   table.insert(newstyle, styles[1])
   table.insert(newstyle, {text = " : ", backcolour=backcolour, textcolour=textcolour})
   tdict1 = utils.split(styles[2].text, ':')
@@ -187,7 +185,7 @@ function convert_related_helps(styles)
       style2.text = trim(text) .. ', '
     end
     style2.backcolour = styles[2].backcolour
-    style2.textcolour = styles[2].textcolour    
+    style2.textcolour = styles[2].textcolour
     style2.mouseup = function (win, flags, hotspotid)
                     Execute('help ' .. text)
                   end
@@ -198,8 +196,8 @@ end
 
 function convert_categories(styles)
   local newstyle = {}
-  backcolour = styles[2].backcolour  
-  textcolour = styles[2].textcolour  
+  backcolour = styles[2].backcolour
+  textcolour = styles[2].textcolour
   table.insert(newstyle, styles[1])
   table.insert(newstyle, {text = " : ", backcolour=backcolour, textcolour=textcolour})
   tdict1 = utils.split(styles[2].text, ':')
@@ -219,7 +217,7 @@ function convert_categories(styles)
                   end
     table.insert(newstyle, style2)
   end
-  return newstyle    
+  return newstyle
 end
 
 function convert_help(help)
@@ -245,12 +243,12 @@ function convert_help(help)
       else
         table.insert(text, tstyle)
       end
-    else     
+    else
       if inheader then
         table.insert(header, tstyle)
       else
         table.insert(text, tstyle)
-      end  
+      end
     end
   end
   return header, text
@@ -264,9 +262,9 @@ function help_redirect (name, line, wildcards, styles)
     current_help_topic = nil
     requested_topic = nil
     EnableTrigger ("multi_line_help", false)  -- no more lines to go
-    return      
+    return
   end -- if help_end
-  
+
   if name == "help_start" then
     current_help_topic = nil
     line_count = 0
@@ -276,7 +274,7 @@ function help_redirect (name, line, wildcards, styles)
     EnableTrigger ("multi_line_help", false)  -- no more lines to go
     if current_help_topic then
       newtopic = add_help(current_help_topic, help_text)
-      --cache_help () 
+      --cache_help ()
       get_help(newtopic)
     else
       printstyles(help_text)
@@ -292,7 +290,7 @@ function help_redirect (name, line, wildcards, styles)
         current_help_topic = string.gsub (keywords, TOPIC_REGEXP, capitalize)
         current_help_topic = current_help_topic:lower()
       end  -- have keywords line
-      
+
       if line == "" then
         styles = {{text=" "}}
       end
@@ -307,7 +305,7 @@ function help_redirect (name, line, wildcards, styles)
     end -- not a tag
   end -- if
 
-end -- function help_redirect 
+end -- function help_redirect
 
 function no_such_help (name, line, wildcards)
   current_help_topic = nil
@@ -317,14 +315,14 @@ end -- no_such_help
 
 -- here if they type HELP <something>
 function get_help (topic)
-  
+
   -- lower-case for comparisons
   topic = topic:lower ()
-  help = lookup_help(topic)  
-  
+  help = lookup_help(topic)
+
   -- check for expiration here also
   if not help then
-  
+
     phelper:mdebug(topic, 'not found in db')
     if statestring ~= 'active' then
       ColourNote ("red", "", "Not currently able to request help from Aardwolf.")
@@ -338,35 +336,35 @@ function get_help (topic)
     if tonumber(help.added) + (phelper.expiretime * 60 * 60)  < os.time () then
       phelper:mdebug('help', help.keyword, 'expired')
       phelper:enabletriggroup("HelpGroup")
-      SendNoEcho ("help " .. topic)      
+      SendNoEcho ("help " .. topic)
     else
       phelper:mdebug('help', topic, 'found in cache')
       show_help(help)
     end
   end
-  
+
 end -- get_help
 
 function help_alias(name, line, wildcards)
   -- muck around finding what they want help on
-  
+
   -- eg. help 'hand to hand'
   local topic = ""
-  
+
   if wildcards [1] then
     topic = string.match (wildcards [1], "'(.-)'")
-    
+
     -- eg. help hand to hand
     if not topic then
       topic = trim (wildcards [1])
     end -- no quotes
   end -- some wildcard
-    
+
   -- eg. help
   if topic == "" then
     topic = "help"
   end -- help on its own
-  
+
   get_help(topic)
 end
 
@@ -399,7 +397,7 @@ function OnPluginBroadcast (msg, id, name, text)
       state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
       statestring = GetPluginVariable ("aaa79afcb20fa11787c5a327", "statestring")
   end -- playing status changed
-  
+
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
@@ -435,7 +433,7 @@ end -- OnPluginDisable
 
 function OnPluginConnect ()
   TelnetOptionOn (TELOPT_HELPS)
-  
+
   phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
