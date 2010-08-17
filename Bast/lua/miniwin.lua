@@ -66,7 +66,7 @@ styles can have the following
   style.circleOp.extra1
   style.circleOp.extra2
   style.circleOp.extra3
-  style.circleOp.extra4  
+  style.circleOp.extra4
 
 Button Notes:
 -------------------------------------
@@ -95,15 +95,15 @@ TODO: addline function that adds a single line to the text addline(line, tab) ta
 TODO: addheader function that adds a header, header_height will go away
 TODO: automatically detect urls: (.*)(http\:\/\/(?:[A-Za-z0-9\.\\\/\?])+)(.*)
 
-windowwidth = self.windowborderwidth 
-              + self.width_padding 
-              + longestline 
-              + self.width_padding 
-              + self.windowborderwidth 
+windowwidth = self.windowborderwidth
+              + self.width_padding
+              + longestline
+              + self.width_padding
+              + self.windowborderwidth
               = (self.windowborderwidth * 2 ) + (self.width_padding * 2) + longestline
 
-windowheight = self.windowborderwidth + self.height_padding + self.titlebarheight 
-               + sum(headerlineheights) + sum(self.lineheights) 
+windowheight = self.windowborderwidth + self.height_padding + self.titlebarheight
+               + sum(headerlineheights) + sum(self.lineheights)
                + self.header_padding + self.height_padding + self.windowborderwidth
 
 AddHotspot(borderwinid, self.id .. ':resize', function, ....) should work fine
@@ -119,6 +119,7 @@ require 'verify'
 require 'serialize'
 require 'copytable'
 require 'commas'
+require 'wait'
 
 local BLACK = 1
 local RED = 2
@@ -170,7 +171,7 @@ end -- strip_colours
 -- subclass phelpobject
 Miniwin = Phelpobject:subclass()
 
--- initialize the Miniwindow 
+-- initialize the Miniwindow
 function Miniwin:initialize(args)
   --[[
 
@@ -186,6 +187,9 @@ function Miniwin:initialize(args)
   self.hyperlink_functions['mouseup'] = {}
   self.hyperlink_functions['mouseover'] = {}
   self.hyperlink_functions['cancelmouseover'] = {}
+  self.hyperlink_functions['releasecallback'] = {}
+  self.hyperlink_functions['movecallback'] = {}
+  self.hyperlink_functions['wheelcallback'] = {}
   self.fonts = {}
   self.startx = 0
   self.starty = 0
@@ -203,12 +207,20 @@ function Miniwin:initialize(args)
   self.actual_text_end_line = nil
   self.drawscrollbar = false
   self.scrollbarwidth = 15
-  
+  self.keepscrolling = false
+  self.clickdelta = -1
+  self.dragscrolling = false
+
   self.titlebarlinenum = -1
   self.tablinenum = -1
 
   -- below are things that can be kept as settings
   self.header_padding = 2
+
+  self.activetab = None
+  self.tabs = {} -- key will be tabname, data will be text
+  --self.tabstyles = {}
+  self.tablist = {}
 
   self:add_cmd('toggle', {func="cmd_toggle", help="toggle window"})
   self:add_cmd('fonts', {func="cmd_fonts", help="show fonts loaded in this miniwin"})
@@ -259,39 +271,33 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'font_warn', {type="bool", help="have been warned about font", default=verify_bool(false), sortlev=55, readonly=true})
   self:add_setting( 'shaded', {type="bool", help="window is shaded", default=verify_bool(false), sortlev=55, readonly=true})
   self:add_setting( 'shade_with_header', {type="bool", help="when window is shaded, still show header", default=verify_bool(false), sortlev=55, longname = "Shade with header"})
-  self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar"})
-  self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines"})
+  self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar", after="resettabs"})
+  self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines", after="resettabs"})
   self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=1, low=0, sortlev=57, longname="Max Tabs"})
 
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
-  self.window_data = {}
+  --self.window_data = {}
 
   self.buttons = {}
-  self.buttonstyles = {}
+  --self.buttonstyles = {}
   self:add_button('minimize', {text=" - ", mouseup=function (win, tflags, hotspotid)
                         win:shade()
                       end, hint="Click to shade", place=1})
   self:add_button('menu', {text=" M ", mouseup=function (win, flags, hotspotid)
                         win:menuclick(flags)
                       end, hint="Right Click to show Window menu\nLeft Click to show Plugin menu", place=2})
-  self:add_button('drag', {text=" + ", mousedown=empty, hint="Click and hold, then drag to move", cursor=10, place=98, 
+  self:add_button('drag', {text=" + ", mousedown=empty, hint="Click and hold, then drag to move", cursor=10, place=98,
                             drag_hotspot=true})
   self:add_button('close', {text=" X ", mouseup=function (win, tflags, hotspotid)
                         win:show(false)
                       end, hint="Click to close", place=99})
 
-  self.activetab = None
-  self.tabs = {} -- key will be tabname, data will be text
-  self.tabstyles = {}
-  self.tablist = {}
-  self.startline = 1 -- start at text line
-
 end
 
 function Miniwin:updateheader(tabname, header)
   if self.tabs[tabname] ~= nil then
-   self.tabs[tabname].header = header     
+   self.tabs[tabname].header = header
   end
 end
 
@@ -299,21 +305,41 @@ function Miniwin:addline(tabname, line)
  -- add a line to the end of the text
 end
 
-function Miniwin:addtab(tabname, text, header)
+function Miniwin:addtab(tabname, text, header, makeactive)
+
  if self.tabs[tabname] == nil then
    self.tabs[tabname] = {}
    self.tabs[tabname].text = text
    self.tabs[tabname].tabname = tabname
    self.tabs[tabname].header = header
+   self.tabs[tabname].buttonstyles = {}
+   self.tabs[tabname].tabstyles = {}
    table.insert(self.tablist, tabname)
  else
    self.tabs[tabname].text = text
    self.tabs[tabname].header = header
+   self.tabs[tabname].build_data = {}
  end
  if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
    tabremoved = table.remove(self.tablist, 1)
    self.tabs[tabremoved] = nil
+   if tabremoved == self.activetab then
+     self.activetab = self.tabs[tabname]
+   end
  end
+ if self.activetab == nil or makeactive then
+   self.activetab = self.tabs[tabname]
+ end
+ self:resettabs()
+ --self:redraw()
+end
+
+function Miniwin:resettabs()
+ for i,v in pairs(self.tabs) do
+   v.build_data = nil
+   self:convert_tab(i)
+ end
+ self:redraw()
 end
 
 function Miniwin:removetab(tabname)
@@ -339,7 +365,8 @@ end
 
 function Miniwin:changetotab(tabname)
   if self.tabs[tabname] then
-    self:createwin(tabname)
+    self.activetab = self.tabs[tabname]
+    self:redraw()
   end
 end
 
@@ -351,19 +378,16 @@ function Miniwin:buildtabline()
       local style = {}
       style.text = ' ' .. v.tabname .. ' '
       style.tab = v.tabname
-      style.mouseup = function(flags, hotspot_id)
+      style.mouseup = function(win, flags, hotspot_id)
                         self:changetotab(v.tabname)
                       end
-      style.mouseover = function(flags, hotspot_id)
+      style.mouseover = function(win, flags, hotspot_id)
 
                         end
-      --style.topborder = true
       style.leftborder = true
       style.rightborder = true
-      --style.bottomborder = true
       style.bordercolour = 'tab_border_colour'
-      --style.font = 'Dina'
-      if v.tabname == self.activetab then
+      if v.tabname == self.activetab.tabname then
         style.textcolour = 'tab_text_colour'
         style.backcolour = 'tab_bg_colour'
         style.bordercolour = 'tab_border_colour'
@@ -373,9 +397,10 @@ function Miniwin:buildtabline()
     end
     tabline.bottomborder = true
     tabline.topborder = true
+    tabline.rightborder = true
     tabline.bordercolour = 'tab_border_colour'
     return tabline
-  end 
+  end
   return {}
 end
 
@@ -396,8 +421,8 @@ function Miniwin:cmd_info(cmddict)
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Id', self.id))
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Height', tostring(WindowInfo(self.id, 4))))
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Width', tostring(WindowInfo(self.id, 3))))
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Calced Height', tostring(self.window_data.actualwindowheight)))
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Calced Width', tostring(self.window_data.actualwindowwidth)))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Calced Height', tostring(self.activetab.build_data.actualwindowheight)))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Calced Width', tostring(self.activetab.build_data.actualwindowwidth)))
 end
 
 -- Command to print loaded fonts for this window
@@ -546,7 +571,7 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
   end
 
   check (WindowFont (self.id, fontid, font, size, bold, italic, underline, strikeout, 0, 49))
-  
+
   fontt.height = WindowFontInfo (self.id, fontid, 1) -- height
   fontt.width = WindowFontInfo (self.id, fontid, 6)  -- avg width
   fontt.font_name = WindowFontInfo (self.id, fontid, 21)  -- name
@@ -587,16 +612,20 @@ function Miniwin:add_button(button, buttoninfo)
 end
 
 function Miniwin:buttonmouseover(name)
-   self.buttonstyles[name].textcolour = 'button_text_highlight_colour'
-   self.buttonstyles[name].backcolour = 'button_bg_highlight_colour'
-   self:displayline(self.window_data[1])
+   self.activetab.buttonstyles[name].textcolour = 'button_text_highlight_colour'
+   self.activetab.buttonstyles[name].backcolour = 'button_bg_highlight_colour'
+   if name ~= 'drag' then
+     self.activetab.buttonstyles['drag'].textcolour = 'button_text_colour'
+     self.activetab.buttonstyles['drag'].backcolour = nil
+   end
+   self:displayline(self.activetab.build_data[self.activetab.buttonstyles[name].linenum])
    Repaint()
 end
 
 function Miniwin:buttoncancelmouseover(name)
-   self.buttonstyles[name].textcolour = 'button_text_colour'
-   self.buttonstyles[name].backcolour = nil
-   self:displayline(self.window_data[1])
+   self.activetab.buttonstyles[name].textcolour = 'button_text_colour'
+   self.activetab.buttonstyles[name].backcolour = nil
+   self:displayline(self.activetab.build_data[self.activetab.buttonstyles[name].linenum])
    Repaint()
 end
 
@@ -650,7 +679,7 @@ function Miniwin:buildtitlebar()
       if (not addedtitle) and (not self.notitletext) then
         addedtitle = true
         local hstyle = {}
-        hstyle.text = self.titlebartext or self.cname 
+        hstyle.text = self.titlebartext or self.cname
         hstyle.bold = true
         hstyle.textcolour = "button_text_colour"
         hstyle.hjust = 'center'
@@ -659,7 +688,7 @@ function Miniwin:buildtitlebar()
       style.hjust = 'right'
     end
     table.insert(tstyle, style)
-   
+
   end
 
   --tstyle.bordercolour = 'black'
@@ -693,7 +722,8 @@ function Miniwin:menusetfont()
                 self.font = self.fonts[self.default_font_id].font_name
                 self.font_size = self.fonts[self.default_font_id].size
                 self:savestate()
-                self:redraw()
+                self:resettabs()
+                --self:redraw()
         end
 end
 
@@ -707,7 +737,7 @@ function Miniwin:buildmousemenu()
       menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring( RGBColourToName(self[name]))
     end
   end
-  --for name,value in table.sort(colours, 
+  --for name,value in table.sort(colours,
   menu = menu .. ' | < | >Toggle '
   for name,setting in tableSort(self.set_options, 'sortlev', 50) do
     if setting.longname ~= nil and setting.type == 'bool' then
@@ -733,7 +763,7 @@ function Miniwin:buildpluginmousemenu()
       menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring( RGBColourToName(self.phelper[name]))
     end
   end
-  --for name,value in table.sort(colours, 
+  --for name,value in table.sort(colours,
   menu = menu .. ' | < | >Toggle '
   for name,setting in tableSort(self.phelper.set_options, 'sortlev', 50) do
     if setting.longname ~= nil and setting.type == 'bool' then
@@ -758,7 +788,7 @@ function Miniwin:menuclick (flags)
   if bit.band(flags, 0x10) ~= 0 then
     menu = self:buildmousemenu()
   elseif bit.band(flags, 0x20) ~= 0 then
-    menu = self:buildpluginmousemenu()    
+    menu = self:buildpluginmousemenu()
   end
   local result = WindowMenu (self.id, WindowInfo (self.id, 14), WindowInfo (self.id, 15), menu) --do menu
   if result:match(' - ') then
@@ -776,9 +806,9 @@ function Miniwin:menuclick (flags)
             self:set('font_size', 'default')
             self:set('font', 'default')
           elseif result:match("Restore Window Defaults") then
-            self:cmd_reset()   
+            self:cmd_reset()
           elseif result:match("Restore Plugin Defaults") then
-            self.phelper:cmd_reset()  
+            self.phelper:cmd_reset()
           elseif result == "Help" then
             self.phelper.helpwin:show(true)
           else
@@ -809,46 +839,21 @@ end -- ListMenu
 -- redraw the window
 function Miniwin:redraw(justtext)
    local shown = WindowInfo(self.id, 5)
-   if justtext then
-     self:redrawtext(self.activetab)
-   else
-     self:buildwindow(self.activetab)
-     self:drawwin()
-   end
-   WindowShow(self.id, shown)
-end
-
--- create the window
-function Miniwin:createwin (tabname)
-  if tabname == nil then
-    if self:counttabs() > 0 then
-      tabname = self.tablist[1]
-      self.activetab = tabname
-    else
-      return
-    end
-  end
-  if self.tabs[tabname] then
-    self.activetab = tabname
-  else
-    return
-  end
-  self.startline = 1
-  self:buildwindow(self.activetab)
-  tshow = WindowInfo(self.id, 5)
-  if tshow == nil then
-    tshow = false
-  end
-  self:drawwin()
-  if self.firstdrawn then
+   if self.firstdrawn then
     flag = verify_bool(GetVariable ("shown"..self.cname))
     self.firstdrawn = false
     if flag == nil then
       flag = false
     end
-    tshow = flag
-  end
-  self:show(tshow)
+    shown = flag
+   end
+   if justtext then
+     self:drawtext(self.activetab)
+   else
+     --self:buildwindow(self.activetab)
+     self:drawwin()
+   end
+   WindowShow(self.id, shown)
 end
 
 -- show or hide the window
@@ -899,6 +904,62 @@ function Miniwin:shade()
   end
   self:savestate()
 end
+
+function Miniwin:addscrollwheelhandler(id, wheelcallback)
+  if movecallback then
+   self.hyperlink_functions['wheelcallback'] [id] = wheelcallback
+   wheelcallback = "wheelcallback"
+  end
+  WindowScrollwheelHandler(self.id, self.id .. ':' .. id, wheelcallback)
+end
+
+-- wheelcallback function, checks to see if the id exists in the hyperlink_functions['wheelcallback'] table
+function Miniwin:wheelcallback (flags, hotspotid)
+
+  local f = self.hyperlink_functions['wheelcallback'][hotspotid]
+  if f then
+    f(self, flags, hotspotid)
+    return true
+  end -- function found
+
+  return false
+end -- movecallback
+
+function Miniwin:adddraghandler(id, movecallback, releasecallback, flags)
+  if movecallback then
+   self.hyperlink_functions['movecallback'] [id] = movecallback
+   movecallback = "movecallback"
+  end
+  if releasecallback then
+   self.hyperlink_functions['releasecallback'] [id] = releasecallback
+   releasecallback = "releasecallback"
+  end
+  WindowDragHandler(self.id, self.id .. ':' .. id, movecallback, releasecallback, flags)
+end
+
+-- movecallback function, checks to see if the id exists in the hyperlink_functions['movecallback'] table
+function Miniwin:movecallback (flags, hotspotid)
+
+  local f = self.hyperlink_functions['movecallback'][hotspotid]
+  if f then
+    f(self, flags, hotspotid)
+    return true
+  end -- function found
+
+  return false
+end -- movecallback
+
+-- releasecallback function, checks to see if the id exists in the hyperlink_functions['releasecallback'] table
+function Miniwin:releasecallback (flags, hotspotid)
+
+  local f = self.hyperlink_functions['releasecallback'][hotspotid]
+  if f then
+    f(self, flags, hotspotid)
+    return true
+  end -- function found
+
+  return false
+end -- releasecallback
 
 -- add a hotspot to the window
 function Miniwin:addhotspot(id, left, top, right, bottom, mouseover, cancelmouseover, mousedown,
@@ -1007,85 +1068,13 @@ function Miniwin:mouseup (flags, hotspotid)
   return false
 end -- mousedown
 
--- horizontal and vertical justify styles in a line after we have found out height and width of window
--- and all styles in the line
-function Miniwin:justify_styles(line, linenum)
-
-  for i,v in ipairs (line.text) do
-    local stylelen = 0
-    local tstart = v.start
-    local ttop = line.texttop
-
-    if v.vjust ~= nil then
-      if v.vjust == 'center' then
-        local theight = line.height
-        local fheight = WindowFontInfo(self.id, v.font_id, 1)
-        ttop = ttop + (theight - fheight) / 2
-      elseif v.vjust == 'bottom' then
-        local theight = line.height
-        local fheight = WindowFontInfo(self.id, v.font_id, 1)
-        ttop = ttop + theight - fheight
-      end
-    end
-    if v.hjust ~= nil then
-      if v.hjust == 'center' then
-        local centerofline = ((self.window_data.lineend - self.window_data.linestart) / 2) + self.window_data.linestart
-        tstart = centerofline - (v.stylelen / 2) 
-      elseif v.hjust == 'right' then
-        
-        local twidth = line.width
-        local wwidth = self.window_data.actualwindowwidth - self.border_width - self.width_padding
-        if self.titlebar and linenum == self.titlebarlinenum then
-          wwidth = self.window_data.actualwindowwidth - self.border_width - 2
-        end
-        local restt = twidth - tstart
-        local restw = wwidth - tstart
-        tstart = tstart + restw - restt
-      end
-    end
-    v.textstart = tstart
-    v.texttop = ttop + 1
-    if v.textcolour ~= nil then
-        v.stylelen = WindowTextWidth (self.id, v.font_id, strip_colours(v.text),
-                      v.textstart, v.texttop, 0, 0, self:get_colour(v.textcolour))
-    else
-        v.stylelen = self:colourtext(v.font_id, v.text, v.textstart, v.texttop, 0, 0, nil, true)
-    end
-
-
-    if tstart + v.stylelen >= self.window_data.textend then
-      if self.titlebar and linenum == self.titlebarlinenum then
-        v.textend = self.window_data.actualwindowwidth - self.border_width - 2
-      else
-        v.textend = self.window_data.textend
-      end
-    else
-      v.textend = v.textstart + v.stylelen
-    end
-
-    if v.button then
-      self.buttonstyles[v.button] = v
-    end
-    if v.tab then
-      self.tabstyles[v.tab] = v
-    end
-  end -- for each style run
-  return line
-end
-
-function Miniwin:is_header_line(linenum)
-  if self.actual_header_start_line ~= nil and self.actual_header_end_line ~= nil then
-    return linenum >= self.actual_header_start_line  and linenum <= self.actual_header_end_line
-  else
-    return false
-  end
-end
-
 -- convert a line, go through and figure out colours, fonts, start positions, end positions, and borders for every line
 -- toppadding = extra spacing between top of line and top of text cell
 -- bottompadding = extra spacing between bottom of line and bottom of text cell
 -- textpadding = extra spacing between cell wall and text
-function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding, textpadding)
+-- check against self.width or self.maxlinelength
+function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltype)
+  local alllines = {}
   local bottompadding = bottompadding or 0
   local toppadding = toppadding or 0
   local textpadding = textpadding or 0
@@ -1093,15 +1082,15 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding, tex
   local def_font_id = self.default_font_id
   local def_colour = self:get_colour('text_colour')
   local maxfontheight = 0
-  --local start = linepadding
+  local linecharlength = 0
   local start = self.border_width + self.width_padding
-  if self:counttabs() > 0 and linenum == self.tablinenum then
+  if ltype == 'tabbarline' then
     start = self.border_width
   end
-  if self.titlebar and linenum == self.titlebarlinenum then
+  if ltype == 'titlebarline' then
     start = self.border_width + 2
   end
-  if self:is_header_line(linenum) then
+  if ltype == 'headerline' then
       def_font_id = self.default_font_id_bold
       def_colour = self:get_colour("header_text_colour")
   end
@@ -1117,9 +1106,9 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding, tex
                       style.strikeout or self.fonts[def_font_id].strikeout)
       maxfontheight = math.max(maxfontheight, self.fonts[font_id].height)
       if style.image and style.image.name then
-         print('Convert_Line: Got Image')
+         self:mdebug('Convert_Line: Got Image')
       elseif style.circleOp and style.circleOp.width then
-         print('Convert_Line: Got CircleOp')
+         self:mdebug('Convert_Line: Got CircleOp')
       else
         local tlength = WindowTextWidth (self.id, font_id, strip_colours(style.text))
         if style.start and style.start > start then
@@ -1134,6 +1123,7 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding, tex
         linet.text[i].bordercolour = style.bordercolour or self.border_colour
         linet.text[i].textcolour = style.textcolour or def_colour
       end
+      linecharlength = linecharlength + style.text:len()
     end
 
     linet.leftborder = line.leftborder or false
@@ -1153,155 +1143,298 @@ function Miniwin:convert_line(linenum, line, top, toppadding, bottompadding, tex
       maxfontheight = math.max(maxfontheight, self.fonts[self.default_font_id].height)
       local tlength = WindowTextWidth (self.id, self.default_font_id, linet.text[1].text)
       start = start + tlength
+      linecharlength = linecharlength + linet.text[1].text:len()
   end
   linet.lineborder = line.lineborder
+  linet.toppadding = toppadding
+  linet.bottompadding = bottompadding
+  linet.textpadding = textpadding
   linet.width = start
   linet.height = maxfontheight
-  linet.linetop = top
-  linet.celltop = linet.linetop + toppadding
-  linet.texttop = linet.celltop + textpadding
-  linet.textbottom = linet.texttop + linet.height + 1
-  linet.cellbottom = linet.textbottom + textpadding
-  linet.linebottom = linet.cellbottom + bottompadding
-
-  return linet
+  linet.linecharlength = linecharlength
+  table.insert(alllines, linet)
+  return alllines
 end
 
-function Miniwin:buildwindow(tabname)
-  if tabname == nil then
+
+-- horizontal and vertical justify styles in a line after we have found out height and width of window
+-- and all styles in the line
+function Miniwin:justify_line(line, top, linenum, ltype, linestart, lineend)
+  line.linetop = top
+  line.celltop = line.linetop + line.toppadding
+  line.texttop = line.celltop + line.textpadding
+  line.textbottom = line.texttop + line.height + 1
+  line.cellbottom = line.textbottom + line.textpadding
+  line.linebottom = line.cellbottom + line.bottompadding
+  line.linestart = linestart or (0 + self.border_width)
+  line.lineend = lineend or (self.activetab.build_data.actualwindowwidth - self.border_width)
+
+  for i,v in ipairs (line.text) do
+    local stylelen = 0
+    local tstart = v.start
+    local ttop = line.texttop
+    v.linenum = linenum
+    if v.vjust ~= nil then
+      if v.vjust == 'center' then
+        local theight = line.height
+        local fheight = WindowFontInfo(self.id, v.font_id, 1)
+        ttop = ttop + (theight - fheight) / 2
+      elseif v.vjust == 'bottom' then
+        local theight = line.height
+        local fheight = WindowFontInfo(self.id, v.font_id, 1)
+        ttop = ttop + theight - fheight
+      end
+    end
+    if v.hjust ~= nil then
+      if v.hjust == 'center' then
+        local centerofline = ((line.lineend - line.linestart) / 2) + line.linestart
+        tstart = centerofline - (v.stylelen / 2)
+      elseif v.hjust == 'right' then
+
+        local twidth = line.width
+        local wwidth = line.lineend
+        if ltype == 'titlebarline' then
+          wwidth = self.activetab.build_data.actualwindowwidth - self.border_width - 2
+        end
+        local restt = twidth - tstart
+        local restw = wwidth - tstart
+        tstart = tstart + restw - restt
+      end
+    end
+    v.textstart = tstart
+    v.texttop = ttop + 1
+    if v.textcolour ~= nil then
+        v.stylelen = WindowTextWidth (self.id, v.font_id, strip_colours(v.text),
+                      v.textstart, v.texttop, 0, 0, self:get_colour(v.textcolour))
+    else
+        v.stylelen = self:colourtext(v.font_id, v.text, v.textstart, v.texttop, 0, 0, nil, true)
+    end
+
+
+    if tstart + v.stylelen >= line.lineend then
+      if ltype == 'titlebarline' then
+        v.textend = self.activetab.build_data.actualwindowwidth - self.border_width - 2
+      else
+        v.textend = line.lineend
+      end
+    else
+      v.textend = v.textstart + v.stylelen
+    end
+
+    if v.button then
+      self.activetab.buttonstyles[v.button] = v
+    end
+    if v.tab then
+      self.activetab.tabstyles[v.tab] = v
+    end
+  end -- for each style run
+
+  return line
+end
+
+function Miniwin:is_header_line(linenum)
+  if self.actual_header_start_line ~= nil and self.actual_header_end_line ~= nil then
+    return linenum >= self.actual_header_start_line  and linenum <= self.actual_header_end_line
+  else
+    return false
+  end
+end
+
+function Miniwin:convert_tab(tabname)
+ -- goes through text and header and finds the max line width in pixels and max line width in characters
+ -- go through and convert each text line
+ -- will need to do this on font change, width change, height change
+ self.tabs[tabname].convtext = {}
+ self.tabs[tabname].convheader = {}
+ local maxwidth = 0
+ local maxcharlength = 0
+
+ if self.tabs[tabname].text then
+   local linenum = 0
+   for i,v in ipairs(self.tabs[tabname].text) do
+     tlines = self:convert_line(v)
+     for ii,vv in ipairs(tlines) do
+       linenum = linenum + 1
+       self.tabs[tabname].convtext[linenum] = vv
+       maxwidth = math.max(maxwidth, self.tabs[tabname].convtext[linenum].width)
+       maxcharlength = math.max(maxcharlength, self.tabs[tabname].convtext[linenum].linecharlength)
+     end
+   end
+ end
+ -- go through and convert each header line
+ if self.tabs[tabname].header then
+   local linenum = 0
+   for i,v in ipairs(self.tabs[tabname].header) do
+     if i == 1 and #self.tabs[tabname].header == 1 then
+       tlines = self:convert_line(v, 3, 2, 0, 'headerline')
+     elseif i == 1 and #self.tabs[tabname].header > 1 then
+       tlines = self:convert_line(v, 3, 0, 0, 'headerline')
+     elseif i == #self.tabs[tabname].header then
+       tlines = self:convert_line(v, 0, 2, 0, 'headerline')
+     else
+       tlines = self:convert_line(v, 0, 0, 0, 'headerline')
+     end
+     for ii,vv in ipairs(tlines) do
+       linenum = linenum + 1
+       self.tabs[tabname].convheader[linenum] = vv
+       maxwidth = math.max(maxwidth, self.tabs[tabname].convheader[linenum].width)
+       maxcharlength = math.max(maxcharlength, self.tabs[tabname].convheader[linenum].linecharlength)
+     end
+   end
+ end
+ self.tabs[tabname].maxwidth = maxwidth
+ self.tabs[tabname].maxlinecharlength = maxcharlength
+end
+
+-- create the window and do things before text is drawn
+function Miniwin:pre_create_window_internal(height, width, x, y)
+  if self.activetab == nil then
     return
   end
 
-  self.window_data = {}
-  self.actual_header_start_line = nil
-  self.actual_header_end_line = nil
-  self.titlebarlinenum = -1
-  self.tablinenum = -1
-  self.drawscrollbar = false
+  if self.activetab.build_data == nil then
+    self.activetab.build_data = {}
+    self.activetab.startline = 1
+  end
+  self.activetab.build_data.actual_header_start_line = nil
+  self.activetab.build_data.actual_header_end_line = nil
+  self.activetab.build_data.actual_text_start_line = nil
+  self.activetab.build_data.actual_text_end_line = nil
+  self.activetab.build_data.titlebarlinenum = -1
+  self.activetab.build_data.tablinenum = -1
+  self.activetab.build_data.drawscrollbar = false
+  self.activetab.build_data.textarea = {}
 
   local height = 0
   local tempdata = {}
   local header = {}
   local text = {}
   local linenum = 0
-  local textstartline = -1
-  local textendline = -1
 
-  self.window_data.maxlinewidth = 0
+  self.activetab.build_data.maxlinewidth = 0
 
   if self.titlebar then
     linenum = linenum + 1
     titlebar = self:buildtitlebar()
-    self.titlebarlinenum = linenum
-    tempdata[linenum] = self:convert_line(linenum, titlebar, self.border_width, 2, 2, 1)
-    height = tempdata[linenum].linebottom
+    self.activetab.build_data.titlebarlinenum = linenum
+    self.activetab.titlebarconv = self:convert_line(titlebar, 2, 2, 1, 'titlebarline')[1]
   end
 
   if self:counttabs() > 1 then
-    if height == 0 then
-      height = 1
-    end
     linenum = linenum + 1
     tabline = self:buildtabline()
-    self.tablinenum = linenum
-    tempdata[linenum] = self:convert_line(linenum, tabline, height, 1, 0)
-    height = tempdata[linenum].linebottom
-    self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
+    self.activetab.build_data.tabbarlinenum = linenum
+    self.activetab.tabbarlineconv = self:convert_line(tabline, 1, 0, 0, 'tabbarline')[1]
   end
+  -- at this point everything has been converted
 
-  if self.tabs[tabname].header and type(self.tabs[tabname].header) == 'table' then
-    -- do header stuff
-    for line, v in ipairs(self.tabs[tabname].header) do
-      linenum = linenum + 1
-      if line == 1 then
-        height = height - 1
-        self.actual_header_start_line = linenum
-        self.actual_header_end_line = linenum + #self.tabs[tabname].header - 1
-      end
-
-      if line == 1 and #self.tabs[tabname].header == 1 then
-        tline = self:convert_line(linenum, v, height, 3, 0)
-      elseif line == 1 and #self.tabs[tabname].header > 1 then
-        tline = self:convert_line(linenum, v, height, 3, 0)
-      elseif line == #self.tabs[tabname].header then
-        tline = self:convert_line(linenum, v, height, 0, 0)
-      else
-        tline = self:convert_line(linenum, v, height, 0, 0)
-      end
-
-      tempdata[linenum] = tline
-      height = tempdata[linenum].linebottom
-      self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
-    end
-  end
-  if height == 0 then
-    height = self.border_width
-  end
-  if type(self.tabs[tabname].text) == 'table' then
-
-    local starttext = 1
-    local endtext = #self.tabs[tabname].text
-
-    if self.maxlines > 0 then
-      if endtext > self.maxlines then
-        self.drawscrollbar = true
-      end
-      starttext = self.startline
-      endtext = self.startline + self.maxlines
-      if endtext > #self.tabs[tabname].text then
-        endtext = #self.tabs[tabname].text 
-        starttext = endtext - self.maxlines
-      end
-    end
- 
-    height = height + self.height_padding
-
-    -- do text stuff
-    for i=starttext,endtext do
-      if self.tabs[tabname].text[i]  ~= nil then      
-        linenum = linenum + 1
-        if textstartline == -1 then
-          textstartline = linenum
-        end
-
-        tline = self:convert_line(linenum, self.tabs[tabname].text[i], height, 0, 0, 0)
-      
-        tempdata[linenum] = tline
-        height = tempdata[linenum].linebottom
-        self.window_data.maxlinewidth = math.max(self.window_data.maxlinewidth, tempdata[linenum].width)
-      end
-    end
-
-    textendline = linenum
-
-    if self.width > 0 then
-      self.window_data.actualwindowwidth = self.width
+  if self.width > 0 then
+    self.activetab.build_data.actualwindowwidth = self.width
+    self.activetab.build_data.textarea.left = 0 + self.border_width
+    if self.maxlines > 0 and #self.activetab.convtext > self.maxlines then
+      self.activetab.build_data.textarea.right = self.width - self.border_width - self.width_padding - self.scrollbarwidth - 1
     else
-      self.window_data.actualwindowwidth = self.window_data.maxlinewidth + self.width_padding + self.border_width
+      self.activetab.build_data.textarea.right = self.width - self.border_width - self.width_padding
     end
-    if self.drawscrollbar then
-      self.window_data.actualwindowwidth = self.window_data.actualwindowwidth + self.scrollbarwidth + 1
+  else
+    self.activetab.build_data.actualwindowwidth =  self.activetab.maxwidth + self.width_padding + self.border_width
+    self.activetab.build_data.textarea.right = self.activetab.maxwidth + self.width_padding
+    self.activetab.build_data.textarea.left = 0 + self.border_width
+    if self.maxlines > 0 and #self.activetab.convtext > self.maxlines then
+      self.activetab.build_data.actualwindowwidth = self.activetab.build_data.actualwindowwidth + self.scrollbarwidth + 1
     end
-    if self.height > 0 then
-      self.window_data.actualwindowheight = self.height
-    else
-       self.window_data.actualwindowheight = height + self.height_padding + self.border_width
-    end
-    self.window_data.linestart = self.border_width
-    self.window_data.lineend = self.window_data.actualwindowwidth - self.border_width 
-    self.window_data.textstart = self.border_width + self.width_padding
-    self.window_data.textend = self.window_data.actualwindowwidth - self.border_width - self.width_padding
-
-    for line, v in ipairs(tempdata) do  
-        self.window_data[line] = self:justify_styles(v, line)
-    end
-
-    self.window_data.textarea = {}
-    self.window_data.textarea.top = self.window_data[textstartline].linetop
-    self.window_data.textarea.bottom = self.window_data[textendline].linebottom
-    self.window_data.textarea.left = 0 + self.border_width + self.width_padding
-    self.window_data.textarea.right = self.window_data.actualwindowwidth - self.border_width - self.width_padding
   end
+
+
+  self.activetab.build_data.textstart = self.border_width + self.width_padding
+  self.activetab.build_data.textend = self.activetab.build_data.actualwindowwidth - self.border_width - self.width_padding
+
+  -- build initial window here and justify lines
+  linenum = 0
+  top = self.border_width
+
+  if self.titlebar then
+    linenum = linenum + 1
+    self.activetab.build_data[linenum] = self:justify_line(self.activetab.titlebarconv, top, linenum, 'titlebarline')
+    top = self.activetab.build_data[linenum].linebottom
+  end
+
+  if self:counttabs() > 1 then
+    linenum = linenum + 1
+    self.activetab.build_data[linenum] = self:justify_line(self.activetab.tabbarlineconv, top, linenum, 'titlebarline')
+    top = self.activetab.build_data[linenum].linebottom
+  end
+
+  for i,v in ipairs(self.activetab.convheader) do
+    linenum = linenum + 1
+    if i == 1 then
+      top = top - 1
+      self.activetab.build_data.actual_header_start_line = linenum
+      self.activetab.build_data.actual_header_end_line = linenum + #self.activetab.convheader - 1
+    end
+    self.activetab.build_data[linenum] = self:justify_line(v, top, linenum, 'headerline')
+    top = self.activetab.build_data[linenum].linebottom
+  end
+
+  local lastlinebeforetext = linenum
+
+  for i,v in ipairs(self.activetab.convtext) do
+    linenum = linenum + 1
+    if i == 1 then
+      self.activetab.build_data.textstartline = linenum
+      --self.activetab.build_data.textendline = linenum + #self.activetab.convtext - 1
+    end
+    local tline = self:justify_line(v, top, linenum, '', self.activetab.build_data.textarea.left, self.activetab.build_data.textarea.right)
+    self.activetab.build_data[linenum] = tline
+    top = self.activetab.build_data[linenum].linebottom
+  end
+
+--   for i,v in ipairs(self.activetab.build_data) do
+--     print(i)
+--     print("top    : ", v.linetop)
+--     print("bottom : ", v.linebottom)
+--     print("height : ", v.height)
+--     print("diff   : ", v.linebottom - v.linetop)
+--   end
+
+  if self.height > 0 then
+    self.activetab.build_data.actualwindowheight = self.height
+  else
+    if self.maxlines > 0 and #self.activetab.convtext > self.maxlines then
+      top = (self.activetab.build_data[lastlinebeforetext].linebottom +
+             (self.maxlines * (self.fonts[self.default_font_id].height + 1)))
+      self.activetab.build_data.drawscrollbar = true
+    end
+    self.activetab.build_data.actualwindowheight = top + self.height_padding + self.border_width
+  end
+
+  -- figure this out somehow
+  self.activetab.build_data.textarea.top = self.activetab.build_data[self.activetab.build_data.textstartline].linetop
+  self.activetab.build_data.textarea.bottom = top
+
+end
+
+function Miniwin:drawtext(tabname)
+
+  WindowRectOp(self.id, 2, self.activetab.build_data.textarea.left, self.activetab.build_data.textarea.top,
+                           self.activetab.build_data.textarea.right, self.activetab.build_data.textarea.bottom,
+               self:get_colour('bg_colour'))
+
+  -- find top
+  linenum = self.activetab.build_data.textstartline - 1
+  local top = self.activetab.build_data.textarea.top
+  for i=self.activetab.startline,#self.activetab.convtext do
+    -- adjust the line then display it
+    -- eventually check against bottom of textarea and stop then, don't count lines
+    linenum = linenum + 1
+    self.activetab.build_data[linenum] = self:justify_line(self.activetab.convtext[i], top, linenum, '', self.activetab.build_data.textarea.left, self.activetab.build_data.textarea.right)
+    if self.activetab.build_data[linenum].linebottom > self.activetab.build_data.textarea.bottom then
+      break
+    end
+    top = self.activetab.build_data[linenum].linebottom
+    self:displayline(self.activetab.build_data[linenum]) -- pass in top and return top in displayline
+  end
+  self:drawshuttle()
 end
 
 -- build a hotspot, called from displayline
@@ -1377,7 +1510,7 @@ function Miniwin:displayline (styles)
   end
 
   if styles.backcolour then
-    WindowRectOp (self.id, 2, self.window_data.linestart, styles.linetop, self.window_data.lineend, styles.linebottom, self:get_colour(styles.backcolour) )
+    WindowRectOp (self.id, 2, styles.linestart, styles.linetop, styles.lineend, styles.linebottom, self:get_colour(styles.backcolour) )
   end
   for i,v in ipairs (styles.text) do
 
@@ -1409,7 +1542,7 @@ function Miniwin:displayline (styles)
        if tborderstyle == 0 then
          tborderstyle = 1
        end
-         WindowRectOp (self.id, tborderstyle, v.textstart, styles.celltop, v.textend, styles.cellbottom, 
+         WindowRectOp (self.id, tborderstyle, v.textstart, styles.celltop, v.textend, styles.cellbottom,
                           self:get_colour(v.bordercolour), self:get_colour(v.bordercolour2))
     else
 
@@ -1434,7 +1567,7 @@ function Miniwin:displayline (styles)
       self:buildhotspot(v, v.textstart, styles.celltop, v.textend, styles.cellbottom)
     end
     if v.hotspot_id == self.drag_hotspot then
-      WindowDragHandler(self.id, self.id .. ':' .. self.drag_hotspot, "dragmove", "dragrelease", 0)
+      self:adddraghandler(self.drag_hotspot, self.dragmove, self.dragrelease, 0)
     end
   end -- for each style run
 
@@ -1445,23 +1578,23 @@ function Miniwin:displayline (styles)
        if tborderstyle == 0 then
          tborderstyle = 1
        end
-         WindowRectOp (self.id, tborderstyle, self.border_width, styles.linetop, self.window_data.actualwindowwidth - self.border_width, styles.linebottom, 
+         WindowRectOp (self.id, tborderstyle, self.border_width, styles.linetop, styles.lineend, styles.linebottom,
                 self:get_colour(styles.bordercolour), self:get_colour(styles.bordercolour2))
    else
 
     if styles.topborder then
-        WindowLine (self.id, self.window_data.linestart, styles.linetop, self.window_data.lineend, styles.linetop, 
+        WindowLine (self.id, styles.linestart, styles.linetop, styles.lineend, styles.linetop,
                                              self:get_colour (tbordercolour), tborderstyle, tborderwidth)
     end
     if styles.bottomborder then
-        WindowLine (self.id, self.window_data.linestart, styles.linebottom, self.window_data.lineend, styles.linebottom, 
+        WindowLine (self.id, styles.linestart, styles.linebottom, styles.lineend, styles.linebottom,
                                              self:get_colour (tbordercolour), tborderstyle, tborderwidth)
     end
     if styles.leftborder then
-        WindowLine (self.id, self.window_data.linestart, styles.linetop, self.window_data.linestart, styles.linebottom, self:get_colour (tbordercolour), tborderstyle, tborderwidth)
+        WindowLine (self.id, styles.linestart, styles.linetop, styles.linestart, styles.linebottom, self:get_colour (tbordercolour), tborderstyle, tborderwidth)
     end
     if styles.rightborder then
-        WindowLine (self.id, self.window_data.lineend - 1, styles.linetop, self.window_data.lineend - 1, styles.linebottom, self:get_colour (tbordercolour), tborderstyle, tborderwidth)
+        WindowLine (self.id, styles.lineend - 1, styles.linetop, styles.lineend - 1, styles.linebottom, self:get_colour (tbordercolour), tborderstyle, tborderwidth)
     end
   end
 
@@ -1469,14 +1602,14 @@ function Miniwin:displayline (styles)
 
 end -- displayline
 
--- create the window and do things before text is drawn
-function Miniwin:pre_create_window_internal(height, width, x, y)
-  local height = height or self.window_data.actualwindowheight 
-  local width = width or self.window_data.actualwindowwidth
+
+function Miniwin:create_window(height, width, x, y)
+  local height = height or self.activetab.build_data.actualwindowheight
+  local width = width or self.activetab.build_data.actualwindowwidth
 
   -- recreate the window the correct size
   local tx = x or self.x
-  local ty = y or self.y 
+  local ty = y or self.y
   if tx >= 0 and ty >= 0 then
     check (WindowCreate (self.id,
                  tx, ty,   -- left, top (auto-positions)
@@ -1498,9 +1631,9 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
   if not self.shaded or self.shade_with_header then
     local htop = 0
     local hbottom = 0
-    if self.actual_header_start_line ~= nil and self.actual_header_end_line ~= nil then
-        htop = self.window_data[self.actual_header_start_line].linetop + 1
-        hbottom = self.window_data[self.actual_header_end_line + 1].linetop - 1
+    if self.activetab.build_data.actual_header_start_line ~= nil and self.activetab.build_data.actual_header_end_line ~= nil then
+        htop = self.activetab.build_data[self.activetab.build_data.actual_header_start_line].linetop + 1
+        hbottom = self.activetab.build_data[self.activetab.build_data.actual_header_end_line + 1].linetop - 1
 
       -- header colour
       check (WindowRectOp (self.id, 2, 3, htop + 1, -3, hbottom, self:get_colour("header_bg_colour"))) -- self:get_colour("header_bg_colour")))
@@ -1516,45 +1649,47 @@ end
 
 -- do stuff after the text has been drawn
 function Miniwin:post_create_window_internal()
-
   if not self.titlebar then
-    self:addhotspot('mousemenu', self.border_width, self.border_width, self.border_width + 5, self.border_width + 5, 
+    self:addhotspot('mousemenu', self.border_width, self.border_width, self.border_width + 5, self.border_width + 5,
                    nil, nil, function (win, flags, hotspotid)
                         win:menuclick(flags)
                       end,
                    nil, nil, 'Show Menu')
   end
 
-  if self.window_data.textarea.left and self.window_data.textarea.top and
-     self.window_data.textarea.right and self.window_data.textarea.bottom then
-     self:addhotspot("ztextarea", self.window_data.textarea.left, self.window_data.textarea.top, 
-                              self.window_data.textarea.right, self.window_data.textarea.bottom, 
+  if self.activetab.build_data.textarea.left and self.activetab.build_data.textarea.top and
+     self.activetab.build_data.textarea.right and self.activetab.build_data.textarea.bottom then
+     self:addhotspot("ztextarea", self.activetab.build_data.textarea.left, self.activetab.build_data.textarea.top,
+                              self.activetab.build_data.textarea.right, self.activetab.build_data.textarea.bottom,
                               empty, empty, empty, empty, empty, "", 0)
-     WindowScrollwheelHandler(self.id, self.id .. ':' .. "ztextarea", "wheelmove")
-  end    
+     self:addscrollwheelhandler("ztextarea", self.wheelmove)
+  end
 
-  if self.drawscrollbar then
-        
-    local upbutton = {}
-    upbutton.top = self.window_data.textarea.top
-    upbutton.bottom = upbutton.top + self.scrollbarwidth
-    upbutton.left = self.window_data.actualwindowwidth - self.scrollbarwidth - self.border_width
-    upbutton.right = self.window_data.actualwindowwidth - self.border_width
-    
-    local downbutton = {}
-    downbutton.bottom = self.window_data.textarea.bottom
-    downbutton.top = downbutton.bottom - self.scrollbarwidth
-    downbutton.left = self.window_data.actualwindowwidth - self.scrollbarwidth - self.border_width
-    downbutton.right = self.window_data.actualwindowwidth - self.border_width
-    
-    WindowRectOp(self.id, 2, upbutton.left, upbutton.bottom, downbutton.right, downbutton.top, ColourNameToRGB ("#E8E8E8")) -- scroll bar background
-    WindowRectOp(self.id, 1, upbutton.left + 1, upbutton.bottom + 1, downbutton.right - 1, downbutton.top - 1, ColourNameToRGB ("black")) -- scroll bar background inset rectangle    
-    
+  if self.activetab.build_data.drawscrollbar then
+    self.activetab.build_data.upbutton = {}
+    self.activetab.build_data.upbutton.top = self.activetab.build_data.textarea.top
+    self.activetab.build_data.upbutton.bottom = self.activetab.build_data.upbutton.top + self.scrollbarwidth
+    self.activetab.build_data.upbutton.left = self.activetab.build_data.actualwindowwidth - self.scrollbarwidth - self.border_width
+    self.activetab.build_data.upbutton.right = self.activetab.build_data.actualwindowwidth - self.border_width
+
+    self.activetab.build_data.downbutton = {}
+    self.activetab.build_data.downbutton.bottom = self.activetab.build_data.textarea.bottom
+    self.activetab.build_data.downbutton.top = self.activetab.build_data.downbutton.bottom - self.scrollbarwidth
+    self.activetab.build_data.downbutton.left = self.activetab.build_data.actualwindowwidth - self.scrollbarwidth - self.border_width
+    self.activetab.build_data.downbutton.right = self.activetab.build_data.actualwindowwidth - self.border_width
+
+    self.activetab.build_data.shuttle = {}
+
+
+    downbutton = self.activetab.build_data.downbutton
+    upbutton = self.activetab.build_data.upbutton
+    self:drawshuttle()
+
     WindowRectOp(self.id, 5, upbutton.left, upbutton.top, upbutton.right, upbutton.bottom, 5, 15 + 0x800) -- top scroll button
-    WindowRectOp(self.id, 5, downbutton.left, downbutton.top, downbutton.right, downbutton.bottom, 5,  15 + 0x800) -- bottom scroll button    
+    WindowRectOp(self.id, 5, downbutton.left, downbutton.top, downbutton.right, downbutton.bottom, 5,  15 + 0x800) -- bottom scroll button
 
     -- draw triangle in up button
-    points = string.format ("%i,%i,%i,%i,%i,%i", upbutton.left + 3, upbutton.top + 9, 
+    points = string.format ("%i,%i,%i,%i,%i,%i", upbutton.left + 3, upbutton.top + 9,
 	                      upbutton.left + 7, upbutton.top + 5, upbutton.left + 11, upbutton.top + 9)
     WindowPolygon (self.id, points,
         ColourNameToRGB("black"), 0, 1,   -- pen (solid, width 1)
@@ -1562,7 +1697,7 @@ function Miniwin:post_create_window_internal()
         true, --close
         false)  --alt fill
 
-    -- draw triangle in down button    
+    -- draw triangle in down button
     points = string.format ("%i,%i,%i,%i,%i,%i", downbutton.left + 3, downbutton.bottom - 11,
 	                   downbutton.left + 7, downbutton.bottom - 7, downbutton.left + 11,
 			   downbutton.bottom - 11)
@@ -1570,54 +1705,131 @@ function Miniwin:post_create_window_internal()
         ColourNameToRGB("black"), 0, 1,   -- pen (solid, width 1)
         ColourNameToRGB("black"), 0, --brush (solid)
         true, --close
-        false) --alt fill  
-    
-    -- scroll bar up/down buttons
-    self:addhotspot('upbutton', upbutton.left, upbutton.top, upbutton.right, upbutton.bottom, 
-                   nil, nil, function (win, flags, hotspotid)
-                        win:scrollup()
-                      end,
-                   nil, nil, 'Scroll Up')
+        false) --alt fill
 
-    self:addhotspot('downbutton', downbutton.left, downbutton.top, downbutton.right, downbutton.bottom, 
-                   nil, nil, function (win, flags, hotspotid)
-                        win:scrolldown()
-                      end,
-                   nil, nil, 'Scroll Down')
-  
+
+    local tfunction = function(win, flags, hotspotid)
+                        win.keepscrolling = false
+                      end
+
+    -- scroll bar up/down buttons
+    self:addhotspot('upbutton', upbutton.left, upbutton.top, upbutton.right, upbutton.bottom,
+                     tfunction,
+                     tfunction,
+                     function(win, flags, hotspotid)
+                        win:scrollup(1, hotspotid)
+                     end,
+                     tfunction,
+                     tfunction,
+                     'Scroll Up')
+
+    self:addhotspot('downbutton', downbutton.left, downbutton.top, downbutton.right, downbutton.bottom,
+                     tfunction,
+                     tfunction,
+                     function(win, flags, hotspotid)
+                        win:scrolldown(1, hotspotid)
+                     end,
+                     tfunction,
+                     tfunction,
+                     'Scroll Down')
+
   end
-  
+
   -- DrawEdge rectangle
   check (WindowRectOp (self.id, 1, 0, 0, 0, 0, self:get_colour('window_border_colour')))
   check (WindowRectOp (self.id, 1, 1, 1, -1, -1, self:get_colour('window_border_colour')))
 end
 
+function Miniwin:drawshuttle()
+    downbutton = self.activetab.build_data.downbutton
+    upbutton = self.activetab.build_data.upbutton
+    shuttle = self.activetab.build_data.shuttle
+    sliderheight = downbutton.top - upbutton.bottom
+    shuttle.top = math.ceil(upbutton.bottom + ((sliderheight / #self.activetab.convtext) * (self.activetab.startline - 1)))
+    shuttle.left = upbutton.left
+    shuttle.right = upbutton.right
+    percentage = self.maxlines/#self.activetab.convtext
+    scrollbarheight = downbutton.top - upbutton.bottom
+    shuttle.height = math.ceil(scrollbarheight * percentage)
+    shuttle.bottom = shuttle.top + shuttle.height
+
+    WindowRectOp(self.id, 2, upbutton.left, upbutton.bottom, downbutton.right, downbutton.top, ColourNameToRGB ("#E8E8E8")) -- scroll bar background
+    WindowRectOp(self.id, 1, upbutton.left + 1, upbutton.bottom + 1, downbutton.right - 1, downbutton.top - 1, ColourNameToRGB ("black")) -- scroll bar background inset rectangle
+
+    WindowRectOp(self.id, 5, shuttle.left, shuttle.top, shuttle.right, shuttle.bottom, 5, 15 + 0x800)
+    if not self.dragscrolling then
+          local tfunction = function(win, flags, hotspotid)
+                        win.keepscrolling = false
+                      end
+
+--(id, left, top, right, bottom, mouseover, cancelmouseover, mousedown,
+--                   cancelmousedown, mouseup, hint, cursor)
+      self:addhotspot("abovescroller", shuttle.left, upbutton.bottom, shuttle.right, shuttle.top,
+                      nil,
+                      nil,
+                      nil,
+                      nil,
+                      function(win, flags, hotspotid)
+                         self:abovescrollermouseup(flags, hotspotid)
+                      end)
+
+      self:addhotspot("scroller", shuttle.left, shuttle.top, shuttle.right, shuttle.bottom,
+                      tfunction,
+                      tfunction,
+                      function(win, flags, hotspotid)
+                         self:scrollermousedown(flags, hotspotid)
+                      end,
+                      tfunction,
+                      tfunction)
+      self:adddraghandler("scroller", self.scrollermovecallback, self.scrollerreleasecallback, 0)
+
+      self:addhotspot("belowscroller", shuttle.left, shuttle.bottom, shuttle.right, downbutton.top,
+                      nil,
+                      nil,
+                      nil,
+                      nil,
+                      function(win, flags, hotspotid)
+                         self:belowscrollermouseup(flags, hotspotid)
+                      end)
+
+    end
+end
+
 -- draw the window
 function Miniwin:drawwin()
-
+  if self.activetab == nil then
+    return
+  end
+  if self.activetab.build_data == nil or self.activetab.build_data[1] == nil then
+    self:pre_create_window_internal()
+  end
+  local endline = #self.activetab.build_data
+  local window_height = 0
   if self.shaded and self.titlebar then
     local tx = self.x or WindowInfo(self.id, 10)
     local ty = self.y or WindowInfo(self.id, 11)
 
     -- create the window shaded
-    local sheight = self.window_data[1].linebottom + self.border_width
-    if self.shade_with_header and self.actual_header_start_line ~= nil and self.actual_header_end_line ~= nil then 
-      local hbottom = self.window_data[self.actual_header_end_line].linebottom + self.border_width + 2
-      sheight = hbottom
+    endline = 1
+    window_height = self.activetab.build_data[1].linebottom + self.border_width
+    if self.shade_with_header and self.activetab.build_data.actual_header_start_line ~= nil and self.activetab.build_data.actual_header_end_line ~= nil then
+      window_height = self.activetab.build_data[self.activetab.build_data.actual_header_end_line].linebottom + self.border_width
+      endline = self.activetab.build_data.actual_header_end_line
     end
-    self:pre_create_window_internal(sheight, nil, tx, ty)
-    self:displayline(self.window_data[1])
-    if self.shade_with_header then
-      for i=2,self.actual_header_end_line do
-        self:displayline(self.window_data[i])
-      end
-    end
+    self:create_window(window_height, nil, tx, ty)
+    -- figure out last line to draw
+    -- different for shade_with_header compared to just shaded
   else
-    self:pre_create_window_internal()
-    for i, v in ipairs (self.window_data) do
-      self:displayline (self.window_data[i])
-    end -- for
+    self:create_window()
+    -- figure out last line to draw
   end
+  local textbottom = self.activetab.build_data.textarea.bottom
+  for i=1,endline do
+    if self.activetab.build_data[i].linebottom > textbottom then
+      break
+    end
+    top = self:displayline (self.activetab.build_data[i], top)
+  end -- for
 
   self:post_create_window_internal()
 
@@ -1649,7 +1861,8 @@ function Miniwin:set(option, value, args)
         return false
       else
         self:setdefaultfont(font_id)
-        self:redraw()
+        self:resettabs()
+        --self:redraw()
       end
     end
     retcode2 = super(self, option, tvalue, args)
@@ -1678,31 +1891,122 @@ function Miniwin:set(option, value, args)
   return true
 end
 
-function Miniwin:scrollup(numlines)
-  numlines = numlines or 1
-  if self.startline > numlines then
-    self.startline = self.startline - numlines
-    self:redraw(true)
-  end  
+function Miniwin:scrollermousedown(flags, hotspot_id)
+ self.clickdelta = WindowInfo (self.id, 15)
+ self.startlineatdrag = self.activetab.startline
+ self.dragscrolling = true
 end
 
-function Miniwin:scrolldown(numlines)
-  -- scrolled down
-  numlines = numlines or 1
-  if self.startline + self.maxlines + numlines > #self.tabs[self.activetab].text then
-    self.startline = #self.tabs[self.activetab].text - self.maxlines
+function Miniwin:scrollerreleasecallback(flags, hotspot_id)
+  self.dragscrolling = false
+  self:redraw(true)
+end
+
+function Miniwin:scrollermovecallback(flags, hotspot_id)
+  local mouselocation =  WindowInfo(self.id, 18) - WindowInfo(self.id, 11)
+  local mousediff = mouselocation - self.clickdelta
+  local sliderheight = self.activetab.build_data.downbutton.top - self.activetab.build_data.upbutton.bottom
+  local pixperline = math.ceil(sliderheight / #self.activetab.convtext - 1)
+  local linediff = math.ceil(mousediff / pixperline)
+  self:setstartline(self.startlineatdrag + linediff)
+
+end
+
+function Miniwin:abovescrollermouseup(flags, hotspot_id)
+  local mouselocation = WindowInfo(self.id, 15)
+  local slidertop = self.activetab.build_data.upbutton.bottom
+  local difference = mouselocation - slidertop
+  local sliderheight = self.activetab.build_data.downbutton.top - self.activetab.build_data.upbutton.bottom
+  local pixperline = math.ceil(sliderheight / #self.activetab.convtext)
+  local linenum = math.ceil(difference / pixperline)
+  self:setstartline(linenum)
+
+end
+
+function Miniwin:belowscrollermouseup(flags, hotspot_id)
+  local mouselocation = WindowInfo(self.id, 15)
+  local slidertop = self.activetab.build_data.upbutton.bottom
+  local difference = mouselocation - slidertop
+  local sliderheight = self.activetab.build_data.downbutton.top - self.activetab.build_data.upbutton.bottom
+  local pixperline = math.ceil(sliderheight / (#self.activetab.convtext))
+  local linenum = math.ceil(difference / pixperline)
+  self:setstartline(linenum)
+
+end
+
+function Miniwin:scrollbar(calledBy)
+    wait.make (function()
+        while self.keepscrolling == true do
+            if calledBy == "upbutton" then
+                self:scrollup(1)
+            elseif calledBy == "downbutton" then
+                self:scrolldown(1)
+            end
+            wait.time(0.1)
+        end
+    end)
+end
+
+function Miniwin:scrollup(numlines, hotspot_id)
+  local numlines = numlines or 1
+  local hotspot_id = hotspot_id or None
+  if self.maxlines > #self.activetab.convtext then
+    return
+  end
+  if self.activetab.startline > numlines then
+    if hotspot_id == "upbutton" then
+      self.keepscrolling = true
+      self:scrollbar(hotspot_id)
+    else
+      self:setstartline(self.activetab.startline - numlines)
+    end
   else
-    if self.startline >= 1 then
-      self.startline = self.startline + numlines
-      self:redraw(true)
+    self.keepscrolling = false
+  end
+end
+
+function Miniwin:scrolldown(numlines, hotspot_id)
+  -- scrolled down
+  local numlines = numlines or 1
+  local hotspot_id = hotspot_id or None
+  if self.maxlines > #self.activetab.convtext then
+    return
+  end
+  if self.activetab.startline + self.maxlines + numlines > #self.activetab.convtext then
+    self:setstartline(self.activetab.startline + numlines)
+  elseif self.activetab.startline >= 1 then
+    if hotspot_id == "downbutton" then
+      self.keepscrolling = true
+      self:scrollbar(hotspot_id)
+    else
+      self:setstartline(self.activetab.startline + numlines)
+    end
+  else
+    self.keepscrolling = false
+  end
+end
+
+function Miniwin:setstartline(line)
+  if self.activetab.startline == line or line <= 0 or line > #self.activetab.convtext then
+    return false
+  end
+  if line + self.maxlines > #self.activetab.convtext + 1 then
+    if self.activetab.startline ~= #self.activetab.convtext - self.maxlines then
+      line = #self.activetab.convtext - self.maxlines + 1
+      self.keepscrolling = false
+    else
+      return false
     end
   end
+  self.activetab.startline = line
+  self:redraw(true)
+  return true
 end
 
 function Miniwin:wheelmove (flags, hotspot_id)
   if bit.band (flags, 0x100) ~= 0 then
     -- wheel scrolled down (towards you)
-    self:scrolldown()     
+    self:scrolldown()
   else
     -- wheel scrolled up (away from you)
     self:scrollup()
@@ -1774,7 +2078,7 @@ function Miniwin:tabbroadcast(flag, text)
   elseif self.cname then
     ttext = " " .. self.cname .. " "
   end
-  
+
   if self.use_tabwin then
     local td = {}
     td.id = GetPluginID()
@@ -1825,6 +2129,6 @@ function popup_style(win, text, colour)
                     end
   style.mousedown = function (flags, hotspotid)
                       win.clickshow = not win.clickshow
-                    end 
+                    end
   return style
 end

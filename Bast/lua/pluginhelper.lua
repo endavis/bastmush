@@ -125,7 +125,7 @@ function Pluginhelper:run_cmd(cmddict)
       table.remove(tcmddict, 1)
       pobj:run_cmd(tcmddict)
     else
-      local tcmd = self:find_default_cmd()      
+      local tcmd = self:find_default_cmd()
       if tcmd == "" then
         ColourNote("", "", "")
         ColourNote("white", "black", "That is not a valid command")
@@ -271,20 +271,20 @@ function Pluginhelper:mouseup(flags, hotspotid)
   self.pobjects_by_id[object_id]:mouseup(flags, hotspotid)
 end
 
-function Pluginhelper:dragmove(flags, hotspotid)
+function Pluginhelper:movecallback(flags, hotspotid)
   object_id, hotspotid = fix_hotspotid(hotspotid)
-  self.pobjects_by_id[object_id]:dragmove(flags, hotspotid)
+  self.pobjects_by_id[object_id]:movecallback(flags, hotspotid)
 end -- dragmove
 
-function Pluginhelper:wheelmove(flags, hotspotid)
+function Pluginhelper:releasecallback(flags, hotspotid)
   object_id, hotspotid = fix_hotspotid(hotspotid)
-  self.pobjects_by_id[object_id]:wheelmove(flags, hotspotid)
-end -- wheelmove
+  self.pobjects_by_id[object_id]:releasecallback(flags, hotspotid)
+end -- dragmove
 
-function Pluginhelper:dragrelease(flags, hotspotid)
+function Pluginhelper:wheelcallback(flags, hotspotid)
   object_id, hotspotid = fix_hotspotid(hotspotid)
-  self.pobjects_by_id[object_id]:dragrelease(flags, hotspotid)
-end
+  self.pobjects_by_id[object_id]:wheelcallback(flags, hotspotid)
+end -- wheelmove
 
 function Pluginhelper:OnPluginBroadcast(msg, id, name, text)
 --  mdebug('OnPluginBroadcast')
@@ -377,8 +377,8 @@ end
 
 function Pluginhelper:cmd_help(cmddict)
 
-  self.helpwin:show(true) 
-  
+  self.helpwin:show(true)
+
   return true
 end
 
@@ -395,11 +395,11 @@ function Pluginhelper:createhelp()
 
   local style = {}
   style.text = 'This is the help for ' .. GetPluginName()
-  style.hjust = 'center'                                      
+  style.hjust = 'center'
   table.insert(ttext, {style})
 
   local style = {}
-  style.text = 'Plugin Alias: '                                     
+  style.text = 'Plugin Alias: '
   table.insert(ttext, {style, {text=self.cmd, textcolour=var.plugin_colour}})
 
   local style = {}
@@ -425,7 +425,7 @@ function Pluginhelper:createhelp()
       style2.text = v.help
       style2.textcolour = var.plugin_colour
       table.insert(tline, style2)
-      
+
       table.insert(ttext, tline)
     end
   end
@@ -494,7 +494,7 @@ end
 function format_hyperlinks(t)
   local tlines = {}
 
-  --table.insert(tlines, {{text=' '}})  
+  --table.insert(tlines, {{text=' '}})
 
   local count = 0
 
@@ -502,7 +502,7 @@ function format_hyperlinks(t)
   for i,v in tableSort(t, 'ltype', 'Other') do
     count = count + 1
     if not printed[v.ltype] then
-          table.insert(tlines, {{text=' '}})  
+          table.insert(tlines, {{text=' '}})
           table.insert(tlines, {{text=v.ltype .. ' Links', textcolour='magenta'}})
           printed[v.ltype] = true
     end
@@ -538,7 +538,7 @@ end
 
 function format_aard_cmds(t)
   local tlines = {}
-  
+
   local style = {}
   style.text = "Aardwolf Commands related to the plugin:"
   style.textcolour = 'magenta'
@@ -582,7 +582,7 @@ end
 
 function format_aard_helps(t)
   local tlines = {}
-  
+
   local style = {}
   style.text = "Aardwolf help files related to the plugin:"
   style.textcolour = 'magenta'
@@ -725,16 +725,16 @@ function mouseup(flags, hotspotid)
   phelper:mouseup(flags, hotspotid)
 end
 
-function dragmove(flags, hotspotid)
-  phelper:dragmove(flags, hotspotid)
-end -- dragmove
-
-function dragrelease(flags, hotspotid)
-  phelper:dragrelease(flags, hotspotid)
+function movecallback(flags, hotspotid)
+  phelper:movecallback(flags, hotspotid)
 end
 
-function wheelmove(flags, hotspotid)
-  phelper:wheelmove(flags, hotspotid)
+function releasecallback(flags, hotspotid)
+  phelper:releasecallback(flags, hotspotid)
+end
+
+function wheelcallback(flags, hotspotid)
+  phelper:wheelcallback(flags, hotspotid)
 end
 
 function fix_hotspotid(hotspotid)
