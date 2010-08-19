@@ -10,7 +10,7 @@
    purpose="Shows quests in a miniwindow"
    date_written="2008-07-24"
    requires="4.52"
-   version="2.0"
+   version="3.0"
    save_state="y"
    >
 <description trim="y">
@@ -26,6 +26,7 @@ Shows quests in a miniwindow
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require "commas"
 require 'var'
