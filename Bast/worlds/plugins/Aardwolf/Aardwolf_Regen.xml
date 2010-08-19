@@ -15,7 +15,7 @@
    save_state="y"
    date_written="2008-12-01 15:06:56"
    requires="4.37"
-   version="2.0"
+   version="3.0"
    >
 <description trim="y">
 <![CDATA[
@@ -60,6 +60,7 @@ It will remove the regen ring when
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require "ldplugin"
 require "verify"
