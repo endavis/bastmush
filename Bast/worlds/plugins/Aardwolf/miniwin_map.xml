@@ -10,7 +10,7 @@
    purpose="redirect map to miniwin"
    date_written="2008-07-18"
    requires="4.52"
-   version="2.0"
+   version="3.0"
    save_state="y"
    >
 <description trim="y">
@@ -77,6 +77,7 @@ Redirects the map to a mini window.
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require 'var'
 require 'pluginhelper'
@@ -308,13 +309,9 @@ function map_redirect (name, line, wildcards, styles)
 
     mapwin:enable()
     mapwin:addtab('default', text, header, true)
-    --mapwin:changetotab('default')
-    --mapwin:createwin()
 
     legwin:enable()
     legwin:addtab('default', info, nil, true)
-   -- legwin:changetotab('default')
-    --legwin:createwin()
   else
     table.insert (map_lines, styles)
   end -- if
@@ -383,8 +380,6 @@ end -- function OnPluginSaveState
 
 <script>
 <![CDATA[
-
-internalrevision = "$Rev$"
 
 phelper:set_default('cmd', 'mmap')
 phelper:set_default('plugin_colour', 'steelblue')
