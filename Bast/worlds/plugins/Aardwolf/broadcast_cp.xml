@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2009-02-18 12:31:01"
    requires="4.38"
-   version="2.0"
+   version="3.0"
    >
 
 <description trim="y">
@@ -117,7 +117,7 @@ timer = {}
   timer.text = "1 w"
   timer.days = 6
   timer.hours = 23
-  
+
 xBroadcast_CP : Broadcast 3
 cp_info = {}
   cp_info.mobs = {}
@@ -348,7 +348,7 @@ cp_info = {}
       minute="5"
       name="mob_timer"
       >
-  </timer>  
+  </timer>
 </timers>
 
 
@@ -356,6 +356,7 @@ cp_info = {}
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require "var"
 require "pluginhelper"
@@ -502,7 +503,7 @@ function mob_timer()
   end
   if GetTimerInfo("mob_timer", 6) == true then
     check(EnableTimer("mob_timer", false))
-  end  
+  end
 end
 
 function cp_check( name, line, wildcards)
