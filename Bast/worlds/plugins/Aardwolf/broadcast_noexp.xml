@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2009-08-02"
    requires="4.28"
-   version="2.0"
+   version="3.0"
    >
 
 <description trim="y">
@@ -63,6 +63,7 @@ Example:
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require "var"
 require "pluginhelper"
