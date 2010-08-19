@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: miniwin_example.xml 673 2010-07-09 01:43:26Z endavis $ -->
-<!--
-
-TODO:
-- make miniwindow only show certain # of lines at a time
-    with footer to go to next page or with scrollbar like
-    in the chat miniwindow
-
--->
+<!-- $Id$ -->
 <muclient>
 <plugin
    name="miniwin_help"
@@ -90,6 +82,8 @@ TODO:
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
+
 -- pull in telnet option handling
 dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
 
@@ -464,8 +458,11 @@ phelper:add_setting('expiretime', {help="the time before a help expires (in hour
 
 phelper:enable()
 
-phelper:addaardhelps{"Help"}
+phelper:addaardhelps{"Help", "Contents", "Index", "NewHelp"}
+phelper:addaardcmds{"help", "contents", "index"}
 
+phelper:addlink('Plugin', "miniwin_help Wiki page", "http://code.google.com/p/bastmush/wiki/miniwin_help",
+                        "The wiki page for this plugin")
 
 ]]>
 </script>
