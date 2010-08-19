@@ -384,6 +384,8 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
+internalrevision = "$Rev$"
+
 phelper:set_default('cmd', 'mmap')
 phelper:set_default('plugin_colour', 'steelblue')
 
