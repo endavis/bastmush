@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2009-02-20 12:31:01"
    requires="4.34"
-   version="2.0"
+   version="3.0"
    >
 
 <description trim="y">
@@ -44,7 +44,7 @@ Example:
       quest_stuff = quest_info
     end
   end
-  
+
 xBroadcast_Quest : Broadcast 2
 quest_info = {}
   quest_info.starttime = 1275941847
@@ -61,7 +61,7 @@ quest_info = {}
   quest_info.mobname = "Grey Orcish Guard"
   quest_info.failed = 0
   quest_info.qp = 0
-  
+
 xBroadcast_Quest : Broadcast 3
 timer = {}
   timer.text = "44 m"
@@ -349,6 +349,7 @@ timer = {}
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require "var"
 require "serialize"
