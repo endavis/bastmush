@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2009-08-02"
    requires="4.28"
-   version="2.0"
+   version="3.0"
    >
 
 <description trim="y">
@@ -62,6 +62,7 @@ Example:
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require "var"
 require "pluginhelper"
@@ -96,7 +97,7 @@ function OnPluginBroadcast (msg, id, name, text)
       if seenrecall == true then
         seenrecall = false
         phelper:enabletriggroup("runtostuff", true)
-      end    
+      end
       if tostring(text) == tostring(32418) then
         seenrecall = true
       end
@@ -118,7 +119,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin ("ATCP_NJG")
-  
+
   phelper:OnPluginEnable()
 end -- OnPluginEnable
 
