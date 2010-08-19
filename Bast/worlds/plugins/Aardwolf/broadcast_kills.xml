@@ -12,7 +12,7 @@
    save_state="y"
    date_written="2009-02-22 18:52:27"
    requires="4.38"
-   version="2.0"
+   version="3.0"
    >
 
 <description trim="y">
@@ -118,12 +118,13 @@ kill_info = {}
    group="deadtrig"
   >
   </trigger>
- 
+
 </triggers>
 
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require "var"
 require "serialize"
@@ -187,7 +188,7 @@ function broadcast_kill()
   kill_info.vorpal = 0
   kill_info.wielded_weapon = ''
   kill_info.second_weapon = ''
-  kill_info.bcasted = true 
+  kill_info.bcasted = true
 end
 
 function trivmob( name, line, wildcards )
@@ -217,12 +218,12 @@ function OnPluginBroadcast (msg, id, name, text)
       loadstring(text)()
       local eqitem = item
       if eqitem.place == 'wielded' then
-        phelper:set('weaponsn', eqitem.itemsn, {silent=true})      
+        phelper:set('weaponsn', eqitem.itemsn, {silent=true})
       end
       if eqitem.place == 'second' then
-        phelper:set('secondsn', eqitem.itemsn, {silent=true})      
+        phelper:set('secondsn', eqitem.itemsn, {silent=true})
       end
-      
+
     end
   end
 
