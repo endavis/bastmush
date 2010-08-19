@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2009-02-22 14:20:07"
    requires="4.38"
-   version="2.0"
+   version="3.0"
    >
 
 <description trim="y">
@@ -298,6 +298,7 @@ item = {}
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require "var"
 require "serialize"
