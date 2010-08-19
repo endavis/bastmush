@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2009-02-02"
    requires="4.28"
-   version="2.0"
+   version="3.0"
    >
 
 <description trim="y">
@@ -48,6 +48,7 @@ and then get the values by:
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require "var"
 require "pluginhelper"
