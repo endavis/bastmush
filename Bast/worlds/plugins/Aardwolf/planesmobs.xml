@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: pluginlist.xml 596 2010-06-24 19:59:25Z endavis $ -->
+<!-- $Id$ -->
 
 <muclient>
 <plugin
-   name="AardwolfPlanesMobs"
+   name="Aardwolf_Planes_Mobs"
    author="Bast"
    id="c4510331407cb4281bea544e"
    language="Lua"
@@ -12,7 +12,7 @@
    save_state="y"
    date_written="2009-02-28 20:14:46"
    requires="4.40"
-   version="2.0"
+   version="3.0"
    >
 
 </plugin>
@@ -24,6 +24,7 @@
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 require "var"
 require "serialize"
@@ -54,7 +55,7 @@ function cmd_find(cmddict)
   else
     ColourNote(RGBColourToName(var.plugin_colour), "black", 'None')
   end
-  Note("")  
+  Note("")
 end
 ]]>
 </script>
