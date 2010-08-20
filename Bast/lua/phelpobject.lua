@@ -157,7 +157,7 @@ function Phelpobject:init_vars(reset)
     if gvalue == nil or gvalue == 'nil' or reset then
       gvalue = setting.default
     end
-    local tvalue = verify(gvalue, setting.type, {window = self})
+    local tvalue = verify(gvalue, setting.type, {silent = true, window = self})
     self:set(name, tvalue, {silent = true, window = self})
   end
   self:savestate(true)
@@ -177,7 +177,10 @@ function Phelpobject:disable()
   self.disabled = true
 end
 
-function Phelpobject:checkvalue(option, value)
+function Phelpobject:checkvalue(option, value, args)
+  if args == nil then
+    args = {}
+  end
   local varstuff = self.set_options[option]
   if not varstuff then
     self:plugin_header()
@@ -187,7 +190,7 @@ function Phelpobject:checkvalue(option, value)
   if value == 'default' then
     value = varstuff.default
   end
-  tvalue = verify(value, varstuff.type, {low=varstuff.low, high=varstuff.high, window=self, msg=varstuff.msg, help=varstuff.help})
+  tvalue = verify(value, varstuff.type, {silent=args.silent, low=varstuff.low, high=varstuff.high, window=self, msg=varstuff.msg, help=varstuff.help})
   if tvalue == nil then
     self:plugin_header()
     ColourNote("red", "", "That is not a valid value for " .. option)
@@ -200,7 +203,7 @@ function Phelpobject:set(option, value, args)
   if args == nil then
     args = {}
   end
-  retcode, tvalue = self:checkvalue(option, value)
+  retcode, tvalue = self:checkvalue(option, value, args)
   varstuff = self.set_options[option]
   if retcode == true then
     self[option] = tvalue
