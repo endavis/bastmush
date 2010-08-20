@@ -171,15 +171,16 @@ function Pluginhelper:enable()
                     sequence = 110,
                     expand_variables = true
                }
-  self:init_vars()
   self.helpwin = Miniwin:new{name=GetPluginName() .. '_help'}
-  self.helpwin:set_default('header_height', 0)
   self.helpwin:set_default('use_tabwin', false)
   self.helpwin:set_default('windowpos', 12)
   self.helpwin:set_default('width_padding', 6)
+  self.helpwin:set_default('maxlines', 30)
   self.helpwin.titlebartext = GetPluginName() .. ' Help'
   self.helpwin.id = 'z_' .. self.helpwin.id
   self:add_pobject('win', self.helpwin)
+
+  self:init_vars()
 end
 
 function Pluginhelper:set_plugin_alias()
@@ -192,6 +193,11 @@ function Pluginhelper:set_plugin_alias()
   match, n = string.gsub (match, "cmdstring", self.cmd or "")
   SetAliasOption ("plugin_parse", "match", match)
   DoAfterSpecial (10, 'BroadcastPlugin (1001)', sendto.script)
+  if not self.helpwin.classinit then
+    theader, ttext = self:createhelp()
+    self.helpwin:addtab('Plugin', ttext, theader, true)
+    self.helpwin:show(false)
+  end
 end
 
 function Pluginhelper:reset(cmddict)
@@ -332,8 +338,8 @@ function Pluginhelper:OnPluginEnable()
   self:broadcast(-2)
 
   self.helpwin:enable()
-  self.helpwin:addtab('default', self:createhelp())
-  self.helpwin:changetotab('default')
+  theader, ttext = self:createhelp()
+  self.helpwin:addtab('Plugin', ttext, theader, true)
   self.helpwin:show(false)
 end
 
@@ -384,23 +390,45 @@ end
 
 function Pluginhelper:createhelp()
   local ttext = {}
+  local header = {}
 
   local style = {}
   style.text = ' '
-  table.insert(ttext, {style, backcolour=var.plugin_colour})
+  table.insert(header, {style, backcolour=var.plugin_colour})
 
   local style = {}
-  style.text = '  '
-  table.insert(ttext, {style})
+  style.text = string.format('%-20s : ', 'Name')
+  table.insert(header, {style, {text=tostring(GetPluginName()), textcolour=var.plugin_colour}, backcolour="bg_colour"})
 
   local style = {}
-  style.text = 'This is the help for ' .. GetPluginName()
-  style.hjust = 'center'
-  table.insert(ttext, {style})
+  style.text = string.format('%-20s : ', 'Author')
+  table.insert(header, {style, {text=tostring(GetPluginInfo(GetPluginID(), 2)), textcolour=var.plugin_colour}, backcolour="bg_colour"})
 
   local style = {}
-  style.text = 'Plugin Alias: '
-  table.insert(ttext, {style, {text=self.cmd, textcolour=var.plugin_colour}})
+  style.text = string.format('%-20s : ', 'Version')
+  table.insert(header, {style, {text=tostring(GetPluginInfo(GetPluginID(), 19)), textcolour=var.plugin_colour}, backcolour="bg_colour"})
+
+  if internalrevision then
+    local style = {}
+    style.text = string.format('%-20s : ', 'Internal Version')
+    table.insert(header, {style, {text=tostring(internalrevision), textcolour=var.plugin_colour}, backcolour="bg_colour"})
+  end
+
+  local style = {}
+  style.text = string.format('%-20s : ', 'Purpose')
+  table.insert(header, {style, {text=tostring(GetPluginInfo(GetPluginID(), 8)), textcolour=var.plugin_colour}, backcolour="bg_colour"})
+
+  local style = {}
+  style.text = string.format('%-20s : ', 'Alias')
+  table.insert(header, {style, {text=self.cmd, textcolour=var.plugin_colour}, backcolour="bg_colour"})
+
+  local style = {}
+  style.text = string.format('%-20s : ', 'MUSHclient version')
+  table.insert(header, {style, {text=tostring(GetInfo(72)), textcolour=var.plugin_colour}, backcolour="bg_colour"})
+
+  local style = {}
+  style.text = ' '
+  table.insert(header, {style, backcolour=var.plugin_colour})
 
   local style = {}
   style.text = '  '
@@ -448,19 +476,25 @@ function Pluginhelper:createhelp()
 
   table.insert(ttext, objectline)
 
-  local style = {}
-  style.text = '  '
-  table.insert(ttext, {style})
+  if next(self.aardhelps) then
+    local style = {}
+    style.text = '  '
+    table.insert(ttext, {style})
 
-  tableExtend(ttext, format_aard_helps(self.aardhelps))
+    tableExtend(ttext, format_aard_helps(self.aardhelps))
+  end
 
-  local style = {}
-  style.text = '  '
-  table.insert(ttext, {style})
+  if next(self.aardcmds) then
+    local style = {}
+    style.text = '  '
+    table.insert(ttext, {style})
 
-  tableExtend(ttext, format_aard_cmds(self.aardcmds))
+    tableExtend(ttext, format_aard_cmds(self.aardcmds))
+  end
 
-  tableExtend(ttext, format_hyperlinks(self.links))
+  if next(self.links) then
+    tableExtend(ttext, format_hyperlinks(self.links))
+  end
 
   local style = {}
   style.text = '  '
@@ -472,7 +506,7 @@ function Pluginhelper:createhelp()
 
   --tprint(ttext)
 
-  return ttext
+  return header, ttext
 end
 
 function Pluginhelper:addaardhelps(args)
