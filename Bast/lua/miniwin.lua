@@ -6,6 +6,7 @@
 
 --[[
 
+
 styles can have the following
   style.text = 'text'
   style.textcolour
@@ -82,18 +83,16 @@ Button Notes:
 quickest way to create a window
  mwin =  Miniwin:new{name="NewWin"}
  mwin:addtab('default', {"Window Body"}, {"Window Header"} )
- mwin:changetotab('default')
  mwin:show(true)
 
 TODO: add footer, this could be used for resizing, tabs, status bar type things
 TODO: resize flag that would make the border be used for resizing, the border will need to be a seperate miniwindow
-TODO: add scrollbar for windows that only show a certain amount of text, see the miniwindow chat plugin
 TODO: add a specific line width that can be used to wrap lines - see "help statmon" and the chat miniwindow
 TODO: add ability to add shapes as styles - see Bigmap_Graphical plugin and WindowCircleOp
 TODO: plugin to set colours on all my miniwindows, maybe a theme
 TODO: addline function that adds a single line to the text addline(line, tab) tab is optional, then I could just convert_line and adjust_line
-TODO: addheader function that adds a header, header_height will go away
 TODO: automatically detect urls: (.*)(http\:\/\/(?:[A-Za-z0-9\.\\\/\?])+)(.*)
+TODO: have adjust_line be the one that breaks up the lines
 
 windowwidth = self.windowborderwidth
               + self.width_padding
@@ -415,7 +414,7 @@ function Miniwin:cmd_snapshot(cmddict)
   tfile = cmddict[1]
   tdir = GetInfo(64)
   if tfile == nil then
-     tfile = tostring(utils.inputbox("Enter a filename, will be saved in " .. tdir))
+     tfile = tostring(utils.inputbox("Enter a filename, will be saved in \n  " .. tdir))
   end
   if tfile then
     WindowWrite(self.id, tfile)
