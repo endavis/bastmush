@@ -42,7 +42,8 @@
    name="StatReport"
    script="StatReport"
    enabled="y"
-   minute="2"
+   minute="59"
+   at_time="n"
    >
   </timer>
 
@@ -401,10 +402,28 @@ function StatReport(minutes)
 end
 
 function settimer()
+   local hours = 0
+   local minutes = 0
+   numb = tonumber(var.showminutes)
+   if numb > 59 then
+     hours = math.floor(numb/60)
+     minutes = numb - (hours * 60)
+   else
+     minutes = numb
+   end
    if tonumber(var.showminutes) == -1 and GetTimerInfo ("StatReport", 6) then
      EnableTimer("StatReport", false)
    else
-     SetTimerOption ("StatReport", "minute", var.showminutes)
+     if hours > 0 then
+       SetTimerOption ("StatReport", "hour", hours)
+     else
+       SetTimerOption ("StatReport", "hour", 0)
+     end
+     if minutes > 0 then
+       SetTimerOption ("StatReport", "minute", minutes)
+     else
+       SetTimerOption ("StatReport", "minute", 0)
+     end
      if not GetTimerInfo ("StatReport", 6) then
        EnableTimer("StatReport", true)
      end
