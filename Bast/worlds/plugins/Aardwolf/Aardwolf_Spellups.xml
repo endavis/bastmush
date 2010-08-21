@@ -334,7 +334,7 @@ function OnPluginEnable ()
     w:SetCommandWindowHeight (0)  -- no command window
     w:SetWorldWindowStatus (3) -- restore it
   end -- world
-
+  disconnected = true
   -- if we are connected when the plugin loads, it must have been reloaded whilst playing
   if IsConnected () then
     TelnetOptionOn (TELOPT_REQUEST_STATUS) -- get actual status (eg. afk, playing)
@@ -590,7 +590,7 @@ function spellups_redirect (name, line, wildcards, styles)
 
   if line == "{/spellheaders}" then
     EnableTrigger ("multi_line_spellups", false)  -- no more lines to go
-    have_slist = true  -- we now know all we need to   
+    have_slist = true  -- we now know all we need to
     make_xrefs ()
     SaveState ()
     resume_buff_loop("have_slist")
