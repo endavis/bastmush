@@ -78,6 +78,9 @@ function findkeyword(item)
 end
 
 function getactuallevel(level, remorts, tier)
+  if level == nil then
+    return -1
+  end
   tier = tier or 0
   return (tier * 7 * 201) + (remorts - 1) * 201 + level
 end
@@ -106,9 +109,9 @@ function printstyles(styles)
     for _, v in ipairs (styles) do
       if next(v) then
         for _, v2 in ipairs (v) do
-            ColourTell (RGBColourToName (v2.textcolour), 
-                    RGBColourToName (v2.backcolour), 
-                    v2.text)  
+            ColourTell (RGBColourToName (v2.textcolour),
+                    RGBColourToName (v2.backcolour),
+                    v2.text)
         end
         Note("")
       end
@@ -191,4 +194,3 @@ wearlocs = {
  'sleeping',
 }
 
- 
