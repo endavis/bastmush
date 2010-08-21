@@ -234,8 +234,6 @@ function formatcp()
   loadstring( pvar )()
   cp_stuff = cp_info
   cpgains = tostring(cp_stuff.qp)
-  length = cp_stuff.finishtime - cp_stuff.starttime
-  days, hours, mins, secs = SecondsToDHMS(length)
   local tmsg = { "CP finished for ", cpgains, "qp" }
   if cp_stuff.tp and tonumber(cp_stuff.tp) > 0 then
     table.insert( tmsg, " "..cp_stuff.tp )
@@ -249,13 +247,17 @@ function formatcp()
     table.insert( tmsg, " "..cp_stuff.pracs )
     table.insert( tmsg, "pr" )
   end
-  tmsg[#tmsg] = tmsg[#tmsg]..".  It took "
-  table.insert( tmsg, string.format( "%02d", days ) )
-  table.insert( tmsg, "d:" )
-  table.insert( tmsg, string.format( "%02d", hours ) )
-  table.insert( tmsg, "h:")
-  table.insert( tmsg, string.format( "%02d", mins ) )
-  table.insert( tmsg, "m." )
+  if cp_stuff.finishtime and cp_stuff.starttime then
+    length = cp_stuff.finishtime - cp_stuff.starttime
+    days, hours, mins, secs = SecondsToDHMS(length)
+    tmsg[#tmsg] = tmsg[#tmsg]..".  It took "
+    table.insert( tmsg, string.format( "%02d", days ) )
+    table.insert( tmsg, "d:" )
+    table.insert( tmsg, string.format( "%02d", hours ) )
+    table.insert( tmsg, "h:")
+    table.insert( tmsg, string.format( "%02d", mins ) )
+    table.insert( tmsg, "m" )
+  end
 
   DisplayInfo( tmsg )
 end
@@ -513,7 +515,7 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'statmn')
 phelper:set_default('plugin_colour', 'orange')
 
-phelper:add_setting('showminutes', {help="the number of minutes between StatMon output, -1 to disable", type="number", after=settimer, default=60})
+phelper:add_setting('showminutes', {help="the number of minutes between StatMon output, -1 to disable", type="number", after=settimer, default=59})
 phelper:add_setting('reportminutes', {help="the number of minutes that Statmon reports on", type="number", default=60})
 
 phelper:add_cmd('report', {func=cmd_report, help="show stats for the last x minutes, x being what is passed as an argument"})
