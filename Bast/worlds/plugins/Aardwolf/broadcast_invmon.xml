@@ -416,7 +416,7 @@ end -- function OnPluginSaveState
 phelper:set_default('plugin_colour', 'orange')
 phelper:set_default('cmd', 'bimon')
 
-phelper:add_setting('isinvmonon', {help="is the invmon command on", type="bool", readonly=true, verify_bool(false)})
+phelper:add_setting('isinvmonon', {help="is the invmon command on", type="bool", readonly=true, default=verify_bool(false)})
 
 phelper:enable()
 ]]>
