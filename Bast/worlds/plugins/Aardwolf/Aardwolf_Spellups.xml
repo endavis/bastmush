@@ -1446,7 +1446,6 @@ spellup_options = {
   }
 
 function wanted_spellups (name, line, wildcards)
-  tprint(wildcards)
 
   if wildcards.list then
 
