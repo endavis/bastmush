@@ -43,19 +43,21 @@ end
 
 function cmd_find(cmddict)
   local mob = cmddict[1]
-  mobs = planeslookup(mob)
-  phelper:plugin_header('Planes Mobs')
-  if next(mobs) then
-    local tformat = '%-30s   %-16s   %-5s'
-    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format(tformat, 'Name', 'Pool', 'Pool#'))
-    ColourNote("white", "black", "-----------------------------------------------------------------------")
-    for i,v in ipairs(mobs) do
-      ColourNote(RGBColourToName(var.plugin_colour), "black", string.format(tformat, v['mobname'], v['poollayer'], v['poolnum']))
+  if mob then
+    mobs = planeslookup(mob)
+    phelper:plugin_header('Planes Mobs')
+    if next(mobs) then
+      local tformat = '%-30s   %-16s   %-5s'
+      ColourNote(RGBColourToName(var.plugin_colour), "black", string.format(tformat, 'Name', 'Pool', 'Pool#'))
+      ColourNote("white", "black", "-----------------------------------------------------------------------")
+      for i,v in ipairs(mobs) do
+        ColourNote(RGBColourToName(var.plugin_colour), "black", string.format(tformat, v['mobname'], v['poollayer'], v['poolnum']))
+      end
+    else
+      ColourNote(RGBColourToName(var.plugin_colour), "black", 'None')
     end
-  else
-    ColourNote(RGBColourToName(var.plugin_colour), "black", 'None')
+    Note("")
   end
-  Note("")
 end
 ]]>
 </script>
