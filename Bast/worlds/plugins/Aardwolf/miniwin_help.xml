@@ -318,7 +318,7 @@ function get_help (topic)
   if not help then
 
     phelper:mdebug(topic, 'not found in db')
-    if statestring ~= 'active' then
+    if not (statestring == 'active' or statestring == 'combat' or statestring == 'resting' or statestring == 'sleeping') then
       ColourNote ("red", "", "Not currently able to request help from Aardwolf.")
       return
     else
