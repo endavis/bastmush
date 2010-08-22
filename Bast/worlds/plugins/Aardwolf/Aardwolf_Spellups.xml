@@ -1446,7 +1446,8 @@ spellup_options = {
   }
 
 function wanted_spellups (name, line, wildcards)
-  --tprint(wildcards)
+  tprint(wildcards)
+
   if wildcards.list then
 
     wildcards.list = trim (wildcards.list):lower ()
@@ -1526,8 +1527,6 @@ function wanted_spellups (name, line, wildcards)
             ColourNote ("yellow", "", capitalize (spells [v].name) .. " was NOT in the spellups list.")
           end -- if
         end -- for
-      else
-        wanted_buffs = new_wanted_list
       end -- if
     end -- new list
   end -- if wildcards
