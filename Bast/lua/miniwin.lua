@@ -430,10 +430,12 @@ function Miniwin:cmd_info(cmddict)
   self:plugin_header('Info')
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Name', self.cname))
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Id', self.id))
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Height', tostring(WindowInfo(self.id, 4))))
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Width', tostring(WindowInfo(self.id, 3))))
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Calced Height', tostring(self.activetab.build_data.actualwindowheight)))
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Calced Width', tostring(self.activetab.build_data.actualwindowwidth)))
+  if self.activetab then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Height', tostring(WindowInfo(self.id, 4))))
+    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Width', tostring(WindowInfo(self.id, 3))))
+    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Calced Height', tostring(self.activetab.build_data.actualwindowheight)))
+    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Calced Width', tostring(self.activetab.build_data.actualwindowwidth)))
+  end
 end
 
 -- Command to print loaded fonts for this window
