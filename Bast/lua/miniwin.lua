@@ -1831,6 +1831,8 @@ end
 
 function Miniwin:resizemousedown()
   self:buildmovewindow(WindowInfo(self.id, 10), WindowInfo(self.id, 11), WindowInfo(self.id, 3), WindowInfo(self.id, 4) )
+  self.mousestartx = WindowInfo (self.id, 17)
+  self.mousestarty = WindowInfo (self.id, 18)
 end
 
 function Miniwin:resizemovecallback(flags, hotspot_id)
@@ -1855,6 +1857,9 @@ function Miniwin:resizemovecallback(flags, hotspot_id)
   if hotspot_id:find("left") then
     self.newwidth = WindowInfo(self.id, 12) - mousex
     self.newx = mousex
+    if self.newx - self.mousestartx > WindowInfo(self.id, 3) - 30 then
+      self.newx = WindowInfo(self.id, 3) - 30 + self.mousestartx
+    end
     if self.newwidth < 30 then
       self.newwidth = 30
     end
@@ -1862,6 +1867,9 @@ function Miniwin:resizemovecallback(flags, hotspot_id)
   if hotspot_id:find("top") then
     self.newheight = WindowInfo(self.id, 13) - mousey
     self.newy = mousey
+    if self.newy - self.mousestarty > WindowInfo(self.id, 4) - 30 then
+      self.newy = self.mousestarty + WindowInfo(self.id, 4) - 30
+    end
     if self.newheight < 30 then
       self.newheight = 30
     end
@@ -1903,7 +1911,9 @@ function Miniwin:createwindowborder()
     self:addhotspot('lefttopresize', 0, 0, cornerwidth, self.window_border_width,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
@@ -1912,7 +1922,9 @@ function Miniwin:createwindowborder()
     self:addhotspot('topleftresize', 0, self.window_border_width, self.window_border_width, cornerwidth,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
@@ -1924,7 +1936,9 @@ function Miniwin:createwindowborder()
                       cornerwidth, self.activetab.build_data.actualwindowheight,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
@@ -1934,7 +1948,9 @@ function Miniwin:createwindowborder()
                       self.window_border_width, self.activetab.build_data.actualwindowheight - self.window_border_width,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
@@ -1945,7 +1961,9 @@ function Miniwin:createwindowborder()
                       self.activetab.build_data.actualwindowwidth, self.window_border_width,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
@@ -1955,7 +1973,9 @@ function Miniwin:createwindowborder()
                       self.activetab.build_data.actualwindowwidth, 0 + self.window_border_width + cornerwidth,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
@@ -1966,7 +1986,9 @@ function Miniwin:createwindowborder()
                       self.activetab.build_data.actualwindowwidth, self.activetab.build_data.actualwindowheight,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
@@ -1977,7 +1999,9 @@ function Miniwin:createwindowborder()
                       self.activetab.build_data.actualwindowwidth, self.activetab.build_data.actualwindowheight,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
@@ -1988,7 +2012,9 @@ function Miniwin:createwindowborder()
     self:addhotspot('topresize', cornerwidth, 0, self.activetab.build_data.actualwindowwidth - cornerwidth, self.window_border_width,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
@@ -1999,7 +2025,9 @@ function Miniwin:createwindowborder()
     self:addhotspot('bottomresize', cornerwidth, self.activetab.build_data.actualwindowheight - self.window_border_width, self.activetab.build_data.actualwindowwidth - cornerwidth, self.activetab.build_data.actualwindowheight,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
@@ -2009,7 +2037,9 @@ function Miniwin:createwindowborder()
     self:addhotspot('leftresize', 0, 0 + cornerwidth, self.window_border_width, self.activetab.build_data.actualwindowheight - cornerwidth,
                       empty,
                       empty,
-                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
                       empty,
                       empty,
                       'Resize Window',
