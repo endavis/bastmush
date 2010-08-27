@@ -196,7 +196,6 @@ function Miniwin:initialize(args)
   self.notitletext = false
   self.clickshow = false
   self.firstdrawn = true
-  self.drag_hotspot = "_drag_hotspot"
   self.actual_header_start_line = nil
   self.actual_header_end_line = nil
   self.actual_text_start_line = nil
@@ -286,14 +285,12 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
 
   self.buttons = {}
   --self.buttonstyles = {}
-  self:add_button('minimize', {text=" - ", mouseup=function (win, tflags, hotspotid)
-                        win:shade()
-                      end, hint="Click to shade", place=1})
   self:add_button('menu', {text=" M ", mouseup=function (win, flags, hotspotid)
                         win:menuclick(flags)
                       end, hint="Right Click to show Window menu\nLeft Click to show Plugin menu", place=2})
-  self:add_button('drag', {text=" + ", mousedown=empty, hint="Click and hold, then drag to move", cursor=10, place=98,
-                            drag_hotspot=true})
+  self:add_button('shade', {text=" - ", mouseup=function (win, tflags, hotspotid)
+                        win:shade()
+                      end, hint="Click to shade", place=90})
   self:add_button('close', {text=" X ", mouseup=function (win, tflags, hotspotid)
                         win:show(false)
                       end, hint="Click to close", place=99})
@@ -632,10 +629,6 @@ end
 function Miniwin:buttonmouseover(name)
    self.activetab.buttonstyles[name].textcolour = 'button_text_highlight_colour'
    self.activetab.buttonstyles[name].backcolour = 'button_bg_highlight_colour'
-   if name ~= 'drag' then
-     self.activetab.buttonstyles['drag'].textcolour = 'button_text_colour'
-     self.activetab.buttonstyles['drag'].backcolour = nil
-   end
    self:displayline(self.activetab.build_data[self.activetab.buttonstyles[name].linenum])
    Repaint()
 end
@@ -685,11 +678,6 @@ function Miniwin:buildtitlebar()
     end
     if button.hotspot_id then
       style.hotspot_id = button.hotspot_id
-    end
-
-    if button.drag_hotspot then
-      style.hotspot_id = self.drag_hotspot
-      style.mousedown = empty
     end
 
     style.button = name
@@ -1641,9 +1629,6 @@ function Miniwin:displayline (styles)
        v.cancelmouseover ~= nil then
       self:buildhotspot(v, v.textstart, styles.celltop, v.textend, styles.cellbottom)
     end
-    if v.hotspot_id == self.drag_hotspot then
-      self:adddraghandler(self.drag_hotspot, self.dragmove, self.dragrelease, 0)
-    end
   end -- for each style run
 
   tbordercolour = styles.bordercolour
@@ -1703,22 +1688,39 @@ function Miniwin:create_window(height, width, x, y)
                  self:get_colour("bg_colour")) )
   end
 
+  WindowDeleteAllHotspots (self.id)
+
   if not self.shaded or self.shade_with_header then
     local htop = 0
     local hbottom = 0
     if self.activetab.build_data.actual_header_start_line ~= nil and self.activetab.build_data.actual_header_end_line ~= nil then
-        htop = self.activetab.build_data[self.activetab.build_data.actual_header_start_line].linetop + 1
-        hbottom = self.activetab.build_data[self.activetab.build_data.actual_header_end_line + 1].linetop - 1
+      local htop = self.activetab.build_data[self.activetab.build_data.actual_header_start_line].linetop + 1
+      local hbottom = self.activetab.build_data[self.activetab.build_data.actual_header_end_line + 1].linetop - 1
 
       -- header colour
       check (WindowRectOp (self.id, 2, 3, htop + 1, -3, hbottom, self:get_colour("header_bg_colour"))) -- self:get_colour("header_bg_colour")))
       --check (WindowRectOp (self.id, 1, 2, htop + 1, -2, hbottom, self:get_colour("black"))) -- self:get_colour("header_bg_colour")))
+
+      if self.titlebar then
+        local top = self.activetab.build_data[1].linetop
+        local bottom = self.activetab.build_data[1].linebottom
+
+        -- add windowdraghandler
+        self:addhotspot('drag_hotspot', self.window_border_width, top, width - self.window_border_width, bottom,
+                     empty,
+                     empty,
+                     empty,
+                     empty,
+                     empty,
+                     'Click and Drag to move window', 10)
+        self:adddraghandler('drag_hotspot', self.dragmove, self.dragrelease, 0)
+      end
     end
   end
 
   --check (WindowRectOp (self.id, 2, 0, 0, 0, 0, 0x575757))
 
-  WindowDeleteAllHotspots (self.id)
+
 
 end
 
