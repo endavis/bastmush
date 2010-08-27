@@ -1701,20 +1701,24 @@ function Miniwin:create_window(height, width, x, y)
       check (WindowRectOp (self.id, 2, 3, htop + 1, -3, hbottom, self:get_colour("header_bg_colour"))) -- self:get_colour("header_bg_colour")))
       --check (WindowRectOp (self.id, 1, 2, htop + 1, -2, hbottom, self:get_colour("black"))) -- self:get_colour("header_bg_colour")))
 
-      if self.titlebar then
-        local top = self.activetab.build_data[1].linetop
-        local bottom = self.activetab.build_data[1].linebottom
+    end
 
-        -- add windowdraghandler
-        self:addhotspot('drag_hotspot', self.window_border_width, top, width - self.window_border_width, bottom,
-                     empty,
-                     empty,
-                     empty,
-                     empty,
-                     empty,
-                     'Click and Drag to move window', 0)
-        self:adddraghandler('drag_hotspot', self.dragmove, self.dragrelease, 0)
-      end
+  end
+
+  if self.shaded or self.titlebar then
+    if self.titlebar then
+      local top = self.activetab.build_data[1].linetop
+      local bottom = self.activetab.build_data[1].linebottom
+
+      -- add windowdraghandler
+      self:addhotspot('drag_hotspot', self.window_border_width, top, width - self.window_border_width, bottom,
+                    empty,
+                    empty,
+                    empty,
+                    empty,
+                    empty,
+                    'Click and Drag to move window', 0)
+      self:adddraghandler('drag_hotspot', self.dragmove, self.dragrelease, 0)
     end
   end
 
