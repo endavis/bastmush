@@ -86,7 +86,6 @@ quickest way to create a window
  mwin:show(true)
 
 TODO: add footer, this could be used for resizing, tabs, status bar type things
-TODO: resize flag that would make the border be used for resizing, the border will need to be a seperate miniwindow
 TODO: add a specific line width that can be used to wrap lines - see "help statmon" and the chat miniwindow
 TODO: add ability to add shapes as styles - see Bigmap_Graphical plugin and WindowCircleOp
 TODO: plugin to set colours on all my miniwindows, maybe a theme
@@ -108,7 +107,6 @@ windowheight = self.windowborderwidth + self.height_padding + self.titlebarheigh
 AddHotspot(borderwinid, self.id .. ':resize', function, ....) should work fine
 
 event system - so that when a variable is changed, or the window is moved, or resized, functions can be attached to each event
-
 --]]
 
 require 'var'
@@ -199,7 +197,6 @@ function Miniwin:initialize(args)
   self.clickshow = false
   self.firstdrawn = true
   self.drag_hotspot = "_drag_hotspot"
-  self.border_width = 2
   self.actual_header_start_line = nil
   self.actual_header_end_line = nil
   self.actual_text_start_line = nil
@@ -210,6 +207,12 @@ function Miniwin:initialize(args)
   self.clickdelta = -1
   self.dragscrolling = false
   self.menuname = 'unknown'
+  self.resizable = args.resizable or false
+  self.newheight = -1
+  self.newwidth = -1
+  self.newx = -1
+  self.newy = -1
+  self.movewinid = 'z' .. self.id .. ':movewin'
 
   self.titlebarlinenum = -1
   self.tablinenum = -1
@@ -245,6 +248,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x0D0D0D, sortlev=3, longname="Background Colour"})
   self:add_setting( 'text_colour', {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=3, longname="Text Colour"})
   self:add_setting( 'window_border_colour', {type="colour", help="border colour for window", default=0x303030, sortlev=3, longname="Window Border Colour"})
+  self:add_setting( 'window_border_width', {type="number", help="border width for window", default=2, sortlev=3, longname="Window Border Width"})
   self:add_setting( 'title_bg_colour', {type="colour", help="background colour for the titlebar", default=0x575757, sortlev=3, longname="Title Background Colour"})
   self:add_setting( 'tab_bg_colour', {type="colour", help="background colour for a tab", default=0xDCDCDC, sortlev=6, longname="Tab Background Colour"})
   self:add_setting( 'tab_text_colour', {type="colour", help="text colour for a tab", default=0x0D0D0D, sortlev=6, longname="Tab Text Colour"})
@@ -272,6 +276,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'shaded', {type="bool", help="window is shaded", default=verify_bool(false), sortlev=55, readonly=true})
   self:add_setting( 'shade_with_header', {type="bool", help="when window is shaded, still show header", default=verify_bool(false), sortlev=55, longname = "Shade with header"})
   self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar", after="resettabs"})
+  self:add_setting( 'showresize', {type="bool", help="show resize hotspots", default=verify_bool(true), sortlev=56, longname="Show Resize Hotspots"})
   self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines", after="resettabs"})
   self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=1, low=0, sortlev=57, longname="Max Tabs"})
 
@@ -763,7 +768,7 @@ function Miniwin:buildmousemenu()
       menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring(self[name])
     end
   end
-  menu = menu .. ' | < || Restore Window Defaults || >Commands '
+  menu = menu .. ' | < || >Reset | Reset All | Reset Size | Reset Position | < || >Commands '
   for name,cmd in pairs(self.cmds_table) do
     if cmd.nomenu ~= true then
       menu = menu .. '|' .. name .. ' - ' .. cmd.help
@@ -805,6 +810,15 @@ function Miniwin:buildpluginmousemenu()
   return menu
 end
 
+function Miniwin:movewindow()
+  if self.x >= 0 and self.y >= 0 then
+    flags = 2
+  else
+    flags = 0
+  end
+  WindowPosition(self.id, self.x, self.y, self.windowpos, flags);
+end
+
 -- the function called when the mouse is clicked in the menu button
 function Miniwin:windowmenu(result)
   if result:match("Set font") then
@@ -816,8 +830,20 @@ function Miniwin:windowmenu(result)
   elseif result == "Default Font" then
     self:set('font_size', 'default')
     self:set('font', 'default')
-  elseif result:match("Restore Window Defaults") then
+  elseif result == 'Reset All' then
     self:cmd_reset()
+  elseif result == "Reset Size" then
+    self.width = self.set_options.width.default
+    self.height = self.set_options.height.default
+    WindowResize(self.id, self.width, self.height, self:get_colour('bg_colour'))
+    SaveState()
+    self:resettabs()
+  elseif result == 'Reset Position' then
+    self.x = self.set_options.x.default
+    self.y = self.set_options.y.default
+    self.windowpos = self.set_options.windowpos.default
+    SaveState()
+    self:movewindow()
   elseif result == "Help" then
     self.phelper.helpwin:show(true)
   else
@@ -1132,12 +1158,12 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
   local def_colour = self:get_colour('text_colour')
   local maxfontheight = 0
   local linecharlength = 0
-  local start = self.border_width + self.width_padding
+  local start = self.window_border_width + self.width_padding
   if ltype == 'tabbarline' then
-    start = self.border_width
+    start = self.window_border_width
   end
   if ltype == 'titlebarline' then
-    start = self.border_width + 2
+    start = self.window_border_width + 2
   end
   if ltype == 'headerline' then
       def_font_id = self.default_font_id_bold
@@ -1215,8 +1241,8 @@ function Miniwin:justify_line(line, top, linenum, ltype, linestart, lineend)
   line.textbottom = line.texttop + line.height + 1
   line.cellbottom = line.textbottom + line.textpadding
   line.linebottom = line.cellbottom + line.bottompadding
-  line.linestart = linestart or (0 + self.border_width)
-  line.lineend = lineend or (self.activetab.build_data.actualwindowwidth - self.border_width)
+  line.linestart = linestart or (0 + self.window_border_width)
+  line.lineend = lineend or (self.activetab.build_data.actualwindowwidth - self.window_border_width)
 
   for i,v in ipairs (line.text) do
     local stylelen = 0
@@ -1243,7 +1269,7 @@ function Miniwin:justify_line(line, top, linenum, ltype, linestart, lineend)
         local twidth = line.width
         local wwidth = line.lineend
         if ltype == 'titlebarline' then
-          wwidth = self.activetab.build_data.actualwindowwidth - self.border_width - 2
+          wwidth = self.activetab.build_data.actualwindowwidth - self.window_border_width - 2
         end
         local restt = twidth - tstart
         local restw = wwidth - tstart
@@ -1262,7 +1288,7 @@ function Miniwin:justify_line(line, top, linenum, ltype, linestart, lineend)
 
     if tstart + v.stylelen >= line.lineend then
       if ltype == 'titlebarline' then
-        v.textend = self.activetab.build_data.actualwindowwidth - self.border_width - 2
+        v.textend = self.activetab.build_data.actualwindowwidth - self.window_border_width - 2
       else
         v.textend = line.lineend
       end
@@ -1379,28 +1405,28 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
 
   if self.width > 0 then
     self.activetab.build_data.actualwindowwidth = self.width
-    self.activetab.build_data.textarea.left = 0 + self.border_width
+    self.activetab.build_data.textarea.left = 0 + self.window_border_width
     if self.maxlines > 0 and #self.activetab.convtext > self.maxlines then
-      self.activetab.build_data.textarea.right = self.width - self.border_width - self.width_padding - self.scrollbarwidth - 1
+      self.activetab.build_data.textarea.right = self.width - self.window_border_width - self.width_padding - self.scrollbarwidth - 1
     else
-      self.activetab.build_data.textarea.right = self.width - self.border_width - self.width_padding
+      self.activetab.build_data.textarea.right = self.width - self.window_border_width - self.width_padding
     end
   else
-    self.activetab.build_data.actualwindowwidth =  self.activetab.maxwidth + self.width_padding + self.border_width
+    self.activetab.build_data.actualwindowwidth =  self.activetab.maxwidth + self.width_padding + self.window_border_width
     self.activetab.build_data.textarea.right = self.activetab.maxwidth + self.width_padding
-    self.activetab.build_data.textarea.left = 0 + self.border_width
+    self.activetab.build_data.textarea.left = 0 + self.window_border_width
     if self.maxlines > 0 and #self.activetab.convtext > self.maxlines then
       self.activetab.build_data.actualwindowwidth = self.activetab.build_data.actualwindowwidth + self.scrollbarwidth + 1
     end
   end
 
 
-  self.activetab.build_data.textstart = self.border_width + self.width_padding
-  self.activetab.build_data.textend = self.activetab.build_data.actualwindowwidth - self.border_width - self.width_padding
+  self.activetab.build_data.textstart = self.window_border_width + self.width_padding
+  self.activetab.build_data.textend = self.activetab.build_data.actualwindowwidth - self.window_border_width - self.width_padding
 
   -- build initial window here and justify lines
   linenum = 0
-  top = self.border_width
+  top = self.window_border_width
 
   if self.titlebar then
     linenum = linenum + 1
@@ -1454,7 +1480,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
              (self.maxlines * (self.fonts[self.default_font_id].height + 1)))
       self.activetab.build_data.drawscrollbar = true
     end
-    self.activetab.build_data.actualwindowheight = top + self.height_padding + self.border_width
+    self.activetab.build_data.actualwindowheight = top + self.height_padding + self.window_border_width
   end
 
   -- figure this out somehow
@@ -1554,8 +1580,8 @@ function Miniwin:displayline (styles)
   local def_colour = self:get_colour("text_colour")
   local def_bg_colour = self:get_colour("bg_colour")
 
-  if not self.shaded and styles.linebottom > (WindowInfo(self.id, 4) - self.border_width - self.height_padding) then
-    styles.bottom = WindowInfo(self.id, 4) - self.border_width - self.height_padding
+  if not self.shaded and styles.linebottom > (WindowInfo(self.id, 4) - self.window_border_width - self.height_padding) then
+    styles.bottom = WindowInfo(self.id, 4) - self.window_border_width - self.height_padding
   end
 
   if styles.backcolour then
@@ -1627,7 +1653,7 @@ function Miniwin:displayline (styles)
        if tborderstyle == 0 then
          tborderstyle = 1
        end
-         WindowRectOp (self.id, tborderstyle, self.border_width, styles.linetop, styles.lineend, styles.linebottom,
+         WindowRectOp (self.id, tborderstyle, self.window_border_width, styles.linetop, styles.lineend, styles.linebottom,
                 self:get_colour(styles.bordercolour), self:get_colour(styles.bordercolour2))
    else
 
@@ -1699,7 +1725,7 @@ end
 -- do stuff after the text has been drawn
 function Miniwin:post_create_window_internal()
   if not self.titlebar then
-    self:addhotspot('mousemenu', self.border_width, self.border_width, self.border_width + 5, self.border_width + 5,
+    self:addhotspot('mousemenu', self.window_border_width, self.window_border_width, self.window_border_width + 5, self.window_border_width + 5,
                    nil, nil, function (win, flags, hotspotid)
                         win:menuclick(flags)
                       end,
@@ -1720,14 +1746,14 @@ function Miniwin:post_create_window_internal()
     self.activetab.build_data.upbutton = {}
     self.activetab.build_data.upbutton.top = self.activetab.build_data.textarea.top
     self.activetab.build_data.upbutton.bottom = self.activetab.build_data.upbutton.top + self.scrollbarwidth
-    self.activetab.build_data.upbutton.left = self.activetab.build_data.actualwindowwidth - self.scrollbarwidth - self.border_width
-    self.activetab.build_data.upbutton.right = self.activetab.build_data.actualwindowwidth - self.border_width
+    self.activetab.build_data.upbutton.left = self.activetab.build_data.actualwindowwidth - self.scrollbarwidth - self.window_border_width
+    self.activetab.build_data.upbutton.right = self.activetab.build_data.actualwindowwidth - self.window_border_width
 
     self.activetab.build_data.downbutton = {}
     self.activetab.build_data.downbutton.bottom = self.activetab.build_data.textarea.bottom
     self.activetab.build_data.downbutton.top = self.activetab.build_data.downbutton.bottom - self.scrollbarwidth
-    self.activetab.build_data.downbutton.left = self.activetab.build_data.actualwindowwidth - self.scrollbarwidth - self.border_width
-    self.activetab.build_data.downbutton.right = self.activetab.build_data.actualwindowwidth - self.border_width
+    self.activetab.build_data.downbutton.left = self.activetab.build_data.actualwindowwidth - self.scrollbarwidth - self.window_border_width
+    self.activetab.build_data.downbutton.right = self.activetab.build_data.actualwindowwidth - self.window_border_width
 
     self.activetab.build_data.shuttle = {}
 
@@ -1786,9 +1812,220 @@ function Miniwin:post_create_window_internal()
 
   end
 
+  self:createwindowborder()
+
+end
+
+function Miniwin:buildmovewindow(x, y, width, height)
+  WindowCreate(self.movewinid, x, y, width, height, 0, 6, self:get_colour('bg_colour'))
+  WindowRectOp(self.movewinid, 2, 0, 0, 0, 0, self:get_colour('bg_colour'))
+  WindowRectOp(self.movewinid, 1, 0, 0, 0, 0, ColourNameToRGB("white"))
+  WindowShow(self.movewinid, 1)
+end
+
+function Miniwin:destroymovewindow()
+  WindowDelete(self.movewinid)
+end
+
+function Miniwin:resizemousedown()
+  self:buildmovewindow(WindowInfo(self.id, 10), WindowInfo(self.id, 11), WindowInfo(self.id, 3), WindowInfo(self.id, 4) )
+end
+
+function Miniwin:resizemovecallback(flags, hotspot_id)
+  local mousex = WindowInfo (self.id, 17) -- where mouse is relative to output window (X)
+  local mousey = WindowInfo (self.id, 18) -- where mouse is relative to output window (Y)
+  self.newwidth = WindowInfo(self.id, 3)
+  self.newheight = WindowInfo(self.id, 4)
+  self.newx = WindowInfo(self.id, 10)
+  self.newy = WindowInfo(self.id, 11)
+  if hotspot_id:find("right") then
+    self.newwidth = mousex - WindowInfo(self.id, 10)
+    if self.newwidth < 30 then
+      self.newwidth = 30
+    end
+  end
+  if hotspot_id:find("bottom") then
+    self.newheight = mousey - WindowInfo(self.id, 11)
+    if self.newheight < 30 then
+      self.newheight = 30
+    end
+  end
+  if hotspot_id:find("left") then
+    self.newwidth = WindowInfo(self.id, 12) - mousex
+    self.newx = mousex
+    if self.newwidth < 30 then
+      self.newwidth = 30
+    end
+  end
+  if hotspot_id:find("top") then
+    self.newheight = WindowInfo(self.id, 13) - mousey
+    self.newy = mousey
+    if self.newheight < 30 then
+      self.newheight = 30
+    end
+  end
+  self:buildmovewindow(self.newx, self.newy, self.newwidth, self.newheight)
+end
+
+function Miniwin:resizereleasecallback(flags, hotspot_id)
+  self:destroymovewindow()
+  self.width = self.newwidth
+  self.height = self.newheight
+  self.newwidth = -1
+  self.newheight = -1
+  self.x = self.newx
+  self.y = self.newy
+  self.newx = -1
+  self.newy = -1
+  SaveState()
+  WindowResize(self.id, self.width, self.height, self:get_colour('bg_colour'))
+  self:resettabs()
+end
+
+function Miniwin:createwindowborder()
   -- DrawEdge rectangle
-  check (WindowRectOp (self.id, 1, 0, 0, 0, 0, self:get_colour('window_border_colour')))
-  check (WindowRectOp (self.id, 1, 1, 1, -1, -1, self:get_colour('window_border_colour')))
+  for i=1,self.window_border_width do
+    local num = i - 1
+    check (WindowRectOp (self.id, 1, num, num, 0 - num, 0 - num, self:get_colour('window_border_colour')))
+  end
+  --check (WindowRectOp (self.id, 1, 1, 1, -1, -1, self:get_colour('window_border_colour')))
+
+  if not self.shaded and (self.resizable and self.showresize) then
+    local cornerwidth = 10
+
+  --function Miniwin:addhotspot(id, left, top, right, bottom, mouseover, cancelmouseover, mousedown,
+  --                   cancelmousedown, mouseup, hint, cursor)
+
+    -- add 8 corner hotspots
+    -- add 2 top left corner hotspots
+    self:addhotspot('lefttopresize', 0, 0, cornerwidth, self.window_border_width,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - lefttopresize',
+                      6)
+    self:adddraghandler("lefttopresize", self.resizemovecallback, self.resizereleasecallback, 0)
+    self:addhotspot('topleftresize', 0, self.window_border_width, self.window_border_width, cornerwidth,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - topleftresize',
+                      6)
+    self:adddraghandler("topleftresize", self.resizemovecallback, self.resizereleasecallback, 0)
+
+    -- add 2 bottom left corner hotspots
+    self:addhotspot('leftbottomresize', 0, self.activetab.build_data.actualwindowheight - self.window_border_width,
+                      cornerwidth, self.activetab.build_data.actualwindowheight,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - leftbottomresize',
+                      7)
+    self:adddraghandler("leftbottomresize", self.resizemovecallback, self.resizereleasecallback, 0)
+    self:addhotspot('bottomleftresize', 0, self.activetab.build_data.actualwindowheight - self.window_border_width - cornerwidth,
+                      self.window_border_width, self.activetab.build_data.actualwindowheight - self.window_border_width,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - bottomleftresize',
+                      7)
+    self:adddraghandler("bottomleftresize", self.resizemovecallback, self.resizereleasecallback, 0)
+    -- add 2 top right corner hotspots
+    self:addhotspot('righttopresize', self.activetab.build_data.actualwindowwidth - cornerwidth, 0,
+                      self.activetab.build_data.actualwindowwidth, self.window_border_width,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - righttopresize',
+                      7)
+    self:adddraghandler("righttopresize", self.resizemovecallback, self.resizereleasecallback, 0)
+    self:addhotspot('toprightresize', self.activetab.build_data.actualwindowwidth - self.window_border_width, 0 + self.window_border_width,
+                      self.activetab.build_data.actualwindowwidth, 0 + self.window_border_width + cornerwidth,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - toprightresize',
+                      7)
+    self:adddraghandler("toprightresize", self.resizemovecallback, self.resizereleasecallback, 0)
+    -- add 2 bottom right corner hotspots
+    self:addhotspot('rightbottomresize', self.activetab.build_data.actualwindowwidth - cornerwidth, self.activetab.build_data.actualwindowheight - self.window_border_width,
+                      self.activetab.build_data.actualwindowwidth, self.activetab.build_data.actualwindowheight,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - rightbottomresize',
+                      6)
+    self:adddraghandler("rightbottomresize", self.resizemovecallback, self.resizereleasecallback, 0)
+
+    self:addhotspot('bottomrightresize', self.activetab.build_data.actualwindowwidth - self.window_border_width,  self.activetab.build_data.actualwindowheight - self.window_border_width - cornerwidth,
+                      self.activetab.build_data.actualwindowwidth, self.activetab.build_data.actualwindowheight,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - bottomrightresize',
+                      6)
+    self:adddraghandler("bottomrightresize", self.resizemovecallback, self.resizereleasecallback, 0)
+    -- add 4 border hotspots
+    -- create top border hotspot
+    self:addhotspot('topresize', cornerwidth, 0, self.activetab.build_data.actualwindowwidth - cornerwidth, self.window_border_width,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - topresize',
+                      9)
+    self:adddraghandler("topresize", self.resizemovecallback, self.resizereleasecallback, 0)
+
+    -- create bottom border hotspot
+    self:addhotspot('bottomresize', cornerwidth, self.activetab.build_data.actualwindowheight - self.window_border_width, self.activetab.build_data.actualwindowwidth - cornerwidth, self.activetab.build_data.actualwindowheight,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - bottomresize',
+                      9)
+    self:adddraghandler("bottomresize", self.resizemovecallback, self.resizereleasecallback, 0)
+    -- create left border hotspot
+    self:addhotspot('leftresize', 0, 0 + cornerwidth, self.window_border_width, self.activetab.build_data.actualwindowheight - cornerwidth,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Resize Window - leftresize',
+                      8)
+    self:adddraghandler("leftresize", self.resizemovecallback, self.resizereleasecallback, 0)
+    -- create right border hotspot
+    self:addhotspot('rightresize', self.activetab.build_data.actualwindowwidth - self.window_border_width, 0 + cornerwidth, self.activetab.build_data.actualwindowwidth, self.activetab.build_data.actualwindowheight - cornerwidth,
+                      empty,
+                      empty,
+                      function(win, flags, hotspotid)
+                         self:resizemousedown(flags, hotspotid)
+                      end,
+                      empty,
+                      empty,
+                      'Resize Window - rightresize',
+                      8)
+    self:adddraghandler("rightresize", self.resizemovecallback, self.resizereleasecallback, 0)
+  end
 end
 
 function Miniwin:drawshuttle()
@@ -1862,9 +2099,9 @@ function Miniwin:drawwin()
 
     -- create the window shaded
     endline = 1
-    window_height = self.activetab.build_data[1].linebottom + self.border_width
+    window_height = self.activetab.build_data[1].linebottom + self.window_border_width
     if self.shade_with_header and self.activetab.build_data.actual_header_start_line ~= nil and self.activetab.build_data.actual_header_end_line ~= nil then
-      window_height = self.activetab.build_data[self.activetab.build_data.actual_header_end_line].linebottom + self.border_width
+      window_height = self.activetab.build_data[self.activetab.build_data.actual_header_end_line].linebottom + self.window_border_width
       endline = self.activetab.build_data.actual_header_end_line
     end
     self:create_window(window_height, nil, tx, ty)
