@@ -33,8 +33,8 @@ require "serialize"
 require "copytable"
 
 
-testwin = Miniwin:new{name="Example"}
-testwin:set_default('header_height', 1)
+testwin = Miniwin:new{name="Example", resizable=true}
+testwin:set_default('maxtabs', 5)
 testwin2 = Miniwin:new{name="Example_2"}
 testwin2:set_default('header_height', 1)
 testwin2:set_default('use_tabwin', false)
