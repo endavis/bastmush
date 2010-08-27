@@ -287,7 +287,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   --self.buttonstyles = {}
   self:add_button('menu', {text=" M ", mouseup=function (win, flags, hotspotid)
                         win:menuclick(flags)
-                      end, hint="Right Click to show Window menu\nLeft Click to show Plugin menu", place=2})
+                      end, hint="Left Click to show Window menu\nRight Click to show Plugin menu", place=2})
   self:add_button('shade', {text=" - ", mouseup=function (win, tflags, hotspotid)
                         win:shade()
                       end, hint="Click to shade", place=90})
@@ -1712,7 +1712,7 @@ function Miniwin:create_window(height, width, x, y)
                      empty,
                      empty,
                      empty,
-                     'Click and Drag to move window', 10)
+                     'Click and Drag to move window', 0)
         self:adddraghandler('drag_hotspot', self.dragmove, self.dragrelease, 0)
       end
     end
@@ -1906,7 +1906,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - lefttopresize',
+                      'Resize Window',
                       6)
     self:adddraghandler("lefttopresize", self.resizemovecallback, self.resizereleasecallback, 0)
     self:addhotspot('topleftresize', 0, self.window_border_width, self.window_border_width, cornerwidth,
@@ -1915,7 +1915,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - topleftresize',
+                      'Resize Window',
                       6)
     self:adddraghandler("topleftresize", self.resizemovecallback, self.resizereleasecallback, 0)
 
@@ -1927,7 +1927,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - leftbottomresize',
+                      'Resize Window',
                       7)
     self:adddraghandler("leftbottomresize", self.resizemovecallback, self.resizereleasecallback, 0)
     self:addhotspot('bottomleftresize', 0, self.activetab.build_data.actualwindowheight - self.window_border_width - cornerwidth,
@@ -1937,7 +1937,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - bottomleftresize',
+                      'Resize Window',
                       7)
     self:adddraghandler("bottomleftresize", self.resizemovecallback, self.resizereleasecallback, 0)
     -- add 2 top right corner hotspots
@@ -1948,7 +1948,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - righttopresize',
+                      'Resize Window',
                       7)
     self:adddraghandler("righttopresize", self.resizemovecallback, self.resizereleasecallback, 0)
     self:addhotspot('toprightresize', self.activetab.build_data.actualwindowwidth - self.window_border_width, 0 + self.window_border_width,
@@ -1958,7 +1958,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - toprightresize',
+                      'Resize Window',
                       7)
     self:adddraghandler("toprightresize", self.resizemovecallback, self.resizereleasecallback, 0)
     -- add 2 bottom right corner hotspots
@@ -1969,7 +1969,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - rightbottomresize',
+                      'Resize Window',
                       6)
     self:adddraghandler("rightbottomresize", self.resizemovecallback, self.resizereleasecallback, 0)
 
@@ -1980,7 +1980,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - bottomrightresize',
+                      'Resize Window',
                       6)
     self:adddraghandler("bottomrightresize", self.resizemovecallback, self.resizereleasecallback, 0)
     -- add 4 border hotspots
@@ -1991,7 +1991,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - topresize',
+                      'Resize Window',
                       9)
     self:adddraghandler("topresize", self.resizemovecallback, self.resizereleasecallback, 0)
 
@@ -2002,7 +2002,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - bottomresize',
+                      'Resize Window',
                       9)
     self:adddraghandler("bottomresize", self.resizemovecallback, self.resizereleasecallback, 0)
     -- create left border hotspot
@@ -2012,7 +2012,7 @@ function Miniwin:createwindowborder()
                       empty,
                       empty,
                       empty,
-                      'Resize Window - leftresize',
+                      'Resize Window',
                       8)
     self:adddraghandler("leftresize", self.resizemovecallback, self.resizereleasecallback, 0)
     -- create right border hotspot
@@ -2024,7 +2024,7 @@ function Miniwin:createwindowborder()
                       end,
                       empty,
                       empty,
-                      'Resize Window - rightresize',
+                      'Resize Window',
                       8)
     self:adddraghandler("rightresize", self.resizemovecallback, self.resizereleasecallback, 0)
   end
