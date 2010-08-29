@@ -322,26 +322,32 @@ function Miniwin:addtab(tabname, text, header, makeactive)
    self.tabs[tabname].header = header
    self.tabs[tabname].build_data = {}
  end
- if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
-   tabremoved = table.remove(self.tablist, 1)
-   self.tabs[tabremoved] = nil
-   if tabremoved == self.activetab then
-     self.activetab = self.tabs[tabname]
-   end
+ if not self.classinit then
+  if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
+    tabremoved = table.remove(self.tablist, 1)
+    self.tabs[tabremoved] = nil
+    if tabremoved == self.activetab then
+      self.activetab = self.tabs[tabname]
+    end
+  end
+  if self.activetab == nil or makeactive then
+    self.activetab = self.tabs[tabname]
+  end
+  self:resettabs()
+  --self:redraw()
  end
- if self.activetab == nil or makeactive then
-   self.activetab = self.tabs[tabname]
- end
- self:resettabs()
- --self:redraw()
 end
 
 function Miniwin:resettabs()
  for i,v in pairs(self.tabs) do
    v.build_data = nil
-   self:convert_tab(i)
+   if not self.classinit then
+     self:convert_tab(i)
+   end
  end
- self:redraw()
+ if not self.classinit then
+   self:redraw()
+ end
 end
 
 function Miniwin:removetab(tabname)
@@ -1723,8 +1729,6 @@ function Miniwin:create_window(height, width, x, y)
   end
 
   --check (WindowRectOp (self.id, 2, 0, 0, 0, 0, 0x575757))
-
-
 
 end
 

@@ -711,6 +711,9 @@ end
 function convert_ticks(ticks)
   --string.format ("Time to go: %sd %sh %sm ", cptimer.days, cptimer.hours, cptimer.mins)
   tout = {}
+  if not ticks then
+    return tout
+  end
   seconds = (ticks / 2) * 60
   tout.days, tout.hours, tout.mins, tout.secs = SecondsToDHMS(seconds)
   tstring = {}
