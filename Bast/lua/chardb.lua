@@ -356,6 +356,7 @@ function Statdb:savelevel( levelinfo )
   if self:open() then
     if levelinfo['type'] == 'level' then
       self:addtostat('totallevels', 1)
+      self:addtostat('level', 1)
     end
     levelinfo['newlevel'] = tonumber(db:getstat('totallevels'))
     local stmt = self.db:prepare[[ INSERT INTO levels VALUES (NULL, :type, :newlevel, :str,
@@ -406,7 +407,7 @@ function Statdb:savemobkill( killinfo )
     self:addtostat('monsterskilled', 1)
     killinfo['level'] = tonumber(db:getstat('totallevels'))
     local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (NULL, :mob, :xp, :bonusxp,
-                                                          :gold, :tp, :time, :vorpal_weapon, :second_weapon, :level) ]]
+                                                          :gold, :tp, :time, :wielded_weapon, :second_weapon, :level) ]]
     stmt:bind_names(  killinfo  )
     stmt:step()
     stmt:finalize()
