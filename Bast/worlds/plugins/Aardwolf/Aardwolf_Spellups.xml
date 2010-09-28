@@ -5,7 +5,7 @@
 <muclient>
 <plugin
    name="Aardwolf_Spellups"
-   author="Nick Gammon"
+   author="Nick Gammon/Bast"
    id="b0a9cef2629fae2eacf97603"
    language="Lua"
    purpose="Does Aardwolf spellups"
