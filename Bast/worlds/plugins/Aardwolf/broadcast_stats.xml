@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: broadcast_state.xml 823 2010-08-29 18:57:35Z endavis $ -->
+<muclient>
+<plugin
+   name="xBroadcast_Stats"
+   author="Bast"
+   id="aaa44dccb20fa11787c5a327"
+   language="Lua"
+   purpose="broadcasts when stats change, based on gmcp"
+   save_state="y"
+   date_written="2009-02-02"
+   requires="4.28"
+   version="3.0"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+Detects when there is a change in state
+
+Example:
+
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "aaa44dccb20fa11787c5a327" then
+
+    end -- playing status changed
+  end
+
+--stats.vitals { "hp": 5280, "mana": 4390, "moves": 5185 }
+--stats.stats { "str": 233, "int": 177, "wis": 213, "dex": 329, "con": 181, "luck": 245, "hr": 309, "dr": 371, "saves": 51 }
+--stats.maxstats { "maxhp": 5280, "maxmana": 4390, "maxmoves": 5185, "maxstr": 110, "maxint": 100, "maxwis": 131, "maxdex": 182, "maxcon": 108, "maxluck": 157 }
+--stats.worth { "gold": 322802, "bank": 0, "qp": 5257, "tp": 2, "trains": 1, "pracs": 3 }
+--stats.status { "level": 180, "tnl": 1428, "hunger": 70, "thirst": 70, "align": 74, "state": 8, "pos": "Fighting" , "enemy": "a mountain cyclops", "enemypct": 12 }
+--stats.base { "name": "Bast", "class": "Thief", "subclass": "Ninja", "race": "Shadow", "clan": "", "pretitle": "", "perlevel": 5000 }
+
+]]>
+</description>
+
+</plugin>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+internalrevision = "$Rev: 823 $"
+
+require "var"
+require "pluginhelper"
+require "ldplugin"
+require "tprint"
+
+seenvitals = false
+seenstats = false
+seenmaxstats = false
+seenworth = false
+seenstatus = false
+seenbase = false
+
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+function OnPluginBroadcast (msg, id, name, text)
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
+      tt = assert (loadstring ('return ' .. gmcparg or ""))()
+
+      if tt['vitals'] and tt['stats'] and tt['maxstats'] and tt['worth'] and tt['status'] and tt['base'] then
+          var.stats = serialize.save( "stats", tt )
+          phelper:broadcast(6, var.stats)
+      end
+
+    end
+  end
+
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin ("GMCP_handler")
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'bstats')
+phelper:set_default('plugin_colour', 'orange')
+
+phelper:enable()
+
+]]>
+</script>
+</muclient>
