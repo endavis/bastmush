@@ -97,11 +97,15 @@ function savegq()
 end
 
 function createmilestone()
+  Execute("whois")
+  DoAfterSpecial(5, "aftermilestone()", 12)
+end
+
+function aftermilestone()
   level = db:getstat('totallevels')
   tlist = convertlevel(level)
   milestone = string.format("t%sr%sl%s", tlist.tier, tlist.remort, tlist.level)
-  Execute("whois")
-  DoAfterSpecial(5, string.format('db:addmilestone("%s")', milestone), 12)
+  db:addmilestone(milestone)
 end
 
 function AddMilestone(cmddict)
