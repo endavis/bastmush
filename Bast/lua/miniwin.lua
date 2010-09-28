@@ -187,6 +187,7 @@ function Miniwin:initialize(args)
   self.hyperlink_functions['releasecallback'] = {}
   self.hyperlink_functions['movecallback'] = {}
   self.hyperlink_functions['wheelcallback'] = {}
+  self.textareahotspots = {}
   self.fonts = {}
   self.startx = 0
   self.starty = 0
@@ -975,7 +976,7 @@ function Miniwin:shade()
 end
 
 function Miniwin:addscrollwheelhandler(id, wheelcallback)
-  if movecallback then
+  if wheelcallback then
    self.hyperlink_functions['wheelcallback'] [id] = wheelcallback
    wheelcallback = "wheelcallback"
   end
@@ -984,7 +985,6 @@ end
 
 -- wheelcallback function, checks to see if the id exists in the hyperlink_functions['wheelcallback'] table
 function Miniwin:wheelcallback (flags, hotspotid)
-
   local f = self.hyperlink_functions['wheelcallback'][hotspotid]
   if f then
     f(self, flags, hotspotid)
@@ -1067,6 +1067,12 @@ function Miniwin:addhotspot(id, left, top, right, bottom, mouseover, cancelmouse
                 mouseup, -- mouseup
                 hint,
                 cursor or 1, 0)
+
+  if left > self.activetab.build_data.textarea.left and left < self.activetab.build_data.textarea.right and
+        top > self.activetab.build_data.textarea.top and top < self.activetab.build_data.textarea.bottom then
+     table.insert(self.textareahotspots, self.id .. ':' .. id)
+     self:addscrollwheelhandler(id, self.wheelmove)
+  end
 
 end
 
@@ -1153,6 +1159,7 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
   local maxfontheight = 0
   local linecharlength = 0
   local start = self.window_border_width + self.width_padding
+  local def_colour = nil
   if ltype == 'tabbarline' then
     start = self.window_border_width
   end
@@ -1478,12 +1485,21 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
   end
 
   -- figure this out somehow
-  self.activetab.build_data.textarea.top = self.activetab.build_data[self.activetab.build_data.textstartline].linetop
-  self.activetab.build_data.textarea.bottom = top
+  self.activetab.build_data.textarea.top = self.activetab.build_data[self.activetab.build_data.textstartline].linetop + 1
+  self.activetab.build_data.textarea.bottom = top + 1
 
 end
 
+function Miniwin:removetextareahotspots()
+  for i,v in ipairs(self.textareahotspots) do
+    WindowDeleteHotspot(self.id, v)
+    WindowScrollwheelHandler(self.id, v, "")
+  end
+  self.textareahotspots = {}
+end
+
 function Miniwin:drawtext(tabname)
+  self:removetextareahotspots()
 
   WindowRectOp(self.id, 2, self.activetab.build_data.textarea.left, self.activetab.build_data.textarea.top,
                            self.activetab.build_data.textarea.right, self.activetab.build_data.textarea.bottom,
@@ -1910,9 +1926,6 @@ function Miniwin:createwindowborder()
 
   if not self.shaded and (self.resizable and self.showresize) then
     local cornerwidth = 10
-
-  --function Miniwin:addhotspot(id, left, top, right, bottom, mouseover, cancelmouseover, mousedown,
-  --                   cancelmousedown, mouseup, hint, cursor)
 
     -- add 8 corner hotspots
     -- add 2 top left corner hotspots
