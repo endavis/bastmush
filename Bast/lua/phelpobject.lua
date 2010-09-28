@@ -28,6 +28,7 @@ function Phelpobject:initialize(args)
   self.phelper = nil
   self.classinit = true
   self.shutdownf = false
+  self.disabled = false
   self.set_options = {}
   self.cname = args.name or "Default"
   self.id = GetPluginID() .. self.cname
@@ -302,7 +303,7 @@ function Phelpobject:add_setting(name, setting)
 end
 
 function Phelpobject:mdebug(...)
-  if var.tdebug == "true" or self.tdebug then
+  if (var.tdebug == "true" or self.tdebug) and self.disabled == false then
     print("DEBUG: " .. GetPluginInfo (GetPluginID (), 1), "- Object", self.cname, ": Debug")
     print("---------------------------------------------")
     local tstring = {}
