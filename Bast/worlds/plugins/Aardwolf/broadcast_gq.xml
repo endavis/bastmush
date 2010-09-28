@@ -439,12 +439,15 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  if msg == 1 and id == "8a710e0783b431c06d61a54c" then
 
-    -- get one variable
-    enemy = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
-    curlevel = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
-  end -- stats changed
+  if id == 'aaa44dccb20fa11787c5a327' then
+      local pvar = GetPluginVariable(  "aaa44dccb20fa11787c5a327", "stats" )
+
+      -- get the timer
+      loadstring( pvar )()
+      curlevel = stats.status.level
+      enemy = stats.status.enemy
+  end
 
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
@@ -460,7 +463,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin("Stats_Detector")
+  ldplugin("broadcast_stats")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable

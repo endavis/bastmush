@@ -23,7 +23,7 @@ Commands:
 
 bigmap remove map cache  --> removes the cache, forcing maps to be downloaded
                                (only do this after a major continent upgrade)
-                      
+
 bigmap auto              --> toggle auto-minimize map
 bigmap auto on           --> auto-hide map when you enter an area
 bigmap auto off          --> manually hide map
@@ -48,7 +48,7 @@ bigmap off               --> hide the map
    regexp="y"
   >
   </trigger>
- 
+
   <trigger
    enabled="n"
    match="*"
@@ -82,7 +82,7 @@ bigmap off               --> hide the map
    ignore_case="y"
   >
   </alias>
-  
+
  <alias
    script="auto_minimize_alias"
    match="^bigmap auto( on| off)?$"
@@ -92,7 +92,7 @@ bigmap off               --> hide the map
    ignore_case="y"
   >
   </alias>
-    
+
 <alias
    script="map_on_off_alias"
    match="^bigmap( on| off)?$"
@@ -102,7 +102,7 @@ bigmap off               --> hide the map
    ignore_case="y"
   >
   </alias>
-    
+
 </aliases>
 
 
@@ -153,13 +153,13 @@ function auto_minimize_alias (name, line, wildcards)
   elseif wildcards [1]:lower () == " off" then
     auto_minimize = false
   end -- if
-  
+
   if auto_minimize then
     ColourNote ("yellow", "", "Bigmap auto-hide enabled.")
   else
     ColourNote ("yellow", "", "Bigmap auto-hide DISABLED.")
-  end -- if  
-    
+  end -- if
+
 end -- auto_minimize_alias
 
 function map_on_off_alias (name, line, wildcards)
@@ -170,7 +170,7 @@ function map_on_off_alias (name, line, wildcards)
   elseif wildcards [1]:lower () == " off" then
     show_map = false
   end -- if
-  
+
   if show_map then
     ColourNote ("yellow", "", "Bigmap enabled.")
     if map and #map > 0 and in_continent then
@@ -179,8 +179,8 @@ function map_on_off_alias (name, line, wildcards)
   else
     ColourNote ("yellow", "", "Bigmap DISABLED - type 'bigmap' to re-enable.")
     WindowShow (win, false)
-  end -- if  
-    
+  end -- if
+
 end -- auto_minimize_alias
 
 
@@ -196,14 +196,14 @@ brushes = {
   ["^"] = miniwin.brush_waves_vertical,
   ["."] = miniwin.brush_hatch_backwards_diagonal,
   }
-  
+
 function Display_Styled_Line (line, styles, id)
 
 local left = 5
 local top = (line - 1) * rectangle_size + 15
 
   for _, v in ipairs (styles) do
-    
+
     for i = 1, #v.text do
       local char = string.sub (v.text, i, i)
       local brush = brushes [char] or 8
@@ -211,9 +211,9 @@ local top = (line - 1) * rectangle_size + 15
       local forecolour = v.textcolour
       local backcolour = background_colour
 
-      if brush == 0 then 
+      if brush == 0 then
         backcolour = v.textcolour
-      end -- if 
+      end -- if
       if char == " " then
         forecolour = background_colour -- invisible
        end -- if
@@ -221,15 +221,15 @@ local top = (line - 1) * rectangle_size + 15
       WindowCircleOp(win, miniwin.circle_rectangle, left, top, left + rectangle_size, top + rectangle_size,
                     forecolour, miniwin.pen_null, 0,   -- pen colour, null pen, pen width
                     backcolour, brush)  -- brush colour, style
-                    
+
       -- special image for the zone entrance
       if char == "?" then
         WindowDrawImage (win, "zone", left, top, left + rectangle_size, top + rectangle_size, 2)
       end -- if
       left = left + rectangle_size
     end -- for each character
-        
-  end -- for each style run                 
+
+  end -- for each style run
 
 end -- Display_Styled_Line
 
@@ -247,11 +247,11 @@ function DrawMap (x, y)
   local origx, origy = x, y
   x = x + 1  -- allow for border, make 1-relative
   y = y + 1  -- ditto
-  
+
   if not map or #map == 0 then
     return
   end -- no map
-   
+
   local lines = #map + 2
   local columns = 0
   for _, v in ipairs (map [1]) do
@@ -260,43 +260,43 @@ function DrawMap (x, y)
   local window_width = columns * rectangle_size + 10
   local window_height =  lines * rectangle_size + 10 + (font_height * 2)
    -- recreate the window the correct size
-   WindowCreate (win, 
-                 windowinfo.window_left, 
-                 windowinfo.window_top, 
+   WindowCreate (win,
+                 windowinfo.window_left,
+                 windowinfo.window_top,
                  window_width,     -- width
                  window_height,  -- height
-                 windowinfo.window_mode,   
+                 windowinfo.window_mode,
                  windowinfo.window_flags,
-                 background_colour) 
-  
+                 background_colour)
+
    WindowDeleteAllHotspots (win)
    movewindow.add_drag_handler (win, 0, 0, 0, font_height, 1)
-   
+
   local name = continent or ""
   local namewidth = WindowTextWidth (win, font_id, name)
   WindowText (win, font_id, name, (window_width - namewidth) / 2, 5, 0, 0, zone_name_colour)  -- title
-  
-  
+
+
   for i, v in ipairs (map) do
     Display_Styled_Line (i + 1, v, font_id)
   end -- for
-  
+
   local our_location_x = (x - 1) * rectangle_size + (rectangle_size / 2) + 5
   local our_location_y = (y) * rectangle_size + (rectangle_size / 2) + 15
-  
-                  
+
+
   local coords = string.format ("Location: %2i, %2i", origx, origy)
   local coordswidth = WindowTextWidth (win, font_id, coords)
-  WindowText (win, font_id, coords, (window_width - coordswidth) / 2, 
+  WindowText (win, font_id, coords, (window_width - coordswidth) / 2,
              window_height - font_height - 10, 0, 0, zone_name_colour)  -- title
-  
+
   Display_Line (#map + 1, coords, font_id, 0x000000)
- 
+
   -- DrawEdge rectangle
   WindowRectOp (win, 5, 0, 0, 0, 0, 10, 15)
-  
+
   -- draw circle around us
-  WindowCircleOp (win, miniwin.circle_ellipse, 
+  WindowCircleOp (win, miniwin.circle_ellipse,
                   our_location_x - 20, our_location_y - 20,
                   our_location_x + 20, our_location_y + 20,
                   ColourNameToRGB "cornflowerblue",  -- pen colour
@@ -304,8 +304,8 @@ function DrawMap (x, y)
                   3, -- pen width
                   0, -- brush colour
                   miniwin.brush_null ) -- null brush
-                  
-  WindowCircleOp (win, miniwin.circle_ellipse, 
+
+  WindowCircleOp (win, miniwin.circle_ellipse,
                   our_location_x - 20, our_location_y - 20,
                   our_location_x + 20, our_location_y + 20,
                   ColourNameToRGB "cyan",  -- pen colour
@@ -316,7 +316,7 @@ function DrawMap (x, y)
 
  -- draw circle around us
 
-  WindowCircleOp (win, miniwin.circle_ellipse, 
+  WindowCircleOp (win, miniwin.circle_ellipse,
                   our_location_x - 8, our_location_y - 8,
                   our_location_x + 8, our_location_y + 8,
                   ColourNameToRGB "cornflowerblue",  -- pen colour
@@ -324,8 +324,8 @@ function DrawMap (x, y)
                   3, -- pen width
                   0, -- brush colour
                   miniwin.brush_null ) -- null brush
-                    
-  WindowCircleOp (win, miniwin.circle_ellipse, 
+
+  WindowCircleOp (win, miniwin.circle_ellipse,
                   our_location_x - 8, our_location_y - 8,
                   our_location_x + 8, our_location_y + 8,
                   ColourNameToRGB "cyan",  -- pen colour
@@ -333,7 +333,7 @@ function DrawMap (x, y)
                   1, -- pen width
                   0, -- brush colour
                   miniwin.brush_null ) -- null brush
-                  
+
  if show_map and in_continent then
     WindowShow (win, true)
     Repaint ()
@@ -343,24 +343,24 @@ end -- DrawMap
 
 function updatelocation (name, line, wildcards)
   -- where we are
-  x = tonumber (wildcards.x) 
+  x = tonumber (wildcards.x)
   y = tonumber (wildcards.y)
   zone = tonumber (wildcards.zone)
-  
+
   -- changed continent?
   if old_zone ~= zone then
-  
+
     -- grab cached map
     map = continents [zone]
     continent = xref [zone]
-    
+
     -- no cached map? better get it
     if not map then
       SendNoEcho "bigmap noself" -- grab map
     end -- don't know this one
     old_zone = zone
   end -- need big map
-  
+
   -- draw our location
   if map then
     DrawMap (x, y)
@@ -380,43 +380,43 @@ function map_redirect (name, line, wildcards, styles)
     xref [zone] = wildcards.zonename
   elseif line == "{/bigmap}" then
     EnableTrigger ("multi_line_map", false)  -- no more lines to go
-    
-    table.remove (map, 1)  -- remove first line (the border) 
+
+    table.remove (map, 1)  -- remove first line (the border)
     map [#map] = nil  -- remove last line (the other border)
-    
+
    for _, v in ipairs (map) do
-      
+
       if v [1].text == "|" then
         table.remove (v, 1)
       elseif string.match (v [1].text, "^|") then
         v [1].text = string.sub (v [1].text, 2)
         v [1].length = #v [1].text
       end -- remove first border
-      
+
      if v [#v].text == "" then
         v [#v] = nil
       end -- remove last border
-      
+
       if v [#v].text == "|" then
         v [#v] = nil
       elseif string.match (v [#v].text, "|$") then
         v [#v].text = string.sub (v [#v].text, 1, -2)
         v [#v].length = #v [#v].text
       end -- remove last border
-    
+
     end -- for
-    
+
     if zone then
       continents [zone] = map  -- cache it
     end -- we know the continent
-    
+
     DrawMap (x, y)
   else
     table.insert (map, styles)
   end -- if
 
-  
-end -- function map_redirect 
+
+end -- function map_redirect
 
 function OnPluginInstall ()
   assert (loadstring (GetVariable ("continents") or "")) ()
@@ -433,26 +433,26 @@ function OnPluginInstall ()
     font_size = 10
     font_name = "Courier"
   end -- if
-    
+
   font_id = "map_font"  -- our internal name
   font_id_bold = "map_font_bold"  -- our internal name
 
   windowinfo = movewindow.install (win, 6)
-  
+
   -- make miniwindow so I can grab the font info
-  check (WindowCreate (win, 
-                 windowinfo.window_left, 
-                 windowinfo.window_top, 
-                 1, 1,  
-                 windowinfo.window_mode,   
+  check (WindowCreate (win,
+                 windowinfo.window_left,
+                 windowinfo.window_top,
+                 1, 1,
+                 windowinfo.window_mode,
                  windowinfo.window_flags,
                  background_colour) )
-  
+
   check (WindowFont (win, font_id, font_name, font_size, false, false, false, false, 0, 49))  -- normal
   font_height = WindowFontInfo (win, font_id, 1) -  WindowFontInfo (win, font_id, 4) + 1 -- height
   font_width = WindowFontInfo (win, font_id, 6)  -- avg width
   descent = WindowFontInfo (win, font_id, 3)
-  
+
 -- WindowCreateImage (win, "zone",
 --        tonumber ("00011000", 2),  -- row 8
 --        tonumber ("00111100", 2),  -- row 7
@@ -479,36 +479,35 @@ function OnPluginInstall ()
     check (EnablePlugin(GetPluginID (), false))
     return
   end -- they didn't enable us last time
-  
+
   OnPluginEnable ()  -- do initialization stuff
-  
+
 end -- OnPluginInstall
 
 function OnPluginSaveState ()
-  SetVariable ("continents", 
+  SetVariable ("continents",
                "continents = " .. serialize.save_simple (continents))
-               
-  SetVariable ("xref", 
+
+  SetVariable ("xref",
                "xref = " .. serialize.save_simple (xref))
-               
+
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
   SetVariable ("auto_minimize", tostring (auto_minimize))
-               
+
   movewindow.save_state (win)
-  
+
 end -- function OnPluginSaveState
 
 -- pull in telnet option handling
 dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
 
 function OnPluginBroadcast (msg, id, name, text)
-
-  if id == "85f72d0e263d75df7bde6f00" then
-     if msg == 7 then
-      --breakup the message
-      local tcontinent = utils.split(text, ',')
-      
-      if continentnames[tcontinent[1]] ~= nil then
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("room.info") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room")
+      room = assert (loadstring ('return ' .. gmcparg or ""))()
+      oncont = room.info.coord.cont
+      if tonumber(oncont) == 1 then
         if WindowInfo(win, 6) == false then
           in_continent = true
           WindowShow (win, true)
@@ -517,9 +516,9 @@ function OnPluginBroadcast (msg, id, name, text)
         in_continent = false
         WindowShow (win, false)
       end
-     end
+    end
   end
-  
+
 end
 
 function OnPluginConnect ()
@@ -528,7 +527,7 @@ end -- function OnPluginConnect
 
 function OnPluginClose ()
   -- if enabled
-  if GetPluginInfo (GetPluginID (), 17) then  
+  if GetPluginInfo (GetPluginID (), 17) then
     TelnetOptionOff (TELOPT_BIGMAP)
   end -- currently enabled
 end -- OnPluginClose
@@ -546,7 +545,7 @@ function OnPluginDisable ()
   TelnetOptionOff (TELOPT_BIGMAP)
 
   WindowShow (win, false)
-  
+
 end -- OnPluginDisable
 
 ]]>

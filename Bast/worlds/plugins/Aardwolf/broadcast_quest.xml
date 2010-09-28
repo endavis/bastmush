@@ -26,9 +26,7 @@ Broadcasts
    3 - time left to finish quest
         timer = {secs = num, text = 'time in text format' }
    4 - quest mob killed
-   5 - length of quest, get var.quest_info and loadstring it
-        see below
-   6 - rewards : get var.quest_info and loadstring it, values will be 0 if not applicable
+   6 - rewards and time : get var.quest_info and loadstring it, values will be 0 if not applicable
         see below
    7 - time left until next quest
         timer = {secs = num, text = 'time in text format' }
@@ -67,23 +65,6 @@ timer = {}
   timer.text = "44 m"
   timer.secs = 2640
 
-xBroadcast_Quest : Broadcast 5
-quest_info = {}
-  quest_info.starttime = 1275941847
-  quest_info.lucky = 0
-  quest_info.mobroom = "The Grey Watchtower"
-  quest_info.mobarea = "The Fortress of Angband"
-  quest_info.tier = 0
-  quest_info.trains = 0
-  quest_info.tp = 0
-  quest_info.mccp = 0
-  quest_info.pracs = 0
-  quest_info.gold = 0
-  quest_info.finishtime = 1275941920
-  quest_info.mobname = "Grey Orcish Guard"
-  quest_info.failed = 0
-  quest_info.qp = 0
-
 xBroadcast_Quest : Broadcast 6
 quest_info = {}
   quest_info.starttime = 1275941847
@@ -115,220 +96,7 @@ timer = {}
 <!--  Triggers  -->
 
 <triggers>
-  <trigger
-   enabled="y"
-   match="Welcome to Aardwolf. May your adventures be mystical, challenging and rewarding."
-   send_to="12" sequence="100"
-  >
-  <send>
-  Send("quest info")
-  </send>
-  </trigger>
 
-  <trigger
-   enabled="y"
-   match="############# Reconnecting to Game #############"
-   sequence="100"
-   send_to="12"
-  >
-  <send>
-  Send("quest info")
-  </send>
-  </trigger>
-
-  <trigger
-   enabled="y"
-   regexp="y"
-   match="^You ask .* for a quest.$"
-   script="start_questor_stuff"
-   sequence="100"
-  >
-  </trigger>
-
-  <trigger
-   enabled="n"
-   regexp="y"
-   match="^.* tells you 'Seek (.*) out somewhere in the vicinity'$"
-   name="mobName"
-   group="qinfo"
-   script="mobName"
-   sequence="100"
-   text_colour="6"
-  >
-  </trigger>
-
-  <trigger
-   enabled="n"
-   regexp="y"
-   match="^.* tells you 'of (.*) which is in the general area'$"
-   name="roomName"
-   group="qinfo"
-   script="roomName"
-   sequence="100"
-   text_colour="6"
-  >
-  </trigger>
-
-  <trigger
-   enabled="n"
-   regexp="y"
-   match="^.* tells you 'of (.*).'$"
-   name="areaName"
-   group="qinfo"
-   script="areaName"
-   sequence="100"
-   text_colour="6"
-  >
-  </trigger>
-
-  <trigger
-   enabled="n"
-   regexp="y"
-   match="^.* tells you 'You have (.*) to complete your quest.'$"
-   name="questor_time"
-   script="questor_time"
-   sequence="10"
-   group="qinfo"
-  >
-  </trigger>
-
- <trigger
-   enabled="n"
-   regexp="y"
-   match="^QUEST: You have almost completed your QUEST!$"
-   sequence="100"
-   script="quest_done"
-   group="questin"
-  >
-  </trigger>
-
- <trigger
-   enabled="n"
-   regexp="y"
-   match="^(.*) tells you 'Congratulations (.*) on completing your quest!'$"
-   sequence="100"
-   script="quest_handed_in"
-   group="questin"
-  >
-  </trigger>
-
-  <trigger
-   enabled="y"
-   regexp="y"
-   match="^You hang your head in shame and admit defeat (.*).$"
-   script="quest_fail"
-   sequence="100"
-   group="questin"
-  >
-  </trigger>
-
- <trigger
-   enabled="y"
-   regexp="y"
-   match="^There are (.*) minutes remaining until you can go on another quest.$"
-   sequence="100"
-   script="quest_time_to_go"
-  >
-  </trigger>
-
- <trigger
-   enabled="y"
-   regexp="y"
-   match="^QUEST: You may now quest again.$"
-   sequence="100"
-   script="quest_available"
-  >
-  </trigger>
-
-  <trigger
-   enabled="y"
-   regexp="y"
-   match="^You do not have to wait to go on another quest.$"
-   sequence="100"
-   script="quest_available"
-  >
-  </trigger>
-
-  <!-- quest rewards -->
-  <trigger
-   enabled="n"
-   match="^.* tells you 'As a reward, I am giving you (\d*) quest points and (\d*) gold.'$"
-   name="qcompletecatcher"
-   regexp="y"
-   script="quest_rewards"
-   sequence="100"
-   group="questrew"
-  >
-  </trigger>
-  <trigger
-   enabled="n"
-   match="^.* tells you 'I am also giving you (.*) quest points? tier bonus.'$"
-   name="tierqpcatcher"
-   regexp="y"
-   group="questrew"
-   script="quest_rewards"
-   sequence="100"
-  >
-  </trigger>
-  <trigger
-   enabled="n"
-   regexp="y"
-   match="^You get lucky and gain an extra (.*) quest points.$"
-   name="luckyqpcatcher"
-   script="quest_rewards"
-   group="questrew"
-   sequence="100"
-  >
-  </trigger>
-  <trigger
-   enabled="n"
-   regexp="y"
-   match="^You gain an extra (.*) quest points 'MCCP Bonus'.$"
-   name="mccpqpcatcher"
-   script="quest_rewards"
-   group="questrew"
-   sequence="100"
-  >
-  </trigger>
-  <trigger
-   enabled="n"
-   match="^\*\* You gain a bonus trivia point! \*\*$"
-   name="qtpcatcher"
-   regexp="y"
-   script="quest_rewards"
-   group="questrew"
-   sequence="100"
-  >
-  </trigger>
-  <trigger
-   enabled="n"
-   match="^\*\* You gain a bonus (\d?)\s?training sessions? \*\*\s*$"
-   name="qtraincatcher"
-   regexp="y"
-   script="quest_rewards"
-   group="questrew"
-   sequence="100"
-  >
-  </trigger>
-  <trigger
-   enabled="n"
-   match="^\*\* You gain a bonus (\d?)\s?practices? \*\*\s*$"
-   name="qpraccatcher"
-   regexp="y"
-   script="quest_rewards"
-   group="questrew"
-   sequence="100"
-  >
-  </trigger>
-  <trigger
-   enabled="n"
-   match="*"
-   name="finishqpcatcher"
-   script="quest_rewards"
-   group="questrew"
-   sequence="101"
-  >
-  </trigger>
 </triggers>
 
 <!--  Timers  -->
@@ -356,6 +124,7 @@ require "serialize"
 require "commas"
 require 'pluginhelper'
 require "verify"
+require "ldplugin"
 
 onquest = false
 quest_info = {}
@@ -379,39 +148,10 @@ function blankquest ()
   quest_info.failed = 0
 end
 
-function quest_handed_in (name, line, wildcards)
-  phelper:enabletriggroup("questin", false)
-  quest_info['finishtime'] = GetInfo(304)
-  var.quest_info = serialize.save( "quest_info", quest_info )
-  phelper:broadcast(5, var.quest_info)
-  when_required = os.time () + (30 * 60)  -- 30 mins to go
-  onquest = false
-  update_timer()
-  check(EnableTimer("questtimer", true))
-  phelper:enabletriggroup("questrew", true)
-
-end -- quest_handed_in
-
 function quest_available (name, line, wildcards)
   check(EnableTimer("questtimer", false))
   phelper:broadcast(1)
 end -- quest_available
-
-function quest_fail(name, line, wildcards)
-  phelper:enabletriggroup("questin", false)
-  when_required = os.time () + (15 * 60)  -- 15 mins to go
-  onquest = false
-  update_timer()
-  quest_info.failed = 1
-  var.quest_info = serialize.save( "quest_info", quest_info )
-  phelper:broadcast(8, var.quest_info)
-  check(EnableTimer("questtimer", true))
-end
-
-function quest_done (name, line, wildcards)
-  check(EnableTimer("questtimer", false))
-  phelper:broadcast(4)
-end -- quest_done
 
 function quest_time_to_go (name, line, wildcards)
   local mins = tonumber (wildcards [1])
@@ -421,54 +161,12 @@ function quest_time_to_go (name, line, wildcards)
   update_timer()
 end -- quest_time_to_go
 
-function start_questor_stuff (name, line, wildcards)
-  phelper:enabletriggroup("qinfo", true)
-  blankquest()
-  quest_info['starttime'] = GetInfo(304)
-end -- start_questor_stuff
+function questor_time (minutes)
 
-function mobName( strTriggerName, trig_line, wildcards )
-  quest_info['mobname'] = wildcards[1]
-end -- mobName
-
-function roomName( strTriggerName, trig_line, wildcards )
-  quest_info['mobroom'] = wildcards[1]
-end -- roomName
-
-function areaName( strTriggerName, trig_line, wildcards )
-  quest_info['mobarea'] = wildcards[1]
-  var.quest_info = serialize.save( "quest_info", quest_info )
-  phelper:broadcast(2, var.quest_info)
-end
-
-function questor_time (name, line, wildcards)
-
-  local text = wildcards [1]
-
-   -- work out when quest ends
-
-  when_required = os.time ()
-
-  local days = string.match (text, "(%d+) days?")
-  if days then
-    when_required = when_required + tonumber (days) * 60 * 60 * 24
-  end -- some days left
-
-  local hours = string.match (text, "(%d+) hours?")
-  if hours then
-    when_required = when_required + tonumber (hours) * 60 * 60
-  end -- some days left
-
-  local minutes = string.match (text, "(%d+) minutes?")
-  if minutes then
-    when_required = when_required + tonumber (minutes) * 60
-  end -- some days left
+  when_required = os.time () + tonumber (minutes) * 60
 
   onquest = true
-  phelper:enabletriggroup("qinfo", false)
-  phelper:enabletriggroup("questin", true)
   update_timer()
-  check(EnableTimer("questtimer", true))
 
 end -- questor_end
 
@@ -477,6 +175,7 @@ function update_timer()
   if when_required == nil then
     return
   end
+  check(EnableTimer("questtimer", true))
   local time_to_go = when_required - os.time ()
   timer['secs'] = time_to_go
   timer['text'] = convert_time(time_to_go)
@@ -488,38 +187,6 @@ function update_timer()
   end
 end
 
-function quest_rewards (name, line, wildcards)
-  if name == 'finishqpcatcher' then
-    if trim(line) == '' then
-      phelper:enabletriggroup("questrew", false)
-      var.quest_info = serialize.save( "quest_info", quest_info )
-      phelper:broadcast(6, var.quest_info)
-    end
-  elseif name == "qcompletecatcher" then
-    quest_info['qp'] = wildcards[1]
-    quest_info['gold'] = wildcards[2]
-  elseif name == "tierqpcatcher" then
-    quest_info['tier'] = wildcards[1]
-  elseif name == "luckyqpcatcher" then
-    quest_info['lucky'] = wildcards[1]
-  elseif name == "mccpqpcatcher" then
-    quest_info['mccp'] = wildcards[1]
-  elseif name == "qtpcatcher" then
-    quest_info['tp'] = 1
-  elseif name == "qtraincatcher" then
-    if wildcards[1] == "" then
-      quest_info['trains'] = 1
-    else
-      quest_info['trains'] = wildcards[1]
-    end
-  elseif name == "qpraccatcher" then
-    if wildcards[1] == "" then
-      quest_info['pracs'] = 1
-    else
-      quest_info['pracs'] = wildcards[1]
-    end
-  end
-end
 
 ]]>
 </script>
@@ -529,6 +196,67 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   phelper:OnPluginBroadcast(msg, id, name, text)
+
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("comm.quest") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","comm.quest")
+      stuff = assert (loadstring ('return ' .. gmcparg or ""))()
+
+      if stuff.action == 'ready' then
+        phelper:broadcast(1)
+        check(EnableTimer("questtimer", false))
+      elseif stuff.action == 'start' then
+        blankquest()
+        quest_info['starttime'] = GetInfo(304)
+        quest_info['mobname'] = stuff.targ
+        quest_info['mobroom'] = stuff.room
+        quest_info['mobarea'] = stuff.area
+        var.quest_info = serialize.save( "quest_info", quest_info )
+        phelper:broadcast(2, var.quest_info)
+        questor_time (tonumber(stuff.timer))
+      elseif stuff.action == 'killed' then
+        check(EnableTimer("questtimer", false))
+        phelper:broadcast(4)
+      elseif stuff.action == 'comp' then
+        quest_info['qp'] = stuff.qp
+        quest_info['gold'] = stuff.gold
+        quest_info['tier'] = stuff.tierqp
+        quest_info['lucky'] = stuff.lucky
+        quest_info['mccp'] = stuff.mccp
+        quest_info['tp'] = stuff.tp
+        quest_info['trains'] = stuff.trains
+        quest_info['pracs'] = stuff.pracs
+        quest_info['finishtime'] = GetInfo(304)
+        quest_info['double'] = 0
+        if quest_info['double'] == 1 then
+          quest_info['double'] = stuff.qp
+        end
+        var.quest_info = serialize.save( "quest_info", quest_info )
+        phelper:broadcast(6, var.quest_info)
+        when_required = os.time () + (30 * 60)  -- 30 mins to go
+        onquest = false
+        update_timer()
+      elseif stuff.action == 'fail' then
+        when_required = os.time () + (stuff.wait * 60)  -- 15 mins to go
+        onquest = false
+        update_timer()
+        quest_info.failed = 1
+        quest_info['finishtime'] = GetInfo(304)
+        var.quest_info = serialize.save( "quest_info", quest_info )
+        phelper:broadcast(8, var.quest_info)
+      elseif stuff.action == 'status' then
+        if stuff.status == 'ready' then
+          quest_available()
+        else
+          when_required = os.time() + (stuff.wait * 60)
+          update_timer()
+        end
+      elseif stuff.action == 'reset' then
+        when_required = os.time() + (stuff.timer * 60)
+        update_timer()
+      end
+    end
+  end
 end
 
 function OnPluginInstall ()
@@ -543,6 +271,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  ldplugin ("GMCP_handler")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable

@@ -34,60 +34,71 @@ require "serialize"
 require "tablefuncs"
 require "ldplugin"
 
+char = {}
+
 statwin = Miniwin:new{name="Stats"}
 statwin:set_default('width_padding', 5)
 statwin:set_default('header_height', 0)
 
 function build_stat_window()
-  stats = GetPluginVariableList("8a710e0783b431c06d61a54c")
-
   styles = {}
 
-  tstyle = format_stat('Strength', stats.str, stats.base_str, 13, 3)
+  tstyle = format_stat('Strength', char.stats.str, char.maxstats.maxstr, 13, 3)
   table.insert(tstyle, {text="   "})
-  tableExtend(tstyle, format_stat('HP', stats.hp, stats.max_hp, 5, #tostring(stats.max_hp)))
+  tableExtend(tstyle, format_stat('HP', char.vitals.hp, char.maxstats.maxhp, 5, #tostring(char.maxstats.maxhp)))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Intelligence', stats.int, stats.base_int, 13, 3)
+  tstyle = format_stat('Intelligence', char.stats.int, char.maxstats.maxint, 13, 3)
   table.insert(tstyle, {text="   "})
-  tableExtend(tstyle, format_stat('Mana', stats.mana, stats.max_mana, 5, #tostring(stats.max_mana)))
+  tableExtend(tstyle, format_stat('Mana', char.vitals.mana, char.maxstats.maxmana, 5, #tostring(char.maxstats.maxmana)))
   table.insert(styles, tstyle)
 
-
-  tstyle = format_stat('Wisdom', stats.wis, stats.base_wis, 13, 3)
+  tstyle = format_stat('Wisdom', char.stats.wis, char.maxstats.maxwis, 13, 3)
   table.insert(tstyle, {text="   "})
-  tableExtend(tstyle, format_stat('Moves', stats.moves, stats.max_moves, 5, #tostring(stats.max_moves)))
+  tableExtend(tstyle, format_stat('Moves', char.vitals.moves, char.maxstats.maxmoves, 5, #tostring(stats.max_moves)))
   table.insert(styles, tstyle)
 
-  table.insert(styles, format_stat('Dexterity', stats.dex, stats.base_dex, 13, 3))
-
-  tstyle = format_stat('Constitution', stats.con, stats.base_con, 13, 3)
+  tstyle = format_stat('Dexterity', char.stats.dex, char.maxstats.maxdex, 13, 3)
   table.insert(tstyle, {text="   "})
-  tableExtend(tstyle, format_stat('HR', stats.hitroll, nil, 5, #tostring(stats.hitroll)))
+  tableExtend(tstyle, format_stat('Saves', char.stats.saves, nil, 5, #tostring(stats.hitroll)))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Luck', stats.luck, stats.base_luck, 13, 3)
+  tstyle = format_stat('Constitution', char.stats.con, char.maxstats.maxcon, 13, 3)
   table.insert(tstyle, {text="   "})
-  tableExtend(tstyle, format_stat('DR', stats.damroll, nil, 5, #tostring(stats.damroll)))
+  tableExtend(tstyle, format_stat('HR', char.stats.hr, nil, 5, #tostring(char.stats.hr)))
   table.insert(styles, tstyle)
+
+  tstyle = format_stat('Luck', char.stats.luck, char.maxstats.maxluck, 13, 3)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('DR', char.stats.dr, nil, 5, #tostring(char.stats.dr)))
+  table.insert(styles, tstyle)
+
+  tstyle = format_stat('Trains', char.worth.trains, nil, 13, 7)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('Pracs', char.worth.pracs, nil, 5, #tostring(char.worth.pracs)))
+  table.insert(styles, tstyle)
+
+  tstyle = format_stat('XP to Level', char.status.tnl, nil, 13, 7)
+  table.insert(tstyle, {text="   "})
+  tableExtend(tstyle, format_stat('Level', char.status.level, nil, 5, #tostring(char.status.level), "#00EE00"))
+  table.insert(styles, tstyle)
+
+  tstyle = format_stat('Alignment', char.status.align, nil, 13, 7)
+  table.insert(tstyle, {text="   "})
+  --tableExtend(tstyle, format_stat('Gold', char.worth.gold, nil, 5, #tostring(char.worth.gold), 'gold'))
+  --table.insert(styles, tstyle)
 
   table.insert(styles, {{text = ''}})
 
-  tstyle = format_stat('XP to Level', stats.to_level, nil, 13, 7)
+  tstyle = format_stat('QP', char.worth.qp, nil, 13, 7)
   table.insert(tstyle, {text="   "})
-  tableExtend(tstyle, format_stat('Level', stats.level, nil, 5, #tostring(stats.level), "#00EE00"))
+  tableExtend(tstyle, format_stat('TP', char.worth.tp, nil, 5, #tostring(char.worth.tp)))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Alignment', stats.align, nil, 13, 7)
-  table.insert(tstyle, {text="   "})
-  tableExtend(tstyle, format_stat('Gold', stats.gold, nil, 5, #tostring(stats.gold), 'gold'))
+  tstyle = format_stat('Gold', char.worth.gold, nil, 13, #tostring(char.worth.gold), 'gold')
   table.insert(styles, tstyle)
 
-  table.insert(styles, {{text = ''}})
-
-  tstyle = format_stat('QP', stats.qp, nil, 13, 7)
-  table.insert(tstyle, {text="   "})
-  tableExtend(tstyle, format_stat('TP', stats.tp, nil, 5, #tostring(stats.tp)))
+  tstyle = format_stat('Bank', char.worth.bank, nil, 13, #tostring(char.worth.bank), 'gold')
   table.insert(styles, tstyle)
 
   statwin:enable()
@@ -140,8 +151,20 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  if msg == 1 and id == "8a710e0783b431c06d61a54c" then
-    build_stat_window()
+--stats.vitals { "hp": 5280, "mana": 4390, "moves": 5185 }
+--stats.stats { "str": 233, "int": 177, "wis": 213, "dex": 329, "con": 181, "luck": 245, "hr": 309, "dr": 371, "saves": 51 }
+--stats.maxstats { "maxhp": 5280, "maxmana": 4390, "maxmoves": 5185, "maxstr": 110, "maxint": 100, "maxwis": 131, "maxdex": 182, "maxcon": 108, "maxluck": 157 }
+--stats.worth { "gold": 322802, "bank": 0, "qp": 5257, "tp": 2, "trains": 1, "pracs": 3 }
+--stats.status { "level": 180, "tnl": 1428, "hunger": 70, "thirst": 70, "align": 74, "state": 8, "pos": "Fighting" , "enemy": "a mountain cyclops", "enemypct": 12 }
+--stats.base { "name": "Bast", "class": "Thief", "subclass": "Ninja", "race": "Shadow", "clan": "", "pretitle": "", "perlevel": 5000 }
+
+  if id == 'aaa44dccb20fa11787c5a327' then
+      local pvar = GetPluginVariable(  "aaa44dccb20fa11787c5a327", "stats" )
+
+      -- get the timer
+      loadstring( pvar )()
+      char = stats
+      build_stat_window()
   end
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
@@ -159,7 +182,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin("Stats_Detector")
+  ldplugin("broadcast_stats")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable

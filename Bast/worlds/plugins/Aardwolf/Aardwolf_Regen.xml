@@ -197,12 +197,13 @@ function OnPluginBroadcast (msg, id, name, text)
     if status.statestring == 'active' then
        checkstand()
     end
-  elseif id == "85f72d0e263d75df7bde6f00" then
-     if msg == 4 then
+  elseif id == '3e7dedbe37e44942dd46d264' then
+    if text:find("room.info") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room")
+      room = assert (loadstring ('return ' .. gmcparg or ""))()
       current_room = {}
-      current_room['id'] = tonumber(text)
-     elseif msg == 2 then
-      current_room['name'] = text
+      current_room['id'] = tonumber(room.info.num)
+      current_room['name'] = room.info.name
       oldregen  = verify_bool(phelper.inregen)
       phelper:set('inregen', check_room(current_room.id), {silent=true})
 
@@ -219,7 +220,8 @@ function OnPluginBroadcast (msg, id, name, text)
         remove_regen()
         return
       end
-     end
+
+    end
   elseif id == "aaa7b6edb20fa44565c5a327" then
     if msg == 1 then
       runto = true
@@ -280,7 +282,7 @@ end -- OnPluginClose
 function OnPluginEnable ()
 
   ldplugin ("broadcast_runto")
-  ldplugin ("ATCP_NJG")
+  ldplugin ("GMCP_handler")
   ldplugin ("broadcast_state")
   ldplugin ("broadcast_invmon")
   ldplugin ("AFK_Detector.xml")

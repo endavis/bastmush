@@ -92,13 +92,16 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  if id == "85f72d0e263d75df7bde6f00" then
-    if msg == 4 then
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("room.info") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room")
+      room = assert (loadstring ('return ' .. gmcparg or ""))()
+
       if seenrecall == true then
         seenrecall = false
         phelper:enabletriggroup("runtostuff", true)
       end
-      if tostring(text) == tostring(32418) then
+      if tostring(room.info.num) == tostring(32418) then
         seenrecall = true
       end
     end
@@ -118,7 +121,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin ("ATCP_NJG")
+  ldplugin ("GMCP_handler")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable

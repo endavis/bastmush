@@ -145,15 +145,17 @@ function OnPluginBroadcast (msg, id, name, text)
       cpwin:disable()
     end
 
-  elseif id == "8a710e0783b431c06d61a54c" then
-    if msg == 1 then
-      -- get one variable
-      tcurlevel = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
+  elseif id == 'aaa44dccb20fa11787c5a327' then
+      local pvar = GetPluginVariable(  "aaa44dccb20fa11787c5a327", "stats" )
+
+      -- get the timer
+      loadstring( pvar )()
+      tcurlevel = stats.status.level
       if curlevel ~= tcurlevel then
         curlevel = tcurlevel
         show_cp_text()
       end
-    end
+  end
   end -- stats changed
 
   phelper:OnPluginBroadcast(msg, id, name, text)
@@ -172,7 +174,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("broadcast_cp")
-  ldplugin("Stats_Detector")
+  ldplugin("broadcast_stats")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable

@@ -52,9 +52,7 @@ internalrevision = "$Rev$"
 
 require "var"
 require "pluginhelper"
-
--- pull in telnet option handling
-dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+require "ldplugin"
 
 statestrings = {
   [1] = 'login',
@@ -72,21 +70,6 @@ statestrings = {
 var.statestring = statestrings[1]
 var.state = 1
 
-function OnPluginTelnetOption (option)
-  --- ignore not type 100.
-
-  if string.byte(option,1) ~= 100 then return end
-
-  state = tonumber(string.byte(option,2))
-  if state == var.state then return end
-
-  var.state = state
-  var.statestring = statestrings[state]
-
-  phelper:broadcast(state)
-
-end -- function
-
 ]]>
 </script>
 
@@ -94,6 +77,16 @@ end -- function
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char.status") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+      var.state = char.status.state
+      var.statestring = statestrings[tonumber(var.state)]
+      phelper:broadcast(var.state)
+    end
+  end
+
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
@@ -109,6 +102,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  ldplugin ("GMCP_handler")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
@@ -119,7 +113,6 @@ function OnPluginDisable ()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
-  TelnetOptionOn (TELOPT_REQUEST_STATUS)  -- get actual status (eg. afk, playing)
 
   phelper:OnPluginConnect()
 end -- function OnPluginConnect

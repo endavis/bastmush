@@ -189,6 +189,7 @@ function broadcast_kill()
   kill_info.wielded_weapon = ''
   kill_info.second_weapon = ''
   kill_info.bcasted = true
+  kill_info.mob = ""
 end
 
 function trivmob( name, line, wildcards )
@@ -202,16 +203,17 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  if msg == 1 and id == "8a710e0783b431c06d61a54c" then
 
-    -- get one variable
-    mob = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
-    if mob ~= nil and mob ~= "" and kill_info.bcasted then
-      kill_info.mob = GetPluginVariable ("8a710e0783b431c06d61a54c", "enemy")
-      kill_info.level = GetPluginVariable ("8a710e0783b431c06d61a54c", "level")
-    end
+  if id == 'aaa44dccb20fa11787c5a327' then
+      local pvar = GetPluginVariable(  "aaa44dccb20fa11787c5a327", "stats" )
 
-  end -- stats changed
+      -- get the timer
+      loadstring( pvar )()
+      kill_info.level = stats.status.level
+      if stats.status.enemy ~= "" then
+        kill_info.mob = stats.status.enemy
+      end
+  end
 
   if id == "aaa7dc9ed92ffc6146964abc" then
     if msg == 2 then
@@ -242,7 +244,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin("Stats_Detector")
+  ldplugin("broadcast_stats")
   ldplugin("broadcast_invmon")
 
   phelper:OnPluginEnable()

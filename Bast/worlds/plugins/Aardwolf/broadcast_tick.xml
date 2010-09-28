@@ -46,26 +46,6 @@ require "verify"
 
 status = {}
 
-function OnPluginTelnetOption (option)
-  --- ignore not type 100.
-
-  if string.byte(option,1) ~= 101 then return end
-
-  itype = tonumber(string.byte(option,2))
-
-  phelper:broadcast(itype)
-  phelper:mdebug(type(phelper.crontick))
-  phelper:mdebug(phelper.crontick)
-  phelper:mdebug(status.statestring)
-  if verify_bool(phelper.crontick) and (status.statestring == 'active' or
-                                 status.statestring == 'sleeping' or
-                                 status.statestring == 'resting') then
-    phelper:mdebug("Sending", "cr")
-    SendNoEcho("")
-  end
-
-end -- function
-
 ]]>
 </script>
 
@@ -76,7 +56,20 @@ function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa79afcb20fa11787c5a327" then
     status = GetPluginVariableList("aaa79afcb20fa11787c5a327")
   end -- if
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("comm.tick") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","comm.event")
+      stuff = assert (loadstring ('return ' .. gmcparg or ""))()
 
+      phelper:broadcast(1)
+      if verify_bool(phelper.crontick) and (status.statestring == 'active' or
+                                    status.statestring == 'sleeping' or
+                                    status.statestring == 'resting') then
+        phelper:mdebug("Sending", "cr")
+        SendNoEcho("")
+      end
+    end
+  end
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
@@ -93,6 +86,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("broadcast_state")
+  ldplugin ("GMCP_handler")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable

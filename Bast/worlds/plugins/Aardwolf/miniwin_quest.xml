@@ -173,6 +173,8 @@ function OnPluginBroadcast (msg, id, name, text)
       tstyle = {style}
       questwin.tabcolour = questwin.bg_colour
       questwin:tabbroadcast(true, tstyle)
+    elseif msg == 8 then
+      questwin:show(winbetweenquest)
     end
 
   end -- stats changed
