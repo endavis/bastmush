@@ -328,7 +328,7 @@ function Pluginhelper:OnPluginEnable()
   self:mdebug('OnPluginEnable')
   -- if we are connected when the plugin loads, it must have been reloaded whilst playing
   for i,v in pairs(self.pobjects) do
-    if not v.disabled then
+    if v.disabled == false then
       v:init(true)
     end
   end
