@@ -233,7 +233,6 @@ function whois_stats(name, line, wildcards)
     end
   end
   if name == "powerup" then
-    print("powerup")
     whoisinfo['powerupsall'] = trim(wildcards['pval1'])
     whoisinfo['powerupsmort'] = trim(wildcards['pval2'])
   end
