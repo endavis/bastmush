@@ -84,11 +84,9 @@ function build_stat_window()
   table.insert(styles, tstyle)
 
   tstyle = format_stat('Alignment', char.status.align, nil, 13, 7)
-  table.insert(tstyle, {text="   "})
+  --table.insert(tstyle, {text="   "})
   --tableExtend(tstyle, format_stat('Gold', char.worth.gold, nil, 5, #tostring(char.worth.gold), 'gold'))
-  --table.insert(styles, tstyle)
-
-  table.insert(styles, {{text = ''}})
+  table.insert(styles, tstyle)
 
   tstyle = format_stat('QP', char.worth.qp, nil, 13, 7)
   table.insert(tstyle, {text="   "})
