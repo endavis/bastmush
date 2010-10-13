@@ -132,10 +132,12 @@ function formatlevel()
     table.insert( tmsg, "bonus " )
   end
   if level ~= nil then
+    local lastrow = db:getlastrow('levels')
+    lastrow = lastrow - 1
     oldlevel = level - 1
     if db:open() then
       if db:checkfortable('levels') and level % 201 > 2 then
-        for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level = %d;", oldlevel)) do
+        for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level_id = %d;", lastrow)) do
           starttime = a[1]
           finishtime = a[2]
         end
@@ -151,7 +153,7 @@ function formatlevel()
         end
       end
       if db:checkfortable('mobkills') then
-        for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where level = %s and xp > 0", oldlevel)) do
+        for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where time > %s and time < %s and xp > 0", starttime, finishtime)) do
           mobskilled = a[1]
           mobsavexp = a[2]
         end
