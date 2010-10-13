@@ -238,9 +238,9 @@ function OnPluginBroadcast (msg, id, name, text)
       end
     end
   elseif id == "aaa7dc9ed92ffc6146964abc" then
-    loadstring(text)()
-    eqitem = item
     if msg == 2 then
+      loadstring(text)()
+      eqitem = item
       if eqitem.place == "lfinger" then
         if eqitem.name == "Aardwolf Ring of Regeneration" then
           phelper:set('regenworn',  true, {silent=true})
@@ -250,6 +250,8 @@ function OnPluginBroadcast (msg, id, name, text)
         end
       end
     elseif msg == 1 then
+      loadstring(text)()
+      eqitem = item
       if eqitem.place == "lfinger" then
         if eqitem.name ~= "Aardwolf Ring of Regeneration" then
           phelper:set('oldringsn', eqitem.itemsn, {silent=true})
