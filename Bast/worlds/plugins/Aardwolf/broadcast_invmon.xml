@@ -3,11 +3,11 @@
 <!-- $Id$ -->
 <muclient>
 <plugin
-   name="xBroadcast_Invmon"
+   name="xBroadcast_Inventory"
    author="Bast"
    id="aaa7dc9ed92ffc6146964abc"
    language="Lua"
-   purpose="broadcast invmon"
+   purpose="broadcast inventory"
    save_state="y"
    date_written="2009-02-22 14:20:07"
    requires="4.38"
@@ -72,16 +72,27 @@ item = {}
 
   <trigger
    enabled="y"
+   match="^{invitem}(.*)$"
+   name="invitem"
+   script="invitem"
+   sequence="100"
+   regexp="y"
+   omit_from_output="y"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
    match="############# Reconnecting to Game #############"
    sequence="100"
-   script="check_invmon"
+   script="check_inventory"
   >
   </trigger>
   <trigger
    enabled="y"
    match="Welcome to Aardwolf. May your adventures be mystical, challenging and rewarding."
    sequence="100"
-   script="check_invmon"
+   script="check_inventory"
   >
   </trigger>
   <trigger
@@ -292,6 +303,70 @@ item = {}
    omit_from_output="n"
   >
   </trigger>
+ <trigger
+   enabled="y"
+   match="^{invdetails}$"
+   script="invdetails_redirect"
+   omit_from_output="n"
+   name="start_invdetails"
+   sequence="100"
+   regexp="y"
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="*"
+   script="invdetails_redirect"
+   name="multi_line_invdetails"
+   omit_from_output="n"
+   group="invdetails"
+   sequence="10"
+  >
+  </trigger>
+ <trigger
+   enabled="y"
+   match="^{eqdata}$"
+   script="eqdata_redirect"
+   omit_from_output="n"
+   name="start_eqdata"
+   sequence="100"
+   regexp="y"
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="*"
+   script="eqdata_redirect"
+   name="multi_line_eqdata"
+   omit_from_output="n"
+   group="eqdata"
+   sequence="10"
+  >
+  </trigger>
+
+ <trigger
+   enabled="y"
+   match="^{invdata\s*(?&lt;container&gt;.*)}$"
+   script="invdata_redirect"
+   omit_from_output="n"
+   name="start_invdata"
+   sequence="100"
+   regexp="y"
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="*"
+   script="invdata_redirect"
+   name="multi_line_invdata"
+   omit_from_output="n"
+   group="invdata"
+   sequence="10"
+  >
+  </trigger>
 </triggers>
 
 
@@ -307,13 +382,54 @@ require "pluginhelper"
 require "verify"
 require "aardutils"
 
+function afterdebug()
+  local trigstoupdate = {"invmon", "start_invdetails", "multi_line_invdetails", "start_eqdata",
+                    "multi_line_eqdata" , "start_invdata", "multi_line_invdata"}
+  for i,v in ipairs(trigstoupdate) do
+    if phelper.tdebug then
+      SetTriggerOption(v, "omit_from_output", "n");
+    else
+      SetTriggerOption(v, "omit_from_output", "y");
+    end
+  end
+end
+
 item = {}
 item_name = ''
+invdetails = {}
+eqdata = {}
+invdata = {}
+invdata_temp = {}
+eqdata_cache = {}
+invdata_cache = {}
+invdetails_cache = {}
+containers_cache = {}
 
-function check_invmon()
+place = 0
+waiting = {}
+
+function check_inventory()
   if not verify_bool(phelper.isinvmonon) then
     SendNoEcho('invmon on')
   end
+--  if not next(eqdata) then
+--    SendNoEcho('eqdata')
+--  end
+--  if not next(invdata) then
+--    SendNoEcho('invdata')
+--  end
+end
+
+function invitem( name, line, wildcards)
+  local rline = wildcards[1]
+  local tstuff = dataparse(rline, 'eqdata')
+  if invdata[tstuff.objectid] == nil then
+    invdata[tstuff.objectid] = tstuff
+    invdata_cache[tstuff.objectid] = tstuff
+  else
+    invdata[tstuff.objectid].shortflags = tstuff.shortflags
+  end
+  phelper:broadcast(12)
 end
 
 function invmon ( name, line, wildcards )
@@ -326,22 +442,66 @@ end
 
 
 function builditem(wildcards)
-  item = {}
-  item.place = wearlocs[tonumber(wildcards.location) + 1] or -1
-  item.itemsn = wildcards.itemsn
+  local item = {}
+  item.placestr = wearlocs[tonumber(wildcards.location) + 1] or -1
+  item.wearloc = wildcards.location
+  item.objectid = wildcards.itemsn
   item.container = wildcards.container
   item.name = item_name
+  return item
 end
 
 function broadcast_invmon ( name, line, wildcards )
   phelper:mdebug(line)
+  local item = builditem(wildcards)
   if tonumber(wildcards.action) ~= 1 then
-    builditem(wildcards)
     local items = serialize.save( "item", item )
-    phelper:broadcast(wildcards.action, items, items)
+    phelper:broadcast(tonumber(wildcards.action), items, items)
     name = ''
-  else
-    builditem(wildcards)
+  end
+  checkaction(tonumber(wildcards.action), item)
+
+end
+
+function checkaction(action, item, afterwait)
+  waiting = {}
+  if action == 1 then
+    if eqdata[tonumber(item.wearloc)] ~= nil then
+      eqdata[tonumber(item.wearloc)] = nil
+      invdata[item.objectid] = eqdata_cache[item.objectid]
+      phelper:broadcast(11)
+      phelper:broadcast(12)
+    end
+  elseif action == 2 then
+    eqdata[tonumber(item.wearloc)] = eqdata_cache[item.objectid]
+    phelper:broadcast(11)
+    if next(invdata) then
+      invdata[item.objectid] = nil
+      phelper:broadcast(12)
+    end
+  elseif action == 3 or action == 7 then
+    invdata[item.objectid] = nil
+    phelper:broadcast(12)
+  elseif action == 4 then
+    --invdata[item.objectid] = invdata_cache[item.objectid]
+    --local titem = serialize.save( "invdata", invdata )
+    --phelper:broadcast(12)
+    --if afterwait then
+    --  invdata[item.objectid] = invdata_cache[item.objectid]
+    --  local titem = serialize.save( "invdata", invdata )
+    --  phelper:broadcast(12)
+    --else
+      SendNoEcho('invdata')
+    --  waiting.objectid = item.objectid
+    --  waiting.action = 4
+    --end
+
+  elseif action == 5 or action == 6 then
+    SendNoEcho('invdata')
+    SendNoEcho('invdata ' .. item.container)
+
+  --elseif action == 6 then
+
   end
 end
 
@@ -354,6 +514,166 @@ end
 
 function weareq ( name, line, wildcards )
   item_name = wildcards.item
+end
+
+function geteq (type, container)
+
+  if type == 'inventory' or type == 'invdata' then
+    local titem = serialize.save_simple( invdata )
+    return titem
+  elseif type == 'worn' or type == 'eqdata' then
+    local titem = serialize.save_simple( eqdata )
+    return titem
+  elseif type == 'container' then
+    if containers_cache[container] ~= nil then
+      local titem = serialize.save_simple( containers_cache[container] )
+      return titem
+    end
+  end
+  return serialize.save_simple( {} )
+end
+
+layout ={
+invheader = {"objectid", "level", "itemtype", "value", "weight", "wearable", "flags", "owner", "fromclan", "timer", "u1", "u2", "u3", "score"},
+container = {"capacity", "heaviestitem", "holding", "itemsinside", "totalweight", "itemsburden", "itemweightpercent"},
+statmod = {"stat", "value"},
+resistmod = {"resist", "value"},
+weapon = {"type", "avedam", "inflicts", "damtype", "special"},
+skillmod = {"skillnum", "value"},
+spells = {"uses", "level", "sn1", "sn2", "sn3", "sn4", "u1"},
+food = {"percent"},
+drink = {"servings", "liquid", "liquidmax", "liquidleft", "thirstpercent", "hungerpercent", "u1"},
+furniture = {"hpregen","manaregen","u1"},
+eqdata = {"objectid", "shortflags", "itemname", "level", "itemtype", "unique", "wearloc", "timer"}
+}
+
+function addmod(ltype, mod)
+  if invdetails[ltype] == nil then
+    invdetails[ltype] = {}
+  end
+  invdetails[ltype][mod[1]] = tonumber(mod[2])
+end
+
+
+function invdetails_redirect (name, line, wildcards, styles)
+  -- start of spells list? remove old ones
+  ltype = 'unknown'
+  if name == "start_invdetails" then
+    invdetails = {}
+    phelper:enabletriggroup("invdetails", true)
+    return
+  elseif line == "{/invdetails}" then
+    phelper:enabletriggroup("invdetails", false)
+    invdetails_cache[invdetails.objectid] = invdetails
+    local titem = serialize.save( "item", invdetails )
+    phelper:broadcast(10, titem, titem)
+    if waiting.action and waiting.objectid == invdetails.objectid then
+      checkaction(waiting.action, invdetails, true)
+    end
+    return
+  end -- if
+
+  ttype = string.match(line,"{(.*)}")
+  if layout[ttype] then
+    ltype = ttype
+  else
+    print('no layout for', ttype)
+  end
+
+  local tlist = utils.split(line, '}')
+  local llist = utils.split(tlist[2], '|')
+  if layout[ltype] then
+    if ltype == "statmod" or ltype == "resistmod" or ltype == "skillmod" then
+      addmod(ltype, llist)
+    else
+      for i,v in ipairs(layout[ltype]) do
+        if ltype == 'invheader' then
+          local value = llist[i]
+          if v == 'itemtype' or v == 'level' then
+            value = tonumber(value)
+          end
+          invdetails[v] = value
+        else
+          if invdetails[ltype] == nil then
+            invdetails[ltype] = {}
+          end
+          local value = llist[i]
+          if v == 'wearloc' or v == 'itemtype' or v == 'level' then
+            value = tonumber(value)
+          end
+          invdetails[ltype][v] = value
+        end
+      end
+    end
+  end
+end
+
+function dataparse(line, layoutname)
+  local tlist = utils.split(line, ',')
+  local wearloc = tlist[7]
+  local titem = {}
+  for i,v in ipairs(layout[layoutname]) do
+    local value = tlist[i]
+    if v == 'wearloc' or v == 'itemtype' or v == 'level' then
+      value = tonumber(value)
+    end
+    titem[v] = value
+  end
+  return titem
+end
+
+function eqdata_redirect (name, line, wildcards, styles)
+  -- start of spells list? remove old ones
+  ltype = 'unknown'
+  if name == "start_eqdata" then
+    eqdata = {}
+    phelper:enabletriggroup("eqdata", true)
+    return
+  elseif line == "{/eqdata}" then
+    phelper:enabletriggroup("eqdata", false)
+    phelper:broadcast(11)
+    return
+  end -- if
+
+  if line ~= "" then
+    titem = dataparse(line, 'eqdata')
+    eqdata[tonumber(titem.wearloc)] = titem
+    eqdata_cache[titem.objectid] = titem
+  end
+
+end
+
+function invdata_redirect (name, line, wildcards, styles)
+  -- start of spells list? remove old ones
+  ltype = 'unknown'
+  if name == "start_invdata" then
+    invdata_temp = {}
+    place = 0
+    if wildcards.container then
+      invdata_temp['container'] = trim(wildcards.container)
+      --if containers_cache[invdata.container] == nil then
+      --  DoAfterSpecial(5,'SendNoEcho("invdetails " .. invdata.container)',12)
+      --end
+    end
+    phelper:enabletriggroup("invdata", true)
+    return
+  elseif line == "{/invdata}" then
+    phelper:enabletriggroup("invdata", false)
+    if invdata_temp.container ~= "" then
+      containers_cache[invdata_temp.container] = invdata_temp
+      phelper:broadcast(13, invdata_temp.container, invdata_temp.container)
+    else
+      invdata = invdata_temp
+      phelper:broadcast(12)
+    end
+    return
+  end -- if
+
+  place = place + 1
+  titem = dataparse(line, 'eqdata')
+  titem.place = place
+  invdata_temp[titem.objectid] = titem
+  invdata_cache[titem.objectid] = titem
 end
 
 ]]>
@@ -380,7 +700,7 @@ end -- OnPluginClose
 function OnPluginEnable ()
   -- if we are connected when the plugin loads, it must have been reloaded whilst playing
   if IsConnected () then
-    check_invmon()
+    check_inventory()
   end -- if already connected
 
   phelper:OnPluginEnable()
@@ -414,9 +734,10 @@ end -- function OnPluginSaveState
 
 
 phelper:set_default('plugin_colour', 'orange')
-phelper:set_default('cmd', 'bimon')
+phelper:set_default('cmd', 'binv')
 
 phelper:add_setting('isinvmonon', {help="is the invmon command on", type="bool", readonly=true, default=verify_bool(false)})
+phelper:add_setting( 'tdebug', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1, after=afterdebug})
 
 phelper:enable()
 ]]>
