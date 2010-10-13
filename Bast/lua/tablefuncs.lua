@@ -2,7 +2,7 @@
 --[[
 http://code.google.com/p/bastmush
  - Documentation and examples
- 
+
 functions in this module
 tableSort
      sort the table by the keys or an internal key to each table, will sort string or integer keys
@@ -34,14 +34,23 @@ tableExtend
     extend a table by adding another table
 
 --]]
-function tableSort(ttable, sortkey, default)
+function tableSort(ttable, sortkey, default, reverse)
+  reverse = reverse or false
   local function sortfunc (a, b)
     if sortkey then
       local akey = ttable[a][sortkey] or default
       local bkey = ttable[b][sortkey] or default
-      return (akey < bkey)
+      if reverse then
+        return (bkey < akey)
+      else
+        return (akey < bkey)
+      end
     else
-      return (a < b)
+      if reverse then
+        return (b < a)
+      else
+        return (a < b)
+      end
     end
   end
 
