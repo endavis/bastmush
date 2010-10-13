@@ -145,9 +145,9 @@ function OnPluginBroadcast (msg, id, name, text)
       fromscript = false
       return
     end
-    loadstring(text)()
-    local eqitem = item
     if msg == 2 then
+      loadstring(text)()
+      local eqitem = item
       if eqitem.place == 'wielded' then
         print("weapon1 set to", eqitem.itemsn)
         SetVariable("weapon1", eqitem.itemsn)
