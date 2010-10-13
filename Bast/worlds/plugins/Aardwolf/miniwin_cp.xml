@@ -155,7 +155,6 @@ function OnPluginBroadcast (msg, id, name, text)
         curlevel = tcurlevel
         show_cp_text()
       end
-  end
   end -- stats changed
 
   phelper:OnPluginBroadcast(msg, id, name, text)
