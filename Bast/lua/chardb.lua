@@ -27,6 +27,15 @@ require 'aardutils'
 
 Statdb = Sqlitedb:subclass()
 
+tableids = {
+  levels = 'level_id',
+  stats = 'stat_id',
+  quests = 'quest_id',
+  campaigns = 'campaigns_id',
+  gquests = 'gq_id',
+  mobkills = 'mk_id'
+}
+
 function Statdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "/stats.db"
@@ -583,3 +592,18 @@ function Statdb:checkitemtable()
   end
 end
 
+
+function Statdb:getlastrow(ttable)
+  local colid = tableids[ttable]
+  local lastid = nil
+  if self:open() then
+    if colid then
+      tstring = 'SELECT MAX(' .. colid .. ') AS MAX FROM ' .. ttable
+      for a in self.db:nrows(tstring) do
+        lastid = a['MAX']
+      end
+    end
+    self:close()
+  end
+  return lastid
+end
