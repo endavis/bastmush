@@ -212,7 +212,7 @@ function formatquest()
   table.insert( tmsg, "s." )
   if db:open() then
     if db:checkfortable('quests') then
-      for a in db.db:rows("SELECT COUNT(*), AVG(qp + mccp + lucky + tier), AVG(finishtime - starttime) FROM quests;") do
+      for a in db.db:rows("SELECT COUNT(*), AVG(qp + mccp + lucky + tier), AVG(finishtime - starttime) FROM quests where failed = 0") do
         quest_total = a[1]
         quest_avg = a[2]
         quest_tavg = a[3]
