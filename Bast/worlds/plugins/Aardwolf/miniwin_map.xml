@@ -85,6 +85,7 @@ require "miniwin"
 require "tprint"
 require "commas"
 require "serialize"
+require "ldplugin"
 
 -- pull in telnet option handling
 dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
@@ -116,6 +117,9 @@ legwin:set_default('use_tabwin', false)
 map_lines = {}
 coords = nil
 PKroom = false
+Graffiti = false
+mapheader = {}
+maptext = {}
 
 dirmap = {
   e = 'east',
@@ -184,7 +188,7 @@ function process_coords ( name, line, wildcards, styles )
   style.style = 0
   table.insert (tstyle, style)
   style = {}
-  style.text = "]"
+  style.text = " ]"
   style.len = #style.text
   style.backcolour = mapwin.bg_colour
   style.textcolour = 0x00D600
@@ -259,6 +263,13 @@ function convert_exits(styles)
   return tstyles
 end
 
+flagfuncs = {
+  graffiti = function ()
+            SendNoEcho('read graffiti')
+        end
+
+}
+
 function parse_map(map)
   local header = {}
   local text = {}
@@ -285,6 +296,66 @@ function parse_map(map)
   if coords then
     text[#text - 1] = coords
   end
+  if room.details == "" then
+    tflags = utils.split(room.details, ",")
+    local styles = {}
+
+    local style = {}
+    style.text = '[ '
+    style.textcolour = 0x00D600
+    table.insert(styles, style)
+
+    local style = {}
+    style.text = 'Flags'
+    style.textcolour = 'white'
+    table.insert(styles, style)
+
+    local style = {}
+    style.text = ': None ]'
+    style.textcolour = 0x00D600
+    table.insert(styles, style)
+
+    table.insert(text, styles)
+  else
+    tflags = utils.split(room.details, ",")
+    local styles = {}
+
+    local style = {}
+    style.text = '[ '
+    style.textcolour = 0x00D600
+    table.insert(styles, style)
+
+    local style = {}
+    style.text = 'Flags'
+    style.textcolour = 'white'
+    table.insert(styles, style)
+
+    local style = {}
+    style.text = ':'
+    style.textcolour = 0x00D600
+    table.insert(styles, style)
+
+    for i,v in ipairs(tflags) do
+      local style = {}
+      style.text = ' ' .. string.upper(v:sub(1,2))
+      style.textcolour = 0x00D600
+      style.hint = v
+      style.mouseover = empty
+      if flagfuncs[v] ~= nil then
+        style.mouseup = flagfuncs[v]
+      end
+
+      table.insert(styles, style)
+    end
+
+    local style = {}
+    style.text = ' ]'
+    style.textcolour = 0x00D600
+    table.insert(styles, style)
+
+    table.insert(text, styles)
+  end
+  --tprint(text)
   return header, text
 end
 
@@ -295,23 +366,7 @@ function map_redirect (name, line, wildcards, styles)
   if name == "map_start" then
     map_lines = {}
   elseif name == "map_end" then
-
     EnableTrigger ("multi_line_map", false)  -- no more lines to go
-
-    if map_lines[1][1].textcolour == 255 then
-      PKroom = true
-    else
-      PKroom = false
-    end
-    local header = {}
-    local text = {}
-    header, text = parse_map(map_lines)
-
-    mapwin:enable()
-    mapwin:addtab('default', text, header, true)
-
-    legwin:enable()
-    legwin:addtab('default', info, nil, true)
   else
     table.insert (map_lines, styles)
   end -- if
@@ -326,7 +381,42 @@ end -- function map_redirect
 
 function OnPluginBroadcast (msg, id, name, text)
   phelper:OnPluginBroadcast(msg, id, name, text)
+
+  if not legwin:hastab('default') then
+    legwin:enable()
+    legwin:addtab('default', info, nil, true)
+  end
+
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("room.info") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
+      room = assert (loadstring ('return ' .. gmcparg or ""))()
+
+      if room.details:find("pk") then
+        PKroom = true
+      else
+        PKroom = false
+      end
+      if room.details:find("graffiti") then
+        Graffiti = true
+      else
+        Graffiti = false
+      end
+      mapheader = {}
+      maptext = {}
+      mapheader, maptext = parse_map(map_lines)
+
+      mapwin:enable()
+      mapwin:addtab('default', maptext, mapheader, true)
+    end
+  end
 end
+
+function requestmap()
+    SendNoEcho('map')
+    CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request room")
+end
+
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
@@ -341,8 +431,13 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  ldplugin ("GMCP_handler")
 
   phelper:OnPluginEnable()
+
+  if IsConnected() then
+    DoAfterSpecial(.5, "requestmap()", 12)
+  end
 end -- OnPluginEnable
 
 function OnPluginDisable ()
