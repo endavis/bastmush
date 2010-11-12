@@ -366,6 +366,8 @@ function Statdb:savelevel( levelinfo )
     if levelinfo['type'] == 'level' then
       self:addtostat('totallevels', 1)
       self:addtostat('level', 1)
+    elseif levelinfo['type'] == 'pup' then
+      self:addtostat('powerupsall', 1)
     end
     levelinfo['newlevel'] = tonumber(db:getstat('totallevels'))
     local stmt = self.db:prepare[[ INSERT INTO levels VALUES (NULL, :type, :newlevel, :str,
