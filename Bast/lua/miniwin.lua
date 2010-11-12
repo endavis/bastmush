@@ -92,6 +92,7 @@ TODO: plugin to set colours on all my miniwindows, maybe a theme
 TODO: addline function that adds a single line to the text addline(line, tab) tab is optional, then I could just convert_line and adjust_line
 TODO: automatically detect urls: (.*)(http\:\/\/(?:[A-Za-z0-9\.\\\/\?])+)(.*)
 TODO: have adjust_line be the one that breaks up the lines
+TODO: make a sticky tab that doesn't move off
 
 windowwidth = self.windowborderwidth
               + self.width_padding
@@ -308,8 +309,7 @@ function Miniwin:addline(tabname, line)
  -- add a line to the end of the text
 end
 
-function Miniwin:addtab(tabname, text, header, makeactive)
-
+function Miniwin:addtab(tabname, text, header, makeactive, sticky)
  if self.tabs[tabname] == nil then
    self.tabs[tabname] = {}
    self.tabs[tabname].text = text
@@ -317,6 +317,9 @@ function Miniwin:addtab(tabname, text, header, makeactive)
    self.tabs[tabname].header = header
    self.tabs[tabname].buttonstyles = {}
    self.tabs[tabname].tabstyles = {}
+   if sticky then
+     self.tabs[tabname].sticky = true
+   end
    table.insert(self.tablist, tabname)
  else
    self.tabs[tabname].text = text
@@ -325,7 +328,12 @@ function Miniwin:addtab(tabname, text, header, makeactive)
  end
  if not self.classinit then
   if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
-    tabremoved = table.remove(self.tablist, 1)
+    for i,v in pairs(self.tablist) do
+      if not self.tabs[v].sticky then
+        tabremoved = table.remove(self.tablist, i)
+        break
+      end
+    end
     self.tabs[tabremoved] = nil
     if tabremoved == self.activetab then
       self.activetab = self.tabs[tabname]
@@ -337,6 +345,14 @@ function Miniwin:addtab(tabname, text, header, makeactive)
   self:resettabs()
   --self:redraw()
  end
+end
+
+function Miniwin:stickytab(tabname)
+  self.tabs[tabname].sticky = true
+end
+
+function Miniwin:unstickytab(tabname)
+  self.tabs[tabname].sticky = false
 end
 
 function Miniwin:resettabs()
@@ -352,12 +368,21 @@ function Miniwin:resettabs()
 end
 
 function Miniwin:removetab(tabname)
+  print('removing', tabname)
   for i,v in pairs(self.tablist) do
-   if v.tabname == tabname then
+    print('tabname', v.tabname)
+    if self.tabs[v].tabname == tabname then
+     print('found tab at', i)
      table.remove(self.tablist, i)
-   end
+    end
   end
   self.tabs[tabname] = nil
+  if tabname == self.activetab then
+    print('setting activetab to', self.tablist[1])
+    self.activetab = self.tablist[1]
+  end
+  print('redrawwing tabs')
+  self:resettabs()
 end
 
 function Miniwin:counttabs()
@@ -379,6 +404,29 @@ function Miniwin:changetotab(tabname)
   end
 end
 
+function Miniwin:tabmenu(tabname)
+  local menu = 'Close'
+  local stext = '| Sticky'
+  if self.tabs[tabname].sticky then
+    stext = ' | UnSticky'
+  end
+  menu = menu .. stext
+  local result = WindowMenu (self.id, WindowInfo (self.id, 14), WindowInfo (self.id, 15), menu) --do menu
+  if result:match(' - ') then
+    local tresult = utils.split(result, '-')
+    result = trim(tresult[1])
+  end
+  if result ~= "" then
+    if result:match("UnSticky") then
+      self:unstickytab(tabname)
+    elseif result:match("Sticky") then
+      self:stickytab(tabname)
+    elseif result:match("Close") then
+      self:removetab(tabname)
+    end
+  end
+end
+
 function Miniwin:buildtabline()
   if self:counttabs() > 1 then
     local tabline = {}
@@ -388,7 +436,13 @@ function Miniwin:buildtabline()
       style.text = ' ' .. v.tabname .. ' '
       style.tab = v.tabname
       style.mouseup = function(win, flags, hotspot_id)
-                        self:changetotab(v.tabname)
+                        if bit.band(flags, 0x10) ~= 0 then
+                          -- left
+                          self:changetotab(v.tabname)
+                        elseif bit.band(flags, 0x20) ~= 0 then
+                          -- right
+                          self:tabmenu(v.tabname)
+                        end
                       end
       style.mouseover = function(win, flags, hotspot_id)
 
@@ -1688,6 +1742,7 @@ end -- displayline
 function Miniwin:create_window(height, width, x, y)
   local height = height or self.activetab.build_data.actualwindowheight
   local width = width or self.activetab.build_data.actualwindowwidth
+
 
   -- recreate the window the correct size
   local tx = x or self.x
