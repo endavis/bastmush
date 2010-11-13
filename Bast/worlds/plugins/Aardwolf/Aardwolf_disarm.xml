@@ -171,7 +171,7 @@ function disarmed(name, line, wildcards, styles)
   if cweap == nil then
     Send("get all")
     fromscript = true
-    Send("wield all")
+    Send("wear all")
   else
     Send("get " .. cweap)
     fromscript = true
