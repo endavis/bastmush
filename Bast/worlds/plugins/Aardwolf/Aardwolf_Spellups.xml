@@ -11,7 +11,7 @@
    purpose="Does Aardwolf spellups"
    date_written="2008-07-05"
    requires="4.30"
-   version="1.02"
+   version="1.1"
    save_state="y"
    >
 <description trim="y">
@@ -315,7 +315,7 @@ end -- OnPluginClose
 
 
 function OnPluginEnable ()
-  checkplugin ("8a710e0783b431c06d61a54c", "Stats_Detector.xml")
+  checkplugin ("3e7dedbe37e44942dd46d264", "GMCP_Handler.xml")
   checkplugin ("aaa79afcb20fa11787c5a327", "broadcast_state.xml")
 
   -- ensure world file exists
@@ -345,8 +345,9 @@ function OnPluginEnable ()
   tstatus = GetPluginVariableList("aaa79afcb20fa11787c5a327")
   status = tstatus or status
   if status.statestring == "active" then
-    stats = GetPluginVariableList("8a710e0783b431c06d61a54c")
-    spellup_refresh()
+    if getStats() then
+      spellup_refresh()
+    end
   end
 end -- OnPluginEnable
 
@@ -448,19 +449,33 @@ function parse_recoveries_line (line)
   return tonumber (sn), trim (name:lower ()), tonumber (duration)
 end -- parse_recoveries_line
 
+function getStats()
+  res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
+  tt = assert (loadstring ('return ' .. gmcparg or ""))()
+
+  if tt['vitals'] and tt['stats'] and tt['maxstats'] and tt['worth'] and tt['status'] and tt['base'] then
+    stats = tt
+    return true
+  end
+
+  return false
+end
+
 function OnPluginBroadcast (msg, id, name, text)
-  local old_mana = stats.mana
-  local old_moves = stats.moves
+  local old_mana = stats.vitals.mana
+  local old_moves = stats.vitals.moves
   local new_stats = false
   local old_state = status.state
 
   -- stats change
-  if id == "8a710e0783b431c06d61a54c" then
-    if not next(stats) then
-      new_stats = true
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      if getStats() then
+        if not next(stats) then
+          newstats = true
+        end
+      end
     end
-    stats = GetPluginVariableList("8a710e0783b431c06d61a54c")
-  -- state change
   elseif id == "aaa79afcb20fa11787c5a327" then
     status = GetPluginVariableList("aaa79afcb20fa11787c5a327")
   end -- if
@@ -471,13 +486,13 @@ function OnPluginBroadcast (msg, id, name, text)
   elseif new_stats then
     resume_buff_loop("newstats")
   elseif next(stats) and not (old_mana == nil or old_moves == nil) then
-    pdebug("stats.mana: ", stats.mana, " old_mana: ", old_mana)
-    if tonumber (stats.mana) > tonumber (old_mana) then
+    pdebug("stats.vitals.mana: ", stats.vitals.mana, " old_mana: ", old_mana)
+    if tonumber (stats.vitals.mana) > tonumber (old_mana) then
       low_mana = nil
-      resume_buff_loop ("more_mana", stats.mana)
-    elseif tonumber (stats.moves) > tonumber (old_moves) then
+      resume_buff_loop ("more_mana", stats.vitals.mana)
+    elseif tonumber (stats.vitals.moves) > tonumber (old_moves) then
       low_moves = nil
-      resume_buff_loop ("more_moves", stats.moves)
+      resume_buff_loop ("more_moves", stats.vitals.moves)
     end
   end -- something changed
 end  -- OnPluginBroadcast
@@ -881,7 +896,7 @@ end -- show_spells
 function show_status (w)
   -- show our status
 
-  w:ColourTell ("silver", "", "Position: " .. capitalize (stats.position_str or "unknown"))
+  w:ColourTell ("silver", "", "Position: " .. capitalize (stats.status.pos or "unknown"))
   if status.statestring == "afk" then
     w:ColourTell ("cyan", "", " (AFK)")
   end -- AFK
@@ -957,7 +972,7 @@ function show_current_buffs (name, line, wildcards, styles)
 
   if next (spells) == nil or
      next (recoveries) == nil or
-     stats.hp == nil then
+     stats.vitals.hp == nil then
     return
   end -- no spells known
 
@@ -1798,7 +1813,7 @@ function spell_failure (name, line, wildcards)
 
   -- NOT ENOUGH MANA
   elseif reason == 4 then  -- No mana, skip it
-     low_mana = tonumber (stats.mana)
+     low_mana = tonumber (stats.vitals.mana)
 
   -- SPELL DISABLED
   elseif reason == 7 then  -- OooO  - spell disabled
@@ -1826,7 +1841,7 @@ function spell_failure (name, line, wildcards)
 
   -- NOT ENOUGH MOVES
   elseif reason == 12 then  -- No moves, skip it
-     low_moves = tonumber (stats.moves)
+     low_moves = tonumber (stats.vitals.moves)
 
   end -- if
 
@@ -1873,7 +1888,7 @@ function try_to_buff_us (reason)
   -- need a certain minimal amount of information to proceed
   if next (spells) == nil or
      next (recoveries) == nil or
-     stats.hp == nil then
+     stats.vitals.hp == nil then
     pdebug("return because we don't have enough info")
     return
   end -- tables not set up
