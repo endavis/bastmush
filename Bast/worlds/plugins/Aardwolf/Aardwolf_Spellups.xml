@@ -462,10 +462,13 @@ function getStats()
 end
 
 function OnPluginBroadcast (msg, id, name, text)
-  local old_mana = stats.vitals.mana
-  local old_moves = stats.vitals.moves
+  if next(stats) then
+    local old_mana = stats.vitals.mana
+    local old_moves = stats.vitals.moves
+  end
   local new_stats = false
   local old_state = status.state
+
 
   -- stats change
   if id == '3e7dedbe37e44942dd46d264' then
