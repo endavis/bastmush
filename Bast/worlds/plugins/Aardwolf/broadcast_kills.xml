@@ -204,15 +204,19 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
 
-  if id == 'aaa44dccb20fa11787c5a327' then
-      local pvar = GetPluginVariable(  "aaa44dccb20fa11787c5a327", "stats" )
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
+      tt = assert (loadstring ('return ' .. gmcparg or ""))()
 
-      -- get the timer
-      loadstring( pvar )()
-      kill_info.level = stats.status.level
-      if stats.status.enemy ~= "" then
-        kill_info.mob = stats.status.enemy
+      if tt['status'] then
+        kill_info.level = tt.status.level
+        if tt.status.enemy ~= "" then
+          kill_info.mob = tt.status.enemy
+        end
       end
+
+    end
   end
 
   if id == "aaa7dc9ed92ffc6146964abc" then
@@ -244,7 +248,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin("broadcast_stats")
+  ldplugin("GMCP_Handler")
   ldplugin("broadcast_invmon")
 
   phelper:OnPluginEnable()
