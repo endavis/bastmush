@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2009-02-22 14:20:07"
    requires="4.38"
-   version="3.0"
+   version="4.0"
    >
 
 <description trim="y">
@@ -68,6 +68,13 @@ whoisinfo = {}
   whoisinfo.duelslost = "0"
   whoisinfo.questsfailed = "138"
   whoisinfo.name = "Bast"
+
+pagesize 30
+Page size set to 30 lines.
+
+
+pagesize
+You currently display 30 lines per page.
 
 ]]>
 </description>

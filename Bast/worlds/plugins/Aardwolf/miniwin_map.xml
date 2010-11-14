@@ -10,7 +10,7 @@
    purpose="redirect map to miniwin"
    date_written="2008-07-18"
    requires="4.52"
-   version="3.0"
+   version="4.0"
    save_state="y"
    >
 <description trim="y">
