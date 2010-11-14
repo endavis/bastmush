@@ -545,12 +545,16 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
 
-  if id == 'aaa44dccb20fa11787c5a327' then
-      local pvar = GetPluginVariable(  "aaa44dccb20fa11787c5a327", "stats" )
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
+      tt = assert (loadstring ('return ' .. gmcparg or ""))()
 
-      -- get the timer
-      loadstring( pvar )()
-      curlevel = stats.status.level
+      if tt['status'] then
+          curlevel = tt.status.level
+      end
+
+    end
   end
 
   phelper:OnPluginBroadcast(msg, id, name, text)
@@ -570,7 +574,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin("broadcast_stats")
+  ldplugin("GMCP_Handler")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
