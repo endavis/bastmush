@@ -7,7 +7,7 @@
    author="Bast"
    id="eee90c778a44169e1e1d9585"
    language="Lua"
-   purpose="display stats in a miniwindow"
+   purpose="display stats in a miniwindow, includes quests, cps, etc"
    date_written="2008-07-18"
    requires="4.52"
    version="3.0"
@@ -33,12 +33,28 @@ require "commas"
 require "serialize"
 require "tablefuncs"
 require "ldplugin"
+require "chardb"
 
 char = {}
+db = Statdb:new{}
 
 statwin = Miniwin:new{name="Stats"}
 statwin:set_default('width_padding', 5)
 statwin:set_default('header_height', 0)
+statwin:set_default("maxtabs", 5)
+
+function roundto(val, decimal)
+  local tval = -1
+  --print('rounding', val, ' to ', decimal, 'places')
+  if (decimal) then
+    tval = math.floor( (val * 10^decimal) + 0.5) / (10^decimal)
+  else
+    tval = math.floor(val+0.5)
+  end
+  --print('returned', tval)
+  return tval
+end
+
 
 function build_stat_window()
   styles = {}
@@ -55,12 +71,12 @@ function build_stat_window()
 
   tstyle = format_stat('Wisdom', char.stats.wis, char.maxstats.maxwis, 13, 3)
   table.insert(tstyle, {text="   "})
-  tableExtend(tstyle, format_stat('Moves', char.vitals.moves, char.maxstats.maxmoves, 5, #tostring(stats.max_moves)))
+  tableExtend(tstyle, format_stat('Moves', char.vitals.moves, char.maxstats.maxmoves, 5, #tostring(char.stats.max_moves)))
   table.insert(styles, tstyle)
 
   tstyle = format_stat('Dexterity', char.stats.dex, char.maxstats.maxdex, 13, 3)
   table.insert(tstyle, {text="   "})
-  tableExtend(tstyle, format_stat('Saves', char.stats.saves, nil, 5, #tostring(stats.hitroll)))
+  tableExtend(tstyle, format_stat('Saves', char.stats.saves, nil, 5, #tostring(char.stats.hitroll)))
   table.insert(styles, tstyle)
 
   tstyle = format_stat('Constitution', char.stats.con, char.maxstats.maxcon, 13, 3)
@@ -100,25 +116,412 @@ function build_stat_window()
   table.insert(styles, tstyle)
 
   statwin:enable()
-  statwin:addtab('default', styles, nil, true)
+  statwin:addtab('Stats', styles)
 
 end
 
-function format_stat(statname, statcur, statother, colwidth, statlength, color)
-    allstyle = {}
+function build_level_window()
+  local styles = {}
+  local stats = {}
+  stats['levels'] = {}
+  stats['pups'] = {}
+  if db:open() then
+    for a in db.db:rows("SELECT totallevels, qpearned FROM stats WHERE milestone = 'current'") do
+      stats.levels['total'] = a[1]
+      stats.levels['qpearned'] = a[2]
+    end
+    for a in db.db:rows("SELECT MAX(powerupsall) FROM stats") do
+      stats.pups['total'] = a[1]
+    end
+    if totallevels then
+      stats.levels['qpave'] = qpearned/totallevels
+    end
+    for a in db.db:rows("SELECT AVG(trains), AVG(bonustrains), SUM(trains + bonustrains), SUM(pracs), COUNT(*) FROM levels where type = 'level'") do
+      stats.levels['avetrains'] = a[1]
+      stats.levels['avebonustrains'] = a[2]
+      stats.levels['totaltrains'] = a[3]
+      stats.levels['totalpracs'] = a[4]
+      stats.levels['indb'] = a[5]
+    end
 
-    style = {}
+    for a in db.db:rows("SELECT AVG(finishtime - starttime) FROM levels where type = 'level' and finishtime <> -1" ) do
+      stats.levels['avetime'] = a[1]
+    end
+
+    for a in db.db:rows("SELECT AVG(trains), AVG(bonustrains), SUM(trains + bonustrains), COUNT(*) FROM levels where type = 'pup'") do
+      stats.pups['avetrains'] = a[1]
+      stats.pups['avebonustrains'] = a[2]
+      stats.pups['totaltrains'] = a[3]
+      stats.pups['indb'] = a[4]
+    end
+
+    for a in db.db:rows("SELECT AVG(finishtime - starttime) FROM levels where type = 'pup' and finishtime <> -1" ) do
+      stats.pups['avetime'] = a[1]
+    end
+
+
+    local allstyles = {}
+
+    local linestyles = format_row("Type", "Levels", "Pups", "lime", "lime")
+    table.insert(allstyles, linestyles)
+
+    table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+
+    local linestyles = format_row("Total Overall", stats.levels['total'], stats.pups['total'])
+    table.insert(allstyles, linestyles)
+
+    local linestyles = format_row("Total in DB", stats.levels['indb'], stats.pups['indb'])
+    table.insert(allstyles, linestyles)
+
+    local linestyles = format_row("Total Trains", stats.levels['totaltrains'], stats.pups['totaltrains'])
+    table.insert(allstyles, linestyles)
+
+    local linestyles = format_row("Ave Trains",
+         tonumber(string.format("%.3f", stats.levels['avetrains'])),
+         tonumber(string.format("%.3f", stats.pups['avetrains'])))
+    table.insert(allstyles, linestyles)
+
+    local linestyles = format_row("Ave Bon Trains",
+         tonumber(string.format("%.3f", stats.levels['avebonustrains'])),
+         tonumber(string.format("%.3f", stats.pups['avebonustrains'])))
+    table.insert(allstyles, linestyles)
+
+    local linestyles = format_row("Total Pracs", stats.levels['totalpracs'], "")
+    table.insert(allstyles, linestyles)
+
+    local linestyles = format_row("Ave Time", convert_time(stats.levels['avetime']), convert_time(stats.pups['avetime']))
+    table.insert(allstyles, linestyles)
+
+    statwin:enable()
+
+    statwin:addtab('Levels', allstyles)
+  end
+
+end
+
+function build_quest_window()
+  local styles = {}
+  local stats = {}
+  if db:open() then
+    for a in db.db:rows("SELECT qpearned, questscomplete, questsfailed, totallevels FROM stats WHERE milestone = 'current'") do
+      stats['qpearned'] = a[1]
+      stats['questcomp'] = a[2]
+      stats['questfailed'] = a[3]
+      stats['totallevels'] = a[4]
+    end
+    if stats['totallevels'] then
+      stats['qplevelave'] = stats['qpearned']/stats['totallevels']
+    end
+    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), SUM(tier), AVG(tier), SUM(mccp), AVG(mccp), SUM(lucky), AVG(qp), AVG(lucky), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*), AVG(qp + mccp + lucky + tier) FROM quests where failed = 0") do
+      stats['avetime'] = a[1]
+      stats['qp'] = a[2]
+      stats['tier'] = a[3]
+      stats['avetier'] = a[4] or 0
+      if stats['avetier'] == "" then
+        stats['avetier'] = 0
+      end
+      stats['mccp'] = a[5]
+      stats['mccpave'] = a[6]
+      stats['lucky'] = a[7]
+      stats['qpquestave'] = a[8]
+      stats['luckyave'] = a[9]
+      stats['tp'] = a[10]
+      stats['tpave'] = a[11]
+      stats['trains'] = a[12]
+      stats['trainsave'] = a[13]
+      stats['pracs'] = a[14]
+      stats['pracsave'] = a[15]
+      stats['qindb'] = a[16]
+      stats['dboverallave'] = a[17]
+    end
+
+    for a in db.db:rows("SELECT COUNT(*) FROM quests where failed != 0") do
+      stats['failedindb'] = a[1]
+    end
+    stats['indb'] = stats['failedindb'] + stats['qindb']
+
+    local allstyles = {}
+
+    local linestyles = format_row("DB Stats", "Total", "In DB", "lime", "lime")
+    table.insert(allstyles, linestyles)
+    table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+    local linestyles = format_row("Quests", stats['questcomp'] + stats['questfailed'], stats['indb'])
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Quests Comp", stats['questcomp'], stats['qindb'])
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Quests Failed", stats['questfailed'], stats['failedindb'])
+    table.insert(allstyles, linestyles)
+
+    table.insert(allstyles, {{text = ''}})
+
+    local linestyles = format_row("QP Stats", "Total", "Average", "lime", "lime")
+    table.insert(allstyles, linestyles)
+    table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+    local linestyles = format_row("Overall QP", stats['qpearned'], string.format("%.3f", stats['qplevelave']) .. '/level')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Quest QP", stats['qp'], string.format("%.3f", stats['qpquestave']) .. '/quest')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("MCCP",
+         stats['mccp'],
+         string.format("%.3f", stats['mccpave']) .. '/quest')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Lucky",
+         stats['lucky'],
+         string.format("%.3f", stats['luckyave']) .. '/quest')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Tier",
+         stats['tier'],
+         string.format("%.3f", stats['avetier']) .. '/quest')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("QP Per Quest", "", string.format("%.3f", stats['dboverallave']) .. '/quest')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Time", "", convert_time(stats['avetime']))
+    table.insert(allstyles, linestyles)
+
+    table.insert(allstyles, {{text = ''}})
+
+    local linestyles = format_row("Bonus Rewards", "Total", "Average", "lime", "lime")
+    table.insert(allstyles, linestyles)
+    table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+    local linestyles = format_row("TP",
+         stats['tp'],
+         string.format("%.3f", stats['tpave']) .. '/quest')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Trains",
+         stats['trains'],
+         string.format("%.3f", stats['trainsave']) .. '/quest')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Pracs",
+         stats['pracs'],
+         string.format("%.3f", stats['pracsave']) .. '/quest')
+    table.insert(allstyles, linestyles)
+
+    statwin:enable()
+
+    statwin:addtab('Quests', allstyles)
+  end
+
+end
+
+function build_cp_window()
+  local styles = {}
+  local stats = {}
+  if db:open() then
+    for a in db.db:rows("SELECT campaignsdone, campaignsfld, totallevels FROM stats WHERE milestone = 'current'") do
+      stats['campaignsdone'] = a[1]
+      stats['campaignsfld'] = a[2]
+      stats['totallevels'] = a[3]
+    end
+    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), AVG(qp), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*) FROM campaigns where failed = 0") do
+      stats['avetime'] = a[1]
+      stats['qp'] = a[2]
+      stats['qpcpave'] = a[3]
+      stats['tp'] = a[4]
+      stats['tpave'] = a[5]
+      stats['trains'] = a[6]
+      stats['trainsave'] = a[7]
+      stats['pracs'] = a[8]
+      stats['pracsave'] = a[9]
+      stats['cindb'] = a[10]
+    end
+
+    for a in db.db:rows("SELECT COUNT(*) FROM campaigns where failed != 0") do
+      stats['failedindb'] = a[1]
+    end
+    stats['indb'] = stats['failedindb'] + stats['cindb']
+
+    local allstyles = {}
+
+    local linestyles = format_row("DB Stats", "Total", "In DB", "lime", "lime")
+    table.insert(allstyles, linestyles)
+
+    table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+    local linestyles = format_row("CPs", stats['campaignsdone'] + stats['campaignsfld'], stats['indb'])
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("CPs Comp", stats['campaignsdone'], stats['cindb'])
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("CPs Failed", stats['campaignsfld'], stats['failedindb'])
+    table.insert(allstyles, linestyles)
+
+    table.insert(allstyles, {{text = ''}})
+
+    local linestyles = format_row("CP Stats", "Total", "Average", "lime", "lime")
+    table.insert(allstyles, linestyles)
+    table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+    local linestyles = format_row("CP QP", stats['qp'], string.format("%.3f", stats['qpcpave']) .. '/CP')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Time", "", convert_time(stats['avetime']))
+    table.insert(allstyles, linestyles)
+
+    table.insert(allstyles, {{text = ''}})
+
+    local linestyles = format_row("Bonus Rewards", "Total", "Average", "lime", "lime")
+    table.insert(allstyles, linestyles)
+    table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+    local linestyles = format_row("TP",
+         stats['tp'],
+         string.format("%.3f", stats['tpave']) .. '/CP')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Trains",
+         stats['trains'],
+         string.format("%.3f", stats['trainsave']) .. '/CP')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Pracs",
+         stats['pracs'],
+         string.format("%.3f", stats['pracsave']) .. '/CP')
+    table.insert(allstyles, linestyles)
+
+    statwin:enable()
+
+    statwin:addtab('CPs', allstyles)
+  end
+
+end
+
+function build_gq_window()
+
+  local styles = {}
+  local stats = {}
+  if db:open() then
+    for a in db.db:rows("SELECT gquestswon FROM stats WHERE milestone = 'current'") do
+      stats['gquestswon'] = a[1]
+    end
+    stats['won'] = {}
+    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), AVG(qp), SUM(qpmobs), AVG(qpmobs), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*) FROM gquests where won = 1") do
+      stats['won']['avetime'] = a[1]
+      stats['won']['qp'] = a[2]
+      stats['won']['qpave'] = a[3]
+      stats['won']['qpmobs'] = a[4]
+      stats['won']['qpmobsave'] = a[5]
+      stats['won']['tp'] = a[6]
+      stats['won']['tpave'] = a[7]
+      stats['won']['trains'] = a[8]
+      stats['won']['trainsave'] = a[9]
+      stats['won']['pracs'] = a[10]
+      stats['won']['pracsave'] = a[11]
+      stats['won']['indb'] = a[12]
+    end
+    stats['lost'] = {}
+    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qpmobs), AVG(qpmobs), COUNT(*) FROM gquests where won != 1") do
+      stats['lost']['avetime'] = a[1]
+      stats['lost']['qpmobs'] = a[2]
+      stats['lost']['qpmobsave'] = a[3]
+      stats['lost']['indb'] = a[4]
+    end
+
+    for a in db.db:rows("SELECT SUM(qpmobs + qp), AVG(qpmobs + qp) FROM gquests") do
+      stats['overallqp'] = a[1]
+      stats['overallqpave'] = a[2]
+    end
+
+    stats['indb'] = stats['won']['indb'] + stats['lost']['indb']
+
+    local allstyles = {}
+
+    local linestyles = format_row("GQ Stats", "Total", "In DB", "lime", "lime")
+    table.insert(allstyles, linestyles)
+
+    table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+    local linestyles = format_row("GQs Won", stats['gquestswon'], stats['won']['indb'])
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("GQs Lost", "", stats['lost']['indb'])
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Overall", stats['gquestswon'] + stats['lost']['indb'], stats['won']['indb'] + stats['lost']['indb'])
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("QP", stats['overallqp'], string.format("%.3f", stats['overallqpave']) .. '/GQ')
+    table.insert(allstyles, linestyles)
+
+    table.insert(allstyles, {{text = ''}})
+
+    local linestyles = format_row("GQ Won Stats", "Total", "Average", "lime", "lime")
+    table.insert(allstyles, linestyles)
+    table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+    local linestyles = format_row("GQ QP", stats['won']['qp'], string.format("%.3f", stats['won']['qpave']) .. '/GQ')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("GQ Mobs QP", stats['won']['qpmobs'], string.format("%.3f", stats['won']['qpmobsave']) .. '/GQ')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Time", "", convert_time(stats['won']['avetime']))
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("TP",
+         stats['won']['tp'],
+         string.format("%.3f", stats['won']['tpave']) .. '/GQ')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Trains",
+         stats['won']['trains'],
+         string.format("%.3f", stats['won']['trainsave']) .. '/GQ')
+    table.insert(allstyles, linestyles)
+    local linestyles = format_row("Pracs",
+         stats['won']['pracs'],
+         string.format("%.3f", stats['won']['pracsave']) .. '/GQ')
+    table.insert(allstyles, linestyles)
+
+    table.insert(allstyles, {{text = ''}})
+
+    local linestyles = format_row("GQ Lost Stats", "Total", "Average", "lime", "lime")
+    table.insert(allstyles, linestyles)
+    table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+    local linestyles = format_row("GQ Mobs QP", stats['lost']['qpmobs'], string.format("%.3f", stats['lost']['qpmobsave']) .. '/GQ')
+    table.insert(allstyles, linestyles)
+
+    statwin:enable()
+
+    statwin:addtab('GQs', allstyles)
+  end
+
+end
+
+function format_row(rowname, data1, data2, datacolour, headercolour, width1, width2, width3)
+  if not width1 then
+    width1 = 14
+  end
+  if not width2 then
+    width2 = 12
+  end
+  if not width3 then
+    width3 = 12
+  end
+  local linestyles = {}
+
+  headercolour = headercolour or "lightseagreen"
+  datacolour = datacolour or "white"
+
+  local style = {}
+  style.text = string.format( "%-" .. tostring(width1) .. "s", tostring(rowname) )
+  style.textcolour = headercolour
+  table.insert(linestyles, style)
+
+  local style = {}
+  style.text = " :  "
+  style.textcolour = headercolour
+  table.insert(linestyles, style)
+
+  local style = {}
+  style.text = string.format( "%-" .. tostring(width2) .. "s", tostring(data1) )
+  style.textcolour = datacolour
+  table.insert(linestyles, style)
+
+  local style = {}
+  style.text = string.format( "%-" .. tostring(width3) .. "s", tostring(data2) )
+  style.textcolour = datacolour
+  table.insert(linestyles, style)
+  return linestyles
+end
+
+function format_stat(statname, statcur, statother, colwidth, statlength, color)
+    local allstyle = {}
+
+    local style = {}
     style.text = string.format( "%-" .. tostring(colwidth) .. "s", statname )
     style.textcolour = "lightseagreen"
     table.insert(allstyle, style)
 
-    style = {}
+    local style = {}
     style.text = ' : '
     style.textcolour = "lightseagreen"
     --style.start = start
     table.insert(allstyle, style)
 
-    style = {}
+    local style = {}
     style.text = string.format( "%" .. tostring(statlength) .. "s",  statcur)
     if color then
       style.textcolour = color
@@ -128,12 +531,12 @@ function format_stat(statname, statcur, statother, colwidth, statlength, color)
     table.insert(allstyle, style)
 
     if statother then
-      style = {}
+    local style = {}
       style.text = '/'
       style.textcolour = "lightseagreen"
       table.insert(allstyle, style)
 
-      style = {}
+    local style = {}
       style.text = string.format( "%-" .. tostring(statlength) .. "s",  statother)
       style.textcolour = 'white'
       table.insert(allstyle, style)
@@ -156,14 +559,43 @@ function OnPluginBroadcast (msg, id, name, text)
 --stats.status { "level": 180, "tnl": 1428, "hunger": 70, "thirst": 70, "align": 74, "state": 8, "pos": "Fighting" , "enemy": "a mountain cyclops", "enemypct": 12 }
 --stats.base { "name": "Bast", "class": "Thief", "subclass": "Ninja", "race": "Shadow", "clan": "", "pretitle": "", "perlevel": 5000 }
 
-  if id == 'aaa44dccb20fa11787c5a327' then
-      local pvar = GetPluginVariable(  "aaa44dccb20fa11787c5a327", "stats" )
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
 
-      -- get the timer
-      loadstring( pvar )()
-      char = stats
-      build_stat_window()
+      if char['vitals'] and char['stats'] and char['maxstats'] and char['worth'] and char['status'] and char['base'] then
+        build_stat_window()
+        if IsPluginInstalled("a749d26f1cb3e00282727e55") and GetPluginInfo("a749d26f1cb3e00282727e55", 17) then
+          if not statwin:hastab('Levels') then
+            build_level_window()
+          end
+          if not statwin:hastab('Quests') then
+            build_quest_window()
+          end
+          if not statwin:hastab('CPs') then
+            build_cp_window()
+          end
+          if not statwin:hastab('GQs') then
+            build_gq_window()
+          end
+        end
+      end
+    end
+  else
+    if IsPluginInstalled("a749d26f1cb3e00282727e55") and GetPluginInfo("a749d26f1cb3e00282727e55", 17) then
+      if id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
+        DoAfterSpecial(.2, 'build_level_window()', 12)
+      elseif id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
+        DoAfterSpecial(.2, 'build_quest_window()', 12)
+      elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
+        DoAfterSpecial(.2, 'build_cp_window()', 12)
+      elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
+        DoAfterSpecial(.2, 'build_gq_window()', 12)
+      end
+    end
   end
+
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
@@ -180,7 +612,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin("broadcast_stats")
+  ldplugin ("GMCP_handler")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
