@@ -137,7 +137,7 @@ function formatlevel()
     oldlevel = level - 1
     if db:open() then
       if db:checkfortable('levels') and level % 201 > 2 then
-        for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level_id = %d;", lastrow)) do
+        for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level_id = %d;", oldlevel)) do
           starttime = a[1]
           finishtime = a[2]
         end
@@ -153,14 +153,16 @@ function formatlevel()
         end
       end
       if db:checkfortable('mobkills') then
-        for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where time > %s and time < %s and xp > 0", starttime, finishtime)) do
+        for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where level = %d and xp > 0", oldlevel)) do
           mobskilled = a[1]
           mobsavexp = a[2]
         end
-        table.insert( tmsg, mobskilled )
-        table.insert( tmsg, " mobs killed (" )
-        table.insert( tmsg, string.format( "%02.02f", mobsavexp ) )
-        table.insert( tmsg, "xp/mob)" )
+        if mobskilled ~= nil and mobsavexp ~= nil then
+          table.insert( tmsg, mobskilled )
+          table.insert( tmsg, " mobs killed (" )
+          table.insert( tmsg, string.format( "%02.02f", mobsavexp ) )
+          table.insert( tmsg, "xp/mob)" )
+        end
       end
       db:close()
     end
@@ -235,33 +237,35 @@ function formatcp()
   --get the cp info
   loadstring( pvar )()
   cp_stuff = cp_info
-  cpgains = tostring(cp_stuff.qp)
-  local tmsg = { "CP finished for ", cpgains, "qp" }
-  if cp_stuff.tp and tonumber(cp_stuff.tp) > 0 then
-    table.insert( tmsg, " "..cp_stuff.tp )
-    table.insert( tmsg, "TP" )
-  end
-  if cp_stuff.trains and tonumber(cp_stuff.trains) > 0 then
-    table.insert( tmsg, " "..cp_stuff.trains )
-    table.insert( tmsg, "tr" )
-  end
-  if cp_stuff.pracs and tonumber(cp_stuff.pracs) > 0 then
-    table.insert( tmsg, " "..cp_stuff.pracs )
-    table.insert( tmsg, "pr" )
-  end
-  if cp_stuff.finishtime and cp_stuff.starttime then
-    length = cp_stuff.finishtime - cp_stuff.starttime
-    days, hours, mins, secs = SecondsToDHMS(length)
-    tmsg[#tmsg] = tmsg[#tmsg]..".  It took "
-    table.insert( tmsg, string.format( "%02d", days ) )
-    table.insert( tmsg, "d:" )
-    table.insert( tmsg, string.format( "%02d", hours ) )
-    table.insert( tmsg, "h:")
-    table.insert( tmsg, string.format( "%02d", mins ) )
-    table.insert( tmsg, "m" )
-  end
+  if cp_stuff.failed == 0 then
+    cpgains = tostring(cp_stuff.qp)
+    local tmsg = { "CP finished for ", cpgains, "qp" }
+    if cp_stuff.tp and tonumber(cp_stuff.tp) > 0 then
+      table.insert( tmsg, " "..cp_stuff.tp )
+      table.insert( tmsg, "TP" )
+    end
+    if cp_stuff.trains and tonumber(cp_stuff.trains) > 0 then
+      table.insert( tmsg, " "..cp_stuff.trains )
+      table.insert( tmsg, "tr" )
+    end
+    if cp_stuff.pracs and tonumber(cp_stuff.pracs) > 0 then
+      table.insert( tmsg, " "..cp_stuff.pracs )
+      table.insert( tmsg, "pr" )
+    end
+    if cp_stuff.finishtime and cp_stuff.starttime then
+      length = cp_stuff.finishtime - cp_stuff.starttime
+      days, hours, mins, secs = SecondsToDHMS(length)
+      tmsg[#tmsg] = tmsg[#tmsg]..".  It took "
+      table.insert( tmsg, string.format( "%02d", days ) )
+      table.insert( tmsg, "d:" )
+      table.insert( tmsg, string.format( "%02d", hours ) )
+      table.insert( tmsg, "h:")
+      table.insert( tmsg, string.format( "%02d", mins ) )
+      table.insert( tmsg, "m" )
+    end
 
-  DisplayInfo( tmsg )
+    DisplayInfo( tmsg )
+  end
 end
 
 function formatgq()
