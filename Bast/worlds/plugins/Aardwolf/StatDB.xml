@@ -78,6 +78,26 @@ function savewhois()
   loadstring( pvar )()
   db:savewhois(  whoisinfo  )
   phelper:set('seenwhois', true, {silent=true})
+  if db:countlevels() == 0 then
+    print('levels', db:getstat('totallevels'))
+    levelinfo = {}
+    levelinfo.type = "level"
+    levelinfo.newlevel = tonumber(db:getstat('totallevels'))
+    levelinfo.str = 0
+    levelinfo.int = 0
+    levelinfo.wis = 0
+    levelinfo.dex = 0
+    levelinfo.con = 0
+    levelinfo.luc = 0
+    levelinfo.time = GetInfo(304)
+    levelinfo.hp = 0
+    levelinfo.mp = 0
+    levelinfo.mv = 0
+    levelinfo.pracs = 0
+    levelinfo.trains = 0
+    levelinfo.bonustrains = 0
+    db:savelevel(levelinfo, true)
+  end
 end
 
 function savemobkill()
