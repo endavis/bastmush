@@ -94,12 +94,14 @@ function Mastertabwin:toggletab(flags, hotspot_id)
 end
 
 function Mastertabwin:drawtabs()
-  if self.orientation == 0 then
-    self:drawtabs_horizontal()
-  elseif self.orientation == 1 then
-    self:drawtabs_vertical()
+  if not self.disabled then
+    if self.orientation == 0 then
+      self:drawtabs_horizontal()
+    elseif self.orientation == 1 then
+      self:drawtabs_vertical()
+    end
+    self:show(true)
   end
-  self:show(true)
 end
 
 function Mastertabwin:drawtabs_vertical()
@@ -144,7 +146,7 @@ function Mastertabwin:drawtabs_horizontal()
   local alltext = {}
   local ttext = {}
   local start = self.width_padding
-   
+
   for i,v in tableSort(self.wtabs, 'name', 'Default') do
     start = start + self.tab_padding / 2
     v.start = start
