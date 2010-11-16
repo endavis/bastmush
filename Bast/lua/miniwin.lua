@@ -691,14 +691,14 @@ function Miniwin:buttonmouseover(name)
    self.activetab.buttonstyles[name].textcolour = 'button_text_highlight_colour'
    self.activetab.buttonstyles[name].backcolour = 'button_bg_highlight_colour'
    self:displayline(self.activetab.build_data[self.activetab.buttonstyles[name].linenum])
-   Repaint()
+   Redraw()
 end
 
 function Miniwin:buttoncancelmouseover(name)
    self.activetab.buttonstyles[name].textcolour = 'button_text_colour'
    self.activetab.buttonstyles[name].backcolour = nil
    self:displayline(self.activetab.build_data[self.activetab.buttonstyles[name].linenum])
-   Repaint()
+   Redraw()
 end
 
 -- build the titlebar with buttons and text
