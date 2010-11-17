@@ -79,7 +79,6 @@ function savewhois()
   db:savewhois(  whoisinfo  )
   phelper:set('seenwhois', true, {silent=true})
   if db:countlevels() == 0 then
-    print('levels', db:getstat('totallevels'))
     levelinfo = {}
     levelinfo.type = "level"
     levelinfo.newlevel = tonumber(db:getstat('totallevels'))

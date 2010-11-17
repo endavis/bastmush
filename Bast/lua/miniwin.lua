@@ -368,20 +368,15 @@ function Miniwin:resettabs()
 end
 
 function Miniwin:removetab(tabname)
-  print('removing', tabname)
   for i,v in pairs(self.tablist) do
-    print('tabname', v.tabname)
     if self.tabs[v].tabname == tabname then
-     print('found tab at', i)
      table.remove(self.tablist, i)
     end
   end
   self.tabs[tabname] = nil
   if tabname == self.activetab then
-    print('setting activetab to', self.tablist[1])
     self.activetab = self.tablist[1]
   end
-  print('redrawwing tabs')
   self:resettabs()
 end
 

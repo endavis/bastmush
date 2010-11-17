@@ -374,7 +374,6 @@ end
 
 function Statdb:savelevel( levelinfo, first )
   first = first or false
-  print(first)
   self:checklevelstable()
   if self:open() then
     if not first then
