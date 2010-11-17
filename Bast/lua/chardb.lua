@@ -360,16 +360,32 @@ function Statdb:checklevelstable()
   end
 end
 
-function Statdb:savelevel( levelinfo )
+function Statdb:countlevels()
+  self:checklevelstable()
+  local numlevels = -1
+  if self:open() then
+    for a in db.db:rows("SELECT COUNT(*) FROM levels where type = 'level'") do
+      numlevels = a[1]
+    end
+    self:close()
+  end
+  return numlevels
+end
+
+function Statdb:savelevel( levelinfo, first )
+  first = first or false
+  print(first)
   self:checklevelstable()
   if self:open() then
-    if levelinfo['type'] == 'level' then
-      self:addtostat('totallevels', 1)
-      self:addtostat('level', 1)
-    elseif levelinfo['type'] == 'pup' then
-      self:addtostat('powerupsall', 1)
+    if not first then
+      if levelinfo['type'] == 'level' then
+        self:addtostat('totallevels', 1)
+        self:addtostat('level', 1)
+      elseif levelinfo['type'] == 'pup' then
+        self:addtostat('powerupsall', 1)
+      end
+      levelinfo['newlevel'] = tonumber(db:getstat('totallevels'))
     end
-    levelinfo['newlevel'] = tonumber(db:getstat('totallevels'))
     local stmt = self.db:prepare[[ INSERT INTO levels VALUES (NULL, :type, :newlevel, :str,
                                                           :int, :wis, :dex, :con,  :luc,
                                                           :time, -1, :hp, :mp, :mv, :pracs, :trains,
@@ -487,7 +503,6 @@ function Statdb:savegq( gqinfo )
     phelper:mdebug("inserted gq:", rowid)
     local stmt2 = self.db:prepare[[ INSERT INTO gqmobs VALUES
                                       (NULL, :gq_id, :num, :name, :room) ]]
-    tprint(gqinfo['mobs'])
     for i,v in ipairs(gqinfo['mobs']) do
       v['gq_id'] = rowid
       stmt2:bind_names (v)
