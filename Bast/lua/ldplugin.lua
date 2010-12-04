@@ -148,10 +148,12 @@ function loadfromfile(file)
   end
 end
 
-function ldplugin_helper(plugin, silent)
-  --print("ldplugin_helper", plugin)
+function ldplugin_helper(plugin, id, silent)
   silent = silent or false
   local loaded = false
+  if id ~= "" and id ~= nil and id ~= "nil" and IsPluginInstalled(id) then
+    return
+  end
   loaded = loadfromfile(plugin)
   if loaded == false then
     if not silent then
@@ -160,7 +162,7 @@ function ldplugin_helper(plugin, silent)
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     else
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-      ColourNote("yellow", "black", " Could not load " .. plugin)
+      ColourNote("yellow", "black", " Could not load " .. plugin .. "(" .. id .. ")" )
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     end
     return false
@@ -171,7 +173,7 @@ function ldplugin_helper(plugin, silent)
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     else
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-      ColourNote("yellow", "black", " Could not load " .. plugin .. " because the file was not found")
+      ColourNote("yellow", "black", " Could not load " .. plugin .. "(" .. id .. ")" .. " because the file was not found")
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     end
   elseif loaded == "Problem" then
@@ -181,7 +183,7 @@ function ldplugin_helper(plugin, silent)
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     else
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-      ColourNote("yellow", "black", " Could not load " .. plugin .. " because of loading problems" )
+      ColourNote("yellow", "black", " Could not load " .. plugin .. "(" .. id .. ")" .. " because of loading problems" )
       ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     end  
   end
@@ -197,6 +199,6 @@ function ldplugin_helper(plugin, silent)
   return loaded
 end
 
-function ldplugin(plugin, silent)
-  DoAfterSpecial(1, "ldplugin_helper('" .. plugin .. "', " .. tostring(silent) .. ")", 12)
+function ldplugin(plugin, id, silent)
+  DoAfterSpecial(2, "ldplugin_helper('" .. plugin .. "', '" .. tostring(id) .."', " .. tostring(silent) .. ")", 12)
 end
