@@ -30,6 +30,7 @@ function Mastertabwin:initialize(args)
   td.name = 'z1Show all'
   td.win = self.id .. 'ShowAll'
   td.popup = " Show Windows "
+  td.fake = true
   self:addwtab(td)
   td = {}
   td.id = GetPluginID()
@@ -38,24 +39,35 @@ function Mastertabwin:initialize(args)
   td.name = 'z2Hide all'
   td.win = self.id .. 'HideAll'
   td.popup = " Hide Windows "
+  td.fake = true
   self:addwtab(td)
-
+  -- add a show hidden windows
 end
 
 function Mastertabwin:hideall()
   if not self.alreadyhidden then
     self.alreadyhidden = true
     for i,v in pairs(self.wtabs) do
-      v.last = WindowInfo(v.win, 5)
-      WindowShow(v.win, false)
+      if v.fake ~= true then
+        local id = v.win
+        local plugin = v.id
+        local ttable = {flag=false, id=id}
+        v.last = WindowInfo(v.win, 5)
+        CallPlugin(plugin, 'showwin', serialize.save_simple( ttable ))
+        --WindowShow(v.win, false)
+      end
     end
   end
 end
 
 function Mastertabwin:showall()
   for i,v in pairs(self.wtabs) do
-    if v.last ~= nil then
-      WindowShow(v.win, v.last)
+    if v.last ~= nil and v.fake ~= true then
+      local id = v.win
+      local plugin = v.id
+      local ttable = {flag=v.last, id=id}
+      CallPlugin(plugin, 'showwin', serialize.save_simple( ttable ))
+      --indowShow(v.win, v.last)
     end
   end
   self.alreadyhidden = false
@@ -82,15 +94,20 @@ function Mastertabwin:createtabstyle(start, key, newstyle)
   if self.wtabs[key].win then
     tstyle.mousedown = self.wtabs[key].func or self.toggletab
     tstyle.hint = self.wtabs[key].popup or "Toggle " .. self.wtabs[key].name
-    tstyle.hotspot_id = key .. start
-    self.hotspots[key .. start] = key
+    tstyle.hotspot_id = key
+    self.hotspots[key] = key
   end
   return tstyle
 end
 
 function Mastertabwin:toggletab(flags, hotspot_id)
   self:mdebug('flags', flags, 'hotspot_id', hotspot_id)
-  WindowShow(self.hotspots[hotspot_id], not (WindowInfo(self.hotspots[hotspot_id], 5)))
+  local id = self.hotspots[hotspot_id]
+  local flag = not (WindowInfo(self.hotspots[hotspot_id], 5))
+  local plugin = self.wtabs[hotspot_id].id
+  local ttable = {flag=flag, id=id}
+  CallPlugin(plugin, 'showwin', serialize.save_simple( ttable ))
+  --WindowShow(self.hotspots[hotspot_id], not (WindowInfo(self.hotspots[hotspot_id], 5)))
 end
 
 function Mastertabwin:drawtabs()
