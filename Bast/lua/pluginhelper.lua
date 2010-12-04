@@ -301,6 +301,16 @@ function Pluginhelper:OnPluginBroadcast(msg, id, name, text)
       end
     end
   end
+  if id == "eee8dcaf925c1bbb534ef093" and msg == 1002 then
+    newset = assert (loadstring ('return ' .. text or ""))()
+    for i,v in pairs(self.pobjects) do
+      if v.type == 'Miniwin' then
+        if not v.disabled then
+          v:onSettingChange(newset)
+        end
+      end
+    end
+  end
 end
 
 --function Pluginhelper:__newindex(name, val)
@@ -525,6 +535,10 @@ function Pluginhelper:addlink(ltype, text, url, tip)
   table.insert(self.links, {ltype=ltype, text=text, url=url, tip=tip})
 end
 
+function Pluginhelper:showwin(showtable)
+  self.pobjects_by_id[showtable.id]:show(showtable.flag)
+end
+
 function format_hyperlinks(t)
   local tlines = {}
 
@@ -740,6 +754,11 @@ function convert_ticks(ticks)
   end
   tout.string = strjoin(':', tstring)
   return tout
+end
+
+function showwin(ttable)
+  local showtable = loadstring('return ' .. ttable)()
+  phelper:showwin(showtable)
 end
 
 function mousedown(flags, hotspotid)
