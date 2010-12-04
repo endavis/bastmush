@@ -31,7 +31,6 @@ require "mastertab"
 
 tabwin = Mastertabwin:new{name="tabwin"}
 tabwin:set_default('windowpos', 4)
-tabwin:set_default('font_size', 8)
 tabwin:set_default('text_colour', 0x00FFFF)
 tabwin:set_default('header_height', 0)
 tabwin:set_default('height_padding', 0)
