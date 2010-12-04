@@ -130,11 +130,11 @@ function verify_number(numberval, args)
      elseif args.low then
        msg = msg .. 'Must be greater than or equal to' .. tostring(args.low)
      elseif args.high then
-       msg = msg .. 'Must be less that or equal to '  .. tostring(args.high) 
-     end 
+       msg = msg .. 'Must be less that or equal to '  .. tostring(args.high)
+     end
      tvalue = tonumber(utils.inputbox(msg))
   end
-  
+
   -- check if we were successful
   if tvalue ~= nil then
 
@@ -186,13 +186,81 @@ function verify_bool(boolval, args)
   return nil
 end
 
+function isfontinstalled(fontid, font_name, win)
+  local twin = win or "test_font"
+  --print('win : ', twin)
+  if string.lower(WindowFontInfo (twin, fontid, 21)) == string.lower(font_name) then
+    return true
+  end
+  return false
+
+end
+
+function verify_font(fonttable, args)
+  local fontt = {}
+  if fonttable == nil then
+    fontt.bold = false
+    fontt.italic = false
+    fontt.underline = false
+    fontt.strikeout = false
+    fontt.name = ""
+    fontt.size = ""
+  else
+    fontt.bold = verify_bool(fonttable.bold)
+    fontt.italic = verify_bool(fonttable.italic)
+    fontt.underline = verify_bool(fonttable.underline)
+    fontt.strikeout = verify_bool(fonttable.strikeout)
+    fontt.name = string.lower(fonttable.name or "")
+    fontt.size = tonumber(fonttable.size or "8")
+  end
+
+  if fontt.name == '' or fontt.size == '' or args.ask then
+    if fontt.size == '' then
+      fontt.size = 8
+    end
+    wanted_font = utils.fontpicker (fontt.name, fontt.size) --font dialog
+    if wanted_font then
+      fontt = wanted_font
+    else
+      return nil
+    end
+  end
+
+  fontt.name = string.lower(fontt.name)
+
+  local fontid = tostring(fontt.name) .. '_' .. tostring(fontt.size)
+  local twinid = '_fonttest'
+
+  check (WindowCreate (twinid,
+                 0, 0, 1, 1,
+                 6,   -- top right
+                 0,
+                 000000) )
+
+  --tprint(fontt)
+  check (WindowFont (twinid, fontid, fontt.name, fontt.size, fontt.bold, fontt.italic, fontt.underline, fontt.strikeout, 0, 49))
+
+  local found = nil
+  if isfontinstalled(fontid, fontt.name, twinid) then
+    found = fontt
+  end
+
+  check (WindowDelete (twinid))
+  return found
+
+end
+
+function formatfont(font)
+  return font.name .. ', ' .. font.size
+end
+
 verify_table = {
                string = verify_string,
                colour = verify_colour,
                number = verify_number,
                bool = verify_bool,
+               font = verify_font,
               }
-
 
 function verify(value, ttype, args)
   if ttype == nil then
@@ -206,3 +274,4 @@ function verify(value, ttype, args)
   end
   return f(value, args)
 end
+
