@@ -64,7 +64,8 @@ statestrings = {
   [7] = 'page',
   [8] = 'combat',
   [9] = 'sleeping',
-  [11] = 'resting'
+  [11] = 'resting',
+  [12] = 'running'
   }
 
 var.statestring = statestrings[1]
