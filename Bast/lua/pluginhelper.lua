@@ -514,8 +514,6 @@ function Pluginhelper:createhelp()
   style.text = ' '
   table.insert(ttext, {style, backcolour=var.plugin_colour})
 
-  --tprint(ttext)
-
   return header, ttext
 end
 
@@ -624,7 +622,7 @@ function format_aard_cmds(t)
   end
 
   table.insert(tlines, helpline)
-  --tprint(tlines)
+
   return tlines
 end
 
@@ -668,7 +666,7 @@ function format_aard_helps(t)
   end
 
   table.insert(tlines, helpline)
-  --tprint(tlines)
+
   return tlines
 end
 

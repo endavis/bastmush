@@ -553,7 +553,6 @@ end
 -- check if a font is installed
 function Miniwin:isfontinstalled(fontid, font_name, win)
   twin = win or self.id
-  --print('win : ', twin)
   if string.lower(WindowFontInfo (twin, fontid, 21)) == string.lower(font_name) then
     return true
   end
@@ -628,11 +627,6 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
   end
 
   tfontt = verify_font(fontt, {})
-  --print('addfont, adding')
-  --print(tfontt)
-  --if type(tfontt) == 'table' then
-  --  tprint(tfontt)
-  --end
   if tfontt ~= nil then
     tfontt.id = fontid    
   end
@@ -641,7 +635,7 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
                      tfontt.strikeout, 0, 49))
   tfontt.height = WindowFontInfo (self.id, fontid, 1) -- height
   tfontt.width = WindowFontInfo (self.id, fontid, 6)  -- avg width_padding
-  --print(tfontt.id)
+
   self.fonts[tfontt.id] = tfontt
   return tfontt.id
 
@@ -772,14 +766,6 @@ function Miniwin:menusetfont()
         wanted_font = verify_font(fonttable, newtable)
         if wanted_font then
                 self:set('textfont', wanted_font)
-                --tprint(wanted_font)
-                --fid = self:addfont(wanted_font.name, wanted_font.size, wanted_font.bold, wanted_font.italic,
-                --                   wanted_font.underline, wanted_font.strikeout)
-                --self:setdefaultfont(fid)
-                --self.textfont = self.fonts[fid]
-                --self:savestate()
-                --self:resettabs()
-                --self:redraw()
         end
 end
 
@@ -890,7 +876,7 @@ function Miniwin:windowmenu(result)
   else
     for name,setting in tableSort(self.set_options, 'type', 'unknown') do
       if result == setting.longname then
-        --print("changing settings " .. setting.longname)
+
         if setting.type == 'bool' then
           return self:set(name, not self[name])
         else
@@ -913,7 +899,7 @@ function Miniwin:pluginmenu(result)
   else
     for name,setting in tableSort(self.phelper.set_options, 'type', 'unknown') do
       if result == setting.longname then
-        --print("changing settings " .. setting.longname)
+
         if setting.type == 'bool' then
           return self.phelper:set(name, not self[name])
         else
@@ -1128,7 +1114,6 @@ end
 
 -- mousedown function, checks to see if the id exists in the hyperlink_functions['mousedown'] table
 function Miniwin:mousedown (flags, hotspotid)
-  --print('mousedown', 'hotspotid', hotspotid)
   -- find where mouse is so we can adjust window relative to mouse
   self.startx, self.starty = WindowInfo (self.id, 14), WindowInfo (self.id, 15)
 
@@ -1230,8 +1215,7 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
                       style.italic or self.fonts[def_font_id].italic,
                       style.underline or self.fonts[def_font_id].underline,
                       style.strikeout or self.fonts[def_font_id].strikeout)
-      --print(font_id)
-      --tprint(self.fonts[font_id])
+
       maxfontheight = math.max(maxfontheight, self.fonts[font_id].height)
       if style.image and style.image.name then
          self:mdebug('Convert_Line: Got Image')
@@ -1516,14 +1500,6 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
     self.activetab.build_data[linenum] = tline
     top = self.activetab.build_data[linenum].linebottom
   end
-
---   for i,v in ipairs(self.activetab.build_data) do
---     print(i)
---     print("top    : ", v.linetop)
---     print("bottom : ", v.linebottom)
---     print("height : ", v.height)
---     print("diff   : ", v.linebottom - v.linetop)
---   end
 
   if self.height > 0 then
     self.activetab.build_data.actualwindowheight = self.height

@@ -188,7 +188,6 @@ end
 
 function isfontinstalled(fontid, font_name, win)
   local twin = win or "test_font"
-  --print('win : ', twin)
   if string.lower(WindowFontInfo (twin, fontid, 21)) == string.lower(font_name) then
     return true
   end
@@ -237,7 +236,6 @@ function verify_font(fonttable, args)
                  0,
                  000000) )
 
-  --tprint(fontt)
   check (WindowFont (twinid, fontid, fontt.name, fontt.size, fontt.bold, fontt.italic, fontt.underline, fontt.strikeout, 0, 49))
 
   local found = nil

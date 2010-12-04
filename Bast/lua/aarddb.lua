@@ -135,7 +135,7 @@ end
 function Aarddb:checkhelplookuptable()
   self:open()
   if not self:checkfortable('helplookup') then
-    print('creating helplookup table')
+
     self.db:exec([[CREATE TABLE helplookup(
       lookup_id INTEGER NOT NULL PRIMARY KEY autoincrement,
       lookup TEXT UNIQUE NOT NULL,

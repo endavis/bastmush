@@ -164,7 +164,7 @@ function Phelpobject:savestate(override)
     return
   end
   for i,v in pairs(self.set_options) do
-    --print("saving as", self.cname .. '-' .. i)
+
     if v.istable then
       SetVariable(i .. self.cname, serialize.save_simple((self[i])))
     else
