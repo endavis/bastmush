@@ -92,7 +92,6 @@ TODO: plugin to set colours on all my miniwindows, maybe a theme
 TODO: addline function that adds a single line to the text addline(line, tab) tab is optional, then I could just convert_line and adjust_line
 TODO: automatically detect urls: (.*)(http\:\/\/(?:[A-Za-z0-9\.\\\/\?])+)(.*)
 TODO: have adjust_line be the one that breaks up the lines
-TODO: make a sticky tab that doesn't move off
 
 windowwidth = self.windowborderwidth
               + self.width_padding
@@ -108,6 +107,13 @@ windowheight = self.windowborderwidth + self.height_padding + self.titlebarheigh
 AddHotspot(borderwinid, self.id .. ':resize', function, ....) should work fine
 
 event system - so that when a variable is changed, or the window is moved, or resized, functions can be attached to each event
+ the events I have so far - 
+   visibility - called whenever this window changes visibility
+     args = {flag=showflag}
+   shade - called whenever this windows shaded value changes
+     args = {flag=shadedflag}
+
+events I would like to add - move, resize
 --]]
 
 require 'var'
@@ -175,6 +181,7 @@ function Miniwin:initialize(args)
 
   --]]
   super(self, args)
+  self.otype = "Miniwin"
   self.parent = args.parent or nil
   self.borderwinid = self.id .. ':border'
   self.text = {}
@@ -213,7 +220,7 @@ function Miniwin:initialize(args)
   self.newwidth = -1
   self.newx = -1
   self.newy = -1
-  self.movewinid = 'z' .. self.id .. ':movewin'
+  self.resizewinid = 'z' .. self.id .. ':movewin'
 
   self.titlebarlinenum = -1
   self.tablinenum = -1
@@ -246,37 +253,36 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
 ]]})
   self:add_setting( 'x', {type="number", help="x location of this window, -1 = auto", default=-1, sortlev=2})
   self:add_setting( 'y', {type="number", help="y location of this window, -1 = auto", default=-1, sortlev=2})
-  self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x0D0D0D, sortlev=3, longname="Background Colour"})
-  self:add_setting( 'text_colour', {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=3, longname="Text Colour"})
-  self:add_setting( 'window_border_colour', {type="colour", help="border colour for window", default=0x303030, sortlev=3, longname="Window Border Colour"})
-  self:add_setting( 'window_border_width', {type="number", help="border width for window", default=2, sortlev=3, longname="Window Border Width"})
-  self:add_setting( 'title_bg_colour', {type="colour", help="background colour for the titlebar", default=0x575757, sortlev=3, longname="Title Background Colour"})
-  self:add_setting( 'tab_bg_colour', {type="colour", help="background colour for a tab", default=0xDCDCDC, sortlev=6, longname="Tab Background Colour"})
-  self:add_setting( 'tab_text_colour', {type="colour", help="text colour for a tab", default=0x0D0D0D, sortlev=6, longname="Tab Text Colour"})
-  self:add_setting( 'tab_border_colour', {type="colour", help="border colour for a tab", default=0xDCDCDC, sortlev=6, longname="Tab Border Colour"})
-  self:add_setting( 'button_text_colour', {type="colour", help="text colour for the buttons in the titlebar", default=0x70CBB9, sortlev=10, longname="Button Text Colour"})
-  self:add_setting( 'button_text_highlight_colour', {type="colour", help="text colour for the buttons in the titlebar", default='black', sortlev=10, longname="Button Text Highlight Colour"})
-  self:add_setting( 'button_bg_highlight_colour', {type="colour", help="text colour for the buttons in the titlebar", default=0x70CBB9, sortlev=10, longname="Button Background Colour"})
-  self:add_setting( 'button_border_light', {type="colour", help="border colour for cells", default=0x404040, sortlev=10, longname="Button Border Light"})
-  self:add_setting( 'button_border_dark', {type="colour", help="border colour for cells", default=0x1F1F1F, sortlev=10, longname="Button Border Dark"})
-  self:add_setting( 'hyperlink_colour', {type="colour", help="hyperlink colour for this window", default=0x00FFFF, sortlev=15, longname="Hyperlink Colour"})
-  self:add_setting( 'header_bg_colour', {type="colour", help="header colour for this window", default=0x696969, sortlev=20, longname="Header Background Colour"})
-  self:add_setting( 'header_text_colour', {type="colour", help="header text colour for this window", default=0x00FF00, sortlev=20, longname="Header Text Colour"})
-  self:add_setting( 'header_height', {type="number", help="the header height", default=1, low=0, high=10, sortlev=20})
-  self:add_setting( 'footer_bg_colour', {type="colour", help="footer colour for this window", default=0x696969, sortlev=25, longname="Footer Background Colour"})
-  self:add_setting( 'footer_text_colour', {type="colour", help="footer text colour for this window", default=0x00FF00, sortlev=25, longname="Footer Text Colour"})
-  self:add_setting( 'border_colour', {type="colour", help="border colour for cells", default="white", sortlev=30, longname="Cell Border Colour"})
-  self:add_setting( 'font_size', {type="number", help="font_size for this window", low=2, high=30, default=8, sortlev=35})
-  self:add_setting( 'font', {type="string", help="change the font for this window", default=self:getdefaultfont(), sortlev=35})
+  self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x0D0D0D, sortlev=3, longname="Background Colour", globalset=true})
+  self:add_setting( 'text_colour', {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=3, longname="Text Colour", globalset=true})
+  self:add_setting( 'window_border_colour', {type="colour", help="border colour for window", default=0x303030, sortlev=4, longname="Window Border Colour", globalset=true})
+  self:add_setting( 'window_border_width', {type="number", help="border width for window", default=2, sortlev=4, longname="Window Border Width", globalset=true})
+  self:add_setting( 'title_bg_colour', {type="colour", help="background colour for the titlebar", default=0x575757, sortlev=5, longname="Title Background Colour", globalset=true})
+  self:add_setting( 'tab_bg_colour', {type="colour", help="background colour for a tab", default=0xDCDCDC, sortlev=6, longname="Tab Background Colour", globalset=true})
+  self:add_setting( 'tab_text_colour', {type="colour", help="text colour for a tab", default=0x0D0D0D, sortlev=6, longname="Tab Text Colour", globalset=true})
+  self:add_setting( 'tab_border_colour', {type="colour", help="border colour for a tab", default=0xDCDCDC, sortlev=6, longname="Tab Border Colour", globalset=true})
+  self:add_setting( 'button_text_colour', {type="colour", help="text colour for the buttons in the titlebar", default=0x70CBB9, sortlev=10, longname="Button Text Colour", globalset=true})
+  self:add_setting( 'button_text_highlight_colour', {type="colour", help="text colour for the buttons in the titlebar", default='black', sortlev=10, longname="Button Text Highlight Colour", globalset=true})
+  self:add_setting( 'button_bg_highlight_colour', {type="colour", help="text colour for the buttons in the titlebar", default=0x70CBB9, sortlev=10, longname="Button Background Colour", globalset=true})
+  self:add_setting( 'button_border_light', {type="colour", help="border colour for cells", default=0x404040, sortlev=10, longname="Button Border Light", globalset=true})
+  self:add_setting( 'button_border_dark', {type="colour", help="border colour for cells", default=0x1F1F1F, sortlev=10, longname="Button Border Dark", globalset=true})
+  self:add_setting( 'hyperlink_colour', {type="colour", help="hyperlink colour for this window", default=0x00FFFF, sortlev=15, longname="Hyperlink Colour", globalset=true})
+  self:add_setting( 'header_bg_colour', {type="colour", help="header background colour for this window", default=0x696969, sortlev=20, longname="Header Background Colour", globalset=true})
+  self:add_setting( 'header_text_colour', {type="colour", help="header text colour for this window", default=0x00FF00, sortlev=20, longname="Header Text Colour", globalset=true})
+  self:add_setting( 'header_height', {type="number", help="the header height", default=1, low=0, high=10, sortlev=20, globalset=true})
+  self:add_setting( 'footer_bg_colour', {type="colour", help="footer colour for this window", default=0x696969, sortlev=25, longname="Footer Background Colour", globalset=true})
+  self:add_setting( 'footer_text_colour', {type="colour", help="footer text colour for this window", default=0x00FF00, sortlev=25, longname="Footer Text Colour", globalset=true})
+  self:add_setting( 'border_colour', {type="colour", help="border colour for cells", default="white", sortlev=30, longname="Cell Border Colour", globalset=true})
+  self:add_setting( 'textfont', {type="font", help="change the font for this window", default=serialize.save_simple(self:getdefaultfont()), sortlev=35, istable=true, formatfunc=formatfont, globalset=true})
   self:add_setting( 'width', {type="number", help="width of this window, 0 = auto", low=0, default=0, sortlev=40})
   self:add_setting( 'height', {type="number", help="height of this window, 0 = auto", low=0, default=0, sortlev=40})
   self:add_setting( 'height_padding', {type="number", help="height padding for this window", low=0, high=30, default=2, sortlev=45})
   self:add_setting( 'width_padding', {type="number", help="width padding for this window", low=0, high=30, default=2, sortlev=45})
   self:add_setting( 'use_tabwin', {type="bool", help="toggle to use tabwin", default=verify_bool(true), sortlev=50})
   self:add_setting( 'font_warn', {type="bool", help="have been warned about font", default=verify_bool(false), sortlev=55, readonly=true})
-  self:add_setting( 'shaded', {type="bool", help="window is shaded", default=verify_bool(false), sortlev=55, readonly=true})
+  self:add_setting( 'shaded', {type="bool", help="window is shaded", default=verify_bool(false), sortlev=55, readonly=true, globalset=true})
   self:add_setting( 'shade_with_header', {type="bool", help="when window is shaded, still show header", default=verify_bool(false), sortlev=55, longname = "Shade with header"})
-  self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar", after="resettabs"})
+  self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar", after="resettabs", globalset=true})
   self:add_setting( 'showresize', {type="bool", help="show resize hotspots", default=verify_bool(true), sortlev=56, longname="Show Resize Hotspots"})
   self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines", after="resettabs"})
   self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=1, low=0, sortlev=57, longname="Max Tabs"})
@@ -297,6 +303,10 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
                         win:show(false)
                       end, hint="Click to close", place=99})
 
+  self:addevent('option_textfont', self, self.onfontchange)
+  self:addevent('option_use_tabwin', self, self.onuse_tabwinchange)
+  self:addevent('option_windowpos', self, self.onwindowposchange)
+  self:addevent('option-any', self, self.onanychange)
 end
 
 function Miniwin:updateheader(tabname, header)
@@ -584,7 +594,7 @@ end
 -- set the default font
 function Miniwin:setdefaultfont(fontid)
   self.default_font_id = fontid
-  self.default_font_id_bold =  self:addfont(self.fonts[self.default_font_id].font_name,
+  self.default_font_id_bold =  self:addfont(self.fonts[self.default_font_id].name,
                self.fonts[self.default_font_id].size,
                true, false, false, false, false)
   SaveState()
@@ -605,56 +615,35 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
   if strikeout == nil then
     strikeout = false
   end
-  bold = verify_bool(bold)
-  italic = verify_bool(italic)
-  underline = verify_bool(underline)
-  strikeout = verify_bool(strikeout)
-  font = string.lower(font)
-  size = size or self.font_size
-  local fontid = self:buildfontid(font, size, bold, italic, underline, strikeout)
+  local fontt = {}
+  fontt.bold = verify_bool(bold)
+  fontt.italic = verify_bool(italic)
+  fontt.underline = verify_bool(underline)
+  fontt.strikeout = verify_bool(strikeout)
+  fontt.name = string.lower(font or "")
+  fontt.size = tonumber(size or "8")
+  local fontid = self:buildfontid(fontt.name, fontt.size, fontt.bold, fontt.italic, fontt.underline, fontt.strikeout)    
   if self:checkfontid(fontid) then
     return fontid
   end
 
-  fontt.fontid = fontid
-  fontt.size = size
-
-  twinid = self.id .. '_fonttest'
-
-  check (WindowCreate (twinid,
-                 0, 0, 1, 1,
-                 6,   -- top right
-                 0,
-                 self.bg_colour) )
-
-  check (WindowFont (twinid, fontid, font, size, bold, italic, underline, strikeout, 0, 49))
-
-  if not self:isfontinstalled(fontid, font, twinid) then
-    return -1
+  tfontt = verify_font(fontt, {})
+  --print('addfont, adding')
+  --print(tfontt)
+  --if type(tfontt) == 'table' then
+  --  tprint(tfontt)
+  --end
+  if tfontt ~= nil then
+    tfontt.id = fontid    
   end
-
-  if not WindowInfo(self.id, 21) then
-    check (WindowCreate (self.id,
-                 0, 0, 1, 1,
-                 6,   -- top right
-                 0,
-                 self.bg_colour) )
-  end
-
-  check (WindowFont (self.id, fontid, font, size, bold, italic, underline, strikeout, 0, 49))
-
-  fontt.height = WindowFontInfo (self.id, fontid, 1) -- height
-  fontt.width = WindowFontInfo (self.id, fontid, 6)  -- avg width
-  fontt.font_name = WindowFontInfo (self.id, fontid, 21)  -- name
-  fontt.bold = bold
-  fontt.italic = italic
-  fontt.underline = underline
-  fontt.strikeout = strikeout
-
-  check (WindowDelete (twinid))
-
-  self.fonts[fontid] = fontt
-  return fontid
+  check (WindowFont (self.id, tfontt.id, tfontt.name, tfontt.size, 
+                     tfontt.bold, tfontt.italic, tfontt.underline, 
+                     tfontt.strikeout, 0, 49))
+  tfontt.height = WindowFontInfo (self.id, fontid, 1) -- height
+  tfontt.width = WindowFontInfo (self.id, fontid, 6)  -- avg width_padding
+  --print(tfontt.id)
+  self.fonts[tfontt.id] = tfontt
+  return tfontt.id
 
 end
 
@@ -673,7 +662,7 @@ function Miniwin:getdefaultfont()
 
   WindowDelete(tempid)
 
-  return rstring
+  return {name=rstring, size=8}
 
 end
 
@@ -774,24 +763,29 @@ function Miniwin:menusetfont()
                         self:set('font_warn', true)
                 end
         end
-        tfont = self.fonts[self.default_font_id]
-        wanted_font = utils.fontpicker (tfont.font_name, tfont.size) --font dialog
+        local tfont = self.fonts[self.default_font_id]
+        local fonttable = {}
+        fonttable.name = tfont.name
+        fonttable.size = tfont.size
+        local newtable = copytable.shallow(self.set_options['textfont'])
+        newtable.ask = true
+        wanted_font = verify_font(fonttable, newtable)
         if wanted_font then
+                self:set('textfont', wanted_font)
                 --tprint(wanted_font)
-                fid = self:addfont(wanted_font.name, wanted_font.size, wanted_font.bold, wanted_font.italic,
-                                   wanted_font.underline, wanted_font.strikeout)
-                self:setdefaultfont(fid)
-                self.font = self.fonts[self.default_font_id].font_name
-                self.font_size = self.fonts[self.default_font_id].size
-                self:savestate()
-                self:resettabs()
+                --fid = self:addfont(wanted_font.name, wanted_font.size, wanted_font.bold, wanted_font.italic,
+                --                   wanted_font.underline, wanted_font.strikeout)
+                --self:setdefaultfont(fid)
+                --self.textfont = self.fonts[fid]
+                --self:savestate()
+                --self:resettabs()
                 --self:redraw()
         end
 end
 
 -- build the mousemenu, looks for anything in the settings table with a longname
 function Miniwin:buildmousemenu()
-  menu = "Window Menu || >Font | Set font - Currently: " .. tostring(self.font) .. ', ' .. tostring(self.font_size) .. " | Increase font size | Decrease font size | Default Font | < | >Colours "
+  menu = "Window Menu || >Font | Set font - Currently: " .. tostring(self.textfont.name) .. ', ' .. tostring(self.textfont.size) .. " | Increase font size | Decrease font size | Default Font | < | >Colours "
   --local colours = {}
   for name,setting in tableSort(self.set_options, 'sortlev', 50) do
     if setting.longname ~= nil and setting.type == 'colour' then
@@ -868,12 +862,15 @@ function Miniwin:windowmenu(result)
   if result:match("Set font") then
     self:menusetfont()
   elseif result == "Increase font size" then
-    self:set('font_size', self.font_size + 1)
+    local tfont = copytable.shallow(self.textfont)
+    tfont.size = tfont.size + 1
+    self:set('textfont', tfont)
   elseif result == "Decrease font size" then
-    self:set('font_size', self.font_size - 1)
+    local tfont = copytable.shallow(self.textfont)
+    tfont.size = tfont.size - 1
+    self:set('textfont', tfont)
   elseif result == "Default Font" then
-    self:set('font_size', 'default')
-    self:set('font', 'default')
+    self:set('textfont', 'default')
   elseif result == 'Reset All' then
     self:cmd_reset()
   elseif result == "Reset Size" then
@@ -977,35 +974,38 @@ end
 
 -- show or hide the window
 function Miniwin:show(flag)
-  if flag == nil then
+  if flag == nil or verify_bool(self.disabled) then
     flag = false
   end
-  if verify_bool(self.disabled) then
-    WindowShow(self.id, false)
-    return
-  end
   WindowShow(self.id, flag)
+  self:processevent('visibility', {flag=flag})
 end
 
 -- init the window after the plugin has been initialized
 function Miniwin:init()
   super(self)
 
-  self:setdefaultfont(self:addfont(self.font, self.font_size, false, false, false, false, true))
+  self:setdefaultfont(self.default_font_id)
 end
 
 -- enable the window
 function Miniwin:enable()
+  local disabled = self.disabled
   super(self)
-  self:tabbroadcast(true)
+  if disabled ~= self.disabled then
+    self:tabbroadcast(true)
+  end
 end
 
 -- disable the window
 function Miniwin:disable()
   self.firstdrawn = true
   self:show(false)
-  self:tabbroadcast(false)
+  local disabled = self.disabled
   super(self)
+  if disabled ~= self.disabled then
+    self:tabbroadcast(false)
+  end
 end
 
 -- toggle the window to be shown/not shown
@@ -1020,6 +1020,7 @@ end
 function Miniwin:shade()
   if not self.disabled then
     self:set('shaded', not self.shaded)
+    self:processevent('shade', {flag=self.shaded})  
   end
   self:savestate()
 end
@@ -1223,12 +1224,14 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
   if type(line) == 'table' then
     for i,style in ipairs(line) do
       table.insert(linet.text, i, copytable.deep(style))
-      font_id = self:addfont(style.font_name or self.fonts[def_font_id].font_name,
+      font_id = self:addfont(style.font_name or self.fonts[def_font_id].name,
                       style.font_size or self.fonts[def_font_id].size,
                       style.bold or self.fonts[def_font_id].bold,
                       style.italic or self.fonts[def_font_id].italic,
                       style.underline or self.fonts[def_font_id].underline,
                       style.strikeout or self.fonts[def_font_id].strikeout)
+      --print(font_id)
+      --tprint(self.fonts[font_id])
       maxfontheight = math.max(maxfontheight, self.fonts[font_id].height)
       if style.image and style.image.name then
          self:mdebug('Convert_Line: Got Image')
@@ -1892,19 +1895,19 @@ function Miniwin:post_create_window_internal()
 
 end
 
-function Miniwin:buildmovewindow(x, y, width, height)
-  WindowCreate(self.movewinid, x, y, width, height, 0, 6, self:get_colour('bg_colour'))
-  WindowRectOp(self.movewinid, 2, 0, 0, 0, 0, self:get_colour('bg_colour'))
-  WindowRectOp(self.movewinid, 1, 0, 0, 0, 0, ColourNameToRGB("white"))
-  WindowShow(self.movewinid, 1)
+function Miniwin:buildresizewindow(x, y, width, height)
+  WindowCreate(self.resizewinid, x, y, width, height, 0, 6, self:get_colour('bg_colour'))
+  WindowRectOp(self.resizewinid, 2, 0, 0, 0, 0, self:get_colour('bg_colour'))
+  WindowRectOp(self.resizewinid, 1, 0, 0, 0, 0, ColourNameToRGB("white"))
+  WindowShow(self.resizewinid, 1)
 end
 
 function Miniwin:destroymovewindow()
-  WindowDelete(self.movewinid)
+  WindowDelete(self.resizewinid)
 end
 
 function Miniwin:resizemousedown()
-  self:buildmovewindow(WindowInfo(self.id, 10), WindowInfo(self.id, 11), WindowInfo(self.id, 3), WindowInfo(self.id, 4) )
+  self:buildresizewindow(WindowInfo(self.id, 10), WindowInfo(self.id, 11), WindowInfo(self.id, 3), WindowInfo(self.id, 4) )
   self.mousestartx = WindowInfo (self.id, 17)
   self.mousestarty = WindowInfo (self.id, 18)
 end
@@ -1948,7 +1951,7 @@ function Miniwin:resizemovecallback(flags, hotspot_id)
       self.newheight = 30
     end
   end
-  self:buildmovewindow(self.newx, self.newy, self.newwidth, self.newheight)
+  self:buildresizewindow(self.newx, self.newy, self.newwidth, self.newheight)
 end
 
 function Miniwin:resizereleasecallback(flags, hotspot_id)
@@ -2226,60 +2229,31 @@ function Miniwin:drawwin()
 
 end
 
--- set values, redraws the miniwindow if a setting is changed
-function Miniwin:set(option, value, args)
-  retcode, tvalue = self:checkvalue(option, value, args)
-  if retcode == true then
-    if string.find(option, "font") and not self.classinit then
-      local font_name = nil
-      local font_size = nil
-      if option == 'font' then
-        font_name = tvalue
-      end
-      if option == 'font_size' then
-        font_size = tvalue
-      end
-      font_name = font_name or self.fonts[self.default_font_id].font_name
-      font_size = font_size  or self.fonts[self.default_font_id].size
-      font_id = self:addfont(font_name,
-                    font_size,
-                    self.fonts[self.default_font_id].bold,
-                    self.fonts[self.default_font_id].italic,
-                    self.fonts[self.default_font_id].underline,
-                    self.fonts[self.default_font_id].strikeout)
-      if font_id == -1 then
-        ColourNote("red", "", "Could not find font " .. font_name .. " with size " .. tostring(font_size))
-        return false
-      else
-        self:setdefaultfont(font_id)
-        self:resettabs()
-        --self:redraw()
-      end
-    end
-    retcode2 = super(self, option, tvalue, args)
-    if retcode2 then
-      if option == "windowpos" and not self.classinit then
-        self.x = -1
-        self.y = -1
-      end
-      if not self.classinit then
-        self:redraw()
-      end
-      if option == 'use_tabwin' then
-        self:tabbroadcast(tvalue)
-      end
-      return true
-    else
-      return false
-    end
-
-  elseif retcode == 1 then
-    return true
-  else
-    return false
+function Miniwin:onfontchange(args)
+  font = args.value
+  fontid = self:addfont(font.name, font.size, font.bold, font.italic, font.underline, font.strikeout)
+  self.default_font_id = fontid
+  if not self.disabled then
+    self:setdefaultfont(fontid)
+    self:resettabs()
   end
+end
 
-  return true
+function Miniwin:onwindowposchange(args)
+  if not self.classinit then
+    self.x = -1
+    self.y = -1
+  end
+end
+
+function Miniwin:onuse_tabwinchange(args)
+  self:tabbroadcast(self.use_tabwin)
+end
+
+function Miniwin:onanychange(args)
+  if not self.classinit then
+    self:redraw()
+  end
 end
 
 function Miniwin:scrollermousedown(flags, hotspot_id)
