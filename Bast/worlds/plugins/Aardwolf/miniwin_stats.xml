@@ -192,6 +192,11 @@ function build_level_window()
           tonumber(string.format("%.3f", stats.pups['avebonustrains'])))
       table.insert(allstyles, linestyles)
 
+      local linestyles = format_row("Ave Overall",
+          tonumber(string.format("%.3f", tonumber(stats.levels['avetrains']) + tonumber(stats.levels['avebonustrains']))),
+          tonumber(string.format("%.3f", tonumber(stats.pups['avetrains']) + tonumber(stats.pups['avebonustrains']))))
+      table.insert(allstyles, linestyles)
+
       local linestyles = format_row("Total Pracs", stats.levels['totalpracs'], "")
       table.insert(allstyles, linestyles)
 
@@ -602,17 +607,23 @@ function OnPluginBroadcast (msg, id, name, text)
       if char['vitals'] and char['stats'] and char['maxstats'] and char['worth'] and char['status'] and char['base'] then
         build_stat_window()
         if IsPluginInstalled("a749d26f1cb3e00282727e55") and GetPluginInfo("a749d26f1cb3e00282727e55", 17) then
-          if db:checkfortable('stats') then
-            if not statwin:hastab('Levels') then
+          if not statwin:hastab('Levels') then
+            if db:checkfortable('stats') then
               build_level_window()
             end
-            if not statwin:hastab('Quests') then
+          end
+          if not statwin:hastab('Quests') then
+            if db:checkfortable('stats') then
               build_quest_window()
             end
-            if not statwin:hastab('CPs') then
+          end
+          if not statwin:hastab('CPs') then
+            if db:checkfortable('stats') then
               build_cp_window()
             end
-            if not statwin:hastab('GQs') then
+          end
+          if not statwin:hastab('GQs') then
+            if db:checkfortable('stats') then
               build_gq_window()
             end
           end
@@ -621,14 +632,20 @@ function OnPluginBroadcast (msg, id, name, text)
     end
   else
     if IsPluginInstalled("a749d26f1cb3e00282727e55") and GetPluginInfo("a749d26f1cb3e00282727e55", 17) then
-      if db:checkfortable('stats') then
-        if id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
+      if id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
+        if db:checkfortable('stats') then
           DoAfterSpecial(.2, 'build_level_window()', 12)
-        elseif id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
+        end
+      elseif id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
+        if db:checkfortable('stats') then
           DoAfterSpecial(.2, 'build_quest_window()', 12)
-        elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
+        end
+      elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
+        if db:checkfortable('stats') then
           DoAfterSpecial(.2, 'build_cp_window()', 12)
-        elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
+        end
+      elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
+        if db:checkfortable('stats') then
           DoAfterSpecial(.2, 'build_gq_window()', 12)
         end
       end
