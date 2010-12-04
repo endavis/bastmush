@@ -7,10 +7,21 @@
 --[[
 
 Events for phelpobject:
-    self:processevent('option_' .. option, {value=value}) 
+    self:processevent('option_' .. option, {option=option, value=value}) 
       - an event for a specific option
     self:processevent('option-any', {option=option, value=value}) 
       - an event to notify on any option change
+
+to use events register with   self:addevent('option_textfont', object, object.onfontchange) if the target is a phelper object
+                              self:addevent('visibility', {}, toggleexample) if the target function is just a function
+
+the function must look like:
+function shadeexample(object, args)
+  -- object will be same as the second argument in addevent
+  -- args, see the actual event
+  examplewin:show(not args.flag)
+end
+
 --]]
 require 'var'
 require 'tprint'
@@ -54,11 +65,11 @@ function Phelpobject:initialize(args)
 end
 
 
-function Phelpobject:addevent(tevent, tfunction)
+function Phelpobject:addevent(tevent, object, tfunction)
   if self.events[tevent] == nil then
     self.events[tevent] = {}
   end
-  table.insert(self.events[tevent], tfunction)
+  table.insert(self.events[tevent], {object=object, func=tfunction})
 end
 
 
@@ -67,7 +78,7 @@ function Phelpobject:processevent(tevent, args)
     return
   end
   for i,v in ipairs(self.events[tevent]) do
-    v(args)
+    v.func(v.object, args)
   end
 end
 
@@ -254,7 +265,7 @@ function Phelpobject:set(option, value, args)
     if afterf ~= nil then
       self:run_func(afterf)
     end
-    self:processevent('option_' .. option, {value=value})    
+    self:processevent('option_' .. option, {option=option, value=value})    
     self:processevent('option-any', {option=option, value=value})  
     SaveState()
     return true
