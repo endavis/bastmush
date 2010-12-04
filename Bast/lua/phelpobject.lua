@@ -6,6 +6,11 @@
 
 --[[
 
+Events for phelpobject:
+    self:processevent('option_' .. option, {value=value}) 
+      - an event for a specific option
+    self:processevent('option-any', {option=option, value=value}) 
+      - an event to notify on any option change
 --]]
 require 'var'
 require 'tprint'
@@ -34,15 +39,40 @@ function Phelpobject:initialize(args)
   self.id = GetPluginID() .. self.cname
   self:mdebug('phelpobject __init self.cname', self.cname)
   self.cmds_table = {}
+  self.events = {}
 
   self:add_setting( 'tdebug', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1})
+  self:add_setting( 'ignorebsetting', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1, longname="Ignore Broadcast Settings"})
 
   self:add_cmd('help', {func="cmd_help", help="show help"})
   self:add_cmd('debug', {func="cmd_debug", help="toggle debugging"})
   self:add_cmd('set', {func="cmd_set", help="set settings", nomenu=true})
   self:add_cmd('reset', {func="cmd_reset", help="reset settings to default values"})
   self:add_cmd('save', {func=SaveState, help="save plugin variables"})
+  self:add_cmd('showvars', {func="cmd_showvars", help="show plugin variables"})
 
+end
+
+
+function Phelpobject:addevent(tevent, tfunction)
+  if self.events[tevent] == nil then
+    self.events[tevent] = {}
+  end
+  table.insert(self.events[tevent], tfunction)
+end
+
+
+function Phelpobject:processevent(tevent, args)
+  if self.events[tevent] == nil then
+    return
+  end
+  for i,v in ipairs(self.events[tevent]) do
+    v(args)
+  end
+end
+
+function Phelpobject:cmd_showvars(cmddict)
+  tprint(GetVariableList())
 end
 
 function Phelpobject:cmd_set(cmddict)
@@ -57,7 +87,7 @@ function Phelpobject:cmd_set(cmddict)
     self:print_settings_helper()
     return false
   end
-  return self:set_external(option, value, {silent=false})
+  return self:set_external(option, value, {silent=false, istable=self.set_options[option].istable})
 end
 
 function Phelpobject:cmd_debug(cmddict)
@@ -123,7 +153,12 @@ function Phelpobject:savestate(override)
     return
   end
   for i,v in pairs(self.set_options) do
-    SetVariable(i .. self.cname, tostring(self[i]))
+    --print("saving as", self.cname .. '-' .. i)
+    if v.istable then
+      SetVariable(i .. self.cname, serialize.save_simple((self[i])))
+    else
+      SetVariable(i .. self.cname, tostring(self[i]))
+    end
   end
 end
 
@@ -157,6 +192,10 @@ function Phelpobject:init_vars(reset)
     local gvalue = GetVariable(name..self.cname)
     if gvalue == nil or gvalue == 'nil' or reset then
       gvalue = setting.default
+    end
+    if setting.istable then
+      local tvalue = loadstring('return ' .. gvalue or "")()
+      gvalue = tvalue
     end
     local tvalue = verify(gvalue, setting.type, {silent = true, window = self})
     self:set(name, tvalue, {silent = true, window = self})
@@ -215,6 +254,8 @@ function Phelpobject:set(option, value, args)
     if afterf ~= nil then
       self:run_func(afterf)
     end
+    self:processevent('option_' .. option, {value=value})    
+    self:processevent('option-any', {option=option, value=value})  
     SaveState()
     return true
   end
@@ -238,6 +279,11 @@ function Phelpobject:set_external(option, value, args)
               colourname, "black", colourname)
       else
         colourname = RGBColourToName(var.plugin_colour)
+        if formatfunc then
+          cvalue = formatfunc(cvalue)
+        elseif istable then
+          cvalue = serialize.save_simple(cvalue)
+        end
         ColourNote("orange", "black", toption .. " set to : ",
               colourname, "black", tostring(cvalue))
       end
@@ -257,12 +303,12 @@ function Phelpobject:print_settings_helper(ttype)
   --]]
   self:plugin_header("Settings")
   for v,t in tableSort(self.set_options, 'sortlev', 50) do
-    self:print_setting_helper(v, self[v], t.help, t.type, t.readonly)
+    self:print_setting_helper(v, self[v], t.help, t.type, t.readonly, t.istable, t.formatfunc)
   end
   ColourNote("", "", "")
 end
 
-function Phelpobject:print_setting_helper(setting, value, help, ttype, readonly)
+function Phelpobject:print_setting_helper(setting, value, help, ttype, readonly, istable, formatfunc)
   --[[
     this function prints a setting a standard format
      if the setting is a colour, then it will print the value in that colour
@@ -277,6 +323,11 @@ function Phelpobject:print_setting_helper(setting, value, help, ttype, readonly)
   end
   if readonly then
     help = help .. ' (readonly)'
+  end
+  if formatfunc then
+    value = formatfunc(value)
+  elseif istable then
+    value = serialize.save_simple(value)
   end
   ColourNote( "white", "black", string.format("%-30s : ", setting),
               RGBColourToName(colour), "black", string.format("%-20s", tostring(value)),
@@ -293,7 +344,7 @@ function Phelpobject:print_settings()
     if t.type == "colour" then
       value = verify_colour(value, {window = self})
     end
-    self:print_setting_helper(v, value, t.help, t.type, t.readonly)
+    self:print_setting_helper(v, value, t.help, t.type, t.readonly, t.istable, t.formatfunc)
   end
 end
 
@@ -460,3 +511,10 @@ function Phelpobject:get_colour(colour, default, return_original)
   return default
 end
 
+function Phelpobject:onSettingChange(settable)
+  if not self.ignorebsetting then
+    for i,v in pairs(settable) do
+      self:set(i,v)
+    end
+  end
+end
