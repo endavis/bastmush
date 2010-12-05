@@ -58,10 +58,10 @@ Show the moons in a miniwindow
 <![CDATA[
 internalrevision = "$Rev$"
 
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
 require "utils"
 require "commas"
-
--- var is required for pluginhelper below
 require "var"
 require "pluginhelper"
 require "miniwin"

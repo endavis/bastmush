@@ -86,6 +86,7 @@ internalrevision = "$Rev$"
 
 -- pull in telnet option handling
 dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
 
 require 'var'
 require 'pluginhelper'

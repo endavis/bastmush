@@ -29,6 +29,8 @@ Redirects the gq to the miniwindow.
 <![CDATA[
 internalrevision = "$Rev$"
 
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
 require 'var'
 require "commas"
 require 'miniwin'

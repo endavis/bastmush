@@ -25,6 +25,8 @@ Redirects the map to a mini window.
 <![CDATA[
 internalrevision = "$Rev$"
 
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
 require 'var'
 require 'pluginhelper'
 require "miniwin"

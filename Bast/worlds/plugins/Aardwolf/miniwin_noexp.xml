@@ -28,6 +28,8 @@ Shows a noexp miniwin when noexp is enabled
 <![CDATA[
 internalrevision = "$Rev$"
 
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
 require "commas"
 require 'var'
 require "commas"

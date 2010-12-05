@@ -79,6 +79,10 @@ Redirects the map to a mini window.
 <![CDATA[
 internalrevision = "$Rev$"
 
+-- pull in telnet option handling
+dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
 require 'var'
 require 'pluginhelper'
 require "miniwin"
@@ -86,9 +90,6 @@ require "tprint"
 require "commas"
 require "serialize"
 require "ldplugin"
-
--- pull in telnet option handling
-dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
 
 Mapwinc = Miniwin:subclass()
 

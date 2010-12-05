@@ -28,6 +28,8 @@ Shows a double miniwin when their is double xp
 <![CDATA[
 internalrevision = "$Rev$"
 
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
 require "commas"
 require 'var'
 require "commas"

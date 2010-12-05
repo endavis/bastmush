@@ -62,6 +62,8 @@ It will remove the regen ring when
 <![CDATA[
 internalrevision = "$Rev$"
 
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
 require "ldplugin"
 require "verify"
 require "serialize"
