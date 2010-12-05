@@ -630,6 +630,15 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
   if tfontt ~= nil then
     tfontt.id = fontid    
   end
+  if not WindowInfo (self.id, 4) then
+    check (WindowCreate (self.id,
+                 0, 0,   -- left, top (auto-positions)
+                 0,     -- width
+                 0,  -- height
+                 0,
+                 2,  -- flags
+                 self:get_colour("bg_colour")) )    
+  end
   check (WindowFont (self.id, tfontt.id, tfontt.name, tfontt.size, 
                      tfontt.bold, tfontt.italic, tfontt.underline, 
                      tfontt.strikeout, 0, 49))
@@ -970,8 +979,8 @@ end
 -- init the window after the plugin has been initialized
 function Miniwin:init()
   super(self)
-
-  self:setdefaultfont(self.default_font_id)
+  font = self.textfont
+  self:setdefaultfont(self:addfont(font.name, font.size, font.bold, font.italic, font.underline, font.strikeout))
 end
 
 -- enable the window
@@ -2207,9 +2216,10 @@ end
 
 function Miniwin:onfontchange(args)
   font = args.value
-  fontid = self:addfont(font.name, font.size, font.bold, font.italic, font.underline, font.strikeout)
-  self.default_font_id = fontid
-  if not self.disabled then
+  if self.disabled or self.classinit then
+    return    
+  else
+    fontid = self:addfont(font.name, font.size, font.bold, font.italic, font.underline, font.strikeout)
     self:setdefaultfont(fontid)
     self:resettabs()
   end
