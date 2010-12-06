@@ -52,6 +52,15 @@ Example:
    enabled="y"
    regexp="y"
    script="noexp"
+   name="noexpfight"
+   match="^You have set your character to receive no experience points!$"
+   sequence="100"
+  >
+  </trigger>  
+  <trigger
+   enabled="y"
+   regexp="y"
+   script="noexp"
    name="expon"
    match="^You will now receive experience. Happy leveling!$"
    sequence="100"
@@ -73,7 +82,7 @@ require "verify"
 
 
 function noexp(name, line, wildcards)
-  if name == 'noexp' then
+  if name == 'noexp' or name == 'noexpfight' then
     phelper:broadcast(1)
     phelper.noexp = true
   elseif name == 'expon' then

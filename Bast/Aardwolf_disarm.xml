@@ -134,6 +134,8 @@ TODO: automatically rewield primary weapon at end of fight
 
 <script>
 <![CDATA[
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
 require 'tprint'
 require 'aardutils'
 
