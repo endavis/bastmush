@@ -123,6 +123,8 @@ wchats echo off  --> only show in the other window
 chat_world = "Chats"
 folder = "Aardwolf"
 
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+require "findfile"
 require "getworld"
 require "checkplugin"
 require "utils"
@@ -211,8 +213,14 @@ function OnPluginInstall ()
   
 end -- OnPluginInstall
 
--- pull in telnet option handling
-dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+nfile = scan_dir_for_file (GetInfo(60), "telnet_options.lua")
+
+if nfile then
+  -- pull in telnet option handling
+  dofile (nfile)
+else
+  print("Could not load telnet_options.lua, please copy it to your plugin directory")
+end
 
 function OnPluginConnect ()
   -- first time after connect, get tags right
