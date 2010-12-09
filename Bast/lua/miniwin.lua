@@ -785,7 +785,7 @@ function Miniwin:buildmousemenu()
   for name,setting in tableSort(self.set_options, 'sortlev', 50) do
     if setting.longname ~= nil and setting.type == 'colour' then
       --table.append(colours, name, true)
-      menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring( RGBColourToName(self[name]))
+      menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring( RGBColourToName(self:get_colour(self[name])))
     end
   end
   --for name,value in table.sort(colours,
