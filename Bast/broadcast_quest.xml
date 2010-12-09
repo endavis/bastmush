@@ -230,7 +230,7 @@ function OnPluginBroadcast (msg, id, name, text)
         quest_info['pracs'] = stuff.pracs
         quest_info['finishtime'] = GetInfo(304)
         quest_info['double'] = 0
-        if quest_info['double'] == 1 then
+        if tonumber(stuff.double) == 1 then
           quest_info['double'] = stuff.qp
         end
         var.quest_info = serialize.save( "quest_info", quest_info )
@@ -276,6 +276,11 @@ function OnPluginEnable ()
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
 
   phelper:OnPluginEnable()
+
+  if IsConnected() then
+    CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request quest")
+  end
+  
 end -- OnPluginEnable
 
 function OnPluginDisable ()
