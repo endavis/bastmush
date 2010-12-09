@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: miniwin_example.xml 879 2010-11-14 18:53:45Z endavis $ -->
+
+<muclient>
+<plugin
+   name="miniwin_settings"
+   author="Bast"
+   id="eee8dcaf925c1bbb534ef093"
+   language="Lua"
+   purpose="set things for all miniwindows"
+   save_state="y"
+   date_written="2009-02-13 09:28:14"
+   requires="4.52"
+   version="4.0"
+   >
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<script>
+<![CDATA[
+internalrevision = "$Rev: 879 $"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require 'var'
+require 'pluginhelper'
+require "miniwin"
+require "tprint"
+require "commas"
+require "serialize"
+require "copytable"
+require "verify"
+
+newsettings = {}
+exampleheader = {}
+examplestyles = {}
+
+settingwin = Miniwin:new{name="Settings"}
+settingwin:set_default('ignorebsetting', true)
+examplewin = Miniwin:new{name="Example"}
+examplewin:set_default('use_tabwin', false)
+examplewin:set_default('maxtabs', 3)
+
+function toggleexample(object, args)
+  examplewin:show(args.flag)
+end
+
+function shadeexample(object, args)
+  examplewin:show(not args.flag)
+end
+
+settingwin:addevent('visibility', {}, toggleexample)
+settingwin:addevent('shade', examplewin, shadeexample)
+
+settings = {}
+
+for name,setting in tableSort(settingwin.set_options, 'sortlev', 50) do
+  if setting.globalset then
+    table.insert(settings, name)
+  end
+end
+
+function apply()
+  for i,v in pairs(newsettings) do
+    settingwin:set(i, v)
+    examplewin:set(i, v)
+  end
+  local newt = serialize.save_simple(newsettings)
+  phelper:broadcast(1002, newt, newt)
+end
+
+function reset()
+  newsettings = {}
+  for i,v in ipairs(settings) do
+     examplewin:set(v, settingwin[v])
+  end
+  build_window()
+end
+
+function show_example()
+  examplewin:enable()
+  examplewin:addtab('tab1', examplestyles, exampleheader)
+  examplewin:addtab('tab2', examplestyles, exampleheader)
+  examplewin:show(true)
+end
+
+function build_window()
+  -- Header Line, centered
+  local style = {}
+  local styles = {}
+
+  for i,v in ipairs (settings) do
+    local lstyle = {}
+    local tstyle = {}
+    local value = settingwin[v]
+    tstyle.text = string.format('%-30s : ', v)
+    tstyle.hint = settingwin.set_options[v].help
+    tstyle.mouseup = nofunc
+    table.insert(lstyle, tstyle)
+    tstyle = {}
+    if newsettings[v] ~= nil then
+      value = newsettings[v]
+    end
+    tstyle.hint = tostring(value)
+    if settingwin.set_options[v].type == 'colour' then
+      tstyle.text = string.format('%-20s', ' ')
+      tstyle.backcolour = value
+      tstyle.hint = tostring( RGBColourToName(value))
+    else
+      if settingwin.set_options[v].formatfunc then
+        tstyle.text = string.format('%-20s', tostring(settingwin.set_options[v].formatfunc(value)))
+        tstyle.hint = tstyle.text
+      else
+        tstyle.text = string.format('%-20s', tostring(value))
+      end
+    end
+    tstyle.mouseup = function()
+      local option = v
+      local newval = nil
+      if settingwin.set_options[option].type == 'font' then
+        local fonttable = {}
+        fonttable.name = value.name
+        fonttable.size = value.size
+        local newtable = copytable.shallow(settingwin.set_options[option])
+        newtable.ask = true
+        newval = verify_font(fonttable, newtable)
+      elseif settingwin.set_options[option].type == 'bool' then
+        newval = verify_bool(not value)
+      else
+        newval = verify("", settingwin.set_options[option].type, settingwin.set_options[option])
+      end
+      if newval ~= nil then
+        newsettings[option] = newval
+        examplewin:set(option, newval)
+        --show_example()
+      end
+      build_window()
+    end
+    table.insert(lstyle, tstyle)
+    table.insert(styles, lstyle)
+
+  end
+
+  local style = {}
+  style.text = " Reset "
+  style.hjust = 'center'
+  style.mouseup = reset
+  table.insert(styles, {style})
+
+  local style = {}
+  style.text = " Apply "
+  style.hjust = 'center'
+  style.mouseup = apply
+  table.insert(styles, {style})
+
+  settingwin:enable()
+  settingwin:addtab('Settings', styles)
+  show_example()
+end
+
+function build_example_style()
+  exampleheader = {}
+  examplestyles = {}
+
+  -- Header Line, centered
+  local style = {}
+  style.text = "Example Header"
+  style.hjust = 'center'
+  table.insert(exampleheader, {style})
+
+  -- First Line
+  local style = {}
+  style.text = string.format("%-50s", "Some Text")
+  table.insert(examplestyles, {style})
+
+  -- New Line
+  local style = {}
+  style.text = "Just a New Line (Strikeout)"
+  style.strikeout = true
+  style.hint = serialize.save_simple(style)
+  style.mouseover = nofunc
+  table.insert(examplestyles, {style})
+
+  -- New Line, Center Horizontally
+  local style = {}
+  style.text = "Center Horizontally (Underline)"
+  style.hjust = 'center'
+  style.underline = true
+  style.hint = serialize.save_simple(style)
+  style.mouseover = nofunc
+  table.insert(examplestyles, {style})
+
+  -- New Line, Right Justify Horizontally
+  local style = {}
+  style.text = "Right Horizontally (Italic)"
+  style.italic = true
+  style.hjust = 'right'
+  style.hint = serialize.save_simple(style)
+  style.mouseover = nofunc
+
+  table.insert(examplestyles, {style})
+end
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+
+  phelper:OnPluginEnable()
+
+
+  -- always create windows after OnPluginEnable due to default variable handling
+  build_example_style()
+  build_window()
+
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'mnset')
+phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:add_pobject('win', settingwin)
+phelper:add_pobject('win', examplewin)
+
+phelper:enable()
+
+
+]]>
+</script>
+</muclient>
