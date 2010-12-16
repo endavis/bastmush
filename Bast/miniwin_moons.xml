@@ -72,11 +72,11 @@ moonwin = Miniwin:new{name="Moons"}
 moonwin:set_default('windowpos', 4)
 moonwin:set_default('header_height', 0)
 moonwin:set_default('text_colour', 'gold')
-moonwin:add_setting("black_colour", {help="the colour for the black moon", type="colour", default=verify_colour("midnightblue"), sortlev=35})
-moonwin:add_setting("white_colour", {help="the colour for the white moon", type="colour", default=verify_colour("white"), sortlev=35})
-moonwin:add_setting("grey_colour", {help="the colour for the grey moon", type="colour", default=verify_colour("dimgray"), sortlev=35})
-moonwin:add_setting("three_colour", {help="the colour for the when three moons are up", type="colour", default=verify_colour("lime"), sortlev=36})
-moonwin:add_setting("three_bg_colour", {help="the colour for the background when the three moons are up", type="colour", default="bg_colour", sortlev=36})
+moonwin:add_setting("black_colour", {help="the colour for the black moon", type="colour", default=verify_colour("midnightblue"), sortlev=35, longname = "Black moon colour"})
+moonwin:add_setting("white_colour", {help="the colour for the white moon", type="colour", default=verify_colour("white"), sortlev=35, longname = "White moon colour"})
+moonwin:add_setting("grey_colour", {help="the colour for the grey moon", type="colour", default=verify_colour("dimgray"), sortlev=35, longname = "Grey moon colour"})
+moonwin:add_setting("three_colour", {help="the colour for the when three moons are up", type="colour", default=verify_colour("lime"), sortlev=36, longname = "Three moons colour"})
+moonwin:add_setting("three_bg_colour", {help="the colour for the background when the three moons are up", type="colour", default="bg_colour", sortlev=36, longname = "Background colour for when 3 moons are up"})
 
 countdown = nil
 countdowndur = nil
