@@ -49,39 +49,6 @@ spellup disable --> disable a spell without taking it out of the list
 spellup help    --> this message
 
 Bugs - Hide shows up as a negative spellup
-
-TODO:
-create miniwin based on mine
-menu for each spell
- - show Help
- - showskill
- - Info
-  - SN
-  - stuff from slist
-  
-have tabs for:
- * Summary
-   - how many good/bad/requested spells (can click good/bad to go to good/bad tab)
-   - spells that are wearing off in less than one minute
-   - recoveries
-   - spells waiting to be cast
- * Good
- * Bad
- * Requested
-   
-NOTES:
-events that need to trigger a retry of spellups
- - spell wearoff
- - spell fail
- - spell success
- - stats change
- - position change
- - afk change
- - have slist
- - connect (and have slist)
- - recovery on
- - recovery off
- - skillgain (?)
 </description>
 
 
@@ -681,10 +648,16 @@ function getStats()
 end
 
 function OnPluginBroadcast (msg, id, name, text)
+  local old_mana = nil
+  local old_moves = nil
   if next(stats) then
-    local old_mana = stats.vitals.mana
-    local old_moves = stats.vitals.moves
+
+    old_mana = stats.vitals.mana
+
+    old_moves = stats.vitals.moves
+
   end
+
   local new_stats = false
   local old_state = status.state
 
