@@ -252,12 +252,20 @@ function formatfont(font)
   return font.name .. ', ' .. font.size
 end
 
+function verify_table(tableval, args)
+  if type(tableval) == 'table' then
+    return tableval
+  end
+  return nil
+end
+
 verify_table = {
                string = verify_string,
                colour = verify_colour,
                number = verify_number,
                bool = verify_bool,
                font = verify_font,
+               table = verify_table,
               }
 
 function verify(value, ttype, args)
