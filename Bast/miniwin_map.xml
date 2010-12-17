@@ -63,13 +63,49 @@ Redirects the map to a mini window.
 
   <trigger
    enabled="y"
-   match="You can now sense anger in your immediate area."
+   match="You open *."
+   sequence="100"
+   send_to="12"
+  >
+  <send>SendNoEcho ("map")</send>
+  </trigger>
+  
+  <trigger
+   enabled="y"
+   match="You close *."
    sequence="100"
    send_to="12"
   >
   <send>SendNoEcho ("map")</send>
   </trigger>
 
+  <trigger
+   enabled="y"
+   match="* opens*."
+   sequence="100"
+   send_to="12"
+  >
+  <send>SendNoEcho ("map")</send>
+  </trigger>
+  
+  <trigger
+   enabled="y"
+   match="* closes*."
+   sequence="100"
+   send_to="12"
+  >
+  <send>SendNoEcho ("map")</send>
+  </trigger>
+  
+  <trigger
+   enabled="y"
+   match="You can now sense anger in your immediate area."
+   sequence="100"
+   send_to="12"
+  >
+  <send>SendNoEcho ("map")</send>
+  </trigger>
+  
 </triggers>
 
 
@@ -127,6 +163,7 @@ map_lines = {}
 coords = nil
 PKroom = false
 Graffiti = false
+current_room = -100
 mapheader = {}
 maptext = {}
 
@@ -376,12 +413,23 @@ function map_redirect (name, line, wildcards, styles)
     map_lines = {}
   elseif name == "map_end" then
     EnableTrigger ("multi_line_map", false)  -- no more lines to go
+    refreshmap()
   else
     table.insert (map_lines, styles)
   end -- if
 
 end -- function map_redirect
 
+function refreshmap()
+  if room and current_room == tonumber(room.num) then  
+    mapheader = {}
+    maptext = {}
+    mapheader, maptext = parse_map(map_lines)
+        
+    mapwin:enable()
+    mapwin:addtab('default', maptext, mapheader, true)
+  end
+end
 ]]>
 </script>
 
@@ -400,23 +448,25 @@ function OnPluginBroadcast (msg, id, name, text)
     if text:find("room.info") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
       room = assert (loadstring ('return ' .. gmcparg or ""))()
+      if room and current_room ~= tonumber(room.num) then
+        current_room = tonumber(room.num)
+        if room.details:find("pk") then
+          PKroom = true
+        else
+          PKroom = false
+        end
+        if room.details:find("graffiti") then
+          Graffiti = true
+        else
+          Graffiti = false
+        end
+        mapheader = {}
+        maptext = {}
+        mapheader, maptext = parse_map(map_lines)
 
-      if room.details:find("pk") then
-        PKroom = true
-      else
-        PKroom = false
+        mapwin:enable()
+        mapwin:addtab('default', maptext, mapheader, true)
       end
-      if room.details:find("graffiti") then
-        Graffiti = true
-      else
-        Graffiti = false
-      end
-      mapheader = {}
-      maptext = {}
-      mapheader, maptext = parse_map(map_lines)
-
-      mapwin:enable()
-      mapwin:addtab('default', maptext, mapheader, true)
     end
   end
 end
