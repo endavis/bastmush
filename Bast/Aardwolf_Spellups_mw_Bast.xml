@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: Aardwolf_Spellups.xml 917 2010-12-06 02:00:48Z endavis $ -->
 
 <muclient>
 <plugin
    name="Aardwolf_Spellups_miniwin"
-   author="Nick Gammon/Bast"
+   author="Nick Gammon/Bast/Fiendish"
    id="b0a9cef2629fae2eacf97603"
    language="Lua"
    purpose="Does Aardwolf spellups"
@@ -48,7 +47,6 @@ spellup disable --> disable a spell without taking it out of the list
 
 spellup help    --> this message
 
-Bugs - Hide shows up as a negative spellup
 </description>
 
 
@@ -85,18 +83,16 @@ Bugs - Hide shows up as a negative spellup
 <script>
 <![CDATA[
 
-dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
-
 MAX_RETRIES = 10  -- max tries we will allow them to fail to cast
 
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+ 
 require "findfile"
 require "movewindow"  -- load the movewindow.lua module
-require "tprint"
-require "commas"
-require "addxml"
 require "checkplugin"
 require "serialize"
 require "utils"
+require "commas"
 
 MAX_RETRIES = 10  -- max tries we will allow them to fail to cast
 FONT_NAME = GetVariable("font") or "Dina"
@@ -115,6 +111,8 @@ TEXT_COLOUR = ColourNameToRGB("#E8E8E8")
 TEXT_INSET = 5
 
 lines = {}  -- table of display content
+  -- pull in telnet option handling
+  
 nfile = scan_dir_for_file (GetInfo(60), "telnet_options.lua")
 if nfile then
   -- pull in telnet option handling
@@ -122,6 +120,8 @@ if nfile then
 else
   print("Could not load telnet_options.lua, please copy it to your plugin directory")
 end
+
+dofile (GetPluginInfo (GetPluginID(), 20) .. "aardwolf_colors.lua")
 
 
 Win = GetPluginID()
@@ -161,6 +161,20 @@ blockers = {}
 spells_xref = {}
 recoveries_xref = {}
 
+statestrings = {
+  [1] = 'login',
+  [2] = 'motd',
+  [3] = 'active',
+  [4] = 'afk',
+  [5] = 'note',
+  [6] = 'edit',
+  [7] = 'page',
+  [8] = 'combat',
+  [9] = 'sleeping',
+  [11] = 'resting',
+  [12] = 'running'
+  }
+
 function MouseDown(flags, hotspot_id)
     if (hotspot_id == "resize") then
         startx, starty = WindowInfo (Win, 17), WindowInfo (Win, 18)
@@ -190,6 +204,10 @@ function LeftClickOnly(flags, hotspot_id, win)
     return false
 end
 
+function trim(s)
+    return(string.gsub(s, "^%s*(.-)%s*$", "%1"))
+end
+
 -- right click menu
 function right_click_menu ()
     menustring ="Change Font"
@@ -203,8 +221,7 @@ function right_click_menu ()
         if wanted_font then
             FONT_NAME = wanted_font.name
             FONT_SIZE = wanted_font.size
-            SetVariable ("font", FONT_NAME)
-            SetVariable ("font_size", FONT_SIZE)
+            OnPluginSaveState ()
             OnPluginInstall()
         end
     end -- if
@@ -434,16 +451,18 @@ end
 function drawStuff()
     -- draw border
     WindowRectOp (Win, 1, 0, 0, 0, 0, WINDOW_BORDER_COLOUR)
+    WindowRectOp (Win, 1, 1, 1, -1, -1, WINDOW_BORDER_COLOUR/2)
     
-    -- resize tag    
-    WindowLine(Win, WINDOW_WIDTH-RESIZER_WIDTH+1, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-RESIZER_WIDTH+1, ColourNameToRGB ("white"), 0, 2)
-    WindowLine(Win, WINDOW_WIDTH-RESIZER_WIDTH+2, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-RESIZER_WIDTH+2, ColourNameToRGB ("dimgray"), 0, 1)
-    WindowLine(Win, WINDOW_WIDTH-RESIZER_WIDTH+4, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-RESIZER_WIDTH+4, ColourNameToRGB ("white"), 0, 2)
-    WindowLine(Win, WINDOW_WIDTH-RESIZER_WIDTH+5, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-RESIZER_WIDTH+5, ColourNameToRGB ("dimgray"), 0, 1)
-    WindowLine(Win, WINDOW_WIDTH-RESIZER_WIDTH+7, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-RESIZER_WIDTH+7, ColourNameToRGB ("white"), 0, 2)
-    WindowLine(Win, WINDOW_WIDTH-RESIZER_WIDTH+8, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-RESIZER_WIDTH+8, ColourNameToRGB ("dimgray"), 0, 1)
-    WindowLine(Win, WINDOW_WIDTH-RESIZER_WIDTH+10, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-RESIZER_WIDTH+10, ColourNameToRGB ("white"), 0, 2)
-    WindowLine(Win, WINDOW_WIDTH-RESIZER_WIDTH+11, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-RESIZER_WIDTH+11, ColourNameToRGB ("dimgray"), 0, 1)
+    -- draw the resize widget bottom right corner.
+    WindowLine(Win, WINDOW_WIDTH-3, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-3, 0xffffff, 0, 2)
+    WindowLine(Win, WINDOW_WIDTH-4, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-4, 0x696969, 0, 1)
+    WindowLine(Win, WINDOW_WIDTH-6, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-6, 0xffffff, 0, 2)
+    WindowLine(Win, WINDOW_WIDTH-7, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-7, 0x696969, 0, 1)
+    WindowLine(Win, WINDOW_WIDTH-9, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-9, 0xffffff, 0, 2)
+    WindowLine(Win, WINDOW_WIDTH-10, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-10, 0x696969, 0, 1)
+    WindowLine(Win, WINDOW_WIDTH-12, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-12, 0xffffff, 0, 2)
+    WindowLine(Win, WINDOW_WIDTH-13, WINDOW_HEIGHT-2, WINDOW_WIDTH-2, WINDOW_HEIGHT-13, 0x696969, 0, 1)
+
     Redraw()
 end
 
@@ -512,7 +531,6 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   checkplugin ("3e7dedbe37e44942dd46d264", "GMCP_Handler.xml")
-  checkplugin ("aaa79afcb20fa11787c5a327", "broadcast_state.xml")
   WindowShow (Win, true)
   miniNote("Spellups will appear here.")
 
@@ -651,16 +669,11 @@ function OnPluginBroadcast (msg, id, name, text)
   local old_mana = nil
   local old_moves = nil
   if next(stats) then
-
     old_mana = stats.vitals.mana
-
     old_moves = stats.vitals.moves
-
   end
-
   local new_stats = false
   local old_state = status.state
-
 
   -- stats change
   if id == '3e7dedbe37e44942dd46d264' then
@@ -671,10 +684,14 @@ function OnPluginBroadcast (msg, id, name, text)
         end
       end
     end
-  elseif id == "aaa79afcb20fa11787c5a327" then
-    status = GetPluginVariableList("aaa79afcb20fa11787c5a327")
-  end -- if
 
+    if text:find("char.status") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+      status.state = char.status.state
+      status.statestring = statestrings[tonumber(status.state)]
+    end
+  end
   if old_state ~= status.state then
     waiting = -1
     resume_buff_loop ("playing_change", status.state)
