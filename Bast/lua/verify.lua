@@ -52,7 +52,8 @@ function verify_colour(colour, args)
 
   -- if no argument and not silent then open PickColour Dialog
   if (colour == nil or colour == "") and not args.silent then
-    colour = PickColour(0)
+    local tcolour = args.default or 0
+    colour = PickColour(tcolour)
     if colour ~= -1 then
       return colour
     end
@@ -98,7 +99,8 @@ function verify_string(stringval, args)
      if args.msg then
        msg = args.msg .. '\n'
      end
-     stringval = tostring(utils.inputbox(msg))
+     local tmsg = args.default or ""
+     stringval = tostring(utils.inputbox(msg), "", tmsg)
   end
 
   -- check if we can turn it into a string
@@ -128,11 +130,12 @@ function verify_number(numberval, args)
      if args.low and args.high then
        msg = msg .. 'Must be between ' .. tostring(args.low) .. ' and ' .. tostring(args.high)
      elseif args.low then
-       msg = msg .. 'Must be greater than or equal to' .. tostring(args.low)
+       msg = msg .. 'Must be greater than or equal to ' .. tostring(args.low)
      elseif args.high then
        msg = msg .. 'Must be less that or equal to '  .. tostring(args.high)
      end
-     tvalue = tonumber(utils.inputbox(msg))
+     local tmsg = args.default or ""   
+     tvalue = tonumber(utils.inputbox(msg, "", tmsg))
   end
 
   -- check if we were successful
