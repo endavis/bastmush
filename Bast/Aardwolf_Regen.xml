@@ -78,7 +78,6 @@ status = {}
 oldstatus = {}
 tryremove = false
 trywear = false
-clientAFK = false
 regenrooms = {}
 runto = false
 
@@ -230,15 +229,6 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 2 then
       runto = false
     end
-  elseif id == "0e191dc7829ff2ac2433c2d8" then
-    if msg == 1 then
-      clientAFK = text == "y"
-      if clientAFK and status.statestring == 'active' then
-        wear_regen()
-      elseif (not clientAFK) and not verify_bool(phelper.inregen) and status.statestring == 'active' then
-        remove_regen()
-      end
-    end
   elseif id == "aaa7dc9ed92ffc6146964abc" then
     if msg == 2 then
       loadstring(text)()
@@ -289,7 +279,6 @@ function OnPluginEnable ()
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
   ldplugin ("broadcast_state")
   ldplugin ("broadcast_invmon")
-  ldplugin ("AFK_Detector.xml")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
