@@ -304,7 +304,7 @@ function Pluginhelper:OnPluginBroadcast(msg, id, name, text)
   if id == "eee8dcaf925c1bbb534ef093" and msg == 1002 then
     newset = assert (loadstring ('return ' .. text or ""))()
     for i,v in pairs(self.pobjects) do
-      if v.type == 'Miniwin' then
+      if v.otype == 'Miniwin' then
         if not v.disabled then
           v:onSettingChange(newset)
         end
