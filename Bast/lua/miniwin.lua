@@ -6,11 +6,49 @@
 
 --[[
 
+The miniwindows are populated with mushclient styles, you create a table of styles. a sty
+
+Example:
+quickest way to create a window
+ mwin =  Miniwin:new{name="NewWin"}
+
+ lstyle = {} -- the entire line
+
+ style = {}
+ style.text = "Right Horizontally (Italic)"
+ style.italic = true
+ style.hjust = 'right'
+ style.hint = serialize.save_simple(style)
+ style.mouseover = nofunc
+
+ table.insert(lstyle, {style})
+ mwin:addtab('default', lstyle, {{text="Window Header"}} )
+ mwin:show(true)
+ 
+
+The global line can have the following
+  lstyle.backcolour
+  lstyle.gradient (true for gradient)
+  lstyle.colour1
+  lstyle.colour2
+  lstyle.bordercolour
+  lstyle.borderwidth
+  lstyle.borderstyle
+  lstyle.lineborder
+  lstyle.bordercolour
+  lstyle.bordercolour2
+  lstyle.topborder
+  lstyle.bottomborder
+  lstyle.leftborder then
+  lstyle.rightborder then
 
 styles can have the following
-  style.text = 'text'
+These are the main ones
+  style.text = 'text' -- the only one actually required
   style.textcolour
   style.backcolour
+
+Added for miniwin
   style.start - absolute position to start
   style.hjust - can be set to center to put text in the center of the window on that line (default is top)
     values: 'left', 'center', 'right'
@@ -24,6 +62,8 @@ styles can have the following
   style.underline
   style.strikeout
   style.hotspot_id
+
+-- The following are for mouse events and are either function names of the class or actual functions in the plugin
   style.mousedown
   style.cancelmousedown
   style.mouseup
@@ -80,10 +120,6 @@ Button Notes:
   hint = the hint for the button
   place = place of the button in the titlebar, anything <= 50 is on the left side of the bar, anything > 50 is on the right side
 
-quickest way to create a window
- mwin =  Miniwin:new{name="NewWin"}
- mwin:addtab('default', {"Window Body"}, {"Window Header"} )
- mwin:show(true)
 
 TODO: add footer, this could be used for resizing, tabs, status bar type things
 TODO: add a specific line width that can be used to wrap lines - see "help statmon" and the chat miniwindow
@@ -253,15 +289,16 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
 ]]})
   self:add_setting( 'x', {type="number", help="x location of this window, -1 = auto", default=-1, sortlev=2})
   self:add_setting( 'y', {type="number", help="y location of this window, -1 = auto", default=-1, sortlev=2})
-  self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x0D0D0D, sortlev=3, longname="Background Colour", globalset=true})
+  self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x000000, sortlev=3, longname="Background Colour", globalset=true})
   self:add_setting( 'text_colour', {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=3, longname="Text Colour", globalset=true})
-  self:add_setting( 'window_border_colour', {type="colour", help="border colour for window", default=0x303030, sortlev=4, longname="Window Border Colour", globalset=true})
-  self:add_setting( 'window_border_width', {type="number", help="border width for window", default=2, sortlev=4, longname="Window Border Width", globalset=true})
-  self:add_setting( 'title_bg_colour', {type="colour", help="background colour for the titlebar", default=0x575757, sortlev=5, longname="Title Background Colour", globalset=true})
+  self:add_setting( 'window_border_colour', {type="colour", help="border colour for window", default=verify_colour("white"), sortlev=4, longname="Window Border Colour", globalset=true})
+  self:add_setting( 'window_border_width', {type="number", help="border width for window", default=1, sortlev=4, longname="Window Border Width", globalset=true})
+  self:add_setting( 'title_gradient1', {type="colour", help="gradient colour 1 for the titlebar", default=verify_colour(0x151515), sortlev=5, longname="Title Gradient Colour 1", globalset=true})
+  self:add_setting( 'title_gradient2', {type="colour", help="gradient colour 2 for the titlebar", default=verify_colour(0x333333), sortlev=5, longname="Title Gradient Colour 2", globalset=true})
   self:add_setting( 'tab_bg_colour', {type="colour", help="background colour for a tab", default=0xDCDCDC, sortlev=6, longname="Tab Background Colour", globalset=true})
   self:add_setting( 'tab_text_colour', {type="colour", help="text colour for a tab", default=0x0D0D0D, sortlev=6, longname="Tab Text Colour", globalset=true})
   self:add_setting( 'tab_border_colour', {type="colour", help="border colour for a tab", default=0xDCDCDC, sortlev=6, longname="Tab Border Colour", globalset=true})
-  self:add_setting( 'button_text_colour', {type="colour", help="text colour for the buttons in the titlebar", default=0x70CBB9, sortlev=10, longname="Button Text Colour", globalset=true})
+  self:add_setting( 'button_text_colour', {type="colour", help="text colour for the buttons in the titlebar", default=verify_colour("white"), sortlev=10, longname="Button Text Colour", globalset=true})
   self:add_setting( 'button_text_highlight_colour', {type="colour", help="text colour for the buttons in the titlebar", default='black', sortlev=10, longname="Button Text Highlight Colour", globalset=true})
   self:add_setting( 'button_bg_highlight_colour', {type="colour", help="text colour for the buttons in the titlebar", default=0x70CBB9, sortlev=10, longname="Button Background Colour", globalset=true})
   self:add_setting( 'button_border_light', {type="colour", help="border colour for cells", default=0x404040, sortlev=10, longname="Button Border Light", globalset=true})
@@ -710,9 +747,10 @@ function Miniwin:buildtitlebar()
     style.bordercolour = 'button_border_light'
     style.bordercolour2 = 'button_border_dark'
     style.borderstyle = 4
+    style.font_name = 'Dina'
+    style.font_size = 9    
     style.mousedown = button.mousedown
     style.mouseup = button.mouseup
-
     style.mouseover = function (win, hotspotid, flags)
         win:buttonmouseover(name)
     end
@@ -737,6 +775,8 @@ function Miniwin:buildtitlebar()
         hstyle.bold = true
         hstyle.textcolour = "button_text_colour"
         hstyle.hjust = 'center'
+        hstyle.font_name = 'Dina'
+        hstyle.font_size = 9
         table.insert(tstyle, hstyle)
       end
       style.hjust = 'right'
@@ -745,10 +785,15 @@ function Miniwin:buildtitlebar()
 
   end
 
-  --tstyle.bordercolour = 'black'
-  tstyle.backcolour = 'title_bg_colour'
+  tstyle.bordercolour = 'white'
+  --tstyle.backcolour = 'title_bg_colour'
+  --tstyle.lineborder = true
+  tstyle.bottomborder = true
   --tstyle.cellborder = true
   --tstyle.backcolour = 'black'
+  tstyle.gradient = true
+  tstyle.colour1 = 'title_gradient1'
+  tstyle.colour2 = 'title_gradient2'  
   return tstyle
 end
 
@@ -1273,6 +1318,9 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
   linet.width = start
   linet.height = maxfontheight
   linet.linecharlength = linecharlength
+  linet.gradient = line.gradient
+  linet.colour1 = line.colour1
+  linet.colour2 = line.colour2
   table.insert(alllines, linet)
   return alllines
 end
@@ -1489,7 +1537,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
   for i,v in ipairs(self.activetab.convheader) do
     linenum = linenum + 1
     if i == 1 then
-      top = top - 1
+      top = top + 1
       self.activetab.build_data.actual_header_start_line = linenum
       self.activetab.build_data.actual_header_end_line = linenum + #self.activetab.convheader - 1
     end
@@ -1633,6 +1681,13 @@ function Miniwin:displayline (styles)
 
   if styles.backcolour then
     WindowRectOp (self.id, 2, styles.linestart, styles.linetop, styles.lineend, styles.linebottom, self:get_colour(styles.backcolour) )
+  end
+  if styles.gradient then
+    if styles.colour1 == styles.colour2 then
+      WindowRectOp (self.id, 2, styles.linestart, styles.linetop, styles.lineend, styles.linebottom, self:get_colour(styles.colour1) )
+    else
+      WindowGradient (self.id, styles.linestart, styles.linetop, styles.lineend, styles.linebottom, self:get_colour(styles.colour1), self:get_colour(styles.colour2), 2)    
+    end
   end
   for i,v in ipairs (styles.text) do
 
