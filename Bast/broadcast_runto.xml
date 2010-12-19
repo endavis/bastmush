@@ -123,7 +123,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin ("GMCP_handler")
+  ldplugin ("aard_GMCP_handler", ""3e7dedbe37e44942dd46d264")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable

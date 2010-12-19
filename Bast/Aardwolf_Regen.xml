@@ -286,7 +286,7 @@ end -- OnPluginClose
 function OnPluginEnable ()
 
   ldplugin ("broadcast_runto")
-  ldplugin ("GMCP_handler")
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
   ldplugin ("broadcast_state")
   ldplugin ("broadcast_invmon")
   ldplugin ("AFK_Detector.xml")
