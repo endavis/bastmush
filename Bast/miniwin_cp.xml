@@ -10,7 +10,7 @@
    purpose="Shows campaign objectives in a miniwindow"
    date_written="2008-07-22"
    requires="4.52"
-   version="4.0"
+   version="6.0"
    save_state="y"
    >
 <description trim="y">
