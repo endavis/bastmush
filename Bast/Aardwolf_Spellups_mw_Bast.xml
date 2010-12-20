@@ -121,8 +121,13 @@ else
   print("Could not load telnet_options.lua, please copy it to your plugin directory")
 end
 
-dofile (GetPluginInfo (GetPluginID(), 20) .. "aardwolf_colors.lua")
-
+nfile = scan_dir_for_file (GetInfo(60), "aardwolf_colors.lua")
+if nfile then
+  -- pull in telnet option handling
+  dofile (nfile)
+else
+  print("Could not load aardwolf_colors.lua, please copy it to your plugin directory")
+end
 
 Win = GetPluginID()
 font_height = ""
