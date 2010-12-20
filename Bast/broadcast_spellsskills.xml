@@ -1,0 +1,502 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="xBroadcast_SpellSkills"
+   author="Bast"
+   id="aaa72f3b5453567e2bba9d50"
+   language="Lua"
+   purpose="broadcast spell tags"
+   save_state="y"
+   date_written="2009-02-23 16:17:40"
+   requires="4.38"
+   version="4.0"
+   >
+<description trim="y">
+<![CDATA[
+broadcast spell tags
+TODO:
+  read spellheaders into a sqlite database and add the info to the broadcast
+  if not in the database, then reread slist stuff
+  
+change only to broadcast affected when get a stag
+  
+]]>
+</description>
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+<triggers>
+<!-- spellheaders -->
+ <trigger
+   enabled="y"
+   regexp="y"
+   match="{spellheaders\s*(.*)\s*noprompt}"
+   script="spellheaders_redirect"
+   omit_from_output="y"
+   name="start_spellheaders"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="*"
+   script="spellheaders_redirect"
+   name="multi_line_spellheaders"
+   omit_from_output="y"
+   sequence="10"
+  >
+  </trigger>
+  
+<!-- recoveries -->
+  <trigger
+   enabled="y"
+   regexp="y"   
+   match="{recoveries\s*(.*)\s*noprompt}"
+   script="recoveries_redirect"
+   omit_from_output="y"
+   name="start_recoveries"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="*"
+   script="recoveries_redirect"
+   name="multi_line_recoveries"
+   omit_from_output="y"
+   sequence="10"
+  >
+  </trigger>
+  
+<!--  {affon}  -->
+  <trigger
+   name="affon"
+   enabled="y"
+   omit_from_output="y"
+   match="^\{affon\}(?&lt;sn&gt;\d+)\,(?&lt;time&gt;\d+)$"
+   script="spelltag_on"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   name="affoff"
+   enabled="y"
+   omit_from_output="y"
+   match="^\{affoff\}(?&lt;sn&gt;\d+)$"
+   script="spelltag_off"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>
+
+<!--  {recon}  -->
+ <trigger
+   name="recon"
+   enabled="y"
+   omit_from_output="y"
+   match="^\{recon\}(?&lt;sn&gt;\d+)\,(?&lt;time&gt;\d+)$"
+   script="spelltag_on"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   name="recoff"
+   enabled="y"
+   omit_from_output="y"
+   match="^\{recoff\}(?&lt;sn&gt;\d+)$"
+   script="spelltag_off"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   omit_from_output="y"
+   match="^\{sfail\}(?&lt;sn&gt;\-?\d+)\,(?&lt;target&gt;\d+)\,(?&lt;reason&gt;\d+)\,(?&lt;recovery&gt;\-?\d+)$"
+   script="spell_failure"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>  
+</triggers>
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "findfile"
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "copytable"
+require "ldplugin"
+
+nfile = scan_dir_for_file (GetInfo(60), "telnet_options.lua")
+if nfile then
+  -- pull in telnet option handling
+  dofile (nfile)
+else
+  print("Could not load telnet_options.lua, please copy it to your plugin directory")
+end
+
+spells = {}
+recoveries = {}
+slisttype = ""
+spells_count = 0
+spells_xref = {}
+recoveries_xref = {}
+
+state = -1
+
+function spelltag_on (name, line, wildcards)
+  local spelltag = {}
+
+  spelltag.sn = tonumber (wildcards.sn)
+  spelltag.duration = tonumber (wildcards.time)
+  spelltags = serialize.save_simple( spelltag )
+  local bcastnum = -1
+  if name == 'affon' then
+    spells['affected'][tonumber(spelltag.sn)] = copytable.shallow(spells['all'][tonumber(spelltag.sn)])
+    spells['affected'][tonumber(spelltag.sn)].duration = tonumber(spelltag.duration)
+    spells['affected'][tonumber(spelltag.sn)].finish = GetInfo(304) + tonumber(spelltag.duration)
+    bcastnum = sbroadcast_table['affected']
+    local sliststr = serialize.save_simple( spells['affected'] )
+    phelper:broadcast(bcastnum, sliststr, sliststr)     
+    bcastnum = 1
+  elseif name == 'recon' then
+    recoveries['affected'][tonumber(spelltag.sn)] = copytable.shallow(recoveries['all'][tonumber(spelltag.sn)])
+    recoveries['affected'][tonumber(spelltag.sn)].duration = tonumber(spelltag.duration)    
+    recoveries['affected'][tonumber(spelltag.sn)].finish = GetInfo(304) + tonumber(spelltag.duration)
+    bcastnum = rbroadcast_table['affected']
+    local sliststr = serialize.save_simple( recoveries['affected'] )
+    phelper:broadcast(bcastnum, sliststr, sliststr)     
+    bcastnum = 3
+  end
+ 
+  
+  phelper:broadcast(bcastnum, spelltags, spelltags)
+
+end -- spelltag_on
+
+function spelltag_off (name, line, wildcards)
+  local spelltag = {}
+
+  spelltag.sn = tonumber (wildcards.sn)
+  spelltags = serialize.save_simple( spelltag )
+  local bcastnum = -1
+  if name == 'affoff' then
+    spells['affected'][tonumber(spelltag.sn)] = nil
+    bcastnum = sbroadcast_table['affected']
+    local sliststr = serialize.save_simple( spells['affected'] )
+    phelper:broadcast(bcastnum, sliststr, sliststr)  
+    bcastnum = 2
+    
+  elseif name == 'recoff' then
+    recoveries['affected'][tonumber(spelltag.sn)] = nil
+    bcastnum = rbroadcast_table['affected']
+    local sliststr = serialize.save_simple( recoveries['affected'] )
+    phelper:broadcast(bcastnum, sliststr, sliststr)     
+    bcastnum = 4
+  end
+  phelper:broadcast(bcastnum, spelltags, spelltags)
+  
+
+  
+end -- spelltag_off
+
+function spell_failure (name, line, wildcards)
+  local sfail = {}
+  sfail.sn = tonumber (wildcards.sn)
+  sfail.target = tonumber (wildcards.target)
+  sfail.reason = tonumber (wildcards.reason)
+  sfail.recovery = tonumber (wildcards.recovery)
+
+  sfails = serialize.save_simple( sfail )
+
+  phelper:broadcast(5, sfails, sfails)
+end
+
+function request_slist()
+   --print("called request slist")
+   SendNoEcho "slist noprompt"
+   SendNoEcho "slist affected noprompt"
+   SendNoEcho "slist learned noprompt"
+   SendNoEcho "slist spellup noprompt"
+end
+
+function make_spells_xrefs ()
+  spells_xref = {}
+  for k, v in pairs (spells['all']) do
+    spells_xref [v.name] = k
+  end -- for each spell
+
+end -- make_xrefs
+
+function make_recov_xrefs()
+  recoveries_xref = {}
+  for k, v in pairs (recoveries['all']) do
+    recoveries_xref [v.name] = k
+  end -- for each recovery
+end
+
+function request(stype)
+  SendNoEcho("slist " .. stype .. " noprompt")
+end
+
+-- parse spellheaders line, break into pieces
+function parse_spell_line (line)
+  local sn, name, target, duration, percent, recovery, skilltype =
+    string.match (line, "^(%d+)%,([A-Za-z0-9 ]+)%,(%d+)%,(%d+)%,(%d+),(-?%d+),(%d+)$")
+  if not sn then
+    ColourNote ("white", "red", "Invalid spellheaders line: " .. line)
+    return nil
+  end -- not a valid spell name
+
+  return tonumber (sn),
+         trim (name:lower()),
+         tonumber (target),
+         tonumber (duration),
+         tonumber (percent),
+         tonumber (recovery),
+         tonumber (skilltype)
+
+end -- parse_spell_line
+
+sbroadcast_table = {
+  all=7,
+  learned=8,
+  spellup=9,
+  affected=10,
+}
+
+rbroadcast_table = {
+  all=11,
+  affected=12,
+}
+
+-- spells redirector
+function spellheaders_redirect (name, line, wildcards, styles)
+
+  -- start of spells list? remove old ones
+  if name == "start_spellheaders" then
+    if trim(wildcards[1]) == "" then
+      slisttype = "all"     
+    else
+      slisttype = trim(wildcards[1])
+    end
+    spells[slisttype] = {}    
+    spells_count = 0
+    start = GetInfo(304)
+    EnableTrigger ("multi_line_spellheaders", true)  -- capture subsequent lines
+    return
+  end -- if
+
+  if line == "{/spellheaders}" then
+    EnableTrigger ("multi_line_spellheaders", false)  -- no more lines to go
+    --ColourNote ("green", "", "Loaded information about " .. spells_count .. " " .. slisttype .. " spells.")
+    if slisttype == 'all' then
+      make_spells_xrefs ()
+    end
+    --print(slisttype)
+    --tprint(spells[slisttype])
+    local bcastnum = sbroadcast_table[slisttype]
+    local sliststr = serialize.save_simple( spells[slisttype] )
+    phelper:broadcast(bcastnum, sliststr, sliststr)    
+    SaveState ()
+    return
+  end -- if
+
+  local sn, name, target, duration, percent, recovery, skilltype = parse_spell_line (line)
+
+  if not sn then return end
+
+  spells[slisttype][sn] = {
+      name = name:lower (),   -- name of spell
+      target = target,        -- target code
+      percent = tonumber(percent),      -- percent known for this character
+      duration = tonumber(duration),    -- spell duration
+      recovery = tonumber(recovery),    -- depends on which recovery
+      skilltype = tonumber(skilltype),  -- 1 = spell, 2 = skill
+      } -- end spells table item
+      
+  if slisttype == 'affected' then
+    spells['affected'][sn].finish = start + tonumber(duration)
+  end
+  spells_count = spells_count + 1
+
+end -- function spellheaders_redirect
+
+-- parse recoveries line, break into pieces
+function parse_recoveries_line (line)
+  local sn, name, duration = string.match (line, "^(%d+)%,([A-Za-z0-9 ]+)%,(%d+)$")
+
+  if not sn then
+    ColourNote ("white", "red", "Invalid recoveries line: " .. line)
+    return nil
+  end -- not a valid spell name
+
+  return tonumber (sn), trim (name:lower ()), tonumber (duration)
+end -- parse_recoveries_line
+
+function recoveries_redirect (name, line, wildcards, styles)
+
+  -- start of recoveries list? remove old ones
+  if name == "start_recoveries" then
+    if trim(wildcards[1]) == "" then
+      slisttype = "all"     
+    else
+      slisttype = trim(wildcards[1])
+    end  
+    recoveries[slisttype] = {}
+    recoveries_count = 0
+    start = GetInfo(304)    
+    EnableTrigger ("multi_line_recoveries", true)  -- capture subsequent lines
+    return
+  end -- if
+
+  if line == "{/recoveries}" then
+    EnableTrigger ("multi_line_recoveries", false)  -- no more lines to go
+    --ColourNote ("green", "", "Loaded information about " .. recoveries_count .. " recoveries.")
+    if slisttype == 'all' then
+      make_recov_xrefs ()
+    end
+    SaveState ()
+    local bcastnum = rbroadcast_table[slisttype]
+    local sliststr = serialize.save_simple( spells[slisttype] )
+    phelper:broadcast(bcastnum, sliststr, sliststr)      
+    return
+  end -- if
+
+  local sn, name, duration = parse_recoveries_line (line)
+
+  if not sn then
+    return
+  end -- not a valid spell name
+  recoveries[slisttype][sn] = { name = name  }
+  if slisttype == 'affected' then
+    recoveries['affected'][sn].finish = start + tonumber(duration)
+  end
+  recoveries_count = recoveries_count + 1
+
+end -- function recoveries_redirect
+
+function get_spells(stype)
+  local sliststr = serialize.save_simple( spells[stype] or {} )
+  return sliststr
+end
+
+function get_recoveries(stype)
+  local sliststr = serialize.save_simple( recoveries[stype] or {} )
+  return sliststr
+end
+
+function get_spells_xref(stype)
+  local sliststr = serialize.save_simple( spells_xref or {} )
+  return sliststr
+end
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+  
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      local tt = assert (loadstring ('return ' .. gmcparg or ""))()
+      if tt['vitals'] and tt['stats'] and tt['maxstats'] and tt['worth'] and tt['status'] and tt['base'] then
+        state = tt['status'].state
+        if tonumber(state) == 3 then
+          if spells['all'] == nil then
+            --print("state = 3 and spells['all'] nil")
+            request_slist()
+          end
+        end
+      end
+    end
+  end
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin ("broadcast_spellsskills", "aaa72f3b5453567e2bba9d50")
+  
+  phelper:OnPluginEnable()
+  if IsConnected() then
+    --print("IsConnect in Enable")
+    request_slist()
+  end
+  
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+  if GetPluginInfo (GetPluginID (), 17) then
+    TelnetOptionOff (TELOPT_SPELLUP)
+    TelnetOptionOff (TELOPT_SKILLGAINS)
+  end -- if enabled
+  
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+  TelnetOptionOn (TELOPT_SPELLUP)
+  TelnetOptionOn (TELOPT_SKILLGAINS)
+
+  
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'bsst')
+phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:enable()
+
+]]>
+</script>
+</muclient>
