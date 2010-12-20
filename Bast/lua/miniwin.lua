@@ -1550,7 +1550,9 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
   for i,v in ipairs(self.activetab.convtext) do
     linenum = linenum + 1
     if i == 1 then
-      top = top + 1
+      if linenum ~= 1 then
+        top = top + 1
+      end
       self.activetab.build_data.textstartline = linenum
       --self.activetab.build_data.textendline = linenum + #self.activetab.convtext - 1
     end
