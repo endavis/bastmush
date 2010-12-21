@@ -196,9 +196,11 @@ end
  
 --]]
 
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+ 
 require "var"
 require "serialize"
-
+require "findfile"
 function process_stuck ( name, line, wildcards, styles )
    BroadcastPlugin( 3, "" )
 end
@@ -246,7 +248,13 @@ end -- OnPluginDisable
 
 
 -- pull in telnet option handling
-dofile (GetPluginInfo (GetPluginID (), 20) .. "telnet_options.lua")
+nfile = scan_dir_for_file (GetInfo(60), "telnet_options.lua")
+if nfile then
+  -- pull in telnet option handling
+  dofile (nfile)
+else
+  print("Could not load telnet_options.lua, please copy it to your plugin directory")
+end
   
 function OnPluginConnect ()
    TelnetOptionOff(TELOPT_QUIET)
