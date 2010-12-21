@@ -21,25 +21,24 @@ bspell a all         --> cast all possible spellups
   to add a spell in a certain place add a : then the place number
 *bspell d "night vision" "detect magic"   --> remove those from the list
 
-spellup fast    --> cast all spellups immediately, as fast as you can
-spellup pause   --> stop casting spellups until a resume
-spellup resume  --> resume casting
-spellup refresh --> requery server for current spells on us
+*bspell fast    --> cast all spellups immediately, as fast as you can
+*bspell pause   --> stop casting spellups until a resume
+*bspell resume  --> resume casting
+*bspell refresh --> requery server for current spells on us
 
-spellup full    --> show full details
-
-spellup other (name) --> try to spellup another player with all spellups
+spellup other (name) --> try to spellup another player with picked spellups
                           (eg. spellup other johnsmith)
 
-spellup block   --> block a spell with another spell
-                           (eg. spellup block + 68 121)
-*spellup disable --> disable a spell without taking it out of the list
+spellup other (name) all --> try to spellup another player with all spellups
+                          (eg. spellup other johnsmith)
 
-*spellup help    --> this message
+*bspell block   --> block a spell with another spell
+                           (eg. spellup block + 68 121)
+*bspell disable --> disable a spell without taking it out of the list
+
+*bspell help    --> this message
 
 Bugs - Hide shows up as a negative spellup
-
------- Don't add duplicates
 
 TODO:
 create miniwin based on mine
@@ -114,6 +113,7 @@ require "commas"
 require "serialize"
 require "ldplugin"
 require "findfile"
+require "verify"
 
 nfile = scan_dir_for_file (GetInfo(60), "telnet_options.lua")
 
@@ -198,8 +198,8 @@ function find_spellsn(item)
 end -- find_spellsn
 
 function isblocked(sn)
-  if phelper.askedspells and phelper.askedspells[askedspells_xref[sn]].blockers then
-    for _, blocker in pairs(phelper.askedspells[askedspells_xref[sn]].blockers) do
+  if phelper.askedspells and askedspells_xref[sn] and phelper.askedspells[askedspells_xref[sn]].blockers then
+    for blocker, _ in pairs(phelper.askedspells[askedspells_xref[sn]].blockers) do
       if spells['affected'][blocker] then
         return true
       end
@@ -217,7 +217,6 @@ function add_blocker(spell, blocker)
         phelper.askedspells[askedspells_xref[sn]].blockers = {}
       end
       phelper.askedspells[askedspells_xref[sn]].blockers[blksn] = 1
-      tprint(phelper.askedspells)
       return true
     end
   end
@@ -253,6 +252,68 @@ end
 
 function cmd_refresh(cmddict)
   SendNoEcho("slist affected noprompt")
+end
+
+function make_askedspells_xrefs ()
+  phelper:mdebug('making askedspells xref')
+  askedspells_xref = {}
+  for k, v in pairs (phelper.askedspells) do
+    askedspells_xref [v.sn] = k
+  end -- for each spell
+end -- make_xrefs
+
+function activatespell(sn, fast)
+  fast = verify_bool(fast)
+  if spells['all'][sn] then
+    v = spells['all'][sn]
+    if not spells['affected'][sn] then
+      local cast = true
+      local recov = spells['all'][sn].recovery
+      if recov and recoveries['affected'][recov] then
+        cast = false
+      end
+      if v.disabled or isblocked(sn) then
+        cast = false
+      end  
+      if cast then
+        if not fast then
+          --print("setting waiting to", sn)
+          waiting = tonumber(sn)
+        end    
+        if tonumber(spells['all'][sn].skilltype) == 1 then
+          SendNoEcho('cast ' .. tostring(sn))
+        else
+          words = justWords(spells['all'][sn].name)
+          SendNoEcho (words[1])
+        end
+        return true
+      end
+    end
+  end
+  return false
+end
+
+function nextspellup (reason)
+  --print("called nextspellup", reason, waiting)
+  if have_slist and 
+     stats ~= nil and 
+     not waiting and 
+     not need_mana and 
+     not need_moves and 
+     not noneed and
+     not nocast and
+     not phelper.pause and
+     tonumber(stats.status.state) == 3 then
+     
+    --print('got to go through table')
+    for k,v in ipairs(phelper.askedspells) do
+      if activatespell(v.sn) then
+        return
+      end
+    end
+    noneed = true
+    
+  end
 end
 
 function cmd_listspells(cmddict)
@@ -364,7 +425,13 @@ function cmd_enable(cmddict)
   end
 end
 
-function cmd_delete(cmddict)
+function cmd_fast(cmddict)
+  for i,v in ipairs(phelper.askedspells) do
+    activatespell(tonumber(v.sn), true)
+  end
+end
+
+function cmd_deletespell(cmddict)
   if #cmddict >= 1 then
     removed = false
     phelper:plugin_header()   
@@ -459,55 +526,6 @@ function formatspells()
   end
 end
 
-function make_askedspells_xrefs ()
-  phelper:mdebug('making askedspells xref')
-  askedspells_xref = {}
-  for k, v in pairs (phelper.askedspells) do
-    askedspells_xref [v.sn] = k
-  end -- for each spell
-end -- make_xrefs
-
-function nextspellup (reason)
-  phelper:mdebug("called nextspellup", reason)
-  if have_slist and 
-     stats ~= nil and 
-     not waiting and 
-     not need_mana and 
-     not need_moves and 
-     not noneed and
-     not nocast and
-     not phelper.pause and
-     tonumber(stats.status.state) == 3 then
-     
-    phelper:mdebug('got to go through table')
-    for k,v in ipairs(phelper.askedspells) do
-      if not spells['affected'][v.sn] then
-        local cast = true
-        local recov = spells['all'][v.sn].recovery
-        if recov and recoveries['affected'][recov] then
-          cast = false
-        end
-        if v.disabled or isblocked(v.sn) then
-          cast = false
-        end
-        if cast then
-          if tonumber(spells['all'][v.sn].skilltype) == 1 then
-            waiting = tonumber(v.sn)
-            phelper:mdebug('casting',  v.sn)
-            SendNoEcho('cast ' .. tostring(v.sn))
-            return
-          else
-            words = justWords(spells['all'][v.sn].name)
-            SendNoEcho (words[1])
-            return
-          end
-        end
-      end
-    end
-    noneed = true
-    
-  end
-end
 
 ]]>
 </script>
@@ -727,12 +745,13 @@ phelper:add_cmd('listspells', {func=cmd_listspells, help="list request spells", 
 phelper:add_cmd('add', {func=cmd_addspell, help="add a spell"})
 phelper:add_cmd('pause', {func=cmd_pause, help="pause spellup"})
 phelper:add_cmd('resume', {func=cmd_resume, help="resume spellup"})
-phelper:add_cmd('delete', {func=cmd_delete, help="remove a spell"})
+phelper:add_cmd('delete', {func=cmd_deletespell, help="remove a spell"})
 phelper:add_cmd('disable', {func=cmd_disable, help="disable a spell"})
 phelper:add_cmd('enable', {func=cmd_enable, help="enable a spell"})
 phelper:add_cmd('ablock', {func=cmd_ablocker, help="add blockers, Ex. 'protection good:inertial barrier'"})
 phelper:add_cmd('dblock', {func=cmd_dblocker, help="remove blockers"})
 phelper:add_cmd('refresh', {func=cmd_refresh, help="refresh affected spells"})
+phelper:add_cmd('fast', {func=cmd_fast, help="cast all spells in one go"})
 
 phelper:enable()
 
