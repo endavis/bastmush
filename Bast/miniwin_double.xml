@@ -98,7 +98,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin("broadcast_noexp")
+  ldplugin("broadcast_double")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
