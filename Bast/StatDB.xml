@@ -263,12 +263,10 @@ function checkcampaign(level)
     db:close()
   end
   if numlevels ~= 1 then
-    if phelper.dontlevelnocampaign then
-      if noexp == nil then
-        noexp = verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp'))
-        if not noexp then
-          SendNoEcho("noexp")
-        end
+    if noexp == nil then
+      noexp = verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp'))
+      if not noexp then
+        SendNoEcho("noexp")
       end
     end
   end
@@ -312,7 +310,9 @@ function OnPluginBroadcast (msg, id, name, text)
       end
   
       if char.status and tonumber(char.status.tnl) < 500 then
-        checkcampaign(tonumber(char.status.level))
+        if phelper.dontlevelnocampaign then      
+          checkcampaign(tonumber(char.status.level))
+        end
       end
     end
   end
