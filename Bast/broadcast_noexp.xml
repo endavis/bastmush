@@ -84,10 +84,10 @@ require "verify"
 function noexp(name, line, wildcards)
   if name == 'noexp' or name == 'noexpfight' then
     phelper:broadcast(1)
-    phelper.noexp = true
+    phelper:set("noexp", true)
   elseif name == 'expon' then
     phelper:broadcast(2)
-    phelper.noexp = false
+    phelper:set("noexp", false)
   end
 
 end
