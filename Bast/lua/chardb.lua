@@ -235,14 +235,14 @@ function Statdb:savequest( questinfo )
   if self:open() then
     questinfo['level'] = db:getstat('totallevels')
     totalqp = tonumber(questinfo.qp) + tonumber(questinfo.tier) + tonumber(questinfo.mccp) + tonumber(questinfo.lucky)
-    self:addtostat('questpoints', totalqp)
-    self:addtostat('qpearned', totalqp)
-    self:addtostat('triviapoints', questinfo.tp)
-    self:addtostat('totaltrivia', questinfo.tp)
     if questinfo.failed == 1 then
       self:addtostat('questsfailed', 1)
     else
       self:addtostat('questscomplete', 1)
+      self:addtostat('questpoints', totalqp)
+      self:addtostat('qpearned', totalqp)
+      self:addtostat('triviapoints', questinfo.tp)
+      self:addtostat('totaltrivia', questinfo.tp)      
     end
 
     local stmt = self.db:prepare[[ INSERT INTO quests VALUES (NULL, :starttime, :finishtime,
@@ -298,14 +298,14 @@ function Statdb:savecp( cpinfo )
   self:checkcptable()
   self:checkcpmobstable()
   if self:open() then
-    self:addtostat('questpoints', cpinfo.qp)
-    self:addtostat('qpearned', cpinfo.qp)
-    self:addtostat('triviapoints', cpinfo.tp)
-    self:addtostat('totaltrivia', cpinfo.tp)
     if cpinfo.failed == 1 then
       self:addtostat('campaignsfld', 1)
     else
       self:addtostat('campaignsdone', 1)
+      self:addtostat('questpoints', cpinfo.qp)
+      self:addtostat('qpearned', cpinfo.qp)
+      self:addtostat('triviapoints', cpinfo.tp)
+      self:addtostat('totaltrivia', cpinfo.tp)      
     end
 
     newlevel = getactuallevel(cpinfo.level, db:getstat('remorts'), db:getstat('tiers'))
