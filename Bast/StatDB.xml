@@ -251,6 +251,30 @@ function ListMilestones(cmddict)
   end
 end
 
+function checkcampaign(level)
+  db:checkcptable()
+  
+  local numlevels = 0
+  local totallevels = db:getstat('totallevels')
+  if db:open() then
+    for a in db.db:rows(string.format("SELECT COUNT(*) FROM campaigns where level = %d;", totallevels)) do
+      numlevels = tonumber(a[1])
+    end
+    db:close()
+  end
+  if numlevels ~= 1 then
+    if phelper.dontlevelnocampaign then
+      if noexp == nil then
+        noexp = verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp'))
+        if not noexp then
+          SendNoEcho("noexp")
+        end
+      end
+    end
+  end
+
+end
+
 ]]>
 </script>
 
@@ -272,11 +296,24 @@ function OnPluginBroadcast (msg, id, name, text)
     savemobkill()
   elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
     savegq()
-  elseif id == "aaa79afcb20fa11787c5a327" then
-    state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
-    statestring = GetPluginVariable ("aaa79afcb20fa11787c5a327", "statestring")
-    if statestring == 'active' and not verify_bool(phelper.seenwhois) then
-      Execute('whois')
+--  elseif id == "aaa79afcb20fa11787c5a327" then
+--    state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
+--    statestring = GetPluginVariable ("aaa79afcb20fa11787c5a327", "statestring")
+--    if statestring == 'active' and not verify_bool(phelper.seenwhois) then
+--      Execute('whois')
+--    end
+  elseif id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then    
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      local char = assert (loadstring ('return ' .. gmcparg or ""))()
+      
+      if char.status.state and tonumber(char.status.state) == 3 and not verify_bool(phelper.seenwhois) then
+        Execute('whois')
+      end
+  
+      if char.status and tonumber(char.status.tnl) < 500 then
+        checkcampaign(tonumber(char.status.level))
+      end
     end
   end
 
@@ -302,6 +339,7 @@ function OnPluginEnable ()
   ldplugin('broadcast_kills')
   ldplugin('broadcast_gq')
   ldplugin('broadcast_state')
+  ldplugin('broadcast_noexp')
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
@@ -340,6 +378,7 @@ phelper:set_default('cmd', 'statdb')
 phelper:set_default('plugin_colour', 'orange')
 
 phelper:add_setting('seenwhois', {help="have seen a whois for StatDB", type="bool", default=false, readonly=true})
+phelper:add_setting('dontlevelnocampaign', {help="set this to true to automatically set noexp at <500 tnl if you haven't done a campaign this level", type="bool", default=false})
 
 phelper:enable()
 
