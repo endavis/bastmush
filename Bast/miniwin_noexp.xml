@@ -48,7 +48,7 @@ noexpwin:set_default('width_padding', 5)
 noexpwin:set_default('height_padding', 3)
 --noexpwin:disable()
 
-noexp = nil
+noexp = false
 
 function show_noexp ()
 
