@@ -251,6 +251,8 @@ function load_spells_xrefs()
 end
 
 function cmd_refresh(cmddict)
+  waiting= false
+  noneed = false
   SendNoEcho("slist affected noprompt")
 end
 

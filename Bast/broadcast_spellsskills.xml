@@ -130,6 +130,17 @@ change only to broadcast affected when get a stag
    sequence="100"
   >
   </trigger>  
+  
+ <trigger
+   enabled="y"
+   omit_from_output="y"
+   match="^\{skillgain\}(?<sn>\d+)\,(?<percent>\d+)$"
+   script="skillgain"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>
+ 
 </triggers>
 
 <script>
@@ -258,6 +269,49 @@ function request(stype)
   SendNoEcho("slist " .. stype .. " noprompt")
 end
 
+sbroadcast_table = {
+  all=7,
+  learned=8,
+  spellup=9,
+  affected=10,
+}
+
+rbroadcast_table = {
+  all=11,
+  affected=12,
+}
+
+function broadcast_slist(slisttype)
+    local bcastnum = sbroadcast_table[slisttype]
+    local sliststr = serialize.save_simple( spells[slisttype] )
+    phelper:broadcast(bcastnum, sliststr, sliststr)
+end
+
+function skillgain (name, line, wildcards)
+  local sn = tonumber (wildcards.sn)
+  local percent = tonumber (wildcards.percent)
+
+  if not spells['all'][sn] then
+    request_slist()
+  else
+    spells ['all'][sn].percent = percent
+    broadcast_slist('all')
+    if spells['spellup'][sn] then
+      spells ['spellup'][sn].percent = percent
+      broadcast_slist('spellup')
+    end
+    if spells['learned'][sn] then
+      spells ['learned'][sn].percent = percent
+      broadcast_slist('learned')
+    end
+  end
+    
+  if spells ['all'][sn] then
+    ColourNote ("yellow", "", string.format ("Your proficiency at %s is now %i%%.",
+                spells ['all'][sn].name, percent))
+  end
+end -- skillgain
+
 -- parse spellheaders line, break into pieces
 function parse_spell_line (line)
   local sn, name, target, duration, percent, recovery, skilltype =
@@ -276,18 +330,6 @@ function parse_spell_line (line)
          tonumber (skilltype)
 
 end -- parse_spell_line
-
-sbroadcast_table = {
-  all=7,
-  learned=8,
-  spellup=9,
-  affected=10,
-}
-
-rbroadcast_table = {
-  all=11,
-  affected=12,
-}
 
 -- spells redirector
 function spellheaders_redirect (name, line, wildcards, styles)
@@ -312,11 +354,7 @@ function spellheaders_redirect (name, line, wildcards, styles)
     if slisttype == 'all' then
       make_spells_xrefs ()
     end
-    --print(slisttype)
-    --tprint(spells[slisttype])
-    local bcastnum = sbroadcast_table[slisttype]
-    local sliststr = serialize.save_simple( spells[slisttype] )
-    phelper:broadcast(bcastnum, sliststr, sliststr)    
+    broadcast_slist(slisttype)   
     SaveState ()
     return
   end -- if
@@ -449,11 +487,10 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin ("broadcast_spellsskills", "aaa72f3b5453567e2bba9d50")
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
   
   phelper:OnPluginEnable()
   if IsConnected() then
-    --print("IsConnect in Enable")
     request_slist()
   end
   
