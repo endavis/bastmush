@@ -139,7 +139,7 @@ function formatlevel()
     oldlevel = level - 1
     if db:open() then
       if db:checkfortable('levels') and level % 201 > 2 then
-        for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level_id = %d;", oldlevel)) do
+        for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level = %d;", oldlevel)) do
           starttime = a[1]
           finishtime = a[2]
         end
