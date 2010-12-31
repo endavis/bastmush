@@ -107,7 +107,6 @@ dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
 
 require 'var'
 require 'pluginhelper'
-require "miniwin"
 require "tprint"
 require "commas"
 require "serialize"
@@ -150,8 +149,6 @@ nocast = false
 
 nocast_rooms = {}
 current_room = -1
-
-spellwin = Miniwin:new{name="Spells/Skills"}
 
 function PrefixCheck (t, s)
   for name, item in pairs (t) do
@@ -740,8 +737,6 @@ phelper:set_default('plugin_colour', 'lime')
 
 phelper:add_setting( 'askedspells', {type="table", help="the list of spells", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatspells, readonly=true, afterf=make_askedspells_xrefs})
 phelper:add_setting( 'pause', {type="bool", help="pause spellup", default=false, sortlev=35, readonly=true})
-
-phelper:add_pobject('win', spellwin)
 
 phelper:add_cmd('listspells', {func=cmd_listspells, help="list request spells", default=true})
 phelper:add_cmd('add', {func=cmd_addspell, help="add a spell"})
