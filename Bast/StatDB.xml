@@ -43,6 +43,8 @@ require "ldplugin"
 
 db = Statdb:new{}
 
+sentnoexp = false
+
 function savelevel()
   local pvar = GetPluginVariable(  "aaa0ab9ed92f8fc614664bd1" , "levelinfo")
 
@@ -252,20 +254,25 @@ function ListMilestones(cmddict)
 end
 
 function checkcampaign(level)
-  db:checkcptable()
-  
-  local numlevels = 0
-  local totallevels = db:getstat('totallevels')
-  if db:open() then
-    for a in db.db:rows(string.format("SELECT COUNT(*) FROM campaigns where level = %d;", totallevels)) do
-      numlevels = tonumber(a[1])
-    end
-    db:close()
-  end
-  if numlevels ~= 1 then
-    SendNoEcho("noexp")
-  end
+  local res, clevel = CallPlugin("aaa66f81c50828bbbfda7100", "isoncp")
+  clevel = tonumber(clevel)
+  if clevel == -1 or clevel ~= level then
+    db:checkcptable()
 
+    local numlevels = 0
+    local totallevels = db:getstat('totallevels')
+    if db:open() then
+      for a in db.db:rows(string.format("SELECT COUNT(*) FROM campaigns where level = %d;", totallevels)) do
+        numlevels = tonumber(a[1])
+      end
+      db:close()
+    end
+
+    if numlevels ~= 1 then
+      sentnoexp = true
+      Send("noexp")
+    end
+  end
 end
 
 ]]>
@@ -304,12 +311,24 @@ function OnPluginBroadcast (msg, id, name, text)
         Execute('whois')
       end
   
-      if char.status and tonumber(char.status.tnl) < 500 then
-        if phelper.dontlevelnocampaign and not verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp')) then 
+      if char.status and tonumber(char.status.tnl) < phelper.campaignxp then
+        if phelper.dontlevelnocampaign and 
+           not verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp')) and
+           not sentnoexp then 
           checkcampaign(tonumber(char.status.level))
         end
       end
     end
+  elseif id == "aaa65ac8122d795ad5348dcd" then
+    sentnoexp = false
+  elseif id == "aaa66f81c50828bbbfda7100" and 
+         msg == 1 and 
+         phelper.dontlevelnocampaign and 
+         verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp')) and
+         not sentnoexp then
+         
+    sentnoexp = true
+    Send('noexp')
   end
 
   phelper:OnPluginBroadcast(msg, id, name, text)
@@ -373,7 +392,8 @@ phelper:set_default('cmd', 'statdb')
 phelper:set_default('plugin_colour', 'orange')
 
 phelper:add_setting('seenwhois', {help="have seen a whois for StatDB", type="bool", default=false, readonly=true})
-phelper:add_setting('dontlevelnocampaign', {help="set this to true to automatically set noexp at <500 tnl if you haven't done a campaign this level", type="bool", default=false})
+phelper:add_setting('dontlevelnocampaign', {help="set this to true to automatically set noexp at <campaignxp tnl if you haven't done a campaign this level", type="bool", default=false})
+phelper:add_setting('campaignxp', {help="tnl to check to set noexp if you haven't done a campaign this level", type="number", default=500})
 
 phelper:enable()
 

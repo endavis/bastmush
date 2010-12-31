@@ -452,7 +452,7 @@ function cp_time (name, line, wildcards)
 end -- cp_time
 
 function campaign_done (name, line, wildcards)
-
+  cp_info['oncp'] = false
   var.cp_info = serialize.save( "cp_info", cp_info )
   SaveState()
   phelper:broadcast(3, var.cp_info)
@@ -461,6 +461,7 @@ end -- campaign_done
 
 function campaign_fail (name, line, wildcards)
   cp_info.failed = 1
+  cp_info['oncp'] = false
   var.cp_info = serialize.save( "cp_info", cp_info )
   SaveState()
   phelper:broadcast(4, var.cp_info)
@@ -477,6 +478,7 @@ end
 function campaign_complete(name, line, wildcards)
   phelper:enabletriggroup("campaignrew", true)
   cp_info['finishtime'] = GetInfo(304)
+  cp_info['oncp'] = false
 end
 
 function build_time()
@@ -527,10 +529,12 @@ function cp_new()
   cp_info['level'] =  curlevel
   cp_info['starttime'] = GetInfo(304)
   cp_info['finishtime'] = 0
+  cp_info['oncp'] = true
   SaveState()
 end
 
 function cp_none( name, line, wildcards)
+  cp_info['oncp'] = false
   phelper:enabletriggroup("campaigncheck", false)
   phelper:enabletriggroup("campaignin", false)
   phelper:enabletriggroup("campaignrew", false)
@@ -539,6 +543,13 @@ function cp_none( name, line, wildcards)
   timer = {}
 end
 
+function isoncp()
+  if cp_info['oncp'] then
+    return cp_info.level
+  else
+    return -1
+  end
+end
 ]]>
 </script>
 
