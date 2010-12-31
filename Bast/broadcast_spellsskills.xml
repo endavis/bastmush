@@ -134,7 +134,7 @@ change only to broadcast affected when get a stag
  <trigger
    enabled="y"
    omit_from_output="y"
-   match="^\{skillgain\}(?<sn>\d+)\,(?<percent>\d+)$"
+   match="^\{skillgain\}(?&lt;sn&gt;\d+)\,(?&lt;percent&gt;\d+)$"
    script="skillgain"
    regexp="y"
    sequence="100"
