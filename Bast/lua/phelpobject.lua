@@ -61,7 +61,8 @@ function Phelpobject:initialize(args)
   self:add_cmd('reset', {func="cmd_reset", help="reset settings to default values"})
   self:add_cmd('save', {func=SaveState, help="save plugin variables"})
   self:add_cmd('showvars', {func="cmd_showvars", help="show plugin variables"})
-
+  self:add_cmd('showevents', {func="cmd_showevents", help="show functions registered for all events"})
+  
 end
 
 
@@ -80,7 +81,7 @@ function Phelpobject:processevent(tevent, args)
   for i,v in ipairs(self.events[tevent]) do
     if v.plugin then
       local targs = serialize.save_simple(args)
-      print('calling', v.plugin, v.func, targs)
+      --print('calling', v.plugin, v.func, targs)
       CallPlugin(v.plugin, v.func, targs)
     else
       v.func(v.object, args)
@@ -90,15 +91,18 @@ end
 
 function Phelpobject:removeevent(tevent, object, tfunction, plugin)
   for i,v in ipairs(self.events[tevent]) do
-    if v.object == object and v.func == tfunction and v.plugin == plugin then
-      print('removing event')
-      table.remove(self.events, i)
+    if v.func == tfunction and (v.object == object or v.plugin == plugin) then
+      table.remove(self.events[tevent], i)
     end
   end
 end
 
 function Phelpobject:cmd_showvars(cmddict)
   tprint(GetVariableList())
+end
+
+function Phelpobject:cmd_showevents(cmddict)
+  tprint(self.events)
 end
 
 function Phelpobject:cmd_set(cmddict)

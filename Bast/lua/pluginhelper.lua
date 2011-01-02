@@ -797,12 +797,12 @@ function fix_hotspotid(hotspotid)
 end
 
 function registerevent(pluginid, event, func)
-  print(GetPluginInfo(GetPluginID(), 1), "registered", pluginid, event, func)
+  phelper:mdebug(GetPluginInfo(GetPluginID(), 1), "registered", pluginid, event, func)
   phelper:addevent(event, {}, func, pluginid)
 end
 
 function unregisterevent(pluginid, event, func)
-  print(GetPluginInfo(GetPluginID(), 1), "unregistered", pluginid, event, func)
+  phelper:mdebug(GetPluginInfo(GetPluginID(), 1), "unregistered", pluginid, event, func)
   phelper:removeevent(event, {}, func, pluginid)  
 end
 
