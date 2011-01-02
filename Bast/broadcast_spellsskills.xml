@@ -306,10 +306,10 @@ function skillgain (name, line, wildcards)
     end
   end
     
-  if spells ['all'][sn] then
-    ColourNote ("yellow", "", string.format ("Your proficiency at %s is now %i%%.",
-                spells ['all'][sn].name, percent))
-  end
+  --if spells ['all'][sn] then
+  --  ColourNote ("yellow", "", string.format ("Your proficiency at %s is now %i%%.",
+  --              spells ['all'][sn].name, percent))
+  --end
 end -- skillgain
 
 -- parse spellheaders line, break into pieces
@@ -415,7 +415,7 @@ function recoveries_redirect (name, line, wildcards, styles)
     end
     SaveState ()
     local bcastnum = rbroadcast_table[slisttype]
-    local sliststr = serialize.save_simple( spells[slisttype] )
+    local sliststr = serialize.save_simple( recoveries[slisttype] )
     phelper:broadcast(bcastnum, sliststr, sliststr)      
     return
   end -- if
