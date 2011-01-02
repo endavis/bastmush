@@ -65,11 +65,11 @@ function Phelpobject:initialize(args)
 end
 
 
-function Phelpobject:addevent(tevent, object, tfunction)
+function Phelpobject:addevent(tevent, object, tfunction, plugin)
   if self.events[tevent] == nil then
     self.events[tevent] = {}
   end
-  table.insert(self.events[tevent], {object=object, func=tfunction})
+  table.insert(self.events[tevent], {object=object, func=tfunction, plugin=plugin})
 end
 
 
@@ -78,7 +78,22 @@ function Phelpobject:processevent(tevent, args)
     return
   end
   for i,v in ipairs(self.events[tevent]) do
-    v.func(v.object, args)
+    if v.plugin then
+      local targs = serialize.save_simple(args)
+      print('calling', v.plugin, v.func, targs)
+      CallPlugin(v.plugin, v.func, targs)
+    else
+      v.func(v.object, args)
+    end
+  end
+end
+
+function Phelpobject:removeevent(tevent, object, tfunction, plugin)
+  for i,v in ipairs(self.events[tevent]) do
+    if v.object == object and v.func == tfunction and v.plugin == plugin then
+      print('removing event')
+      table.remove(self.events, i)
+    end
   end
 end
 
