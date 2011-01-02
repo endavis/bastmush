@@ -356,7 +356,7 @@ function Miniwin:addline(tabname, line)
  -- add a line to the end of the text
 end
 
-function Miniwin:addtab(tabname, text, header, makeactive, sticky)
+function Miniwin:addtab(tabname, text, header, makeactive, sticky, position)
  if self.tabs[tabname] == nil then
    self.tabs[tabname] = {}
    self.tabs[tabname].text = text
@@ -367,7 +367,11 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky)
    if sticky then
      self.tabs[tabname].sticky = true
    end
-   table.insert(self.tablist, tabname)
+   if position then
+     table.insert(self.tablist, position, tabname)     
+   else
+     table.insert(self.tablist, tabname)
+   end
  else
    self.tabs[tabname].text = text
    self.tabs[tabname].header = header
