@@ -97,7 +97,7 @@ spellwin:add_setting("blockedcolour", {help="the text colour for when a quest is
 spellwin:add_setting("disabledcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("orange"), sortlev=1, longname="The colour for the disabled spells"})
 spellwin:add_setting("askedrecoverycolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("cyan"), sortlev=1, longname="The colour for the recoveries fo asked spells"})
 spellwin:add_setting("recoverycolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("lightseagreen"), sortlev=1, longname="The colour for a recovery"})
-
+ 
 good = {}
 bad = {}
 trecoveries = {}
@@ -379,18 +379,26 @@ function settimer()
     seconds = numb
   end
   if minutes > 0 then
-    print("setting minutes to", minutes)
     SetTimerOption ("display_timer", "minute", minutes)
   else
     SetTimerOption ("display_timer", "minute", 0)
   end
   if seconds > 0 then
-    print("setting seconds to", seconds)
     SetTimerOption ("display_timer", "second", seconds)
   else
     SetTimerOption ("display_timer", "second", 0)
   end
 end
+
+function ontabchange(object, args)
+ if args.newtab == 'Summary' then
+   object.showtabline = false
+ else
+   object.showtabline = true 
+ end
+end
+
+spellwin:addevent('tabchange', spellwin, ontabchange)
 
 ]]>
 </script>
