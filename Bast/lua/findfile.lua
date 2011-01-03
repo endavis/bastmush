@@ -1,6 +1,6 @@
 -- this finds a file from the path directory, searching in all subdirectories
 
-function scan_dir_for_file (path, tfile)
+function scan_dir_for_file (path, tfile, directoryonly)
 
   -- find all files in that directory
   local t = assert (utils.readdir (path .. "\\*"))
@@ -16,7 +16,11 @@ function scan_dir_for_file (path, tfile)
           return found
         end
       elseif k == tfile then
-        return path .. "\\" .. k
+        if directoryonly then
+          return path .. "\\"
+        else
+          return path .. "\\" .. k
+        end
       end -- if 
 
    end -- if
