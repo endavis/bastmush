@@ -320,6 +320,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'shaded', {type="bool", help="window is shaded", default=verify_bool(false), sortlev=55, readonly=true, globalset=true})
   self:add_setting( 'shade_with_header', {type="bool", help="when window is shaded, still show header", default=verify_bool(false), sortlev=55, longname = "Shade with header"})
   self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar", after="resettabs", globalset=true})
+  self:add_setting( 'showtabline', {type="bool", help="(don't) show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the tabline", after="resettabs", globalset=true})
   self:add_setting( 'showresize', {type="bool", help="show resize hotspots", default=verify_bool(true), sortlev=56, longname="Show Resize Hotspots"})
   self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines", after="resettabs"})
   self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=1, low=0, sortlev=57, longname="Max Tabs"})
@@ -387,16 +388,22 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky, position)
     end
     self.tabs[tabremoved] = nil
     if tabremoved == self.activetab then
-      self.activetab = self.tabs[tabname]
+      self:changeactivetab(tabname)
     end
   end
   if self.activetab == nil or makeactive then
-    self.activetab = self.tabs[tabname]
+    self:changeactivetab(tabname)
   end
   self:resettabs()
   --self:redraw()
  end
 end
+
+function Miniwin:changeactivetab(tabname)
+    self.activetab = self.tabs[tabname]
+    self:processevent('tabchange', {newtab=tabname})
+end  
+  
 
 function Miniwin:stickytab(tabname)
   self.tabs[tabname].sticky = true
@@ -426,7 +433,7 @@ function Miniwin:removetab(tabname)
   end
   self.tabs[tabname] = nil
   if tabname == self.activetab then
-    self.activetab = self.tablist[1]
+    self:changeactivetab(self.tablist[1].tabname)
   end
   self:resettabs()
 end
@@ -445,7 +452,7 @@ end
 
 function Miniwin:changetotab(tabname)
   if self.tabs[tabname] then
-    self.activetab = self.tabs[tabname]
+    self:changeactivetab(tabname)
     self:redraw()
   end
 end
@@ -1535,7 +1542,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
     top = self.activetab.build_data[linenum].linebottom
   end
 
-  if self:counttabs() > 1 then
+  if self:counttabs() > 1  and self.showtabline then
     linenum = linenum + 1
     self.activetab.build_data[linenum] = self:justify_line(self.activetab.tabbarlineconv, top, linenum, 'titlebarline')
     top = self.activetab.build_data[linenum].linebottom
