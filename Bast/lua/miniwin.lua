@@ -1464,10 +1464,13 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
   if self.activetab == nil then
     return
   end
-
+  
+  if self.activetab.startline == nil then
+    self.activetab.startline = 1
+  end
+    
   if self.activetab.build_data == nil then
     self.activetab.build_data = {}
-    self.activetab.startline = 1
   end
   self.activetab.build_data.actual_header_start_line = nil
   self.activetab.build_data.actual_header_end_line = nil
@@ -2271,9 +2274,12 @@ function Miniwin:drawwin()
     end
     top = self:displayline (self.activetab.build_data[i], top)
   end -- for
-
   self:post_create_window_internal()
-
+  if self.activetab.startline ~= 1 then
+    if not self:setstartline(self.activetab.startline) then
+      self:drawtext(self.activetab)    
+    end
+  end
 end
 
 function Miniwin:onfontchange(args)
