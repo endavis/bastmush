@@ -119,7 +119,7 @@ function Pluginhelper:run_cmd(cmddict)
 
   if not retcode then
 
-    local pobj = self.pobjects[cmddict.action]
+    local pobj = self.pobjects[cmddict.action:lower()]
     if pobj ~= nil then
       tcmddict.action = tcmddict[1]
       table.remove(tcmddict, 1)
@@ -130,14 +130,14 @@ function Pluginhelper:run_cmd(cmddict)
         ColourNote("", "", "")
         ColourNote("white", "black", "That is not a valid command")
         self:cmd_help(cmddict)
-	return false
+        return false
       else
         local tcmddict = parse_cmdline(cmddict.line or '')
-	table.remove(tcmddict, 1)
+        table.remove(tcmddict, 1)
         tcmddict.line = cmddict.line
         tcmddict.action = tcmd
-	retcode = super(self, tcmddict, true)
-	return retcode
+        retcode = super(self, tcmddict, true)
+        return retcode
       end
       return false
     end
@@ -244,7 +244,7 @@ function Pluginhelper:add_pobject(name, object)
    return
  end
  object.phelper = self
- self.pobjects[object.cname] = object
+ self.pobjects[object.cname:lower()] = object
  self.pobjects_by_id[object.id] = object
 end
 
