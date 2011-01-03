@@ -1,0 +1,525 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: miniwin_map.xml 917 2010-12-06 02:00:48Z endavis $ -->
+<muclient>
+<plugin
+   name="miniwin_spellup"
+   author="Bast"
+   id="eeef0c555a44169e0f1d9674"
+   language="Lua"
+   purpose="spellup plugin with a miniwindow"
+   date_written="2008-07-18"
+   requires="4.52"
+   version="6.0"
+   save_state="y"
+   >
+<description trim="y">
+
+TODO:
+create miniwin based on mine
+menu for each spell
+ - show Help
+ - showskill
+ - Info
+  - SN
+  - stuff from slist
+  
+have tabs for:
+ * Summary
+   - how many good/bad/requested spells (can click good/bad/requested to go to good/bad/requested tab)
+   - spells that are wearing off in less than one minute
+   - recoveries
+   - spells pending
+   - disabled spells
+ * Good
+ * Bad
+ * Requested - show blocked
+ * Other
+ 
+ * Combat - list both spells and skills that can be used in combat
+ * Spellups - can click spells in this window to add them
+    - columns for each - self, other
+    - red can't add - (not practiced)
+   
+NOTES:
+
+Spellup Other -
+ put all at end (does all spellups)
+ no all then does the ones you have picked from the spellups tab
+
+
+</description>
+
+</plugin>
+
+<!--  Triggers  -->
+<triggers>
+
+
+</triggers>
+
+<timers>
+ <timer name="display_timer"
+         enabled="y"
+         second="5.00"
+         script="spell_display_timer"
+         active_closed="y"
+         >
+  </timer>
+</timers>
+<!--  Script  -->
+
+<script>
+<![CDATA[
+internalrevision = "$Rev: 917 $"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require 'var'
+require 'pluginhelper'
+require "tprint"
+require "commas"
+require "miniwin"
+require "serialize"
+require "ldplugin"
+require "findfile"
+require "verify"
+require "tablefuncs"
+require "bastspell"
+
+spellwin = Miniwin:new{name="SpellUp"}
+spellwin:set_default('maxlines', 30)
+spellwin:set_default("maxtabs", 5)
+spellwin:add_setting("goodcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("cornflowerblue"), sortlev=1, longname="The colour for the good spells"})
+spellwin:add_setting("badcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("firebrick"), sortlev=1, longname="The colour for the bad spells"})
+spellwin:add_setting("pendingcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("yellow"), sortlev=1, longname="The colour for the pending spells"})
+spellwin:add_setting("blockedcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("seagreen"), sortlev=1, longname="The colour for the blocked spells"})
+spellwin:add_setting("disabledcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("orange"), sortlev=1, longname="The colour for the disabled spells"})
+spellwin:add_setting("askedrecoverycolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("cyan"), sortlev=1, longname="The colour for the recoveries fo asked spells"})
+spellwin:add_setting("recoverycolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("lightseagreen"), sortlev=1, longname="The colour for a recovery"})
+
+good = {}
+bad = {}
+trecoveries = {}
+disabled = {}
+pending = {}
+blocked = {}
+
+askedspells = {}
+
+function SecondsToClock(sSeconds)
+  local nSeconds = tonumber(sSeconds)
+  if nSeconds == 0 then
+    --return nil;
+    return "00:00:00";
+  elseif nSeconds < 0 then
+    return tostring(sSeconds)
+  else
+    nHours = string.format("%02.f", math.floor(nSeconds/3600));
+    nMins = string.format("%02.f", math.floor(nSeconds/60 - (nHours*60)));
+    nSecs = string.format("%02.f", math.floor(nSeconds - nHours*3600 - nMins *60));
+    if nHours ~= "00" then
+      return nHours..":"..nMins..":"..nSecs
+    else
+      return nMins..":"..nSecs
+    end
+  end
+end
+
+have_slist = false
+
+-- spells xref, name to sn
+function counttable(ttable)
+  count = 0
+  for i,v in pairs(ttable) do
+    count = count + 1
+  end
+  return count
+end
+
+function onspellschange(args)
+  askedspells = assert (loadstring ('return ' .. args or ""))()
+  build_summary()
+  build_requested()
+end
+
+function build_windows()
+  good = {}
+  bad = {}
+  trecoveries = {}
+  disabled = {}
+  pending = {}
+  blocked = {}
+
+  for k, v in pairs (spells['affected']) do
+    if v.target == 1 and spells['spellup'][k] == nil then
+      table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
+    else
+      table.insert (good, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )
+    end -- if
+  end
+
+  for _, v in ipairs (askedspells) do
+    local text = spells['all'][tonumber(v.sn)].name
+    if recoveries['affected'][spells['all'][tonumber(v.sn)].recovery] then
+      table.insert (trecoveries, text)
+    else
+      if v.disabled then
+        table.insert(disabled, text)
+      else
+        if v.blockers then
+          for blocker, _ in pairs(v.blockers) do
+            if not spells['affected'][tonumber(v.sn)] and spells['affected'][blocker] then
+              text = text.." (Blocked)"
+              table.insert(blocked, text)              
+            end
+          end
+        end
+        if not spells['affected'][tonumber(v.sn)] then
+          table.insert (pending, text)
+        end         
+      end -- disabled
+    end -- if
+  end -- for
+  
+  build_summary()
+  build_affected()
+  --build_requested()
+  --build_combat()
+end
+
+function build_summary()
+
+  local alines = {}
+
+  local style = {}
+  style.text = "Good: " .. tostring(#good)
+  style.textcolour = "goodcolour"
+  style.mouseup = function ()
+            spellwin:changetotab('Affected')
+         end
+  table.insert(alines, {style})
+
+  local style = {}
+  style.text = "Bad: " .. tostring(#bad)
+  style.textcolour = "badcolour"
+  style.mouseup = function ()
+            spellwin:changetotab('Affected')
+         end
+  table.insert(alines, {style})
+
+  local style = {}
+  style.text = "Recoveries: " .. tostring(#trecoveries)
+  style.textcolour = "askedrecoverycolour"
+  style.mouseup = function ()
+            spellwin:changetotab('Affected')
+         end
+  table.insert(alines, {style})
+
+  local style = {}
+  style.text = "All Recoveries: " .. tostring(counttable(recoveries['affected']))
+  style.textcolour = "recoverycolour"
+  style.mouseup = function ()
+            spellwin:changetotab('Affected')
+         end
+  table.insert(alines, {style})
+
+  local style = {}
+  style.text = "Requested: " .. tostring(#askedspells)
+  style.textcolour = "green"
+  table.insert(alines, {style})
+
+  local style = {}
+  style.text = "Pending: " .. tostring(#pending)
+  style.textcolour = "pendingcolour"
+  table.insert(alines, {style})
+
+  local style = {}
+  style.text = "Blocked: " .. tostring(#blocked)
+  style.textcolour = "blockedcolour"
+  table.insert(alines, {style})
+
+  local style = {}
+  style.text = "Disabled: " .. tostring(#disabled)
+  style.textcolour = "disabledcolour"
+  table.insert(alines, {style})
+  
+  spellwin:enable()
+  spellwin:addtab('Summary', alines, nil, false, true, 1)
+end
+
+function build_affected()
+  local alines = {}
+
+  if #bad > 0 then
+    local style = {}
+    style.text = "Bad: " .. tostring(#bad)
+    style.textcolour = "badcolour"
+    table.insert(alines, {style})
+
+    if next(bad) then
+      table.insert(alines, {{text = '-------------------------------------------', textcolour = "badcolour"}})    
+      for i,v in tableSort(bad, duration) do
+        local lstyle = {}
+        local style = {}
+        style.text = string.format("%-30s : ", v.name)
+        style.textcolour = "badcolour"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = SecondsToClock (v.duration)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        table.insert(alines, lstyle)
+      end
+    end
+    local style = {}
+    style.text = "  "
+    style.textcolour = "badcolour"
+    table.insert(alines, {style})    
+  end
+
+  if counttable(recoveries['affected']) > 0 then
+    local style = {}
+    style.text = "Recoveries: " .. tostring(counttable(recoveries['affected']))
+    style.textcolour = "recoverycolour"
+    table.insert(alines, {style})
+
+    table.insert(alines, {{text = '-------------------------------------------', textcolour = "recoverycolour"}})    
+    for i,v in tableSort(recoveries['affected'], duration) do
+      local lstyle = {}
+      local style = {}
+      style.text = string.format("%-30s : ", v.name)
+      style.textcolour = "recoverycolour"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = SecondsToClock (v.duration)
+      style.textcolour = "white"
+      table.insert(lstyle, style)
+      
+      table.insert(alines, lstyle)
+    end
+    local style = {}
+    style.text = "  "
+    style.textcolour = "recoverycolour"
+    table.insert(alines, {style})    
+  end
+
+  local style = {}
+  style.text = "Good: " .. tostring(#good)
+  style.textcolour = "goodcolour"
+  table.insert(alines, {style})
+
+  if next(good) then
+    table.insert(alines, {{text = '-------------------------------------------', textcolour = "goodcolour"}})    
+    for i,v in tableSort(good, "duration") do
+      local lstyle = {}
+      local style = {}
+      style.text = string.format("%-30s : ", v.name)
+      style.textcolour = "goodcolour"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = SecondsToClock (v.duration)
+      style.textcolour = "white"
+      table.insert(lstyle, style)
+      
+      table.insert(alines, lstyle)
+    end
+  end
+  
+  local style = {}
+  style.text = "  "
+  style.textcolour = "goodcolour"
+  table.insert(alines, {style})    
+  
+--  tprint(alines)
+  spellwin:enable()
+  spellwin:addtab('Affected', alines, nil, false, true)  
+end
+
+function build_requested()
+  -- will show requested spells at top, unrequested spells at bottom
+  print('building spellup')
+end
+
+function build_combat()
+  print('building combat')
+end
+
+function spell_display_timer()
+  good = {}
+  bad = {}
+  
+  for k, v in pairs (spells['affected']) do
+    if v.target == 1 and spells['spellup'][k] == nil then
+      table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
+    else
+      table.insert (good, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )
+    end -- if
+  end
+  
+  for k,v in pairs(recoveries['affected']) do
+     v.duration = v.finish - GetInfo(304)
+  end
+
+  build_affected()
+end
+
+function settimer()
+  local minutes = 0
+  local seconds = 0
+  numb = tonumber(var.refreshrate)
+  if numb > 59 then
+    minutes = math.floor(numb/60)
+    seconds = numb - (hours * 60)
+  else
+    seconds = numb
+  end
+  if minutes > 0 then
+    print("setting minutes to", minutes)
+    SetTimerOption ("display_timer", "minute", minutes)
+  else
+    SetTimerOption ("display_timer", "minute", 0)
+  end
+  if seconds > 0 then
+    print("setting seconds to", seconds)
+    SetTimerOption ("display_timer", "second", seconds)
+  else
+    SetTimerOption ("display_timer", "second", 0)
+  end
+end
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+  
+  if id == "aaaf0c555a44169e0f1d9674" and msg == -2 then
+    CallPlugin("aaaf0c555a44169e0f1d9674", "registerevent", GetPluginID(), "askedspells_change", "onspellschange")    
+  elseif id == 'aaa72f3b5453567e2bba9d50' then
+    if msg == 7 then          
+      -- slist all    
+      spells['all'] = assert (loadstring ('return ' .. text or ""))()   
+      if spells['all'] and spells['affected'] and recoveries['affected'] then
+        --print("have slist")
+        build_windows()
+      end
+      
+    elseif msg == 8 then          
+      -- slist learned
+      spells['learned'] = assert (loadstring ('return ' .. text or ""))()
+      
+    elseif msg == 9 then          
+      -- slist spellups
+      spells['spellup'] = assert (loadstring ('return ' .. text or ""))()
+
+    elseif msg == 10 then          
+      -- slist affected
+      spells['affected'] = assert (loadstring ('return ' .. text or ""))()
+      if spells['all'] and spells['affected'] and recoveries['affected'] then
+        --print('have slist')
+        build_windows()
+      end
+    elseif msg == 11 then          
+      -- recoveries all
+      recoveries['all'] = assert (loadstring ('return ' .. text or ""))()
+
+    elseif msg == 12 then          
+      -- recoveries affected
+      recoveries['affected'] = assert (loadstring ('return ' .. text or ""))()
+      if spells['all'] and spells['affected'] and recoveries['affected'] then
+        --print('have slist')
+        build_windows()
+      end      
+    end  
+  end
+  
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  phelper:OnPluginEnable()
+  
+  ldplugin ("broadcast_spellsskills", "aaa72f3b5453567e2bba9d50")
+  ldplugin ("bast_spellup", "aaaf0c555a44169e0f1d9674")
+
+  CallPlugin("aaaf0c555a44169e0f1d9674", "registerevent", GetPluginID(), "askedspells_change", "onspellschange")    
+
+  if IsConnected() then
+    local ret, task = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedspells")
+    askedspells = assert (loadstring ('return ' .. task or ""))()
+    load_spells("all")
+    load_spells_xrefs()
+    load_spells("affected")
+    load_spells("spellup")
+    load_spells("learned")
+    load_recoveries("all")
+    load_recoveries("affected")
+    if spells['all'] and spells['affected'] and recoveries['affected'] then
+      build_windows()
+    end    
+  
+  end
+
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+  CallPlugin("aaaf0c555a44169e0f1d9674", "unregisterevent", GetPluginID(), "askedspells_change", "onspellschange")    
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'mspell')
+phelper:set_default('plugin_colour', 'lime')
+
+phelper:add_setting('refreshrate', {help="the number of seconds between window updates", type="number", after=settimer, default=5, longname="Refresh Window Rate"})
+
+phelper:add_pobject('spellup', spellwin)
+
+phelper:enable()
+
+--phelper:addaardhelps{"Map", "Automap", "Maprun", "Maptags", "Speedwalks", "Academy-Geography"}
+--phelper:addaardcmds{"map", "automap", "maprun", "tags", "runto"}
+
+]]>
+</script>
+</muclient>
