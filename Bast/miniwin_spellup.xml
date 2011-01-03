@@ -60,7 +60,7 @@ Spellup Other -
 
 <timers>
  <timer name="display_timer"
-         enabled="y"
+         enabled="n"
          second="5.00"
          script="spell_display_timer"
          active_closed="y"
@@ -109,7 +109,7 @@ askedspells = {}
 
 function SecondsToClock(sSeconds)
   local nSeconds = tonumber(sSeconds)
-  if nSeconds == 0 then
+  if nSeconds == 0 or nSeconds == nil then
     --return nil;
     return "00:00:00";
   elseif nSeconds < 0 then
@@ -144,6 +144,10 @@ function onspellschange(args)
 end
 
 function build_windows()
+  if not GetTimerInfo ("display_timer", 6) then
+    EnableTimer("display_timer", true)
+  end
+     
   good = {}
   bad = {}
   trecoveries = {}
@@ -248,6 +252,18 @@ function build_summary()
   spellwin:addtab('Summary', alines, nil, false, true, 1)
 end
 
+function time_colour(time_to_go)
+  if time_to_go == nil then
+    return "red"
+  elseif time_to_go >= 180 then
+    return "lime"
+  elseif time_to_go >= 60 then
+    return "yellow"
+  else
+    return "deeppink"
+  end -- if
+end
+
 function build_affected()
   local alines = {}
 
@@ -259,7 +275,7 @@ function build_affected()
 
     if next(bad) then
       table.insert(alines, {{text = '-------------------------------------------', textcolour = "badcolour"}})    
-      for i,v in tableSort(bad, duration) do
+      for i,v in tableSort(bad, "duration") do
         local lstyle = {}
         local style = {}
         style.text = string.format("%-30s : ", v.name)
@@ -268,7 +284,7 @@ function build_affected()
 
         local style = {}
         style.text = SecondsToClock (v.duration)
-        style.textcolour = "white"
+        style.textcolour = time_colour(v.duration)
         table.insert(lstyle, style)
         
         table.insert(alines, lstyle)
@@ -279,15 +295,15 @@ function build_affected()
     style.textcolour = "badcolour"
     table.insert(alines, {style})    
   end
-
-  if counttable(recoveries['affected']) > 0 then
+  recoverycount = counttable(recoveries['affected'])
+  if recoverycount > 0 then
     local style = {}
-    style.text = "Recoveries: " .. tostring(counttable(recoveries['affected']))
+    style.text = "Recoveries: " .. tostring(recoverycount)
     style.textcolour = "recoverycolour"
     table.insert(alines, {style})
 
     table.insert(alines, {{text = '-------------------------------------------', textcolour = "recoverycolour"}})    
-    for i,v in tableSort(recoveries['affected'], duration) do
+    for i,v in tableSort(recoveries['affected'], "duration") do
       local lstyle = {}
       local style = {}
       style.text = string.format("%-30s : ", v.name)
@@ -295,8 +311,8 @@ function build_affected()
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = SecondsToClock (v.duration)
-      style.textcolour = "white"
+      style.text = SecondsToClock (v.finish - GetInfo(304))
+      style.textcolour = time_colour(v.duration)
       table.insert(lstyle, style)
       
       table.insert(alines, lstyle)
@@ -323,7 +339,7 @@ function build_affected()
 
       local style = {}
       style.text = SecondsToClock (v.duration)
-      style.textcolour = "white"
+      style.textcolour = time_colour(v.duration)
       table.insert(lstyle, style)
       
       table.insert(alines, lstyle)
@@ -362,7 +378,7 @@ function spell_display_timer()
   end
   
   for k,v in pairs(recoveries['affected']) do
-     v.duration = v.finish - GetInfo(304)
+    v.duration = v.finish - GetInfo(304)
   end
 
   build_affected()
