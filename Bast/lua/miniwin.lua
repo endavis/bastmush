@@ -848,7 +848,11 @@ function Miniwin:buildmousemenu()
   menu = menu .. ' | < | >Toggle '
   for name,setting in tableSort(self.set_options, 'sortlev', 50) do
     if setting.longname ~= nil and setting.type == 'bool' then
-      menu = menu .. ' | ' .. setting.longname .. ' - Currently: ' .. tostring(self[name])
+      local estring = ""
+      if self[name] then
+        estring = "+"
+      end
+      menu = menu .. ' | ' .. estring .. setting.longname
     end
   end
   menu = menu .. ' | < | >Other '
