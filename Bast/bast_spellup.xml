@@ -199,6 +199,7 @@ function make_askedspells_xrefs ()
   for k, v in pairs (phelper.askedspells) do
     askedspells_xref [v.sn] = k
   end -- for each spell
+  event_askedspells_change()  
 end -- make_xrefs
 
 function activatespell(sn, fast)
@@ -470,7 +471,6 @@ function cmd_deletespell(cmddict)
           end
           if removed then
             make_askedspells_xrefs()
-            event_askedspells_change()
           end
         end
       end
@@ -492,7 +492,6 @@ function cmd_addspell(cmddict)
       end
       ColourNote(RGBColourToName(var.plugin_colour), "black", "All spells added")
       make_askedspells_xrefs()
-      event_askedspells_change()
       nextspellup("added new spells")   
     else    
       for i,item in ipairs(cmddict) do
@@ -536,7 +535,6 @@ function cmd_addspell(cmddict)
         if added then
           noneed = false
           make_askedspells_xrefs()
-          event_askedspells_change()
           nextspellup("added new spells")
         end
       end -- if number orname found
