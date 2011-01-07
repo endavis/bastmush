@@ -87,3 +87,11 @@ function tableExtend(t, ...)
     end
   end
 end
+
+function tableCountItems(ttable)
+  count = 0
+  for i,v in pairs(ttable) do
+    count = count + 1
+  end
+  return count
+end
