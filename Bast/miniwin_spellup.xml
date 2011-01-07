@@ -107,6 +107,12 @@ blocked = {}
 
 askedspells = {}
 
+spellcures = {}
+spellcures[6] = {23}
+spellcures[66] = {330, 27, 158}
+spellcures[65] = {25, 158}
+
+
 function SecondsToClock(sSeconds)
   local nSeconds = tonumber(sSeconds)
   if nSeconds == 0 or nSeconds == nil then
@@ -122,6 +128,78 @@ function SecondsToClock(sSeconds)
       return nHours..":"..nMins..":"..nSecs
     else
       return nMins..":"..nSecs
+    end
+  end
+end
+
+function buildmenu(item, menutype)
+  menu = strip_colours(spells['all'][item].name) .. "|"
+  menu = menu .. "| showskill"
+  menu = menu .. "| bspell info"
+  if spells['all'][412] and spells['all'][412].percent > 0 and spells['all'][item].percent > 0 then
+    menu = menu .. "| disrupt"
+  end
+  if spellcures[item] then
+    menu = menu .. "| >cure"
+    for i,v in ipairs(spellcures[item]) do
+      if spells['all'][v] and spells['all'][v].percent > 0 then
+        menu = menu .. "| with : " .. spells['all'][v].name
+      end
+    end
+    menu = menu .. '| <'    
+  end
+  return menu
+end
+
+
+function mouseleft(result, item, menutype)
+  if result:match("showskill") then
+    SendNoEcho("showskill " .. tostring(item))
+  elseif result:match("bspell") then
+    Execute("bspell info " .. tostring(item))
+  elseif result:match("disrupt") then
+    SendNoEcho("c disrupt " .. item)
+  elseif result:match("with") then
+    local tresult = utils.split(result, ':')
+    sn, invalid = find_spellsn(trim(tresult[2]))
+    if sn then      
+      SendNoEcho('cast ' .. tostring(sn))
+    else
+      print('could not find cure result')
+    end
+  end
+end
+
+menus = {
+ affectedmenuright = buildmenu,
+ affectedmenuleft = buildmenu,
+ affectedmouseright = mouseleft,
+ affectedmouseleft = mouseleft,
+}
+
+function menuclick(item, menutype)
+  return function (win, flags, hotspot)
+    local item = item
+    local menutype = menutype
+    local menu = ''
+    local mousebutton = ''
+    --make text for menu options
+    -- right click for window menu, left click for plugin menu
+    if bit.band(flags, 0x10) ~= 0 then
+      -- left
+      mousebutton = 'left'
+    elseif bit.band(flags, 0x20) ~= 0 then
+      -- right
+      mousebutton = 'right'
+    end
+    menu = menus[menutype .. 'menu' .. mousebutton](item, menutype)
+    local result = WindowMenu (spellwin.id, WindowInfo (spellwin.id, 14), WindowInfo (spellwin.id, 15), menu) --do menu
+    if result:match(' - ') then
+      local tresult = utils.split(result, '-')
+      result = trim(tresult[1])
+    end
+    if result ~= "" then
+      menus[menutype .. 'mouse' .. mousebutton](result, item, menutype)
     end
   end
 end
@@ -148,6 +226,9 @@ function build_windows()
     EnableTimer("display_timer", true)
   end
      
+  if not next(askedspells) then
+  
+  end
   good = {}
   bad = {}
   trecoveries = {}
@@ -280,11 +361,13 @@ function build_affected()
         local style = {}
         style.text = string.format("%-30s : ", v.name)
         style.textcolour = "badcolour"
+        style.mouseup = menuclick(v.sn, 'affected')        
         table.insert(lstyle, style)
 
         local style = {}
         style.text = SecondsToClock (v.duration)
         style.textcolour = time_colour(v.duration)
+        style.mouseup = menuclick(v.sn, 'affected')      
         table.insert(lstyle, style)
         
         table.insert(alines, lstyle)
@@ -334,12 +417,14 @@ function build_affected()
       local lstyle = {}
       local style = {}
       style.text = string.format("%-30s : ", v.name)
+      style.mouseup = menuclick(v.sn, 'affected')
       style.textcolour = "goodcolour"
       table.insert(lstyle, style)
 
       local style = {}
       style.text = SecondsToClock (v.duration)
       style.textcolour = time_colour(v.duration)
+      style.mouseup = menuclick(v.sn, 'affected')
       table.insert(lstyle, style)
       
       table.insert(alines, lstyle)
@@ -512,7 +597,9 @@ function OnPluginDisable ()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
-
+  local ret, task = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedspells")
+  askedspells = assert (loadstring ('return ' .. task or ""))()
+    
   phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
