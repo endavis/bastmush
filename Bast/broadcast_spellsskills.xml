@@ -169,6 +169,7 @@ else
   print("Could not load telnet_options.lua, please copy it to your plugin directory")
 end
 
+wasdisconnected = false
 spells = {}
 spells['affected'] = {}
 recoveries = {}
@@ -248,9 +249,6 @@ end
 
 function request_slist()
    --print("called request slist")
-   --SendNoEcho "slist noprompt"
-   --SendNoEcho "slist affected noprompt"
-   --SendNoEcho "slist learned noprompt"
    if db:countskills() == 0 or db:countrecoveries() == 0 then
      --print('skillcount: ', db:countskills(), 'recoverycount: ', db:countrecoveries())
      --print('getting all skills')
@@ -264,13 +262,7 @@ function request_slist()
      broadcast_slist('spellup')
      broadcast_recovery('all')
    end
-   Send("slist affected noprompt")
-   --print('affected')
-   --tprint(recoveries['affected'])
-   --tprint(spells['affected'])
-   --print('all')
-   --tprint(spells['all'])
-   --tprint(recoveries['all'])
+   SendNoEcho("slist affected noprompt")
 end
 
 function request(stype)
@@ -372,10 +364,6 @@ function spellheaders_redirect (name, line, wildcards, styles)
     end
     broadcast_slist(slisttype)   
 
---    if slisttype == 'affected' then
---      print('spellheader_redirect, affected')
---      tprint(spells['affected'])
---    end
     if slisttype == 'spellup' then
       db:updatespellup(spells['spellup'])
     end
@@ -444,14 +432,8 @@ function recoveries_redirect (name, line, wildcards, styles)
       broadcast_recovery('affected')      
     end
 
-    --if slisttype == 'affected' then
-    --  print('recoveries_redirect, affected')
-    --  tprint(recoveries['affected'])
-    --end
-
     SaveState ()
-    local bcastnum = rbroadcast_table[slisttype]
-    phelper:broadcast(bcastnum)      
+    broadcast_recovery(slisttype)   
     return
   end -- if
 
@@ -500,6 +482,10 @@ function OnPluginBroadcast (msg, id, name, text)
             request_slist()
           end
         end
+        if wasdisconnected then
+          wasdisconnected = false
+          request_slist()
+        end        
       end
     end
   end
@@ -545,6 +531,7 @@ function OnPluginConnect ()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
+  wasdisconnected = true
 
   phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
