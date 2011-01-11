@@ -666,7 +666,7 @@ function Statdb:updateskills(skills)
       numskills = a[1]
     end
     if numskills == 0 or numskills ~= tableCountItems(skills) then
-      print('updating table')
+      --print('updating table')
       assert (self.db:exec("BEGIN TRANSACTION"))
       local stmt = self.db:prepare[[ REPLACE INTO skills(sn, name, percent, target, type, recovery) VALUES (:sn, :name, :percent,
                                                             :target, :type, :recovery) ]]                                                     
