@@ -97,6 +97,7 @@ spellwin:add_setting("blockedcolour", {help="the text colour for when a quest is
 spellwin:add_setting("disabledcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("orange"), sortlev=1, longname="The colour for the disabled spells"})
 spellwin:add_setting("askedrecoverycolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("cyan"), sortlev=1, longname="The colour for the recoveries fo asked spells"})
 spellwin:add_setting("recoverycolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("lightseagreen"), sortlev=1, longname="The colour for a recovery"})
+spellwin:add_setting("statuscolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("springgreen"), sortlev=1, longname="The colour for a recovery"})
  
 good = {}
 bad = {}
@@ -104,6 +105,7 @@ trecoveries = {}
 disabled = {}
 pending = {}
 blocked = {}
+status = "Unknown"
 
 askedspells = {}
 
@@ -217,66 +219,70 @@ end
 
 function onspellschange(args)
   askedspells = assert (loadstring ('return ' .. args or ""))()
-  build_summary()
-  build_requested()
+  build_windows()
+end
+
+function onstatuschange(args)
+  local targs = assert (loadstring ('return ' .. args or ""))()
+  status = targs.status
+  build_windows()
 end
 
 function build_windows()
   if not GetTimerInfo ("display_timer", 6) then
     EnableTimer("display_timer", true)
   end
-     
-  if not next(askedspells) then
-  
-  end
-  good = {}
-  bad = {}
-  trecoveries = {}
-  disabled = {}
-  pending = {}
-  blocked = {}
+  if spells['all'] and spells['affected'] and recoveries['affected'] then
+    good = {}
+    bad = {}
+    trecoveries = {}
+    disabled = {}
+    pending = {}
+    blocked = {}
 
-  for k, v in pairs (spells['affected']) do
-    if v.target == 1 and spells['spellup'][k] == nil then
-      table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
-    else
-      table.insert (good, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )
-    end -- if
-  end
-
-  for _, v in ipairs (askedspells) do
-    local text = spells['all'][tonumber(v.sn)].name
-    if recoveries['affected'][spells['all'][tonumber(v.sn)].recovery] then
-      table.insert (trecoveries, text)
-    else
-      if v.disabled then
-        table.insert(disabled, text)
+    for k, v in pairs (spells['affected']) do
+      if v.target == 1 and spells['spellup'][k] == nil then
+        table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
       else
-        if v.blockers then
-          for blocker, _ in pairs(v.blockers) do
-            if not spells['affected'][tonumber(v.sn)] and spells['affected'][blocker] then
-              text = text.." (Blocked)"
-              table.insert(blocked, text)              
+        table.insert (good, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )
+      end -- if
+    end
+
+    for _, v in ipairs (askedspells) do
+      local text = spells['all'][tonumber(v.sn)].name
+      if recoveries['affected'][spells['all'][tonumber(v.sn)].recovery] then
+        table.insert (trecoveries, text)
+      else
+        if v.disabled then
+          table.insert(disabled, text)
+        else
+          local isblocked = false
+          if v.blockers then
+            for blocker, _ in pairs(v.blockers) do
+              if not spells['affected'][tonumber(v.sn)] and spells['affected'][blocker] then
+                text = text.." (Blocked)"
+                table.insert(blocked, text)              
+                isblocked = true
+              end
             end
           end
-        end
-        if not spells['affected'][tonumber(v.sn)] then
-          table.insert (pending, text)
-        end         
-      end -- disabled
-    end -- if
-  end -- for
-  
-  build_summary()
-  build_affected()
-  --build_requested()
-  --build_combat()
+          if not spells['affected'][tonumber(v.sn)] and not isblocked then
+            table.insert (pending, text)
+          end         
+        end -- disabled
+      end -- if
+    end -- for
+    
+    build_summary()
+    build_affected()
+    --build_requested()
+    --build_combat()
+  end
 end
 
 function build_summary()
-
   local alines = {}
-
+  
   local style = {}
   style.text = "Good: " .. tostring(#good)
   style.textcolour = "goodcolour"
@@ -328,7 +334,12 @@ function build_summary()
   style.text = "Disabled: " .. tostring(#disabled)
   style.textcolour = "disabledcolour"
   table.insert(alines, {style})
-  
+
+  local style = {}
+  style.text = "Status: " .. tostring(status)
+  style.textcolour = "statuscolour"
+  table.insert(alines, {style})
+
   spellwin:enable()
   spellwin:addtab('Summary', alines, nil, false, true, 1)
 end
@@ -512,18 +523,16 @@ function OnPluginBroadcast (msg, id, name, text)
   
   if id == "aaaf0c555a44169e0f1d9674" and msg == -2 then
     CallPlugin("aaaf0c555a44169e0f1d9674", "registerevent", GetPluginID(), "askedspells_change", "onspellschange")    
+    CallPlugin("aaaf0c555a44169e0f1d9674", "registerevent", GetPluginID(), "status_change", "onstatuschange")    
   elseif id == 'aaa72f3b5453567e2bba9d50' then
     if msg == 7 then          
       -- slist all    
       spells['all'] = assert (loadstring ('return ' .. text or ""))()   
-      if spells['all'] and spells['affected'] and recoveries['affected'] then
-        --print("have slist")
-        build_windows()
-      end
+      build_windows()
       
     elseif msg == 8 then          
       -- slist learned
-      spells['learned'] = assert (loadstring ('return ' .. text or ""))()
+      --spells['learned'] = assert (loadstring ('return ' .. text or ""))()
       
     elseif msg == 9 then          
       -- slist spellups
@@ -532,10 +541,7 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 10 then          
       -- slist affected
       spells['affected'] = assert (loadstring ('return ' .. text or ""))()
-      if spells['all'] and spells['affected'] and recoveries['affected'] then
-        --print('have slist')
-        build_windows()
-      end
+      build_windows()
     elseif msg == 11 then          
       -- recoveries all
       recoveries['all'] = assert (loadstring ('return ' .. text or ""))()
@@ -543,10 +549,7 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 12 then          
       -- recoveries affected
       recoveries['affected'] = assert (loadstring ('return ' .. text or ""))()
-      if spells['all'] and spells['affected'] and recoveries['affected'] then
-        --print('have slist')
-        build_windows()
-      end      
+      build_windows()
     end  
   end
   
@@ -571,20 +574,20 @@ function OnPluginEnable ()
   ldplugin ("bast_spellup", "aaaf0c555a44169e0f1d9674")
 
   CallPlugin("aaaf0c555a44169e0f1d9674", "registerevent", GetPluginID(), "askedspells_change", "onspellschange")    
-
+  CallPlugin("aaaf0c555a44169e0f1d9674", "registerevent", GetPluginID(), "status_change", "onstatuschange")    
+    
   if IsConnected() then
     local ret, task = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedspells")
     askedspells = assert (loadstring ('return ' .. task or ""))()
+    ret, status = CallPlugin("aaaf0c555a44169e0f1d9674", "getstatus") 
     load_spells("all")
-    load_spells_xrefs()
+    --load_spells_xrefs()
     load_spells("affected")
     load_spells("spellup")
-    load_spells("learned")
+    --load_spells("learned")
     load_recoveries("all")
     load_recoveries("affected")
-    if spells['all'] and spells['affected'] and recoveries['affected'] then
-      build_windows()
-    end    
+    build_windows()
   
   end
 
@@ -592,6 +595,7 @@ end -- OnPluginEnable
 
 function OnPluginDisable ()
   CallPlugin("aaaf0c555a44169e0f1d9674", "unregisterevent", GetPluginID(), "askedspells_change", "onspellschange")    
+  CallPlugin("aaaf0c555a44169e0f1d9674", "unregisterevent", GetPluginID(), "status_change", "onstatuschange")   
 
   phelper:OnPluginDisable()
 end -- OnPluginDisable
