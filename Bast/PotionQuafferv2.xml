@@ -392,10 +392,10 @@ end
 
 function Shop_Heal(sName,sLine,wildcards)
   local num = tonumber(GetVariable("healnum"))
-  if wildcards[3] == false then
+  if tonumber(wildcards[3]) == nil then
     num = num + 1
   else
-    num = num + wildcards[3]
+    num = num + tonumber(wildcards[3])
   end -- if
   SetVariable("healnum",num)
   SetStatus("[PotionQuaffer v2] Heals: " .. GetVariable("healnum") .. " Manas: " .. GetVariable("mananum") .. " Buffs: " .. GetVariable("buffnum"))
@@ -403,10 +403,10 @@ end -- Shop_Heal
 
 function Shop_Mana(sName,sLine,wildcards)
   local num = tonumber(GetVariable("mananum"))
-  if wildcards[3] == false then
+  if tonumber(wildcards[3]) == nil then
     num = num + 1
   else
-    num = num + wildcards[3]
+    num = num + tonumber(wildcards[3])
   end -- if
   SetVariable("mananum",num)
   SetStatus("[PotionQuaffer v2] Heals: " .. GetVariable("healnum") .. " Manas: " .. GetVariable("mananum") .. " Buffs: " .. GetVariable("buffnum"))
@@ -414,10 +414,10 @@ end -- Shop_Mana
 
 function Shop_Buff(sName,sLine,wildcards)
   local num = tonumber(GetVariable("buffnum"))
-  if wildcards[3] == false then
+  if tonumber(wildcards[3]) == nil then
     num = num + 1
   else
-    num = num + wildcards[3]
+    num = num + tonumber(wildcards[3])
   end -- if
   SetVariable("buffnum",num)
   SetStatus("[PotionQuaffer v2] Heals: " .. GetVariable("healnum") .. " Manas: " .. GetVariable("mananum") .. " Buffs: " .. GetVariable("buffnum"))
