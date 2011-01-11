@@ -24,6 +24,7 @@ require 'verify'
 require 'pluginhelper'
 require 'sqlitedb'
 require 'aardutils'
+require 'tablefuncs'
 
 Statdb = Sqlitedb:subclass()
 
@@ -33,7 +34,8 @@ tableids = {
   quests = 'quest_id',
   campaigns = 'campaigns_id',
   gquests = 'gq_id',
-  mobkills = 'mk_id'
+  mobkills = 'mk_id',
+  skills = 'sn',
 }
 
 function Statdb:initialize(args)
@@ -318,6 +320,7 @@ function Statdb:savecp( cpinfo )
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted cp:", rowid)
+    assert (self.db:exec("BEGIN TRANSACTION"))    
     local stmt2 = self.db:prepare[[ INSERT INTO cpmobs VALUES
                                       (NULL, :cp_id, :name, :room) ]]
     for i,v in ipairs(cpinfo['mobs']) do
@@ -327,6 +330,7 @@ function Statdb:savecp( cpinfo )
       stmt2:reset()
     end
     stmt2:finalize()
+    assert (self.db:exec("COMMIT"))    
     self:close()
     return rowid
   end
@@ -500,6 +504,7 @@ function Statdb:savegq( gqinfo )
     stmt:finalize()
     rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted gq:", rowid)
+    assert (self.db:exec("BEGIN TRANSACTION"))    
     local stmt2 = self.db:prepare[[ INSERT INTO gqmobs VALUES
                                       (NULL, :gq_id, :num, :name, :room) ]]
     for i,v in ipairs(gqinfo['mobs']) do
@@ -509,6 +514,7 @@ function Statdb:savegq( gqinfo )
       stmt2:reset()
     end
     stmt2:finalize()
+    assert (self.db:exec("COMMIT"))    
     self:close()
     return rowid
   end
@@ -531,6 +537,7 @@ end
 function Statdb:resetclasses()
   local stmt2 = nil
   if self:open() then
+    assert (self.db:exec("BEGIN TRANSACTION"))    
     stmt2 = self.db:prepare("INSERT INTO classes VALUES (:name, -1)")
     for i,v in pairs(classabb) do
       stmt2:bind_names ({name = i})
@@ -538,6 +545,7 @@ function Statdb:resetclasses()
       stmt2:reset()
     end
     stmt2:finalize()
+    assert (self.db:exec("COMMIT"))    
     self:close()
   end
 end
@@ -581,6 +589,7 @@ end
 function Statdb:addclasses(classes)
   self:checkclassestable()
   if self:open() then
+    assert (self.db:exec("BEGIN TRANSACTION"))    
     local stmt2 = self.db:prepare[[ UPDATE classes SET remort = :remort
                                             WHERE class = :class ]]
     for i,v in ipairs(classes) do
@@ -589,6 +598,7 @@ function Statdb:addclasses(classes)
       stmt2:reset()
     end
     stmt2:finalize()
+    assert (self.db:exec("COMMIT"))    
     self:close()
   end
 end
@@ -623,3 +633,272 @@ function Statdb:getlastrow(ttable)
   end
   return lastid
 end
+
+function Statdb:checkskillstable()
+  if self:open() then
+    if not self:checkfortable('skills') then
+      local retcode = self.db:exec([[CREATE TABLE skills(
+        sn INTEGER NOT NULL PRIMARY KEY,
+        name TEXT,        
+        percent INT default 0,
+        target INT default 0,
+        type INT default 0,
+        recovery INT default -1,
+        spellup INT default 0,
+        mag INT default 202,
+        thi INT default 202,
+        war INT default 202,
+        cle INT default 202,
+        psi INT default 202,
+        ran INT default 202,
+        pal INT default 202
+      )]])
+    end
+    self:close()
+  end  
+end
+
+function Statdb:updateskills(skills)
+  self:checkskillstable()
+  if self:open() then
+    local numskills = 0
+    for a in db.db:rows("SELECT COUNT(*) FROM skills") do
+      numskills = a[1]
+    end
+    if numskills == 0 or numskills ~= tableCountItems(skills) then
+      print('updating table')
+      assert (self.db:exec("BEGIN TRANSACTION"))
+      local stmt = self.db:prepare[[ REPLACE INTO skills(sn, name, percent, target, type, recovery) VALUES (:sn, :name, :percent,
+                                                            :target, :type, :recovery) ]]                                                     
+      if stmt ~= nil then
+        for i,v in pairs(skills) do                                                        
+          stmt:bind_names(  v  )
+          stmt:step()
+          stmt:reset()
+        end
+        stmt:finalize()    
+      end
+      assert (self.db:exec("COMMIT"))
+    else
+      print('spells in db == spells in table')    
+    end
+    self:close()
+  end  
+end
+
+function Statdb:countskills()
+  self:checkskillstable()
+  local numskills = 0  
+  if self:open() then
+    for a in db.db:rows("SELECT COUNT(*) FROM skills") do
+      numskills = a[1]
+    end
+    self:close()
+  end  
+  return numskills
+end
+
+function Statdb:updatespellup(spellups)
+  self:checkskillstable()
+  if self:open() then
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare[[ UPDATE skills set spellup = 1 where sn = :sn ]]                                                     
+    if stmt ~= nil then
+      for i,v in pairs(spellups) do
+        local tt = {sn=i}
+        stmt:bind_names(  tt  )
+        stmt:step()
+        stmt:reset()
+      end
+      stmt:finalize()    
+    end
+  assert (self.db:exec("COMMIT"))
+    
+  self:close()
+  end     
+end
+
+function Statdb:lookupskillbysn(sn)
+  self:checkskillstable()
+  local spell = {}
+  if self:open() then
+    for a in self.db:nrows('SELECT * FROM skills WHERE sn = ' .. tostring(sn)) do
+      spell = a
+    end
+    self:close()
+    if next(spell) then
+      return spell
+    end
+  end  
+  return false
+end
+
+function Statdb:lookupskillbyname(name)
+  self:checkskillstable()  
+  local spells = {}
+  if self:open() then
+    for a in self.db:nrows("SELECT * FROM skills WHERE name LIKE '%" .. tostring(name) .. "%'") do
+      spells[a.name] = a
+    end
+    self:close()
+    if spells[tostring(name)] then
+      return spells[name]
+    else
+      if tableCountItems(spells) > 0 then
+        for i,v in pairs(spells) do
+          return v
+        end
+      end
+    end
+  end  
+  return false  
+end
+
+function Statdb:getlearnedskills()
+  self:checkskillstable()  
+  local spells = {}
+  if self:open() then
+    for a in self.db:nrows("SELECT * FROM skills WHERE percent > 0") do
+      spells[a.sn] = a
+    end
+    self:close()
+  end  
+  return spells  
+end
+
+function Statdb:getcombatskills()
+  self:checkskillstable()  
+  local spells = {}
+  if self:open() then
+    for a in self.db:nrows("SELECT * FROM skills WHERE target = 2") do
+      spells[a.sn] = a
+    end
+    self:close() 
+  end  
+  return spells  
+  
+end
+
+function Statdb:getspellupskills()
+  self:checkskillstable()  
+  local spells = {}
+  if self:open() then
+    for a in self.db:nrows("SELECT * FROM skills WHERE spellup = 1") do
+      spells[a.sn] = a
+    end
+    self:close() 
+  end  
+  return spells  
+end
+
+function Statdb:getallskills()
+  self:checkskillstable()  
+  local spells = {}
+  if self:open() then
+    for a in self.db:nrows("SELECT * FROM skills") do
+      spells[a.sn] = a
+    end
+    self:close() 
+  end  
+  return spells    
+end
+
+function Statdb:checkrecoveriestable()
+  if self:open() then
+    if not self:checkfortable('recoveries') then
+      local retcode = self.db:exec([[CREATE TABLE recoveries(
+        sn INTEGER NOT NULL PRIMARY KEY,
+        name TEXT        
+      )]])
+    end
+    self:close()
+  end  
+end
+
+function Statdb:updaterecoveries(recoveries)
+  self:checkrecoveriestable()
+  if self:open() then
+    local numrecs = 0
+    for a in db.db:rows("SELECT COUNT(*) FROM recoveries") do
+      numrecs = a[1]
+    end
+    if numrecs == 0 or numrecs ~= tableCountItems(recoveries) then
+      print('updating recoveries table')
+      assert (self.db:exec("BEGIN TRANSACTION"))
+      local stmt = self.db:prepare[[ REPLACE INTO recoveries(sn, name) VALUES (:sn, :name) ]]                                                     
+      if stmt ~= nil then
+        for i,v in pairs(recoveries) do                                                        
+          stmt:bind_names(  v  )
+          stmt:step()
+          stmt:reset()
+        end
+        stmt:finalize()    
+      end
+      assert (self.db:exec("COMMIT"))
+    else
+      print('recoveries in db == recoveries in table')    
+    end
+    self:close()
+  end  
+end
+
+function Statdb:countrecoveries()
+  self:checkrecoveriestable()
+  local numskills = 0  
+  if self:open() then
+    for a in db.db:rows("SELECT COUNT(*) FROM recoveries") do
+      numskills = a[1]
+    end
+    self:close()
+  end  
+  return numskills
+end
+
+function Statdb:getallrecoveries()
+  self:checkrecoveriestable()  
+  local spells = {}
+  if self:open() then
+    for a in self.db:nrows("SELECT * FROM recoveries") do
+      spells[a.sn] = a
+    end
+    self:close() 
+  end  
+  return spells    
+end
+
+function Statdb:lookuprecoverybysn(sn)
+  self:checkrecoveriestable()
+  local recovery = {}
+  if self:open() then
+    for a in self.db:nrows('SELECT * FROM recoveries WHERE sn = ' .. tostring(sn)) do
+      recovery = a
+    end
+    self:close()
+    if next(recovery) then
+      return recovery
+    end
+  end  
+  return false
+end
+
+function Statdb:lookuprecoverybyname(name)
+  self:checkrecoveriestable()
+  local recoveries = {}
+  if self:open() then
+    for a in self.db:nrows("SELECT * FROM recoveries WHERE name LIKE %'" .. tostring(name) .. "'%") do
+      recoveries[a.name] = a
+    end
+    self:close()
+    if recoveries[tostring(name)] then
+      return recoveries[name]
+    else
+      if tableCountItems(recoveries) > 0 then
+        for i,v in pairs(recoveries) do
+          return v
+        end
+      end
+    end
+  end  
+  return false  
+end
+
