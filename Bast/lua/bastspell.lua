@@ -5,18 +5,13 @@ http://code.google.com/p/bastmush
 
 functions in this module
 
-
-data structures in this module
-spelltarget_table 
- - map target from slist to a string
-
-spelltype_table
- - map type from slist to a string
 --]]
+require "chardb"
 
 spells = {}
+spells['affected'] = {}
 recoveries = {}
-spells_xref = {}
+recoveries['affected'] = {}
 
 function PrefixCheck (t, s)
   for name, item in pairs (t) do
@@ -33,47 +28,62 @@ function justWords(str)
   if not str:gsub("%w+", helper):find"%S" then return t end
 end  
 
-function find_spellsn(item)
-  if not item then
-    ColourNote ("red", "", "A nil value was passed to find_spellsn")
-    return false
+function find_spell(item)
+  local db = Statdb:new{}
+  
+  if item then
+    item = trim (item):lower ()
+    local sn = tonumber (item)
+
+    -- see if numeric spell number given
+    if sn then
+      local a = db:lookupskillbysn(sn)
+      if a then
+        return a
+      end
+    elseif not sn then
+      -- look up word
+      local a = db:lookupskillbyname(item)
+      if a then
+        return a
+      end
+    end -- if
+  else
+    ColourNote ("red", "", "A nil value was passed to find_spell")
   end
-  item = trim (item):lower ()
-  local sn = tonumber (item)
-  local name
-  invalid = false
-  -- see if numeric spell numbner given
-  if sn and not spells['all'] [sn] then
-    ColourNote ("red", "", "Spell number '" .. item .. "' does not exist.")
-    invalid = true
-    sn = nil
-  elseif not sn then
-    -- look up word
-    sn = spells_xref [item]  -- look for exact match first
-                             -- (otherwise "bless" might match "bless weapon")
-    if not sn then
-      _, sn = PrefixCheck (spells_xref, item)
-    end -- not found by exact match
-    if not sn then
-      ColourNote ("red", "", "Spell named '" .. item .. "' does not exist.")
-      invalid = true
-    end -- name not found
-  end -- if
-  return sn, invalid
+
+  return false
 end -- find_spellsn
 
 function load_spells(stype)
-  local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "get_spells", stype)
-  spells[stype] = assert (loadstring ('return ' .. text or ""))()
+  local tspell = {}
+  local db = Statdb:new{}
+  if stype == 'all' then
+    tspell = db:getallskills()
+  elseif stype == 'spellup' then
+    tspell = db:getspellupskills()
+  elseif stype == 'learned' then
+    tspell = db:getlearnedskills()    
+  elseif stype == 'combat' then
+    tspell = db:getcombatskills()
+  elseif stype == 'affected' then
+    local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "get_spells", stype)
+    tspell = assert (loadstring ('return ' .. text or ""))()
+  end
+  spells[stype] = tspell
 end
 
 function load_recoveries(rtype)
-  local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "get_recoveries", rtype)
-  recoveries[rtype] = assert (loadstring ('return ' .. text or ""))()
-end
-
-function load_spells_xrefs()
-  local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "get_spells_xref", rtype)
-  spells_xref = assert (loadstring ('return ' .. text or ""))()
+  local tspell = {}
+  local db = Statdb:new{}
+  if rtype == 'all' then
+    tspell = db:getallrecoveries()
+    --print('getting all')
+    --tprint(tspell)
+  elseif rtype == 'affected' then
+    local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "get_recoveries", rtype)
+    tspell = assert (loadstring ('return ' .. text or ""))()
+  end
+  recoveries[rtype] = tspell    
 end
 
