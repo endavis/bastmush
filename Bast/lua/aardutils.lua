@@ -244,3 +244,12 @@ wearlocreverse = {
   [12] = 'running'
 }
 
+spelltarget_table = {}
+spelltarget_table[0] = 'special'
+spelltarget_table[1] = 'attack'
+spelltarget_table[2] = 'spellup'
+spelltarget_table[3] = 'selfonly'
+spelltarget_table[4] = 'object'
+
+spelltype_table = {'spell', 'skill'}
+
