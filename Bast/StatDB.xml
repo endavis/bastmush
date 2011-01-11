@@ -307,7 +307,7 @@ function OnPluginBroadcast (msg, id, name, text)
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
       local char = assert (loadstring ('return ' .. gmcparg or ""))()
       
-      if char.status.state and tonumber(char.status.state) == 3 and not verify_bool(phelper.seenwhois) then
+      if char.status and char.status.state and tonumber(char.status.state) == 3 and not verify_bool(phelper.seenwhois) then
         Execute('whois')
       end
   
