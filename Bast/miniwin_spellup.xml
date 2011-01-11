@@ -365,10 +365,11 @@ function build_affected()
     local style = {}
     style.text = "Bad: " .. tostring(#bad)
     style.textcolour = "badcolour"
+    style.hjust = 'center'
     table.insert(alines, {style})
 
     if next(bad) then
-      table.insert(alines, {{text = '-------------------------------------------', textcolour = "badcolour"}})    
+      table.insert(alines, {{text = '-------------------------------------------', textcolour = "white"}})    
       for i,v in tableSort(bad, "duration") do
         local lstyle = {}
         local style = {}
@@ -396,9 +397,10 @@ function build_affected()
     local style = {}
     style.text = "Recoveries: " .. tostring(recoverycount)
     style.textcolour = "recoverycolour"
+    style.hjust = 'center'
     table.insert(alines, {style})
 
-    table.insert(alines, {{text = '-------------------------------------------', textcolour = "recoverycolour"}})    
+    table.insert(alines, {{text = '-------------------------------------------', textcolour = "white"}})    
     for i,v in tableSort(recoveries['affected'], "duration") do
       local lstyle = {}
       local style = {}
@@ -422,10 +424,11 @@ function build_affected()
   local style = {}
   style.text = "Good: " .. tostring(#good)
   style.textcolour = "goodcolour"
+  style.hjust = 'center'
   table.insert(alines, {style})
 
   if next(good) then
-    table.insert(alines, {{text = '-------------------------------------------', textcolour = "goodcolour"}})    
+    table.insert(alines, {{text = '-------------------------------------------', textcolour = "white"}})    
     for i,v in tableSort(good, "duration") do
       local lstyle = {}
       local style = {}
