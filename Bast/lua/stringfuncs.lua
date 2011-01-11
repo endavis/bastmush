@@ -42,3 +42,8 @@ function strjoin(delimiter, list)
   end
   return string
 end
+
+function capitalize (s)
+  return string.sub (s, 1, 1):upper () .. string.sub (s, 2):lower ()
+end -- capitalize
+
