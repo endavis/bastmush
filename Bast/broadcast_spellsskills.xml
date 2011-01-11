@@ -156,6 +156,10 @@ require "commas"
 require "pluginhelper"
 require "copytable"
 require "ldplugin"
+require "chardb"
+require "tablefuncs"
+
+db = Statdb:new{}
 
 nfile = scan_dir_for_file (GetInfo(60), "telnet_options.lua")
 if nfile then
@@ -166,11 +170,11 @@ else
 end
 
 spells = {}
+spells['affected'] = {}
 recoveries = {}
+recoveries['affected'] = {}
 slisttype = ""
 spells_count = 0
-spells_xref = {}
-recoveries_xref = {}
 
 state = -1
 
@@ -244,25 +248,29 @@ end
 
 function request_slist()
    --print("called request slist")
-   SendNoEcho "slist noprompt"
-   SendNoEcho "slist affected noprompt"
-   SendNoEcho "slist learned noprompt"
-   SendNoEcho "slist spellup noprompt"
-end
-
-function make_spells_xrefs ()
-  spells_xref = {}
-  for k, v in pairs (spells['all']) do
-    spells_xref [v.name] = k
-  end -- for each spell
-
-end -- make_xrefs
-
-function make_recov_xrefs()
-  recoveries_xref = {}
-  for k, v in pairs (recoveries['all']) do
-    recoveries_xref [v.name] = k
-  end -- for each recovery
+   --SendNoEcho "slist noprompt"
+   --SendNoEcho "slist affected noprompt"
+   --SendNoEcho "slist learned noprompt"
+   if db:countskills() == 0 or db:countrecoveries() == 0 then
+     --print('skillcount: ', db:countskills(), 'recoverycount: ', db:countrecoveries())
+     --print('getting all skills')
+     SendNoEcho("slist noprompt")
+   else
+     --print('skillcount: ', db:countskills(), 'recoverycount: ', db:countrecoveries())
+     spells['all'] = db:getallskills()
+     recoveries['all'] = db:getallrecoveries()
+     broadcast_slist('all')
+     broadcast_slist('learned')
+     broadcast_slist('spellup')
+     broadcast_recovery('all')
+   end
+   Send("slist affected noprompt")
+   --print('affected')
+   --tprint(recoveries['affected'])
+   --tprint(spells['affected'])
+   --print('all')
+   --tprint(spells['all'])
+   --tprint(recoveries['all'])
 end
 
 function request(stype)
@@ -283,8 +291,22 @@ rbroadcast_table = {
 
 function broadcast_slist(slisttype)
     local bcastnum = sbroadcast_table[slisttype]
-    local sliststr = serialize.save_simple( spells[slisttype] )
-    phelper:broadcast(bcastnum, sliststr, sliststr)
+    if slisttype == 'affected' then
+      local sliststr = serialize.save_simple( spells[slisttype] )
+      phelper:broadcast(bcastnum, sliststr, sliststr)
+    else
+      phelper:broadcast(bcastnum)
+    end      
+end
+
+function broadcast_recovery(slisttype)
+    local bcastnum = rbroadcast_table[slisttype]
+    if slisttype == 'affected' then
+      local sliststr = serialize.save_simple( recoveries[slisttype] )
+      phelper:broadcast(bcastnum, sliststr, sliststr)
+    else
+      phelper:broadcast(bcastnum)
+    end      
 end
 
 function skillgain (name, line, wildcards)
@@ -295,21 +317,12 @@ function skillgain (name, line, wildcards)
     request_slist()
   else
     spells ['all'][sn].percent = percent
-    broadcast_slist('all')
-    if spells['spellup'][sn] then
-      spells ['spellup'][sn].percent = percent
-      broadcast_slist('spellup')
-    end
-    if spells['learned'][sn] then
-      spells ['learned'][sn].percent = percent
-      broadcast_slist('learned')
-    end
+    local tspell = {}
+    tspell[sn] = spells['all'][sn]
+    db:updateskills(tspell)
+    broadcast_slist('learned')
   end
     
-  --if spells ['all'][sn] then
-  --  ColourNote ("yellow", "", string.format ("Your proficiency at %s is now %i%%.",
-  --              spells ['all'][sn].name, percent))
-  --end
 end -- skillgain
 
 -- parse spellheaders line, break into pieces
@@ -337,7 +350,9 @@ function spellheaders_redirect (name, line, wildcards, styles)
   -- start of spells list? remove old ones
   if name == "start_spellheaders" then
     if trim(wildcards[1]) == "" then
-      slisttype = "all"     
+      slisttype = "all"
+      spells['affected'] = {}
+      spells['learned'] = {}
     else
       slisttype = trim(wildcards[1])
     end
@@ -352,9 +367,19 @@ function spellheaders_redirect (name, line, wildcards, styles)
     EnableTrigger ("multi_line_spellheaders", false)  -- no more lines to go
     --ColourNote ("green", "", "Loaded information about " .. spells_count .. " " .. slisttype .. " spells.")
     if slisttype == 'all' then
-      make_spells_xrefs ()
+      db:updateskills(spells['all'])
+      broadcast_slist('affected')
     end
     broadcast_slist(slisttype)   
+
+--    if slisttype == 'affected' then
+--      print('spellheader_redirect, affected')
+--      tprint(spells['affected'])
+--    end
+    if slisttype == 'spellup' then
+      db:updatespellup(spells['spellup'])
+    end
+
     SaveState ()
     return
   end -- if
@@ -369,12 +394,15 @@ function spellheaders_redirect (name, line, wildcards, styles)
       percent = tonumber(percent),      -- percent known for this character
       duration = tonumber(duration),    -- spell duration
       recovery = tonumber(recovery),    -- depends on which recovery
-      skilltype = tonumber(skilltype),  -- 1 = spell, 2 = skill
+      ["type"] = tonumber(skilltype),  -- 1 = spell, 2 = skill
+      sn = tonumber(sn),
       } -- end spells table item
       
-  if slisttype == 'affected' then
+  if (slisttype == 'affected' or slisttype == 'all') and duration > 0 then
+    spells['affected'][sn] = spells['all'][sn]
     spells['affected'][sn].finish = start + tonumber(duration)
   end
+
   spells_count = spells_count + 1
 
 end -- function spellheaders_redirect
@@ -396,7 +424,8 @@ function recoveries_redirect (name, line, wildcards, styles)
   -- start of recoveries list? remove old ones
   if name == "start_recoveries" then
     if trim(wildcards[1]) == "" then
-      slisttype = "all"     
+      slisttype = "all" 
+      recoveries['affected'] = {}
     else
       slisttype = trim(wildcards[1])
     end  
@@ -411,12 +440,18 @@ function recoveries_redirect (name, line, wildcards, styles)
     EnableTrigger ("multi_line_recoveries", false)  -- no more lines to go
     --ColourNote ("green", "", "Loaded information about " .. recoveries_count .. " recoveries.")
     if slisttype == 'all' then
-      make_recov_xrefs ()
+      db:updaterecoveries(recoveries['all'])
+      broadcast_recovery('affected')      
     end
+
+    --if slisttype == 'affected' then
+    --  print('recoveries_redirect, affected')
+    --  tprint(recoveries['affected'])
+    --end
+
     SaveState ()
     local bcastnum = rbroadcast_table[slisttype]
-    local sliststr = serialize.save_simple( recoveries[slisttype] )
-    phelper:broadcast(bcastnum, sliststr, sliststr)      
+    phelper:broadcast(bcastnum)      
     return
   end -- if
 
@@ -425,8 +460,10 @@ function recoveries_redirect (name, line, wildcards, styles)
   if not sn then
     return
   end -- not a valid spell name
-  recoveries[slisttype][sn] = { name = name  }
-  if slisttype == 'affected' then
+  
+  recoveries[slisttype][sn] = { name = name, sn = tonumber(sn)  }
+  if (slisttype == 'affected' or slisttype == 'all') and duration > 0 then
+    recoveries['affected'][sn] = recoveries['all'][sn]
     recoveries['affected'][sn].finish = start + tonumber(duration)
   end
   recoveries_count = recoveries_count + 1
@@ -437,17 +474,11 @@ function get_spells(stype)
   local sliststr = serialize.save_simple( spells[stype] or {} )
   return sliststr
 end
-
+ 
 function get_recoveries(stype)
   local sliststr = serialize.save_simple( recoveries[stype] or {} )
   return sliststr
 end
-
-function get_spells_xref(stype)
-  local sliststr = serialize.save_simple( spells_xref or {} )
-  return sliststr
-end
-
 ]]>
 </script>
 
