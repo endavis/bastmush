@@ -229,3 +229,18 @@ wearlocreverse = {
  portal = 31,
  sleeping = 32,
 }
+ 
+ statestrings = {
+  [1] = 'login',
+  [2] = 'motd',
+  [3] = 'active',
+  [4] = 'afk',
+  [5] = 'note',
+  [6] = 'edit',
+  [7] = 'page',
+  [8] = 'combat',
+  [9] = 'sleeping',
+  [11] = 'resting',
+  [12] = 'running'
+}
+
