@@ -229,10 +229,12 @@ function onstatuschange(args)
 end
 
 function build_windows()
-  if not GetTimerInfo ("display_timer", 6) then
-    EnableTimer("display_timer", true)
-  end
+
   if spells['all'] and spells['affected'] and recoveries['affected'] then
+    if not GetTimerInfo ("display_timer", 6) then
+      EnableTimer("display_timer", true)
+    end  
+    
     good = {}
     bad = {}
     trecoveries = {}
@@ -447,7 +449,6 @@ function build_affected()
   style.textcolour = "goodcolour"
   table.insert(alines, {style})    
   
---  tprint(alines)
   spellwin:enable()
   spellwin:addtab('Affected', alines, nil, false, true)  
 end
@@ -463,8 +464,8 @@ end
 
 function spell_display_timer()
   good = {}
-  bad = {}
-  
+  bad = {}  
+
   for k, v in pairs (spells['affected']) do
     if v.target == 1 and spells['spellup'][k] == nil then
       table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
@@ -478,6 +479,7 @@ function spell_display_timer()
   end
 
   build_affected()
+
 end
 
 function settimer()
@@ -527,16 +529,14 @@ function OnPluginBroadcast (msg, id, name, text)
   elseif id == 'aaa72f3b5453567e2bba9d50' then
     if msg == 7 then          
       -- slist all    
-      spells['all'] = assert (loadstring ('return ' .. text or ""))()   
+      load_spells('all')
       build_windows()
       
-    elseif msg == 8 then          
-      -- slist learned
-      --spells['learned'] = assert (loadstring ('return ' .. text or ""))()
+    elseif msg == 8 then  
+      load_spells('learned')
       
-    elseif msg == 9 then          
-      -- slist spellups
-      spells['spellup'] = assert (loadstring ('return ' .. text or ""))()
+    elseif msg == 9 then  
+      load_spells('spellup')
 
     elseif msg == 10 then          
       -- slist affected
@@ -544,7 +544,7 @@ function OnPluginBroadcast (msg, id, name, text)
       build_windows()
     elseif msg == 11 then          
       -- recoveries all
-      recoveries['all'] = assert (loadstring ('return ' .. text or ""))()
+      load_recoveries("all")
 
     elseif msg == 12 then          
       -- recoveries affected
@@ -581,10 +581,9 @@ function OnPluginEnable ()
     askedspells = assert (loadstring ('return ' .. task or ""))()
     ret, status = CallPlugin("aaaf0c555a44169e0f1d9674", "getstatus") 
     load_spells("all")
-    --load_spells_xrefs()
     load_spells("affected")
     load_spells("spellup")
-    --load_spells("learned")
+    load_spells("learned")
     load_recoveries("all")
     load_recoveries("affected")
     build_windows()
