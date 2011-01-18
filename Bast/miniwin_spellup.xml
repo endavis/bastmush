@@ -223,8 +223,6 @@ function menuclick(item, menutype)
   end
 end
 
-have_slist = false
-
 function counttable(ttable)
   count = 0
   for i,v in pairs(ttable) do
@@ -253,13 +251,10 @@ function onstatuschange(args)
   build_windows()
 end
 
-function build_windows()
+function build_windows(first)
 
   if spells['all'] and spells['affected'] and recoveries['affected'] and spells['spellup'] then
-    if not GetTimerInfo ("display_timer", 6) then
-      EnableTimer("display_timer", true)
-    end  
-    
+
     good = {}
     bad = {}
     trecoveries = {}
@@ -311,15 +306,25 @@ function build_windows()
       end -- if
     end -- for
     
-    build_summary()
-    build_affected()
-    build_requested()
-    build_spells()
-    --build_combat()
+    for i,v in tableSort(windowtabs, "sort") do
+      if not spellwin:hastab(i) then
+        v.func()
+      end
+    end
+    
+    if windowtabs[spellwin.activetab.tabname] then
+      windowtabs[spellwin.activetab.tabname].func()
+    end
+    
+    if not GetTimerInfo ("display_timer", 6) then
+      EnableTimer("display_timer", true)
+    end  
+    
   end
 end
 
 function build_summary()
+  --print('build_summary')
   local alines = {}
   
   local style = {}
@@ -467,6 +472,7 @@ function print_affected(atable, name, colour)
 end
 
 function build_affected()
+  --print('build_affected')
   local alines = {}
 
   if #bad > 0 then
@@ -485,6 +491,8 @@ function build_affected()
 end
 
 function build_requested()
+  --print('build_requested')
+
   local alines = {}   
 
   local alines = {}
@@ -609,6 +617,7 @@ function build_requested()
 end
 
 function build_spells()
+  --print('build_spells')
   local alines = {}   
 
   local alines = {}
@@ -746,9 +755,18 @@ function spell_display_timer()
     v.duration = v.finish - GetInfo(304)
   end
 
-  build_affected()
+  if spellwin.activetab.tabname == 'Affected' then
+    build_affected()
+  end
 
 end
+
+windowtabs = {
+ Summary = {func=build_summary, sort=1},
+ Affected = {func=build_affected, sort=2},
+ Requested = {func=build_requested, sort=3},
+ Spells = {func=build_spells, sort=4},
+}
 
 function settimer()
   local minutes = 0
@@ -778,6 +796,7 @@ function ontabchange(object, args)
  else
    object.showtabline = true 
  end
+ build_windows()
 end
 
 spellwin:addevent('tabchange', spellwin, ontabchange)
