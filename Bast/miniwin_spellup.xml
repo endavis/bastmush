@@ -90,14 +90,14 @@ require "bastspell"
 spellwin = Miniwin:new{name="SpellUp"}
 spellwin:set_default('maxlines', 30)
 spellwin:set_default("maxtabs", 5)
-spellwin:add_setting("goodcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("cornflowerblue"), sortlev=1, longname="The colour for the good spells"})
-spellwin:add_setting("badcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("firebrick"), sortlev=1, longname="The colour for the bad spells"})
-spellwin:add_setting("pendingcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("yellow"), sortlev=1, longname="The colour for the pending spells"})
-spellwin:add_setting("blockedcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("seagreen"), sortlev=1, longname="The colour for the blocked spells"})
-spellwin:add_setting("disabledcolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("orange"), sortlev=1, longname="The colour for the disabled spells"})
-spellwin:add_setting("askedrecoverycolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("cyan"), sortlev=1, longname="The colour for the recoveries fo asked spells"})
-spellwin:add_setting("recoverycolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("lightseagreen"), sortlev=1, longname="The colour for a recovery"})
-spellwin:add_setting("statuscolour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("springgreen"), sortlev=1, longname="The colour for a recovery"})
+spellwin:add_setting("goodcolour", {help="the text colour for a good spell", type="colour", default=verify_colour("cornflowerblue"), sortlev=1, longname="The colour for the good spells"})
+spellwin:add_setting("badcolour", {help="the text colour for when a bad spell", type="colour", default=verify_colour("firebrick"), sortlev=1, longname="The colour for the bad spells"})
+spellwin:add_setting("pendingcolour", {help="the text colour for a pending spell", type="colour", default=verify_colour("yellow"), sortlev=1, longname="The colour for the pending spells"})
+spellwin:add_setting("blockedcolour", {help="the text colour for a blocked spell", type="colour", default=verify_colour("seagreen"), sortlev=1, longname="The colour for the blocked spells"})
+spellwin:add_setting("disabledcolour", {help="the text colour for a disabled spell", type="colour", default=verify_colour("orange"), sortlev=1, longname="The colour for the disabled spells"})
+spellwin:add_setting("askedrecoverycolour", {help="the text colour for a recovery that affects an asked spell", type="colour", default=verify_colour("cyan"), sortlev=1, longname="The colour for the recoveries fo asked spells"})
+spellwin:add_setting("recoverycolour", {help="the text colour for all recoveries", type="colour", default=verify_colour("lightseagreen"), sortlev=1, longname="The colour for a recovery"})
+spellwin:add_setting("statuscolour", {help="the text colour for the status", type="colour", default=verify_colour("springgreen"), sortlev=1, longname="The colour for a recovery"})
  
 good = {}
 bad = {}
@@ -105,50 +105,48 @@ trecoveries = {}
 disabled = {}
 pending = {}
 blocked = {}
+noprac = {}
+nolearn = {}
+
+spells_filter = ""
+
 status = "Unknown"
 
+casting = ""
+toremove = ""
+
 askedspells = {}
+askedspells_xref = {}
 
 spellcures = {}
 spellcures[6] = {23}
 spellcures[66] = {330, 27, 158}
 spellcures[65] = {25, 158}
-
-
-function SecondsToClock(sSeconds)
-  local nSeconds = tonumber(sSeconds)
-  if nSeconds == 0 or nSeconds == nil then
-    --return nil;
-    return "00:00:00";
-  elseif nSeconds < 0 then
-    return tostring(sSeconds)
-  else
-    nHours = string.format("%02.f", math.floor(nSeconds/3600));
-    nMins = string.format("%02.f", math.floor(nSeconds/60 - (nHours*60)));
-    nSecs = string.format("%02.f", math.floor(nSeconds - nHours*3600 - nMins *60));
-    if nHours ~= "00" then
-      return nHours..":"..nMins..":"..nSecs
-    else
-      return nMins..":"..nSecs
-    end
-  end
-end
+spellcures[237] = {238}
+spellcures[29] = {70}
 
 function buildmenu(item, menutype)
   menu = strip_colours(spells['all'][item].name) .. "|"
   menu = menu .. "| showskill"
   menu = menu .. "| bspell info"
-  if spells['all'][412] and spells['all'][412].percent > 0 and spells['all'][item].percent > 0 then
+  if spells['all'][412] and spells['all'][412].percent > 0 and spells['all'][item].percent > 1 then
     menu = menu .. "| disrupt"
   end
   if spellcures[item] then
     menu = menu .. "| >cure"
     for i,v in ipairs(spellcures[item]) do
-      if spells['all'][v] and spells['all'][v].percent > 0 then
+      if spells['all'][v] and spells['all'][v].percent > 1 then
         menu = menu .. "| with : " .. spells['all'][v].name
       end
     end
     menu = menu .. '| <'    
+  end
+  if menutype == 'requested' then
+    menu = menu .. "| Remove"
+  end
+  if menutype == 'spellup' and not askedspells_xref[item] then
+    menu = menu .. "| Add"
+    menu = menu .. "| Add in Position"
   end
   return menu
 end
@@ -161,11 +159,22 @@ function mouseleft(result, item, menutype)
     Execute("bspell info " .. tostring(item))
   elseif result:match("disrupt") then
     SendNoEcho("c disrupt " .. item)
+  elseif result:match('Remove') then
+    Execute("bspell remove " .. item)
+  elseif result:match('Add in Position') then
+    pos = verify_number("", {low=1, high=#askedspells + 1, msg="Add in position"})
+    if pos then
+      Execute("bspell add " .. item .. ":" .. pos)
+    end      
+  elseif result:match('Add') then
+    Execute("bspell add " .. item)
   elseif result:match("with") then
     local tresult = utils.split(result, ':')
-    sn, invalid = find_spellsn(trim(tresult[2]))
-    if sn then      
-      SendNoEcho('cast ' .. tostring(sn))
+    local spell = find_spell(trim(tresult[2]))
+    if spell then      
+      casting = spell.sn
+      toremove = item
+      SendNoEcho('cast ' .. tostring(spell.sn))
     else
       print('could not find cure result')
     end
@@ -177,6 +186,14 @@ menus = {
  affectedmenuleft = buildmenu,
  affectedmouseright = mouseleft,
  affectedmouseleft = mouseleft,
+ requestedmenuright = buildmenu,
+ requestedmenuleft = buildmenu,
+ requestedmouseright = mouseleft,
+ requestedmouseleft = mouseleft, 
+ spellupmenuright = buildmenu,
+ spellupmenuleft = buildmenu,
+ spellupmouseright = mouseleft,
+ spellupmouseleft = mouseleft, 
 }
 
 function menuclick(item, menutype)
@@ -208,7 +225,6 @@ end
 
 have_slist = false
 
--- spells xref, name to sn
 function counttable(ttable)
   count = 0
   for i,v in pairs(ttable) do
@@ -217,8 +233,17 @@ function counttable(ttable)
   return count
 end
 
+function make_askedspells_xrefs ()
+  phelper:mdebug('making askedspells xref')
+  askedspells_xref = {}
+  for k, v in pairs (askedspells) do
+    askedspells_xref[v.sn] = k
+  end -- for each spell
+end -- make_xrefs
+
 function onspellschange(args)
   askedspells = assert (loadstring ('return ' .. args or ""))()
+  make_askedspells_xrefs()
   build_windows()
 end
 
@@ -230,7 +255,7 @@ end
 
 function build_windows()
 
-  if spells['all'] and spells['affected'] and recoveries['affected'] then
+  if spells['all'] and spells['affected'] and recoveries['affected'] and spells['spellup'] then
     if not GetTimerInfo ("display_timer", 6) then
       EnableTimer("display_timer", true)
     end  
@@ -241,6 +266,8 @@ function build_windows()
     disabled = {}
     pending = {}
     blocked = {}
+    noprac = {}
+    nolearn= {}
 
     for k, v in pairs (spells['affected']) do
       if v.target == 1 and spells['spellup'][k] == nil then
@@ -256,20 +283,29 @@ function build_windows()
         table.insert (trecoveries, text)
       else
         if v.disabled then
-          table.insert(disabled, text)
+          disabled[v.sn] = spells['all'][v.sn]
+          --table.insert(disabled, spells['all'][v.sn])
+        elseif spells['all'][tonumber(v.sn)].percent == 1 then
+          noprac[v.sn] = spells['all'][v.sn]
+          --table.insert(noprac, spells['all'][v.sn])
+        elseif spells['all'][tonumber(v.sn)].percent == 0 then
+          nolearn[v.sn] = spells['all'][v.sn]
+          --table.insert(nolearn, spells['all'][v.sn])        
         else
           local isblocked = false
           if v.blockers then
             for blocker, _ in pairs(v.blockers) do
               if not spells['affected'][tonumber(v.sn)] and spells['affected'][blocker] then
                 text = text.." (Blocked)"
-                table.insert(blocked, text)              
+                blocked[v.sn] = spells['all'][v.sn]
+                --table.insert(blocked, spells['all'][v.sn])              
                 isblocked = true
               end
             end
           end
-          if not spells['affected'][tonumber(v.sn)] and not isblocked then
-            table.insert (pending, text)
+          if not spells['affected'][tonumber(v.sn)] and not isblocked and spells['all'][tonumber(v.sn)].percent > 1 then
+            pending[v.sn] = spells['all'][v.sn]
+            --table.insert (pending, spells['all'][v.sn])
           end         
         end -- disabled
       end -- if
@@ -277,7 +313,8 @@ function build_windows()
     
     build_summary()
     build_affected()
-    --build_requested()
+    build_requested()
+    build_spells()
     --build_combat()
   end
 end
@@ -318,24 +355,60 @@ function build_summary()
   table.insert(alines, {style})
 
   local style = {}
-  style.text = "Requested: " .. tostring(#askedspells)
+  style.text = "Requested: " .. tostring(#askedspells - tableCountItems(noprac) - tableCountItems(nolearn))
   style.textcolour = "green"
+  style.mouseup = function ()
+            spellwin:changetotab('Requested')
+         end  
   table.insert(alines, {style})
 
   local style = {}
-  style.text = "Pending: " .. tostring(#pending)
+  style.text = "Pending: " .. tostring(tableCountItems(pending))
   style.textcolour = "pendingcolour"
+  style.mouseup = function ()
+            spellwin:changetotab('Requested')
+         end  
   table.insert(alines, {style})
 
-  local style = {}
-  style.text = "Blocked: " .. tostring(#blocked)
-  style.textcolour = "blockedcolour"
-  table.insert(alines, {style})
+  if tableCountItems(blocked) > 0 then
+    local style = {}
+    style.text = "Blocked: " .. tostring(tableCountItems(blocked))
+    style.textcolour = "blockedcolour"
+    style.mouseup = function ()
+            spellwin:changetotab('Requested')
+         end  
+    table.insert(alines, {style})
+  end
 
-  local style = {}
-  style.text = "Disabled: " .. tostring(#disabled)
-  style.textcolour = "disabledcolour"
-  table.insert(alines, {style})
+  if tableCountItems(disabled) > 0 then
+    local style = {}
+    style.text = "Disabled: " .. tostring(tableCountItems(disabled))
+    style.textcolour = "disabledcolour"
+    style.mouseup = function ()
+            spellwin:changetotab('Requested')
+         end  
+    table.insert(alines, {style})
+  end
+
+  if tableCountItems(noprac) > 0 then
+    local style = {}
+    style.text = "Not Practiced: " .. tostring(tableCountItems(noprac))
+    style.textcolour = "disabledcolour"
+    style.mouseup = function ()
+            spellwin:changetotab('Requested')
+         end  
+    table.insert(alines, {style})
+  end
+
+  if tableCountItems(nolearn) > 0 then
+    local style = {}
+    style.text = "Not Learned: " .. tostring(tableCountItems(nolearn))
+    style.textcolour = "disabledcolour"
+    style.mouseup = function ()
+            spellwin:changetotab('Requested')
+         end  
+    table.insert(alines, {style})  
+  end
 
   local style = {}
   style.text = "Status: " .. tostring(status)
@@ -358,83 +431,22 @@ function time_colour(time_to_go)
   end -- if
 end
 
-function build_affected()
+function print_affected(atable, name, colour)
   local alines = {}
-
-  if #bad > 0 then
-    local style = {}
-    style.text = "Bad: " .. tostring(#bad)
-    style.textcolour = "badcolour"
-    style.hjust = 'center'
-    table.insert(alines, {style})
-
-    if next(bad) then
-      table.insert(alines, {{text = '-------------------------------------------', textcolour = "white"}})    
-      for i,v in tableSort(bad, "duration") do
-        local lstyle = {}
-        local style = {}
-        style.text = string.format("%-30s : ", v.name)
-        style.textcolour = "badcolour"
-        style.mouseup = menuclick(v.sn, 'affected')        
-        table.insert(lstyle, style)
-
-        local style = {}
-        style.text = SecondsToClock (v.duration)
-        style.textcolour = time_colour(v.duration)
-        style.mouseup = menuclick(v.sn, 'affected')      
-        table.insert(lstyle, style)
-        
-        table.insert(alines, lstyle)
-      end
-    end
-    local style = {}
-    style.text = "  "
-    style.textcolour = "badcolour"
-    table.insert(alines, {style})    
-  end
-  recoverycount = counttable(recoveries['affected'])
-  if recoverycount > 0 then
-    local style = {}
-    style.text = "Recoveries: " .. tostring(recoverycount)
-    style.textcolour = "recoverycolour"
-    style.hjust = 'center'
-    table.insert(alines, {style})
-
-    table.insert(alines, {{text = '-------------------------------------------', textcolour = "white"}})    
-    for i,v in tableSort(recoveries['affected'], "duration") do
-      local lstyle = {}
-      local style = {}
-      style.text = string.format("%-30s : ", v.name)
-      style.textcolour = "recoverycolour"
-      table.insert(lstyle, style)
-
-      local style = {}
-      style.text = SecondsToClock (v.finish - GetInfo(304))
-      style.textcolour = time_colour(v.duration)
-      table.insert(lstyle, style)
-      
-      table.insert(alines, lstyle)
-    end
-    local style = {}
-    style.text = "  "
-    style.textcolour = "recoverycolour"
-    table.insert(alines, {style})    
-  end
-
   local style = {}
-  style.text = "Good: " .. tostring(#good)
-  style.textcolour = "goodcolour"
+  style.text = name .. ": " .. tostring(tableCountItems(atable))
+  style.textcolour = colour
   style.hjust = 'center'
   table.insert(alines, {style})
 
-  if next(good) then
+  if next(atable) then
     table.insert(alines, {{text = '-------------------------------------------', textcolour = "white"}})    
-    for i,v in tableSort(good, "duration") do
+    for i,v in tableSort(atable, "duration") do
       local lstyle = {}
       local style = {}
       style.text = string.format("%-30s : ", v.name)
       style.mouseup = menuclick(v.sn, 'affected')
-      style.textcolour = "goodcolour"
+      style.textcolour = colour
       table.insert(lstyle, style)
 
       local style = {}
@@ -446,19 +458,272 @@ function build_affected()
       table.insert(alines, lstyle)
     end
   end
-  
   local style = {}
   style.text = "  "
-  style.textcolour = "goodcolour"
-  table.insert(alines, {style})    
+  style.textcolour = colour
+  table.insert(alines, {style}) 
+
+  return alines
+end
+
+function build_affected()
+  local alines = {}
+
+  if #bad > 0 then
+    tableExtend(alines, print_affected(bad, "Bad", "badcolour"))   
+  end
+  
+  recoverycount = counttable(recoveries['affected'])
+  if recoverycount > 0 then
+    tableExtend(alines, print_affected(recoveries['affected'], "Recoveries", "recoverycolour"))
+  end
+
+  tableExtend(alines, print_affected(good, "Good", "goodcolour"))
   
   spellwin:enable()
   spellwin:addtab('Affected', alines, nil, false, true)  
 end
 
 function build_requested()
-  -- will show requested spells at top, unrequested spells at bottom
-  print('building spellup')
+  local alines = {}   
+
+  local alines = {}
+  local style = {}
+  style.text =  "Requested : " .. tostring(tableCountItems(askedspells))
+  style.textcolour = "green"
+  style.hjust = 'center'
+  table.insert(alines, {style})
+  
+  local lstyle = {}
+  local style = {}
+  style.text =  string.format("%-31s : ", "#   - Name") 
+  style.textcolour = "green"
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text =  string.format("%-3s", " P ") 
+  style.textcolour = "pendingcolour"
+  style.hint = "Pending"
+  style.mouseover = nofunc
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text =  string.format("%-3s", " B ") 
+  style.textcolour = "blockedcolour"
+  style.hint = "Blocked"
+  style.mouseover = nofunc
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text =  string.format("%-3s", " D ") 
+  style.textcolour = "disabledcolour"
+  style.hint = "Disabled"
+  style.mouseover = nofunc
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text =  string.format("%-4s", " NP ") 
+  style.textcolour = "disabledcolour"
+  style.hint = "Not Practiced"
+  style.mouseover = nofunc
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text =  string.format("%-4s", " NL ") 
+  style.hint = "Not Learned"
+  style.textcolour = "disabledcolour"
+  style.mouseover = nofunc
+  table.insert(lstyle, style)
+
+  table.insert(alines, lstyle)
+  table.insert(alines, {{text = '---------------------------------------------------', textcolour = "white"}})   
+  
+  for i,v in ipairs(askedspells) do
+    local lstyle = {}
+    local style = {}
+    style.text = string.format("%-3s - %-25s : ", i, spells['all'][v.sn].name)
+    style.mouseup = menuclick(v.sn, 'requested')
+    style.textcolour = "green"
+    table.insert(lstyle, style)  
+    
+    local style = {}
+    style.textcolour = "pendingcolour"
+    style.cellborder = true
+    if pending[v.sn] then
+      style.text = string.format("%-3s", " P ")
+    else
+      style.text = string.format("%-3s", "   ")
+    end
+    table.insert(lstyle, style)  
+
+    local style = {}
+    style.textcolour = "blockedcolour"
+    style.cellborder = true
+    if blocked[v.sn] then
+      style.text = string.format("%-3s", " B ")
+    else
+      style.text = string.format("%-3s", "   ")
+    end
+    table.insert(lstyle, style)  
+
+    local style = {}
+    style.textcolour = "disabledcolour"
+    style.cellborder = true
+    if disabled[v.sn] then
+      style.text = string.format("%-3s", " D ")
+      style.mouseup = function ()
+            Execute("bspell enable " .. v.sn)
+         end
+    else
+      style.text = string.format("%-3s", "   ")
+      style.mouseup = function ()
+            Execute("bspell disable " .. v.sn)
+         end
+    end
+    table.insert(lstyle, style)  
+
+    local style = {}
+    style.textcolour = "disabledcolour"
+    style.cellborder = true
+    if noprac[v.sn] then
+      style.text = string.format("%-4s", " NP ")
+    else
+      style.text = string.format("%-4s", "    ")
+    end
+    table.insert(lstyle, style)  
+
+    local style = {}
+    style.textcolour = "disabledcolour"
+    style.cellborder = true
+    if nolearn[v.sn] then
+      style.text = string.format("%-4s", " NL ")
+    else
+      style.text = string.format("%-4s", "    ")
+    end
+    table.insert(lstyle, style)  
+    table.insert(alines, lstyle)
+  end
+  
+  spellwin:enable()
+  spellwin:addtab('Requested', alines, nil, false, true)  
+end
+
+function build_spells()
+  local alines = {}   
+
+  local alines = {}
+  
+  local lstyle = {}
+  local style = {}
+  style.text =  string.format("%-31s : ", "#   - Name") 
+  style.textcolour = "green"
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text =  string.format("%-3s", " R ") 
+  style.textcolour = "green"
+  style.hint = "Requested"
+  style.mouseover = nofunc
+  table.insert(lstyle, style)
+  
+  local style = {}
+  style.text =  string.format("%-3s", " S ") 
+  style.textcolour = "yellow"
+  style.hint = "Mud Spellup"
+  style.mouseover = nofunc
+  table.insert(lstyle, style)  
+
+  local style = {}
+  style.text =  string.format("%-3s", " C ") 
+  style.textcolour = "yellow"
+  style.hint = "Clientside Spellup"
+  style.mouseover = nofunc
+  table.insert(lstyle, style)  
+
+  local style = {}
+  style.text =  string.format("%-3s", " O ") 
+  style.textcolour = "orange"
+  style.hint = "Flagged for bspell other"
+  style.mouseover = nofunc
+  table.insert(lstyle, style)
+
+  table.insert(alines, lstyle)
+  table.insert(alines, {{text = '----------------------------------------------', textcolour = "white"}})   
+  
+  for i,v in tableSort(spells['all'], "spellup", 0, true) do
+    if v.target == 2 or v.target == 3 then
+      local lstyle = {}
+      local style = {}
+      style.text = string.format("%-3s - %-25s : ", tostring(v.sn), spells['all'][v.sn].name)
+      style.mouseup = menuclick(v.sn, 'spellup')
+      style.textcolour = "green"
+      table.insert(lstyle, style)  
+      
+      local style = {}
+      style.textcolour = "green"
+      style.cellborder = true
+      if askedspells_xref[v.sn] then
+        style.text = string.format("%-3s", " R ")
+        style.mouseup = function ()
+            Execute("bspell remove " .. v.sn)
+         end        
+      else
+        style.text = string.format("%-3s", "   ")
+        if v.spellup or v.clientspellup then
+          style.mouseup = function ()
+            Execute("bspell add " .. v.sn)
+          end        
+        end
+      end
+      table.insert(lstyle, style)  
+
+      local style = {}
+      style.textcolour = "yellow"
+      style.cellborder = true
+      if spells['spellup'][v.sn] and spells['spellup'][v.sn].spellup == 1 then
+        style.text = string.format("%-3s", " S ")
+      else
+        style.text = string.format("%-3s", "   ")
+      end
+      table.insert(lstyle, style)  
+
+      local style = {}
+      style.textcolour = "yellow"
+      style.cellborder = true
+      
+      local sp = spells['spellup'][v.sn]
+   
+      if sp and sp.clientspellup == 1 then
+        style.text = string.format("%-3s", " C ")
+        style.mouseup = function ()
+          Execute("bspell togglespellup " .. v.sn)
+        end          
+      else
+        style.text = string.format("%-3s", "   ")
+        if not sp or (sp and sp.spellup ~= 1) then
+          style.mouseup = function ()
+            Execute("bspell togglespellup " .. v.sn)
+          end          
+        end
+      end
+      table.insert(lstyle, style)  
+
+      local style = {}
+      style.textcolour = "orange"
+      style.cellborder = true
+      if askedspells_xref[v.sn] and askedspells[askedspells_xref[v.sn]].other then
+        style.text = string.format("%-3s", " O ")
+      else
+        style.text = string.format("%-3s", "   ")
+      end
+      table.insert(lstyle, style)  
+
+      table.insert(alines, lstyle)
+    end
+  end
+  
+  spellwin:enable()
+  spellwin:addtab('Spells', alines, nil, false, true)  
 end
 
 function build_combat()
@@ -537,10 +802,12 @@ function OnPluginBroadcast (msg, id, name, text)
       
     elseif msg == 8 then  
       load_spells('learned')
+      build_windows()
       
     elseif msg == 9 then  
-      load_spells('spellup')
-
+      load_spells('spellup', true)
+      build_windows()
+      
     elseif msg == 10 then          
       -- slist affected
       spells['affected'] = assert (loadstring ('return ' .. text or ""))()
@@ -582,10 +849,11 @@ function OnPluginEnable ()
   if IsConnected() then
     local ret, task = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedspells")
     askedspells = assert (loadstring ('return ' .. task or ""))()
+    make_askedspells_xrefs()
     ret, status = CallPlugin("aaaf0c555a44169e0f1d9674", "getstatus") 
     load_spells("all")
     load_spells("affected")
-    load_spells("spellup")
+    load_spells("spellup", true)
     load_spells("learned")
     load_recoveries("all")
     load_recoveries("affected")
@@ -605,6 +873,7 @@ end -- OnPluginDisable
 function OnPluginConnect ()
   local ret, task = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedspells")
   askedspells = assert (loadstring ('return ' .. task or ""))()
+  make_askedspells_xrefs()
     
   phelper:OnPluginConnect()
 end -- function OnPluginConnect
