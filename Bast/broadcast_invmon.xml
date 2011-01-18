@@ -493,14 +493,14 @@ function checkaction(action, item, afterwait)
     --  local titem = serialize.save( "invdata", invdata )
     --  phelper:broadcast(12)
     --else
-      SendNoEcho('invdata')
+    --  SendNoEcho('invdata')
     --  waiting.objectid = item.objectid
     --  waiting.action = 4
     --end
 
   elseif action == 5 or action == 6 then
-    SendNoEcho('invdata')
-    SendNoEcho('invdata ' .. item.container)
+    --SendNoEcho('invdata')
+    --SendNoEcho('invdata ' .. item.container)
 
   --elseif action == 6 then
 
