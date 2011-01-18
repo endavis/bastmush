@@ -29,7 +29,7 @@ bspell a all         --> cast all possible spellups
 spellup other (name) --> try to spellup another player with picked spellups
                           (eg. spellup other johnsmith)
 
-spellup other (name) all --> try to spellup another player with all spellups
+*spellup other (name) fast --> try to spellup another player with all spellups
                           (eg. spellup other johnsmith)
 
 *bspell block   --> block a spell with another spell
@@ -56,15 +56,10 @@ have tabs for:
    - recoveries
    - spells pending
    - disabled spells
- * Good
- * Bad
+ * Affected
  * Requested
- * Other
-   - show blocked
- * Combat - list both spells and skills that can be used in combat
- * Spellups - can click spells in this window to add them
+ * Spells - can click spells in this window to add them
     - columns for each - self, other
-    - red can't add - (not practiced)
    
 NOTES:
 events that need to trigger a retry of spellups
@@ -82,9 +77,10 @@ events that need to trigger a retry of spellups
  - skillgain (?)
  
 Spellup Other -
- put all at end (does all spellups)
- no all then does the ones you have picked from the spellups tab
+ Done - put fast at end (does all spellups)
+ no fast then does the ones you have picked from the spells tab
 
+-- current bug, sometimes a spell gets its spellup changed to 0, need to hunt it down
 
 </description>
 
@@ -137,7 +133,7 @@ have_slist = false
 waiting = false
 need_moves = false
 need_mana = false
-nocast = false
+nocast = falseq
 
 nocast_rooms = {}
 current_room = -1
@@ -260,7 +256,7 @@ function activatespell(sn, fast)
       if recov and recoveries['affected'][recov] then
         cast = false
       end
-      if v.disabled or isblocked(sn) then
+      if v.disabled or isblocked(sn) or spells['all'][sn].percent <= 1 then
         cast = false
       end  
       if cast then
@@ -305,36 +301,77 @@ function nextspellup (reason)
 end
 
 function formatheader()
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-25s" , "Spell"),
-             RGBColourToName(var.plugin_colour), "black", string.format("%-5s" , "SN"),
-             RGBColourToName(var.plugin_colour), "black", string.format("%-10s", "Disabled"),
-             RGBColourToName(var.plugin_colour), "black", string.format("%-10s", "Blocked By"))
- ColourNote(RGBColourToName(var.plugin_colour), "black",   "____________________________________________________")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-30s", "#. Name"),
+             "yellow",          "black", string.format("%-3s", " P "), 
+             "seagreen",        "black", string.format("%-3s", " B "), 
+             "orange",          "black", string.format("%-3s", " D "), 
+             "orange",          "black", string.format("%-4s", " NP "), 
+             "orange",          "black", string.format("%-4s", " NL "))
+  ColourNote(RGBColourToName(var.plugin_colour), "black",   "____________________________________________________")
 end
 
-function formatspell(name, sn, disabled, blocked)
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-25s" , name),
-             RGBColourToName(var.plugin_colour), "black", string.format("%-5s" , sn),
-             RGBColourToName(var.plugin_colour), "black", string.format("%-10s", disabled),
-             RGBColourToName(var.plugin_colour), "black", string.format("%-10s", blocked))
+function formatspell(spell, colour)
+  if not colour then
+    colour = var.plugin_colour
+  end
+  local name = spells['all'][spell.sn].name
+  local disabled = ""
+  local blocked = ""
+  local tstring = ""
+  if spell.disabled then
+    disabled = "Yes"
+  end
+  if spell.blockers then
+    for sn,t in pairs(spell.blockers) do
+      blocked = blocked .. " " .. spells['all'][sn].name
+    end
+  end  
+  ColourNote(RGBColourToName(colour), "black", string.format("%-25s" , name),
+             RGBColourToName(colour), "black", string.format("%-5s" , spell.sn),
+             RGBColourToName(colour), "black", string.format("%-10s", disabled),
+             RGBColourToName(colour), "black", string.format("%-10s", blocked))
 end
 
 function cmd_listspells(cmddict)
   phelper:plugin_header("Spells requested (" .. tostring(#phelper.askedspells) .. ")")
   formatheader()
-  for i,v in ipairs(phelper.askedspells) do
-    local disabled = ""
-    local blocked = ""
-    local tstring = ""
-    if v.disabled then
-      disabled = "Yes"
+  local tnoprac = {}
+  local tgood = {}
+  local tdisable = {}
+  count = 0
+  for i,j in ipairs(phelper.askedspells) do
+    count = count + 1
+    local v = spells['all'][tonumber(j.sn)]
+    local noprac = "   "
+    local nolearn = "   "
+    local disabled = "   "
+    local blocked = "   "
+    local pending = "   "
+    if v.percent == 1 then
+      noprac = " NP "  
+    elseif v.percent == 0 then
+      nolearn = " NL "
     end
-    if v.blockers then
-      for sn,t in pairs(v.blockers) do
-        blocked = blocked .. " " .. spells['all'][sn].name
+    if j.disabled then
+      disabled = " D "
+    end  
+    if not spells['affected'][tonumber(v.sn)] and not j.disabled and not (v.percent <= 1) then
+      pending = " P "
+    end
+    if j.blockers then
+      for blocker, _ in pairs(j.blockers) do
+        if not spells['affected'][tonumber(v.sn)] and spells['affected'][blocker] then
+          blocked = " B "
+        end
       end
-    end
-    formatspell(spells['all'][v.sn].name, tonumber(v.sn), disabled, blocked)
+     end
+    
+    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-30s", count .. ". " .. v.name),
+               "yellow", "black", string.format("%-3s", pending), 
+               "seagreen",  "black", string.format("%-3s", blocked), 
+               "orange", "black", string.format("%-3s", disabled), 
+               "orange", "black", string.format("%-4s", noprac), 
+               "orange", "black", string.format("%-4s", nolearn))
   end
 end
 
@@ -495,25 +532,72 @@ function cmd_info(cmddict)
         formatitem("Type", aspell.type)
         formatitem("Target", aspell.target)
         formatitem("Prac %", aspell.percent)
-        if aspell.spellup then
+        if aspell.spellup == 1 then
           formatitem("Spellup", "Yes")
-        end
+        else
+          formatitem("Spellup", "No")
+        end          
+        if aspell.clientspellup == 1 then
+          formatitem("Client Spellup", "Yes")
+        else
+          formatitem("Client Spellup", "No")
+        end          
         if aspell.recovery ~= -1 then
           formatitem("Recovery", recoveries['all'][aspell.recovery].name)
         end
         local tstring = "No"
+        local blockers = ""
         if askedspells_xref[aspell.sn] and phelper.askedspells[askedspells_xref[aspell.sn]] then
           tstring = "Yes"
           if phelper.askedspells[askedspells_xref[aspell.sn]].disabled then
             tstring = tstring .. " - Disabled"
           end
+          if phelper.askedspells[askedspells_xref[aspell.sn]].blockers then
+            for i,v in pairs(phelper.askedspells[askedspells_xref[aspell.sn]].blockers) do
+              if blockers == "" then
+                blockers = spells['all'][i].name
+              else
+                blockers = blockers .. ", " .. spells['all'][i].name
+              end
+            end
+          end
         end
         formatitem("Requested", tstring)
+        if blockers ~= "" then
+          formatitem("Blockers", blockers)
+        end
+        if spells['affected'][aspell.sn] and spells['affected'][aspell.sn].duration then
+          formatitem("Duration", SecondsToClock(spells['affected'][aspell.sn].finish - GetInfo(304)))
+        end
         ColourNote("black","black", "")
       else
         print('Info: could not find spell', item)
       end
     end
+  end
+end
+
+function cmd_togglespellup(cmddict)
+  if #cmddict >= 1 then
+    phelper:plugin_header("Toggle Spellup")
+    local sspells = {}
+    local uspells = {}
+    for i,item in ipairs(cmddict) do
+      local aspell = find_spell(item)
+      if aspell then
+        if aspell.clientspellup == 0 or not aspell.clientspellup then
+          sspells[aspell.sn] = aspell
+          aspell.clientspellup = 1
+          ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " set to be a spellup.")                
+        else
+          uspells[aspell.sn] = aspell
+          aspell.clientspellup = 0
+          ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " is no longer a spellup.")        
+        end      
+      end
+    end
+    local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "setclientspellup", serialize.save_simple(sspells))
+    local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "unsetclientspellup", serialize.save_simple(uspells))    
   end
 end
 
@@ -523,7 +607,30 @@ function cmd_fast(cmddict)
   end
 end
 
-function cmd_deletespell(cmddict)
+function cmd_other(cmddict)
+  tprint(cmddict)
+  local who = cmddict[1]
+
+  if not who then
+    ColourNote ("red", "", "You did not specify a target!")
+    return
+  end
+  if cmddict[2] == 'fast' then
+    print('got fast')
+    for sn, v in pairs (spells['spellup']) do
+      if v.percent > 1 and   -- we know it
+        v.spellup == 1 and       -- it is a spellup
+        v.target == 2 and   -- can be cast on others
+        v.type == 1 then   -- spell not skill
+          Send ("cast " .. v.sn .. " " .. who)  -- cast it
+      end -- if possible to spellup this one
+    end -- for
+  else
+  
+  end
+end
+
+function cmd_removespell(cmddict)
   if #cmddict >= 1 then
     removed = false
     phelper:plugin_header()   
@@ -584,17 +691,15 @@ function cmd_addspell(cmddict)
         if aspell then
           local sn = tonumber(aspell.sn)
           if sn then            
-            if aspell.percent == 0 then
-              ColourNote ("red", "", "You have not learnt '" .. aspell.name .. "'.")
-              invalid = true
-            elseif aspell.percent == 1 then
-              ColourNote ("red", "", "You have not practiced '" .. aspell.name .. "'.")
-              invalid = true
-            elseif aspell.spellup ~= 1 then
+            if aspell.spellup ~= 1 and aspell.clientspellup ~= 1 then
               ColourNote ("red", "", "Spell '" .. aspell.name .. "' is not a spellup.")
-              invalid = true
             else
               if askedspells_xref[tonumber(sn)] == nil then
+                if aspell.percent == 1 then
+                  ColourNote ("red", "", "You have not practiced '" .. aspell.name .. "', but it will be added anyway, it will not be cast until practiced")
+                elseif aspell.percent == 0 then
+                  ColourNote ("red", "", "You have not learned '" .. aspell.name .. "', but it will be added anyway, it will not be cast until practiced")
+                end                  
                 phelper:mdebug('adding ', item, sn, aspell.name, place)                
                 local pos = -1
                 if place then
@@ -604,6 +709,7 @@ function cmd_addspell(cmddict)
                   table.insert(phelper.askedspells, {sn=tonumber(sn)})
                   pos = tostring(#phelper.askedspells)
                 end
+                make_askedspells_xrefs()                
                 added = true
                 ColourNote(RGBColourToName(var.plugin_colour), "black", "Added " .. aspell.name .. " in position " .. pos)
               else
@@ -617,7 +723,7 @@ function cmd_addspell(cmddict)
       end -- if number orname found
       if added then
         noneed = false
-        make_askedspells_xrefs()
+        --make_askedspells_xrefs()
         nextspellup("added new spells")
       end
     end
@@ -716,38 +822,45 @@ function OnPluginBroadcast (msg, id, name, text)
       -- spell casting failure    
       local tag = assert (loadstring ('return ' .. text or ""))()
       --tprint(tag)
-      if tonumber(tag.sn) == waiting then
-        waiting = false
-      end
-      if tag.reason == 1 then    
+      if tag.reason == 1 then
         if askedspells_xref[tonumber(tag.sn)] ~= nil then
+          waiting = false
           nextspellup('spell fail')            
         end
       elseif tag.reason == 2 then    
         if askedspells_xref[tonumber(tag.sn)] ~= nil then
           local tagsn = tonumber(tag.sn)
-          phelper.askedspells[askedspells_xref[tagsn]].disabled = true
-          ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because the affect already exists.")
-          nextspellup('spell fail')            
+          if tagsn == waiting then
+            phelper.askedspells[askedspells_xref[tagsn]].disabled = true
+            ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because the affect already exists.")
+            make_askedspells_xrefs()
+            waiting = false
+            nextspellup('spell fail')            
+          end
         end 
       elseif tag.reason == 3 then
+        waiting = false      
         nextspellup('spell fail')          
       elseif tag.reason == 4 then
+        waiting = false
         need_mana = true
         event_status_change()
       elseif tag.reason == 5 then
         nocast_rooms[current_room] = true
         nocast = true
+        waiting = false
         event_status_change()
       elseif tag.reason == 8 then
         -- remove from askedspells list
       elseif tag.reason == 11 then
         -- remove from askedspells list
+        ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because it is disabled mudside.")
+        phelper.askedspells[askedspells_xref[tagsn]].disabled = true        
       elseif tag.reason == 12 then
         need_moves = true
+        waiting = false
         event_status_change()        
       end
-      
     elseif msg == 7 then          
       -- all spells  
       load_spells('all')
@@ -763,7 +876,7 @@ function OnPluginBroadcast (msg, id, name, text)
       
     elseif msg == 9 then          
       -- spellup spells
-      load_spells('spellup')
+      load_spells('spellup', true)
       
     elseif msg == 10 then          
       -- affected spells
@@ -824,7 +937,7 @@ function OnPluginEnable ()
     load_spells("all")
     --load_spells_xrefs()
     load_spells("affected")
-    load_spells("spellup")
+    load_spells("spellup", true)
     --load_spells("learned")
     --print('loading recoveries in enable')
     load_recoveries("all")
@@ -884,7 +997,7 @@ phelper:add_cmd('listspells', {func=cmd_listspells, help="list request spells", 
 phelper:add_cmd('add', {func=cmd_addspell, help="add a spell"})
 phelper:add_cmd('pause', {func=cmd_pause, help="pause spellup"})
 phelper:add_cmd('resume', {func=cmd_resume, help="resume spellup"})
-phelper:add_cmd('delete', {func=cmd_deletespell, help="remove a spell, use 'delete all' to clear table"})
+phelper:add_cmd('remove', {func=cmd_removespell, help="remove a spell, use 'delete all' to clear table"})
 phelper:add_cmd('disable', {func=cmd_disable, help="disable a spell"})
 phelper:add_cmd('enable', {func=cmd_enable, help="enable a spell"})
 phelper:add_cmd('ablock', {func=cmd_ablocker, help="add blockers, Ex. 'protection good:inertial barrier'"})
@@ -894,6 +1007,7 @@ phelper:add_cmd('fast', {func=cmd_fast, help="cast all spells in one go"})
 phelper:add_cmd('other', {func=cmd_other, help="cast spells on another char"})
 phelper:add_cmd('export', {func=cmd_export, help="export current spell list as list of commands"})
 phelper:add_cmd('info', {func=cmd_info, help="show info on a spell"})
+phelper:add_cmd('togglespellup', {func=cmd_togglespellup, help="toggle a spell to be a spellup regardless of what the mud says"})
 
 phelper:enable()
 
