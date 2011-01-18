@@ -179,6 +179,27 @@ spells_count = 0
 
 state = -1
 
+function setclientspellup(spells)
+  local tspells = assert (loadstring ('return ' .. spells or ""))()  
+  for i,v in pairs(tspells) do
+    tspells[i].clientspellup = 1
+  end
+  db:updateclientspellups(tspells)
+  local bcastnum = sbroadcast_table['spellup']
+  phelper:broadcast(bcastnum)
+end
+
+function unsetclientspellup(spells)
+  local tspells = assert (loadstring ('return ' .. spells or ""))()  
+  for i,v in pairs(tspells) do
+    tspells[i].clientspellup = 0
+  end
+  db:updateclientspellups(tspells)
+  local bcastnum = sbroadcast_table['spellup']
+  phelper:broadcast(bcastnum)
+end
+
+
 function spelltag_on (name, line, wildcards)
   local spelltag = {}
 
@@ -253,6 +274,7 @@ function request_slist()
      --print('skillcount: ', db:countskills(), 'recoverycount: ', db:countrecoveries())
      --print('getting all skills')
      SendNoEcho("slist noprompt")
+     SendNoEcho("slist spellup noprompt")
    else
      --print('skillcount: ', db:countskills(), 'recoverycount: ', db:countrecoveries())
      spells['all'] = db:getallskills()
@@ -375,22 +397,33 @@ function spellheaders_redirect (name, line, wildcards, styles)
   local sn, name, target, duration, percent, recovery, skilltype = parse_spell_line (line)
 
   if not sn then return end
-
-  spells[slisttype][sn] = {
-      name = name:lower (),   -- name of spell
-      target = target,        -- target code
-      percent = tonumber(percent),      -- percent known for this character
-      duration = tonumber(duration),    -- spell duration
-      recovery = tonumber(recovery),    -- depends on which recovery
-      ["type"] = tonumber(skilltype),  -- 1 = spell, 2 = skill
-      sn = tonumber(sn),
-      } -- end spells table item
+  
+  if spells['all'][sn] then
+    spells[slisttype][sn] = spells['all'][sn]
+    spells[slisttype][sn].duration = tonumber(duration)
+    spells[slisttype][sn].percent = tonumber(percent)
+  else
+    spells[slisttype][sn] = {
+        name = name:lower (),   -- name of spell
+        target = target,        -- target code
+        percent = tonumber(percent),      -- percent known for this character
+        duration = tonumber(duration),    -- spell duration
+        recovery = tonumber(recovery),    -- depends on which recovery
+        ["type"] = tonumber(skilltype),  -- 1 = spell, 2 = skill
+        sn = tonumber(sn),
+        spellup = 0,
+        } -- end spells table item
+  end
       
   if (slisttype == 'affected' or slisttype == 'all') and duration > 0 then
     spells['affected'][sn] = spells['all'][sn]
-    spells['affected'][sn].finish = start + tonumber(duration)
+    spells['affected'][sn].finish = GetInfo(304) + tonumber(duration)
   end
 
+  if slisttype == 'spellup' then
+    spells['all'][sn].spellup = 1
+  end
+  
   spells_count = spells_count + 1
 
 end -- function spellheaders_redirect
@@ -446,7 +479,7 @@ function recoveries_redirect (name, line, wildcards, styles)
   recoveries[slisttype][sn] = { name = name, sn = tonumber(sn)  }
   if (slisttype == 'affected' or slisttype == 'all') and duration > 0 then
     recoveries['affected'][sn] = recoveries['all'][sn]
-    recoveries['affected'][sn].finish = start + tonumber(duration)
+    recoveries['affected'][sn].finish = GetInfo(304) + tonumber(duration)
   end
   recoveries_count = recoveries_count + 1
 
