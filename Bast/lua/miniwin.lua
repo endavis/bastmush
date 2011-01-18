@@ -5,6 +5,10 @@
 -- Author: Eric Davis - 28th September 2008
 
 --[[
+multiple functions in a hotspot
+or functions that are always called in a hotspot
+
+such as the scroll in the text rectangle
 
 The miniwindows are populated with mushclient styles, you create a table of styles. a sty
 
@@ -50,7 +54,7 @@ These are the main ones
 
 Added for miniwin
   style.start - absolute position to start
-  style.hjust - can be set to center to put text in the center of the window on that line (default is top)
+  style.hjust - can be set to center to put text in the center of the window on that line (default is left)
     values: 'left', 'center', 'right'
   style.vjust - can be set to vertically adjust text (comes into play when a line has several sizes of text)
     values: 'top', 'center', 'bottom'
@@ -1613,7 +1617,7 @@ function Miniwin:drawtext(tabname)
 
   -- find top
   linenum = self.activetab.build_data.textstartline - 1
-  local top = self.activetab.build_data.textarea.top
+  local top = self.activetab.build_data.textarea.top - 1
   for i=self.activetab.startline,#self.activetab.convtext do
     -- adjust the line then display it
     -- eventually check against bottom of textarea and stop then, don't count lines
