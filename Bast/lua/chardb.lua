@@ -645,13 +645,14 @@ function Statdb:checkskillstable()
         type INT default 0,
         recovery INT default -1,
         spellup INT default 0,
-        mag INT default 202,
-        thi INT default 202,
-        war INT default 202,
-        cle INT default 202,
-        psi INT default 202,
-        ran INT default 202,
-        pal INT default 202
+        clientspellup INT default 0,
+        mag INT default -1,
+        thi INT default -1,
+        war INT default -1,
+        cle INT default -1,
+        psi INT default -1,
+        ran INT default -1,
+        pal INT default -1
       )]])
     end
     self:close()
@@ -718,6 +719,27 @@ function Statdb:updatespellup(spellups)
   end     
 end
 
+function Statdb:updateclientspellups(spellups)
+  self:checkskillstable()
+  if self:open() then
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare[[ UPDATE skills set clientspellup = :clientspellup where sn = :sn ]]                                                     
+    if stmt ~= nil then
+      for i,v in pairs(spellups) do
+        --local tt = {sn=i}
+        stmt:bind_names(  v  )
+        stmt:step()
+        stmt:reset()
+      end
+      stmt:finalize()    
+    end
+  assert (self.db:exec("COMMIT"))
+    
+  self:close()
+  end     
+end
+
+
 function Statdb:lookupskillbysn(sn)
   self:checkskillstable()
   local spell = {}
@@ -779,11 +801,15 @@ function Statdb:getcombatskills()
   
 end
 
-function Statdb:getspellupskills()
+function Statdb:getspellupskills(client)
   self:checkskillstable()  
   local spells = {}
   if self:open() then
-    for a in self.db:nrows("SELECT * FROM skills WHERE spellup = 1") do
+    tstring = "SELECT * FROM skills WHERE spellup = 1"
+    if client then
+      tstring = "SELECT * FROM skills WHERE spellup = 1 or clientspellup = 1"
+    end
+    for a in self.db:nrows(tstring) do
       spells[a.sn] = a
     end
     self:close() 
