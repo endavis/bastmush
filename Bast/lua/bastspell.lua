@@ -13,6 +13,25 @@ spells['affected'] = {}
 recoveries = {}
 recoveries['affected'] = {}
 
+function SecondsToClock(sSeconds)
+  local nSeconds = tonumber(sSeconds)
+  if nSeconds == 0 or nSeconds == nil then
+    --return nil;
+    return "00:00:00";
+  elseif nSeconds < 0 then
+    return tostring(sSeconds)
+  else
+    nHours = string.format("%02.f", math.floor(nSeconds/3600));
+    nMins = string.format("%02.f", math.floor(nSeconds/60 - (nHours*60)));
+    nSecs = string.format("%02.f", math.floor(nSeconds - nHours*3600 - nMins *60));
+    if nHours ~= "00" then
+      return nHours..":"..nMins..":"..nSecs
+    else
+      return nMins..":"..nSecs
+    end
+  end
+end
+
 function PrefixCheck (t, s)
   for name, item in pairs (t) do
     if string.match (name, "^" .. s) then -- prefix match, so "avoid" matches "avoidance"
@@ -55,13 +74,13 @@ function find_spell(item)
   return false
 end -- find_spellsn
 
-function load_spells(stype)
+function load_spells(stype, client)
   local tspell = {}
   local db = Statdb:new{}
   if stype == 'all' then
     tspell = db:getallskills()
   elseif stype == 'spellup' then
-    tspell = db:getspellupskills()
+    tspell = db:getspellupskills(client)
   elseif stype == 'learned' then
     tspell = db:getlearnedskills()    
   elseif stype == 'combat' then
