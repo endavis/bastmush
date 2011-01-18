@@ -145,6 +145,7 @@ function Statdb:savewhois(whoisinfo)
       self:addmilestone('start')
       phelper:mdebug("no previous stats, created new")
     else
+      assert (self.db:exec("BEGIN TRANSACTION"))       
       local stmt = self.db:prepare[[ UPDATE stats set level = :level, totallevels = :totallevels,
                                             remorts = :remorts, tiers = :tiers, race = :race,
                                             sex = :sex, subclass = :subclass, qpearned = :qpearned,
@@ -162,6 +163,7 @@ function Statdb:savewhois(whoisinfo)
       stmt:bind_names(  whoisinfo  )
       stmt:step()
       stmt:finalize()
+      assert (self.db:exec("COMMIT"))         
       phelper:mdebug("updated stats")
     end
     self:addclasses(whoisinfo['classes'])
@@ -186,6 +188,7 @@ function Statdb:addmilestone(milestone)
     end
     stats['milestone'] = milestone
     stats['time'] = GetInfo(304)
+    assert (self.db:exec("BEGIN TRANSACTION"))       
     local stmt = self.db:prepare[[ INSERT INTO stats VALUES (NULL, :name, :level, :totallevels,
                                                           :remorts, :tiers,:race, :sex,
                                                           :subclass, :qpearned, :questscomplete,
@@ -198,6 +201,7 @@ function Statdb:addmilestone(milestone)
     stmt:bind_names(  stats  )
     stmt:step()
     stmt:finalize()
+    assert (self.db:exec("COMMIT"))       
     rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted milestone:", milestone, "with rowid:", rowid)
     self:close()
@@ -246,7 +250,8 @@ function Statdb:savequest( questinfo )
       self:addtostat('triviapoints', questinfo.tp)
       self:addtostat('totaltrivia', questinfo.tp)      
     end
-
+    
+    assert (self.db:exec("BEGIN TRANSACTION"))   
     local stmt = self.db:prepare[[ INSERT INTO quests VALUES (NULL, :starttime, :finishtime,
                                                           :mobname, :mobarea, :mobroom, :qp, :gold,
                                                           :tier, :mccp, :lucky,
@@ -254,6 +259,7 @@ function Statdb:savequest( questinfo )
     stmt:bind_names(  questinfo  )
     stmt:step()
     stmt:finalize()
+    assert (self.db:exec("COMMIT"))        
     rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted quest:", rowid)
     self:close()
@@ -312,12 +318,14 @@ function Statdb:savecp( cpinfo )
 
     newlevel = getactuallevel(cpinfo.level, db:getstat('remorts'), db:getstat('tiers'))
     cpinfo.level = newlevel
+    assert (self.db:exec("BEGIN TRANSACTION"))      
     local stmt = self.db:prepare[[ INSERT INTO campaigns VALUES (NULL, :starttime, :finishtime,
                                                           :qp, :gold, :tp, :trains, :pracs, :level,
                                                           :failed) ]]
     stmt:bind_names(  cpinfo  )
     stmt:step()
     stmt:finalize()
+    assert (self.db:exec("COMMIT"))    
     rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted cp:", rowid)
     assert (self.db:exec("BEGIN TRANSACTION"))    
@@ -389,6 +397,7 @@ function Statdb:savelevel( levelinfo, first )
       end
       levelinfo['newlevel'] = tonumber(db:getstat('totallevels'))
     end
+    assert (self.db:exec("BEGIN TRANSACTION"))     
     local stmt = self.db:prepare[[ INSERT INTO levels VALUES (NULL, :type, :newlevel, :str,
                                                           :int, :wis, :dex, :con,  :luc,
                                                           :time, -1, :hp, :mp, :mv, :pracs, :trains,
@@ -396,6 +405,7 @@ function Statdb:savelevel( levelinfo, first )
     stmt:bind_names(  levelinfo  )
     stmt:step()
     stmt:finalize()
+    assert (self.db:exec("COMMIT")) 
     rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted", levelinfo['type'], ":", rowid)
     stmt2 = self.db:exec(string.format("UPDATE levels SET finishtime = %d WHERE level_id = %d;" ,
@@ -436,11 +446,13 @@ function Statdb:savemobkill( killinfo )
     self:addtostat('totaltrivia', killinfo.tp)
     self:addtostat('monsterskilled', 1)
     killinfo['level'] = tonumber(db:getstat('totallevels'))
+    assert (self.db:exec("BEGIN TRANSACTION"))     
     local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (NULL, :mob, :xp, :bonusxp,
                                                           :gold, :tp, :time, :wielded_weapon, :second_weapon, :level) ]]
     stmt:bind_names(  killinfo  )
     stmt:step()
     stmt:finalize()
+    assert (self.db:exec("COMMIT"))     
     rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted mobkill:", rowid)
     self:close()
@@ -488,7 +500,9 @@ function Statdb:savegq( gqinfo )
   self:checkgqmobstable()
   if self:open() then
     self:addtostat('questpoints', gqinfo.qp)
+    self:addtostat('questpoints', gqinfo.qpmobs)
     self:addtostat('qpearned', gqinfo.qp)
+    self:addtostat('qpearned', gqinfo.qpmobs)
     self:addtostat('triviapoints', gqinfo.tp)
     self:addtostat('totaltrivia', gqinfo.tp)
     if gqinfo.won == 1 then
@@ -496,12 +510,14 @@ function Statdb:savegq( gqinfo )
     end
     newlevel = getactuallevel(gqinfo.level, db:getstat('remorts'), db:getstat('tiers'))
     gqinfo.level = newlevel
+    assert (self.db:exec("BEGIN TRANSACTION"))     
     local stmt = self.db:prepare[[ INSERT INTO gquests VALUES (NULL, :starttime, :finishtime,
                                                           :qp, :qpmobs, :gold, :tp, :trains, :pracs, :level,
                                                           :won) ]]
     stmt:bind_names(  gqinfo  )
     stmt:step()
     stmt:finalize()
+    assert (self.db:exec("COMMIT"))     
     rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted gq:", rowid)
     assert (self.db:exec("BEGIN TRANSACTION"))    
