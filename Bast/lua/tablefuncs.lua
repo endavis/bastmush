@@ -93,5 +93,10 @@ function tableCountItems(ttable)
   for i,v in pairs(ttable) do
     count = count + 1
   end
+  if count == 0 then
+    for i,v in ipairs(ttable) do
+      count = count + 1
+    end    
+  end
   return count
 end
