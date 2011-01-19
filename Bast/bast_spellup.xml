@@ -850,12 +850,17 @@ function OnPluginBroadcast (msg, id, name, text)
         nocast = true
         waiting = false
         event_status_change()
+      elseif tag.reason == 6 then
+        waiting = false
       elseif tag.reason == 8 then
         -- remove from askedspells list
+      elseif tag.reason == 10 then
+        waiting = false
       elseif tag.reason == 11 then
         -- remove from askedspells list
         ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because it is disabled mudside.")
-        phelper.askedspells[askedspells_xref[tagsn]].disabled = true        
+        phelper.askedspells[askedspells_xref[tagsn]].disabled = true
+        waiting = false
       elseif tag.reason == 12 then
         need_moves = true
         waiting = false
