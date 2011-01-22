@@ -682,23 +682,37 @@ function Statdb:updateskills(skills)
     for a in db.db:rows("SELECT COUNT(*) FROM skills") do
       numskills = a[1]
     end
-    if numskills == 0 or numskills ~= tableCountItems(skills) then
+    oldskills = self:getallskills()
+--    if numskills == 0 or numskills ~= tableCountItems(skills) then
       --print('updating table')
       assert (self.db:exec("BEGIN TRANSACTION"))
-      local stmt = self.db:prepare[[ REPLACE INTO skills(sn, name, percent, target, type, recovery) VALUES (:sn, :name, :percent,
-                                                            :target, :type, :recovery) ]]                                                     
-      if stmt ~= nil then
-        for i,v in pairs(skills) do                                                        
-          stmt:bind_names(  v  )
-          stmt:step()
-          stmt:reset()
+      local stmt = self.db:prepare[[ INSERT INTO skills(sn, name, percent, target, type, recovery) VALUES (:sn, :name, :percent,
+                                                            :target, :type, :recovery) ]]  
+      local stmtupd = self.db:prepare[[ UPDATE skills SET name = :name, percent = :percent,
+                                                            target = :target, type = :type, recovery = :recovery WHERE sn = :sn]]  
+      --print('stmt', stmt)
+      --print('stmtupd', stmtupd)
+      if stmt ~= nil and stmtupd ~= nil then
+        for i,v in pairs(skills) do    
+          if oldskills[v.sn] then
+            --print('updating', v.sn)
+            stmtupd:bind_names( v )
+            stmtupd:step()
+            stmtupd:reset()
+          else
+            --print('inserting', v.sn)
+            stmt:bind_names(  v  )
+            stmt:step()
+            stmt:reset()
+          end
         end
-        stmt:finalize()    
+        stmt:finalize()
+        stmtupd:finalize()
       end
       assert (self.db:exec("COMMIT"))
-    else
-      print('spells in db == spells in table')    
-    end
+--    else
+--      print('spells in db == spells in table')    
+--    end
     self:close()
   end  
 end
@@ -796,7 +810,7 @@ function Statdb:getlearnedskills()
   self:checkskillstable()  
   local spells = {}
   if self:open() then
-    for a in self.db:nrows("SELECT * FROM skills WHERE percent > 0") do
+    for a in self.db:nrows("SELECT * FROM skills WHERE percent > 1") do
       spells[a.sn] = a
     end
     self:close()
@@ -865,7 +879,7 @@ function Statdb:updaterecoveries(recoveries)
       numrecs = a[1]
     end
     if numrecs == 0 or numrecs ~= tableCountItems(recoveries) then
-      print('updating recoveries table')
+      --print('updating recoveries table')
       assert (self.db:exec("BEGIN TRANSACTION"))
       local stmt = self.db:prepare[[ REPLACE INTO recoveries(sn, name) VALUES (:sn, :name) ]]                                                     
       if stmt ~= nil then
@@ -878,7 +892,7 @@ function Statdb:updaterecoveries(recoveries)
       end
       assert (self.db:exec("COMMIT"))
     else
-      print('recoveries in db == recoveries in table')    
+      --print('recoveries in db == recoveries in table')    
     end
     self:close()
   end  
