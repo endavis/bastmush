@@ -7,10 +7,9 @@
 --[[
 multiple functions in a hotspot
 or functions that are always called in a hotspot
-
 such as the scroll in the text rectangle
 
-The miniwindows are populated with mushclient styles, you create a table of styles. a sty
+The miniwindows are populated with mushclient styles, you create a table of styles
 
 Example:
 quickest way to create a window
@@ -550,6 +549,10 @@ function Miniwin:cmd_info(cmddict)
   self:plugin_header('Info')
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Name', self.cname))
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Id', self.id))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Shown', tostring(WindowInfo(self.id, 5))))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Hidden', tostring(WindowInfo(self.id, 6))))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Left', tostring(WindowInfo(self.id, 10))))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Top', tostring(WindowInfo(self.id, 11))))
   if self.activetab then
     ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Height', tostring(WindowInfo(self.id, 4))))
     ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s : %s" , 'Width', tostring(WindowInfo(self.id, 3))))
