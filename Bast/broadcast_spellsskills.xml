@@ -270,21 +270,9 @@ end
 
 function request_slist()
    --print("called request slist")
-   if db:countskills() == 0 or db:countrecoveries() == 0 then
-     --print('skillcount: ', db:countskills(), 'recoverycount: ', db:countrecoveries())
-     --print('getting all skills')
-     SendNoEcho("slist noprompt")
-     SendNoEcho("slist spellup noprompt")
-   else
-     --print('skillcount: ', db:countskills(), 'recoverycount: ', db:countrecoveries())
-     spells['all'] = db:getallskills()
-     recoveries['all'] = db:getallrecoveries()
-     broadcast_slist('all')
-     broadcast_slist('learned')
-     broadcast_slist('spellup')
-     broadcast_recovery('all')
-   end
-   SendNoEcho("slist affected noprompt")
+   SendNoEcho("slist noprompt")
+   SendNoEcho("slist spellup noprompt")
+   --SendNoEcho("slist affected noprompt")
 end
 
 function request(stype)
@@ -380,14 +368,18 @@ function spellheaders_redirect (name, line, wildcards, styles)
   if line == "{/spellheaders}" then
     EnableTrigger ("multi_line_spellheaders", false)  -- no more lines to go
     --ColourNote ("green", "", "Loaded information about " .. spells_count .. " " .. slisttype .. " spells.")
-    if slisttype == 'all' then
-      db:updateskills(spells['all'])
-      broadcast_slist('affected')
-    end
-    broadcast_slist(slisttype)   
-
+    
     if slisttype == 'spellup' then
       db:updatespellup(spells['spellup'])
+    end
+    
+    if slisttype == 'all' then
+      db:updateskills(spells['all'])
+      broadcast_slist('all')
+      broadcast_slist('affected')
+      broadcast_slist('learned')      
+    else
+      broadcast_slist(slisttype)   
     end
 
     SaveState ()
