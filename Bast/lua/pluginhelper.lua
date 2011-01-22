@@ -78,6 +78,7 @@ function Pluginhelper:initialize(args)
   self.links = {}
 
   self:add_cmd('objects', {func="cmd_objects", help="list objects associated with this plugin"})
+  self:add_cmd('windows', {func="cmd_windows", help="list windows and some info associated with this plugin"})
 
   self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1, longname="Plugin Colour"})
   self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb", longname="Plugin Command"})
@@ -95,6 +96,16 @@ function Pluginhelper:cmd_objects()
   self:plugin_header("Objects associated with this plugin")
   for i,v in pairs(self.pobjects) do
     ColourNote(RGBColourToName(var.plugin_colour), "black", i)
+  end
+  ColourNote("", "", "")
+end
+
+function Pluginhelper:cmd_windows()
+  self:plugin_header("Windows associated with this plugin")
+  for i,v in pairs(self.pobjects) do
+    if v.otype == 'Miniwin' then
+      v:cmd_info()
+    end
   end
   ColourNote("", "", "")
 end
