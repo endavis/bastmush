@@ -86,8 +86,10 @@ function load_spells(stype, client)
   elseif stype == 'combat' then
     tspell = db:getcombatskills()
   elseif stype == 'affected' then
-    local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "get_spells", stype)
-    tspell = assert (loadstring ('return ' .. text or ""))()
+    if GetPluginInfo("aaa72f3b5453567e2bba9d50", 17) then
+      local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "get_spells", stype)
+      tspell = assert (loadstring ('return ' .. text or ""))()
+    end
   end
   spells[stype] = tspell
 end
@@ -100,8 +102,10 @@ function load_recoveries(rtype)
     --print('getting all')
     --tprint(tspell)
   elseif rtype == 'affected' then
-    local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "get_recoveries", rtype)
-    tspell = assert (loadstring ('return ' .. text or ""))()
+    if GetPluginInfo("aaa72f3b5453567e2bba9d50", 17) then    
+      local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "get_recoveries", rtype)
+      tspell = assert (loadstring ('return ' .. text or ""))()
+    end
   end
   recoveries[rtype] = tspell    
 end
