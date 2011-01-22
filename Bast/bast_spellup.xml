@@ -27,18 +27,16 @@ bspell a all         --> cast all possible spellups
 *bspell refresh --> requery server for current spells on us
 
 spellup other (name) --> try to spellup another player with picked spellups
-                          (eg. spellup other johnsmith)
+                          (eg. bspell other johnsmith)
 
 *spellup other (name) fast --> try to spellup another player with all spellups
-                          (eg. spellup other johnsmith)
+                          (eg. bspell other johnsmith fast)
 
 *bspell block   --> block a spell with another spell
                            (eg. bspell block 68 121)
 *bspell disable --> disable a spell without taking it out of the list
 
 *bspell help    --> this message
-
-Bugs - Hide shows up as a negative spellup
 
 TODO:
 create miniwin based on mine
@@ -74,13 +72,13 @@ events that need to trigger a retry of spellups
 * - recovery on
 * - recovery off
 * - resume
- - skillgain (?)
+* - skillgain (?)
  
 Spellup Other -
  Done - put fast at end (does all spellups)
  no fast then does the ones you have picked from the spells tab
 
--- current bug, sometimes a spell gets its spellup changed to 0, need to hunt it down
+-- current bug, sometimes a spell gets spellup changed to 0, need to hunt it down
 
 </description>
 
@@ -256,9 +254,12 @@ function activatespell(sn, fast)
       if recov and recoveries['affected'][recov] then
         cast = false
       end
-      if v.disabled or isblocked(sn) or spells['all'][sn].percent <= 1 then
+      if v.disabled or isblocked(sn) or not spells['learned'][sn]  then
         cast = false
-      end  
+      end 
+      if not spells['learned'][sn] then
+        cast = false
+      end
       if cast then
         if not fast then
           --print("setting waiting to", sn)
@@ -526,7 +527,6 @@ function cmd_info(cmddict)
     for i,item in ipairs(cmddict) do
       local aspell = find_spell(item)
       if aspell then
-        --tprint(spells['all'][sn])
         formatitem("Name", aspell.name)
         formatitem("SN", aspell.sn)
         formatitem("Type", aspell.type)
@@ -608,7 +608,6 @@ function cmd_fast(cmddict)
 end
 
 function cmd_other(cmddict)
-  tprint(cmddict)
   local who = cmddict[1]
 
   if not who then
@@ -821,7 +820,6 @@ function OnPluginBroadcast (msg, id, name, text)
     if msg == 5 then          
       -- spell casting failure    
       local tag = assert (loadstring ('return ' .. text or ""))()
-      --tprint(tag)
       if tag.reason == 1 then
         if askedspells_xref[tonumber(tag.sn)] ~= nil then
           waiting = false
@@ -858,6 +856,7 @@ function OnPluginBroadcast (msg, id, name, text)
         waiting = false
       elseif tag.reason == 11 then
         -- remove from askedspells list
+        local tagsn = tonumber(tag.sn)        
         ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because it is disabled mudside.")
         phelper.askedspells[askedspells_xref[tagsn]].disabled = true
         waiting = false
@@ -878,6 +877,8 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 8 then          
       -- learned spells
       load_spells('learned')
+      noneed = false
+      nextspellup('learned change')
       
     elseif msg == 9 then          
       -- spellup spells
@@ -885,9 +886,7 @@ function OnPluginBroadcast (msg, id, name, text)
       
     elseif msg == 10 then          
       -- affected spells
-      --print('got affected')
       load_spells('affected')
-      --tprint(spells['affected'])
       if waiting then
         if spells['affected'][waiting] then
           waiting = false
@@ -906,9 +905,7 @@ function OnPluginBroadcast (msg, id, name, text)
       
     elseif msg == 12 then          
       -- recoveries affected
-      --print('got recoveries')
       load_recoveries('affected')
-      --tprint(recoveries['affected'])
       noneed=false
       if spells['all'] and recoveries['all'] then
         --print('have slist')
@@ -943,11 +940,11 @@ function OnPluginEnable ()
     --load_spells_xrefs()
     load_spells("affected")
     load_spells("spellup", true)
-    --load_spells("learned")
+    load_spells("learned")
     --print('loading recoveries in enable')
     load_recoveries("all")
     load_recoveries("affected")
-    if spells['all'] and recoveries['all'] and recoveries['affected'] and spells['affected'] then
+    if spells['all'] and recoveries['all'] and recoveries['affected'] and spells['affected'] and spells['learned'] then
       --print("have slist")
       have_slist = true
       nextspellup('has slist')
