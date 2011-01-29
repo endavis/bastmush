@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: miniwin_map.xml 917 2010-12-06 02:00:48Z endavis $ -->
+<!-- $Id$ -->
 <muclient>
 <plugin
    name="miniwin_spellup"
@@ -71,7 +71,7 @@ Spellup Other -
 
 <script>
 <![CDATA[
-internalrevision = "$Rev: 917 $"
+internalrevision = "$Rev$"
 
 dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
 
