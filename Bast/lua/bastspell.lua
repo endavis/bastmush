@@ -110,3 +110,13 @@ function load_recoveries(rtype)
   recoveries[rtype] = tspell    
 end
 
+function cancastother(sn)
+   if spells['all'][sn].spellup == 1 and       -- it is a spellup
+        spells['all'][sn].target == 2 and   -- can be cast on others
+        spells['all'][sn].type == 1 then   -- spell not skill  
+     return true
+   else
+     return false
+   end  
+end
+
