@@ -21,9 +21,9 @@
 Broadcasts when items are worn or removed through invmon
 Broadcasts
    1 - eq removed, item is passed as text
-       item = { sn = itemsn, place = place}
+       item = { sn = objectid, place = place}
    2 - eq worn, item is passed as text
-       item = { sn = itemsn, place = place}
+       item = { sn = objectid, place = place}
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
@@ -37,7 +37,7 @@ Example
 You remove Aardwolf Ring of Regeneration from your left finger.
 xBroadcast_Invmon : Broadcast 1
 item = {}
-  item.itemsn = "6285182"
+  item.objectid = "6285182"
   item.place = "lfinger"
   item.name = "Aardwolf Ring of Regeneration"
   item.container = "-1"
@@ -45,7 +45,7 @@ item = {}
 You wear Four Winds on your left finger.
 xBroadcast_Invmon : Broadcast 2
 item = {}
-  item.itemsn = "6285213"
+  item.objectid = "6285213"
   item.place = "lfinger"
   item.name = "Four Winds"
   item.container = "-1"
@@ -61,7 +61,7 @@ item = {}
 <triggers>
   <trigger
    enabled="y"
-   match="^{invmon}(?&lt;action&gt;.*),(?&lt;itemsn&gt;.*),(?&lt;container&gt;.*),(?&lt;location&gt;.*)$"
+   match="^{invmon}(?&lt;action&gt;.*),(?&lt;objectid&gt;.*),(?&lt;container&gt;.*),(?&lt;location&gt;.*)$"
    name="invmon"
    script="broadcast_invmon"
    sequence="100"
@@ -447,7 +447,7 @@ function builditem(wildcards)
   local item = {}
   item.placestr = wearlocs[tonumber(wildcards.location) + 1] or -1
   item.wearloc = wildcards.location
-  item.objectid = wildcards.itemsn
+  item.objectid = wildcards.objectid
   item.container = wildcards.container
   item.name = item_name
   return item
