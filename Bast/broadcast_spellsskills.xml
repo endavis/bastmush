@@ -16,9 +16,6 @@
 <description trim="y">
 <![CDATA[
 broadcast spell tags
-TODO:
-  read spellheaders into a sqlite database and add the info to the broadcast
-  if not in the database, then reread slist stuff
   
 change only to broadcast affected when get a stag
   
