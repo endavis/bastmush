@@ -26,7 +26,16 @@ TODO:
 
 </plugin>
 
-
+<triggers>
+  <trigger
+   enabled="y"
+   match="Commander Barcett tells you 'Type 'campaign info' to see what you must kill.'"
+   sequence="100"
+   send_to="10"
+   script="set_show"
+  >
+  </trigger>
+</triggers>
 <!--  Script  -->
 
 
@@ -56,6 +65,11 @@ cpmobs = {}
 cptimer = {}
 level = nil
 curlevel = nil
+showwin = false
+
+function set_show()
+  showwin = true
+end
 
 function show_cp_text ()
 
@@ -102,6 +116,10 @@ function show_cp_text ()
 
   cpwin:enable()
   cpwin:addtab('default', texttable, header, true)
+  if showwin then
+    cpwin:show(true)
+    showwin = false
+  end
   --cpwin:changetotab('default')
 
   style = {}
