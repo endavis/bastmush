@@ -122,8 +122,10 @@ end
 
 stats = nil
 
--- phelper.askedspells = list of tables with {sn, disabled, blocked}
-askedspells_xref = nil
+-- phelper.askedself = list of tables with {sn, disabled, blocked}
+-- phelper.askedother
+askedself_xref = nil
+askedother_xref = nil
 noneed = false
 
 -- things that can block spells
@@ -150,12 +152,20 @@ function getstatus()
   end
 end
 
-function getaskedspells()
-  return serialize.save_simple(phelper.askedspells or "")
+function getaskedself()
+  return serialize.save_simple(phelper.askedself or "")
 end
 
-function event_askedspells_change()
-  phelper:processevent('askedspells_change', phelper.askedspells)
+function event_askedself_change()
+  phelper:processevent('askedself_change', phelper.askedself)
+end
+
+function getaskedother()
+  return serialize.save_simple(phelper.askedother or "")
+end
+
+function event_askedother_change()
+  phelper:processevent('askedother_change', phelper.askedother)
 end
 
 function event_status_change()
@@ -164,8 +174,8 @@ function event_status_change()
 end
 
 function isblocked(sn)
-  if phelper.askedspells and askedspells_xref[sn] and phelper.askedspells[askedspells_xref[sn]].blockers then
-    for blocker, _ in pairs(phelper.askedspells[askedspells_xref[sn]].blockers) do
+  if phelper.askedself and askedself_xref[sn] and phelper.askedself[askedself_xref[sn]].blockers then
+    for blocker, _ in pairs(phelper.askedself[askedself_xref[sn]].blockers) do
       if spells['affected'][blocker] then
         return true
       end
@@ -191,12 +201,12 @@ function add_blocker(spell, blocker)
     print('could not find spell', blocker)
     return false
   end
-  if sn and blksn and askedspells_xref[sn] and phelper.askedspells[askedspells_xref[sn]] then
-    if phelper.askedspells[askedspells_xref[sn]] then
-      if not phelper.askedspells[askedspells_xref[sn]].blockers then
-        phelper.askedspells[askedspells_xref[sn]].blockers = {}
+  if sn and blksn and askedself_xref[sn] and phelper.askedself[askedself_xref[sn]] then
+    if phelper.askedself[askedself_xref[sn]] then
+      if not phelper.askedself[askedself_xref[sn]].blockers then
+        phelper.askedself[askedself_xref[sn]].blockers = {}
       end
-      phelper.askedspells[askedspells_xref[sn]].blockers[blksn] = 1
+      phelper.askedself[askedself_xref[sn]].blockers[blksn] = 1
       return true
     end
   end
@@ -220,9 +230,9 @@ function remove_blocker(spell, blocker)
     print('could not find spell', blocker)
     return false
   end
-  if sn and blksn and askedspells_xref[sn] and phelper.askedspells[askedspells_xref[sn]] then
-    if phelper.askedspells[askedspells_xref[sn]] then
-      phelper.askedspells[askedspells_xref[sn]].blockers[blksn] = nil
+  if sn and blksn and askedself_xref[sn] and phelper.askedself[askedself_xref[sn]] then
+    if phelper.askedself[askedself_xref[sn]] then
+      phelper.askedself[askedself_xref[sn]].blockers[blksn] = nil
     end
     return true
   end
@@ -233,21 +243,31 @@ function cmd_refresh(cmddict)
   waiting= false
   noneed = false
   SendNoEcho("slist affected noprompt")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "Refreshing affected spells and resetting events")
 end
 
-function make_askedspells_xrefs ()
-  phelper:mdebug('making askedspells xref')
-  askedspells_xref = {}
-  for k, v in pairs (phelper.askedspells) do
-    askedspells_xref[v.sn] = k
+function make_askedself_xrefs ()
+  phelper:mdebug('making askedself xref')
+  askedself_xref = {}
+  for k, v in pairs (phelper.askedself) do
+    askedself_xref[v.sn] = k
   end -- for each spell
-  event_askedspells_change()  
+  event_askedself_change()  
+end -- make_xrefs
+
+function make_askedother_xrefs ()
+  phelper:mdebug('making askedother xref')
+  askedother_xref = {}
+  for k, v in pairs (phelper.askedother) do
+    askedother_xref[v.sn] = k
+  end -- for each spell
+  event_askedother_change()  
 end -- make_xrefs
 
 function activatespell(sn, fast)
   fast = verify_bool(fast)
-  if phelper.askedspells[askedspells_xref[sn]] then
-    v = phelper.askedspells[askedspells_xref[sn]]
+  if phelper.askedself[askedself_xref[sn]] then
+    v = phelper.askedself[askedself_xref[sn]]
     if not spells['affected'][sn] then
       local cast = true
       local recov = spells['all'][sn].recovery
@@ -291,7 +311,7 @@ function nextspellup (reason)
      tonumber(stats.status.state) == 3 then
      
     --print('got to go through table')
-    for k,v in ipairs(phelper.askedspells) do
+    for k,v in ipairs(phelper.askedself) do
       if activatespell(v.sn) then
         return
       end
@@ -333,14 +353,14 @@ function formatspell(spell, colour)
              RGBColourToName(colour), "black", string.format("%-10s", blocked))
 end
 
-function cmd_listspells(cmddict)
-  phelper:plugin_header("Spells requested (" .. tostring(#phelper.askedspells) .. ")")
+function cmd_slist(cmddict)
+  phelper:plugin_header("Spells requested (" .. tostring(#phelper.askedself) .. ")")
   formatheader()
   local tnoprac = {}
   local tgood = {}
   local tdisable = {}
   count = 0
-  for i,j in ipairs(phelper.askedspells) do
+  for i,j in ipairs(phelper.askedself) do
     count = count + 1
     local v = spells['all'][tonumber(j.sn)]
     local noprac = "   "
@@ -392,7 +412,7 @@ function cmd_resume(cmddict)
   nextspellup("resumed")
 end
 
-function cmd_ablocker(cmddict)
+function cmd_sablocker(cmddict)
   if #cmddict >= 1 then
     local ablocked = false
     phelper:plugin_header()    
@@ -411,13 +431,13 @@ function cmd_ablocker(cmddict)
       end
     end
     if ablocked then
-      event_askedspells_change()
+      event_askedself_change()
     end
   end
   return true
 end
 
-function cmd_dblocker(cmddict)
+function cmd_sdblocker(cmddict)
   if #cmddict >= 1 then
     local rblocked = false
     phelper:plugin_header()    
@@ -434,14 +454,14 @@ function cmd_dblocker(cmddict)
       end
     end
     if rblocked then
-      event_askedspells_change()
+      event_askedself_change()
     end    
   end
   return true
 end
 
 
-function cmd_disable(cmddict)
+function cmd_sdisable(cmddict)
   if #cmddict >= 1 then
     phelper:plugin_header()   
     local disabled = false
@@ -450,8 +470,8 @@ function cmd_disable(cmddict)
       if aspell then
         local sn = tonumber(aspell.sn)
         if sn then
-          if askedspells_xref[sn] ~= nil then
-            phelper.askedspells[askedspells_xref[sn]].disabled = true
+          if askedself_xref[sn] ~= nil then
+            phelper.askedself[askedself_xref[sn]].disabled = true
             ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " disabled")    
             disabled = true
           else
@@ -463,12 +483,12 @@ function cmd_disable(cmddict)
       end
     end
     if disabled then
-      event_askedspells_change()
+      event_askedself_change()
     end
   end
 end
 
-function cmd_enable(cmddict)
+function cmd_senable(cmddict)
   if #cmddict >= 1 then
     phelper:plugin_header()   
     local enabled = false
@@ -477,8 +497,8 @@ function cmd_enable(cmddict)
       if aspell then
         local sn = tonumber(aspell.sn)
         if sn then
-          if askedspells_xref[sn] ~= nil then
-            phelper.askedspells[askedspells_xref[sn]].disabled = false
+          if askedself_xref[sn] ~= nil then
+            phelper.askedself[askedself_xref[sn]].disabled = false
             ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " enabled")          
             enabled = true
           else
@@ -491,7 +511,7 @@ function cmd_enable(cmddict)
     end
     if enabled then
       noneed = false
-      event_askedspells_change()      
+      event_askedself_change()      
       nextspellup("spells enabled")
     end
   end
@@ -500,7 +520,7 @@ end
 function cmd_export(cmddict)
   local tdict = {}
   local tblock = {}
-  for i,v in ipairs(phelper.askedspells) do
+  for i,v in ipairs(phelper.askedself) do
     table.insert(tdict, tostring(v.sn))
     if v.blockers then
       for f,u in pairs(v.blockers) do
@@ -508,13 +528,25 @@ function cmd_export(cmddict)
       end
     end
   end
-  local tstring = phelper.cmd .. " delete all;"
-  tstring = tstring .. phelper.cmd .. " add " .. table.concat(tdict, " ")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", phelper.cmd .. " sremove all")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", phelper.cmd .. " sadd " .. table.concat(tdict, " "))
+  local tstring = ""
   if next(tblock) then
-    local tblock = phelper.cmd .. " ablock " .. table.concat(tblock, " ")
-    tstring = tstring .. ";" .. tblock
+    local tblock = phelper.cmd .. " sba " .. table.concat(tblock, " ")
+    if tstring == "" then
+      tstring = tblock    
+    else
+      tstring = tstring .. ";" .. tblock
+    end
   end
   ColourNote(RGBColourToName(var.plugin_colour), "black", tstring)
+  local tdict = {}
+  for i,v in ipairs(phelper.askedother) do
+    table.insert(tdict, tostring(v.sn))
+  end
+  ColourNote(RGBColourToName(var.plugin_colour), "black", phelper.cmd .. " oremove all")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", phelper.cmd .. " oadd " .. table.concat(tdict, " "))
+  
 end
 
 function formatitem(row, data)
@@ -530,7 +562,7 @@ function cmd_info(cmddict)
         formatitem("Name", aspell.name)
         formatitem("SN", aspell.sn)
         formatitem("Type", aspell.type)
-        formatitem("Target", aspell.target)
+        formatitem("Target", spelltarget_table[tonumber(aspell.target)])
         formatitem("Prac %", aspell.percent)
         if aspell.spellup == 1 then
           formatitem("Spellup", "Yes")
@@ -547,13 +579,13 @@ function cmd_info(cmddict)
         end
         local tstring = "No"
         local blockers = ""
-        if askedspells_xref[aspell.sn] and phelper.askedspells[askedspells_xref[aspell.sn]] then
+        if askedself_xref[aspell.sn] and phelper.askedself[askedself_xref[aspell.sn]] then
           tstring = "Yes"
-          if phelper.askedspells[askedspells_xref[aspell.sn]].disabled then
+          if phelper.askedself[askedself_xref[aspell.sn]].disabled then
             tstring = tstring .. " - Disabled"
           end
-          if phelper.askedspells[askedspells_xref[aspell.sn]].blockers then
-            for i,v in pairs(phelper.askedspells[askedspells_xref[aspell.sn]].blockers) do
+          if phelper.askedself[askedself_xref[aspell.sn]].blockers then
+            for i,v in pairs(phelper.askedself[askedself_xref[aspell.sn]].blockers) do
               if blockers == "" then
                 blockers = spells['all'][i].name
               else
@@ -602,7 +634,7 @@ function cmd_togglespellup(cmddict)
 end
 
 function cmd_fast(cmddict)
-  for i,v in ipairs(phelper.askedspells) do
+  for i,v in ipairs(phelper.askedself) do
     activatespell(tonumber(v.sn), true)
   end
 end
@@ -617,25 +649,71 @@ function cmd_other(cmddict)
   if cmddict[2] == 'fast' then
     print('got fast')
     for sn, v in pairs (spells['spellup']) do
-      if v.percent > 1 and   -- we know it
+      if spells['learned'][tonumber(v.sn)] and   -- we know it
         v.spellup == 1 and       -- it is a spellup
         v.target == 2 and   -- can be cast on others
         v.type == 1 then   -- spell not skill
-          Send ("cast " .. v.sn .. " " .. who)  -- cast it
+          Send ("cast " .. tostring(v.sn) .. " " .. who)  -- cast it
       end -- if possible to spellup this one
     end -- for
   else
-  
+    for i, v in ipairs(phelper.askedother) do
+      if spells['learned'][tonumber(v.sn)] and   -- we know it
+        spells['all'][v.sn].spellup == 1 and       -- it is a spellup
+        spells['all'][v.sn].target == 2 and   -- can be cast on others
+        spells['all'][v.sn].type == 1 then   -- spell not skill
+          Send ("cast " .. tostring(v.sn) .. " " .. who)  -- cast it   
+      end
+    end
   end
 end
 
-function cmd_removespell(cmddict)
+function cmd_oadd(cmddict)
+  if #cmddict >= 1 then
+    phelper:plugin_header("Added spells to be cast on others")
+    for i,item in ipairs(cmddict) do
+      local aspell = find_spell(item)
+      if aspell then
+        local sn = tonumber(aspell.sn)
+        --tprint(sn)
+        if sn then            
+          if aspell.spellup ~= 1 and aspell.clientspellup ~= 1 then
+            ColourNote ("red", "", "Spell '" .. aspell.name .. "' is not a spellup.")
+          else
+            if cancastother(sn) then
+              --tprint(askedother_xref)
+              if askedother_xref == nil or askedother_xref[tonumber(sn)] == nil then
+                if aspell.percent == 1 then
+                  ColourNote ("red", "", "You have not practiced '" .. aspell.name .. "', but it will be added anyway, it will not be cast until practiced")
+                elseif aspell.percent == 0 then
+                  ColourNote ("red", "", "You have not learned '" .. aspell.name .. "', but it will be added anyway, it will not be cast until practiced")
+                end                  
+                phelper:mdebug('adding ', item, sn, aspell.name)                
+                table.insert(phelper.askedother, {sn=tonumber(sn)})
+                make_askedother_xrefs()                
+                ColourNote(RGBColourToName(var.plugin_colour), "black", "Added " .. aspell.name)
+              else
+                ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " already in list")
+              end
+            else
+              ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " cannot be cast on another")
+            end  
+          end
+        else
+          print('Add spell: could not find', item)
+        end
+      end
+    end
+  end
+end
+
+function cmd_oremove(cmddict)
   if #cmddict >= 1 then
     removed = false
-    phelper:plugin_header()   
+    phelper:plugin_header("Removed spells to be cast on others")   
     if cmddict[1] == 'all' then
-      phelper.askedspells = {}
-      make_askedspells_xrefs()
+      phelper.askedother = {}
+      make_askedother_xrefs()
       ColourNote(RGBColourToName(var.plugin_colour), "black", "All spells removed")
     else
       for i,item in ipairs(cmddict) do
@@ -643,8 +721,8 @@ function cmd_removespell(cmddict)
         if aspell then
           local sn = tonumber(aspell.sn)
           if sn then
-            if askedspells_xref[sn] ~= nil then
-              table.remove(phelper.askedspells, askedspells_xref[sn])
+            if askedother_xref[sn] ~= nil then
+              table.remove(phelper.askedother, askedother_xref[sn])
               ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " removed")
               removed = true
             else
@@ -656,26 +734,154 @@ function cmd_removespell(cmddict)
         end  
       end
       if removed then
-        make_askedspells_xrefs()
+        make_askedother_xrefs()
       end
     end
   end
 end
 
-function cmd_addspell(cmddict)
+function cmd_odisable(cmddict)
+  if #cmddict >= 1 then
+    phelper:plugin_header()   
+    local disabled = false
+    for i,item in ipairs(cmddict) do
+      local aspell = find_spell(item)
+      if aspell then
+        local sn = tonumber(aspell.sn)
+        if sn then
+          if askedother_xref[sn] ~= nil then
+            phelper.askedother[askedself_xref[sn]].disabled = true
+            ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " disabled")    
+            disabled = true
+          else
+            ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " not in list")      
+          end
+        end
+      else
+        print('Disable: could not find spell', item)
+      end
+    end
+    if disabled then
+      event_askedother_change()
+    end
+  end
+end
+
+function cmd_oenable(cmddict)
+  if #cmddict >= 1 then
+    phelper:plugin_header()   
+    local enabled = false
+    for i,item in ipairs(cmddict) do
+      local aspell = find_spell(item)
+      if aspell then
+        local sn = tonumber(aspell.sn)
+        if sn then
+          if askedother_xref[sn] ~= nil then
+            phelper.askedother[askedself_xref[sn]].disabled = false
+            ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " enabled")          
+            enabled = true
+          else
+            ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " not in list")      
+          end
+        end
+      else
+        print('Enable: could not find spell', item)      
+      end
+    end
+    if enabled then
+      event_askedother_change()      
+    end
+  end
+end
+
+
+function formatotherheader()
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-30s", "#. Name"),
+             "orange",          "black", string.format("%-3s", " D "), 
+             "orange",          "black", string.format("%-4s", " NP "), 
+             "orange",          "black", string.format("%-4s", " NL "))
+  ColourNote(RGBColourToName(var.plugin_colour), "black",   "____________________________________________________")
+end
+
+
+function cmd_olist(cmddict)
+  phelper:plugin_header("Spells requested for others (" .. tostring(#phelper.askedother) .. ")")
+  formatotherheader()
+  local tnoprac = {}
+  local tgood = {}
+  local tdisable = {}
+  local count = 0
+  for i,j in ipairs(phelper.askedother) do
+    count = count + 1
+    local v = spells['all'][tonumber(j.sn)]
+    local noprac = "   "
+    local nolearn = "   "
+    local disabled = "   "
+    local blocked = "   "
+    local pending = "   "
+    if v.percent == 1 then
+      noprac = " NP "  
+    elseif v.percent == 0 then
+      nolearn = " NL "
+    end
+    if j.disabled then
+      disabled = " D "
+    end  
+    
+    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-30s", count .. ". " .. v.name),
+               "orange", "black", string.format("%-3s", disabled), 
+               "orange", "black", string.format("%-4s", noprac), 
+               "orange", "black", string.format("%-4s", nolearn))
+  end
+end
+
+function cmd_sremove(cmddict)
+  if #cmddict >= 1 then
+    removed = false
+    phelper:plugin_header()   
+    if cmddict[1] == 'all' then
+      phelper.askedself = {}
+      make_askedself_xrefs()
+      ColourNote(RGBColourToName(var.plugin_colour), "black", "All spells removed")
+    else
+      for i,item in ipairs(cmddict) do
+        local aspell = find_spell(item)
+        if aspell then
+          local sn = tonumber(aspell.sn)
+          if sn then
+            if askedself_xref[sn] ~= nil then
+              table.remove(phelper.askedself, askedself_xref[sn])
+              ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " removed")
+              removed = true
+            else
+              ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " not in list")      
+            end
+          end
+        else
+          print('Delete Spell: could not find spell', item)
+        end  
+      end
+      if removed then
+        make_askedself_xrefs()
+      end
+    end
+  end
+end
+
+function cmd_sadd(cmddict)
   if #cmddict >= 1 then
     local added = false
     phelper:plugin_header()
     if cmddict[1] == 'all' then
-      phelper.askedspells = {}    
+      phelper.askedself = {}    
       for i,v in pairs(spells['spellup']) do
         if v.percent > 1 then
           ColourNote(RGBColourToName(var.plugin_colour), "black", "Added " .. v.name)
-          table.insert(phelper.askedspells, {sn=tonumber(i)})          
+          table.insert(phelper.askedself, {sn=tonumber(i)})          
         end
       end
       ColourNote(RGBColourToName(var.plugin_colour), "black", "All spells added")
-      make_askedspells_xrefs()
+      make_askedself_xrefs()
       nextspellup("added new spells")   
     else    
       for i,item in ipairs(cmddict) do
@@ -693,7 +899,7 @@ function cmd_addspell(cmddict)
             if aspell.spellup ~= 1 and aspell.clientspellup ~= 1 then
               ColourNote ("red", "", "Spell '" .. aspell.name .. "' is not a spellup.")
             else
-              if askedspells_xref[tonumber(sn)] == nil then
+              if askedself_xref[tonumber(sn)] == nil then
                 if aspell.percent == 1 then
                   ColourNote ("red", "", "You have not practiced '" .. aspell.name .. "', but it will be added anyway, it will not be cast until practiced")
                 elseif aspell.percent == 0 then
@@ -702,13 +908,13 @@ function cmd_addspell(cmddict)
                 phelper:mdebug('adding ', item, sn, aspell.name, place)                
                 local pos = -1
                 if place then
-                  table.insert(phelper.askedspells,place, {sn=tonumber(sn)})
+                  table.insert(phelper.askedself,place, {sn=tonumber(sn)})
                   pos = tostring(place)
                 else
-                  table.insert(phelper.askedspells, {sn=tonumber(sn)})
-                  pos = tostring(#phelper.askedspells)
+                  table.insert(phelper.askedself, {sn=tonumber(sn)})
+                  pos = tostring(#phelper.askedself)
                 end
-                make_askedspells_xrefs()                
+                make_askedself_xrefs()                
                 added = true
                 ColourNote(RGBColourToName(var.plugin_colour), "black", "Added " .. aspell.name .. " in position " .. pos)
               else
@@ -722,7 +928,7 @@ function cmd_addspell(cmddict)
       end -- if number orname found
       if added then
         noneed = false
-        --make_askedspells_xrefs()
+        --make_askedself_xrefs()
         nextspellup("added new spells")
       end
     end
@@ -730,11 +936,11 @@ function cmd_addspell(cmddict)
 end
 
 function formatspells()
-  if not next(phelper.askedspells) then
+  if not next(phelper.askedself) then
     return "None"
   else
     local ttable = {}
-    for i,v in ipairs(phelper.askedspells) do
+    for i,v in ipairs(phelper.askedself) do
       local tstring = v.sn
       if v.disabled then
         tstring = tstring .. " (disabled)"
@@ -821,17 +1027,17 @@ function OnPluginBroadcast (msg, id, name, text)
       -- spell casting failure    
       local tag = assert (loadstring ('return ' .. text or ""))()
       if tag.reason == 1 then
-        if askedspells_xref[tonumber(tag.sn)] ~= nil then
+        if askedself_xref[tonumber(tag.sn)] ~= nil then
           waiting = false
           nextspellup('spell fail')            
         end
       elseif tag.reason == 2 then    
-        if askedspells_xref[tonumber(tag.sn)] ~= nil then
+        if askedself_xref[tonumber(tag.sn)] ~= nil then
           local tagsn = tonumber(tag.sn)
           if tagsn == waiting then
-            phelper.askedspells[askedspells_xref[tagsn]].disabled = true
+            phelper.askedself[askedself_xref[tagsn]].disabled = true
             ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because the affect already exists.")
-            make_askedspells_xrefs()
+            make_askedself_xrefs()
             waiting = false
             nextspellup('spell fail')            
           end
@@ -851,14 +1057,14 @@ function OnPluginBroadcast (msg, id, name, text)
       elseif tag.reason == 6 then
         waiting = false
       elseif tag.reason == 8 then
-        -- remove from askedspells list
+        -- remove from askedself list
       elseif tag.reason == 10 then
         waiting = false
       elseif tag.reason == 11 then
-        -- remove from askedspells list
+        -- remove from askedself list
         local tagsn = tonumber(tag.sn)        
         ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because it is disabled mudside.")
-        phelper.askedspells[askedspells_xref[tagsn]].disabled = true
+        phelper.askedself[askedself_xref[tagsn]].disabled = true
         waiting = false
       elseif tag.reason == 12 then
         need_moves = true
@@ -952,8 +1158,11 @@ function OnPluginEnable ()
     CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request char")    
   end
   
-  if askedspells_xref == nil then
-    make_askedspells_xrefs ()
+  if askedself_xref == nil then
+    make_askedself_xrefs ()
+  end
+  if askedother_xref == nil then
+    make_askedother_xrefs ()
   end
 end -- OnPluginEnable
 
@@ -992,21 +1201,27 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'bspell')
 phelper:set_default('plugin_colour', 'lime')
 
-phelper:add_setting( 'askedspells', {type="table", help="the list of spells", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatspells, readonly=true, afterf=make_askedspells_xrefs})
+phelper:add_setting( 'askedself', {type="table", help="the list of spells to use on self", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatspells, readonly=true, afterf=make_askedself_xrefs})
+phelper:add_setting( 'askedother', {type="table", help="the list of spells to use on other", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatspells, readonly=true, afterf=make_askedother_xrefs})
 phelper:add_setting( 'pause', {type="bool", help="pause spellup", default=false, sortlev=35, readonly=true})
 
-phelper:add_cmd('listspells', {func=cmd_listspells, help="list request spells", default=true})
-phelper:add_cmd('add', {func=cmd_addspell, help="add a spell"})
+phelper:add_cmd('slist', {func=cmd_slist, help="list requested spells", default=true})
+phelper:add_cmd('sadd', {func=cmd_sadd, help="add a spell, use 'all' to add all spellups"})
+phelper:add_cmd('sremove', {func=cmd_sremove, help="remove a spell, use 'all' to clear table"})
+phelper:add_cmd('sdisable', {func=cmd_sdisable, help="disable a spell"})
+phelper:add_cmd('senable', {func=cmd_senable, help="enable a spell"})
+phelper:add_cmd('sba', {func=cmd_sablocker, help="add blockers, Ex. 'protection good:inertial barrier'"})
+phelper:add_cmd('sbr', {func=cmd_sdblocker, help="remove blockers"})
 phelper:add_cmd('pause', {func=cmd_pause, help="pause spellup"})
 phelper:add_cmd('resume', {func=cmd_resume, help="resume spellup"})
-phelper:add_cmd('remove', {func=cmd_removespell, help="remove a spell, use 'delete all' to clear table"})
-phelper:add_cmd('disable', {func=cmd_disable, help="disable a spell"})
-phelper:add_cmd('enable', {func=cmd_enable, help="enable a spell"})
-phelper:add_cmd('ablock', {func=cmd_ablocker, help="add blockers, Ex. 'protection good:inertial barrier'"})
-phelper:add_cmd('dblock', {func=cmd_dblocker, help="remove blockers"})
 phelper:add_cmd('refresh', {func=cmd_refresh, help="refresh affected spells"})
-phelper:add_cmd('fast', {func=cmd_fast, help="cast all spells in one go"})
-phelper:add_cmd('other', {func=cmd_other, help="cast spells on another char"})
+phelper:add_cmd('fast', {func=cmd_fast, help="cast all spells requested in one go"})
+phelper:add_cmd('other', {func=cmd_other, help="cast spells on another char, use 'fast' to cast all spellup spells, otherwise it only casts the ones added with oadd"})
+phelper:add_cmd('oadd', {func=cmd_oadd, help="add spells to cast on other"})
+phelper:add_cmd('oremove', {func=cmd_oremove, help="remove spells to cast on other"})
+phelper:add_cmd('odisable', {func=cmd_odisable, help="disable a spell"})
+phelper:add_cmd('oenable', {func=cmd_oenable, help="enable a spell"})
+phelper:add_cmd('olist', {func=cmd_olist, help="remove spells to cast on other"})
 phelper:add_cmd('export', {func=cmd_export, help="export current spell list as list of commands"})
 phelper:add_cmd('info', {func=cmd_info, help="show info on a spell"})
 phelper:add_cmd('togglespellup', {func=cmd_togglespellup, help="toggle a spell to be a spellup regardless of what the mud says"})
