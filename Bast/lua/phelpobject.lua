@@ -47,7 +47,7 @@ function Phelpobject:initialize(args)
   self.disabled = false
   self.set_options = {}
   self.cname = args.name or "Default"
-  self.id = GetPluginID() .. self.cname
+  self.id = GetPluginID() .. '-' .. self.cname
   self:mdebug('phelpobject __init self.cname', self.cname)
   self.cmds_table = {}
   self.events = {}
@@ -90,9 +90,11 @@ function Phelpobject:processevent(tevent, args)
 end
 
 function Phelpobject:removeevent(tevent, object, tfunction, plugin)
-  for i,v in ipairs(self.events[tevent]) do
-    if v.func == tfunction and (v.object == object or v.plugin == plugin) then
-      table.remove(self.events[tevent], i)
+  if self.events[tevent] then
+    for i,v in ipairs(self.events[tevent]) do
+      if v.func == tfunction and (v.object == object or v.plugin == plugin) then
+        table.remove(self.events[tevent], i)
+      end
     end
   end
 end
@@ -228,7 +230,7 @@ function Phelpobject:init_vars(reset)
       gvalue = tvalue
     end
     local tvalue = verify(gvalue, setting.type, {silent = true, window = self})
-    self:set(name, tvalue, {silent = true, window = self})
+    self:set(name, tvalue, {silent = true, window = self, istable=setting.istable})
   end
   self:savestate(true)
   SaveState()
@@ -284,13 +286,19 @@ function Phelpobject:set(option, value, args)
     self[option] = tvalue
     afterf = varstuff.after
     if args.putvar then
-      var[option] = tvalue
+      if args.istable then
+        var[option] = serialize.save_simple(tvalue)
+      else
+        var[option] = tvalue
+      end
     end
     if afterf ~= nil then
       self:run_func(afterf)
     end
-    self:processevent('option_' .. option, {option=option, value=value})    
-    self:processevent('option-any', {option=option, value=value})  
+    if not args.noevent then
+      self:processevent('option_' .. option, {option=option, value=value})    
+      self:processevent('option-any', {option=option, value=value})  
+    end
     SaveState()
     return true
   end
@@ -424,6 +432,9 @@ end
 function Phelpobject:add_cmd(name, stuff)
   if not self.cmds_table[name] then
     self.cmds_table[name] = stuff
+    if self.cmds_table[name].func == nil then
+      print("cmd", name, "function does not exist")
+    end
   else
     print("cmd", name, "already exists")
   end
