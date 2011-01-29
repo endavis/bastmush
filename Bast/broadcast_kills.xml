@@ -225,11 +225,11 @@ function OnPluginBroadcast (msg, id, name, text)
     if msg == 2 then
       loadstring(text)()
       local eqitem = item
-      if eqitem.place == 'wielded' then
-        phelper:set('weaponsn', eqitem.itemsn, {silent=true})
+      if eqitem.placestr == 'wielded' then
+        phelper:set('weaponsn', eqitem.objectid, {silent=true})
       end
-      if eqitem.place == 'second' then
-        phelper:set('secondsn', eqitem.itemsn, {silent=true})
+      if eqitem.placestr == 'second' then
+        phelper:set('secondsn', eqitem.objectid, {silent=true})
       end
 
     end
