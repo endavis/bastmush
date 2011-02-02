@@ -14,71 +14,48 @@
    save_state="y"
    >
 <description trim="y">
-bspell a all         --> cast all possible spellups
-*bspell d all         --> remove all spellups
+bspell slist      --> list requested self spells
+  
+bspell sa all         --> cast all possible spellups
+bspell sr all         --> remove all spellups
 
-*bspell a blur  "champion's strength:3"    --> add more to the current list
+bspell sa blur  "champion's strength:3"    --> add more to the current list
   to add a spell in a certain place add a : then the place number
-*bspell d "night vision" "detect magic"   --> remove those from the list
+bspell sd "night vision" "detect magic"   --> remove those from the list
 
-*bspell fast    --> cast all spellups immediately, as fast as you can
-*bspell pause   --> stop casting spellups until a resume
-*bspell resume  --> resume casting
-*bspell refresh --> requery server for current spells on us
+bspell sba   --> block a spell with another spell
+                           (eg. bspell sba 68:121)
+bspell sbr   --> remove a block
+                           (eg. bspell sbr 68:121)
 
-spellup other (name) --> try to spellup another player with picked spellups
+bspell sdisable --> disable a spell without taking it out of the list
+bspell senable --> enabled a disabled self spell
+
+bspell fast    --> cast all spellups immediately, as fast as you can
+
+bspell olist      --> list requested other spells
+
+bspell other (name) --> try to spellup another player with picked spellups
                           (eg. bspell other johnsmith)
 
-*spellup other (name) fast --> try to spellup another player with all spellups
+bspell other (name) fast --> try to spellup another player with all spellups
                           (eg. bspell other johnsmith fast)
 
-*bspell block   --> block a spell with another spell
-                           (eg. bspell block 68 121)
-*bspell disable --> disable a spell without taking it out of the list
+bspell oa aid --> add aid as a requested spellup on others
+bspell or aid --> remove aid as a requested spellup on others
 
-*bspell help    --> this message
+bspell odisable --> disable a requested other spell without taking it out of the list
+bspell oenable --> enable a disabled other spell
 
-TODO:
-create miniwin based on mine
-menu for each spell
- - show Help
- - showskill
- - Info
-  - SN
-  - stuff from slist
-  
-have tabs for:
- * Summary
-   - how many good/bad/requested spells (can click good/bad/requested to go to good/bad/requested tab)
-   - spells that are wearing off in less than one minute
-   - recoveries
-   - spells pending
-   - disabled spells
- * Affected
- * Requested
- * Spells - can click spells in this window to add them
-    - columns for each - self, other
-   
-NOTES:
-events that need to trigger a retry of spellups
-* - spell wearoff
-* - spell fail
-* - spell success
-* - stats change
-* - position change
-* - afk change
-* - have slist
-* - connect (and have slist)
-* - recovery on
-* - recovery off
-* - resume
-* - skillgain (?)
- 
-Spellup Other -
- Done - put fast at end (does all spellups)
- no fast then does the ones you have picked from the spells tab
+bspell pause   --> stop casting spellups until a resume
+bspell resume  --> resume casting
+bspell refresh --> requery server for current spells on us
 
--- current bug, sometimes a spell gets spellup changed to 0, need to hunt it down
+bspell info    --> request info about a spell, shows what the mudside slist returned
+bspell export  --> export the spells you have requested and their settings
+bspell togglespellup --> toggle a spell to be used as a spellup even if it isn't a mudside spellup spell
+
+bspell help    --> this message
 
 </description>
 
@@ -1062,10 +1039,12 @@ function OnPluginBroadcast (msg, id, name, text)
         waiting = false
       elseif tag.reason == 11 then
         -- remove from askedself list
-        local tagsn = tonumber(tag.sn)        
-        ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because it is disabled mudside.")
-        phelper.askedself[askedself_xref[tagsn]].disabled = true
-        waiting = false
+        local tagsn = tonumber(tag.sn)
+        if tagsn == waiting then        
+          ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because it is disabled mudside.")
+          phelper.askedself[askedself_xref[tagsn]].disabled = true
+          waiting = false
+        end
       elseif tag.reason == 12 then
         need_moves = true
         waiting = false
