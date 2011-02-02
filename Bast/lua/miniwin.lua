@@ -295,7 +295,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'bg_colour', {type="colour", help="background colour for this window", default=0x000000, sortlev=3, longname="Background Colour", globalset=true})
   self:add_setting( 'text_colour', {type="colour", help="text colour for this window", default=0xDCDCDC, sortlev=3, longname="Text Colour", globalset=true})
   self:add_setting( 'window_border_colour', {type="colour", help="border colour for window", default=verify_colour("white"), sortlev=4, longname="Window Border Colour", globalset=true})
-  self:add_setting( 'window_border_width', {type="number", help="border width for window", default=1, sortlev=4, longname="Window Border Width", globalset=true})
+  self:add_setting( 'window_border_width', {type="number", help="border width for window", default=2, sortlev=4, longname="Window Border Width", globalset=true})
   self:add_setting( 'title_gradient1', {type="colour", help="gradient colour 1 for the titlebar", default=verify_colour(0x151515), sortlev=5, longname="Title Gradient Colour 1", globalset=true})
   self:add_setting( 'title_gradient2', {type="colour", help="gradient colour 2 for the titlebar", default=verify_colour(0x333333), sortlev=5, longname="Title Gradient Colour 2", globalset=true})
   self:add_setting( 'tab_bg_colour', {type="colour", help="background colour for a tab", default=0xDCDCDC, sortlev=6, longname="Tab Background Colour", globalset=true})
@@ -403,10 +403,32 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky, position)
 end
 
 function Miniwin:changeactivetab(tabname)
-    self.activetab = self.tabs[tabname]
-    self:processevent('tabchange', {newtab=tabname})
+  self.activetab = self.tabs[tabname]
+  self:processevent('tabchange', {newtab=tabname})
 end  
-  
+
+function Miniwin:settabnametext(tabname, newtext)
+  if self.tabs[tabname] then
+    self.tabs[tabname].tabnametext = newtext
+  end
+  -- just redraw the tabline instead of the entire window
+  --self:redrawtabline()
+end
+
+function Miniwin:redrawtabline()
+  --self.activetab.build_data.tabbarlinenum
+  if self:counttabs() > 1  and self.showtabline then
+    local tabline = self:buildtabline()
+    --self.activetab.build_data.tabbarlinenum = linenum
+    self.activetab.tabbarlineconv = self:convert_line(tabline, 1, 0, 0, 'tabbarline')[1]
+    --self.activetab.maxwidth = math.max(self.activetab.maxwidth, self.activetab.tabbarlineconv.width)   
+    local top = self.activetab.build_data[self.activetab.build_data.tabbarlinenum - 1].linebottom    
+    self.activetab.build_data[self.activetab.build_data.tabbarlinenum] = self:justify_line(self.activetab.tabbarlineconv, top, self.activetab.build_data.tabbarlinenum, 'titlebarline')    
+    --print('redrawing tabline', self.activetab)
+    --self:displayline(self.activetab.build_data[self.activetab.build_data.tabbarlinenum])  
+    self:displayline(self.activetab.tabbarlineconv)  
+  end
+end
 
 function Miniwin:stickytab(tabname)
   self.tabs[tabname].sticky = true
@@ -483,40 +505,63 @@ function Miniwin:tabmenu(tabname)
   end
 end
 
+function Miniwin:createtabstyle(v, tstyle)
+  local style = copytable.deep(tstyle)
+  style.tab = v.tabname
+  style.mouseup = function(win, flags, hotspot_id)
+                    if bit.band(flags, 0x10) ~= 0 then
+                      -- left
+                      self:changetotab(v.tabname)
+                    elseif bit.band(flags, 0x20) ~= 0 then
+                      -- right
+                      self:tabmenu(v.tabname)
+                    end
+                  end
+  style.mouseover = function(win, flags, hotspot_id)
+
+                    end
+--  style.leftborder = true
+--  style.rightborder = true
+  style.bordercolour = 'tab_border_colour'
+  if v.tabname == self.activetab.tabname then
+    if not style.textcolour then
+      style.textcolour = 'tab_text_colour'
+    end
+    if not style.backcolour then
+      style.backcolour = 'tab_bg_colour'
+    end
+    style.bordercolour = 'tab_border_colour'
+    style.fillall = true
+  end
+  return style
+end
+
 function Miniwin:buildtabline()
   if self:counttabs() > 1 then
     local tabline = {}
     for i,v in ipairs(self.tablist) do
       v = self.tabs[v]
-      local style = {}
-      style.text = ' ' .. v.tabname .. ' '
-      style.tab = v.tabname
-      style.mouseup = function(win, flags, hotspot_id)
-                        if bit.band(flags, 0x10) ~= 0 then
-                          -- left
-                          self:changetotab(v.tabname)
-                        elseif bit.band(flags, 0x20) ~= 0 then
-                          -- right
-                          self:tabmenu(v.tabname)
-                        end
-                      end
-      style.mouseover = function(win, flags, hotspot_id)
-
-                        end
-      style.leftborder = true
-      style.rightborder = true
-      style.bordercolour = 'tab_border_colour'
-      if v.tabname == self.activetab.tabname then
-        style.textcolour = 'tab_text_colour'
-        style.backcolour = 'tab_bg_colour'
-        style.bordercolour = 'tab_border_colour'
-        style.fillall = true
+      if v.tabnametext ~= nil then        
+        local style = self:createtabstyle(v, {text=" " .. v.tabname .. " ", leftborder = true})
+        table.insert(tabline, style)
+        if type(v.tabnametext) == 'string' then
+          local style = self:createtabstyle(v, {text=v.tabnametext})
+          table.insert(tabline, style)
+        elseif type(v.tabnametext) == 'table' then
+          for i,x in ipairs(v.tabnametext) do
+             local style = self:createtabstyle(v, x)
+             table.insert(tabline, style)          
+          end
+        end
+        local style = self:createtabstyle(v, {text=" ", rightborder = true})
+        table.insert(tabline, style)            
+      else
+        local style = self:createtabstyle(v, {text=" " .. v.tabname .. " ", leftborder=true, rightborder=true})
+        table.insert(tabline, style)        
       end
-      table.insert(tabline, style)
     end
     tabline.bottomborder = true
     tabline.topborder = true
-    tabline.rightborder = true
     tabline.bordercolour = 'tab_border_colour'
     return tabline
   end
@@ -1519,7 +1564,9 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
     tabline = self:buildtabline()
     self.activetab.build_data.tabbarlinenum = linenum
     self.activetab.tabbarlineconv = self:convert_line(tabline, 1, 0, 0, 'tabbarline')[1]
+    self.activetab.maxwidth = math.max(self.activetab.maxwidth, self.activetab.tabbarlineconv.width)    
   end
+  
   -- at this point everything has been converted
 
   if self.width > 0 then
