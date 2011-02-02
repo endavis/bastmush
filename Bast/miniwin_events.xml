@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id: miniwin_cp.xml 1082 2011-01-29 00:31:37Z endavis $ -->
+<muclient>
+<plugin
+   name="miniwin_events"
+   author="Bast"
+   id="eee4b4fa021c1bee534ef093"
+   language="Lua"
+   purpose="Shows quests/CPs/GQs in a tabbed miniwindow"
+   date_written="2008-07-22"
+   requires="4.52"
+   version="6.0"
+   save_state="y"
+   >
+<description trim="y">
+<![CDATA[
+
+]]>
+</description>
+
+</plugin>
+
+<!--  Script  -->
+<script>
+<![CDATA[
+internalrevision = "$Rev: 963 $"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "commas"
+require 'var'
+require "commas"
+require 'miniwin'
+require 'tprint'
+require 'pluginhelper'
+require 'ldplugin'
+require 'verify'
+require 'copytable'
+
+quest_text = {}
+quest_stuff = {mob=nil, room=nil, area=nil}
+quest_timer = {}
+
+eventwin = Miniwin:new{name="Events"}
+eventwin:set_default("maxtabs", 5)
+eventwin:add_setting("quest_avail_colour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
+eventwin:add_setting("quest_avail_bg_colour", {help="the background colour for when a quest available", type="colour", default=verify_colour("red"), sortlev=1})
+
+
+function build_quest()
+  if (not next(quest_timer)) or (not next(quest_stuff)) then
+    return
+  end
+
+  quest_text = {}
+  local mobstring = string.format("%-7s: %s", "Mob", quest_stuff.mobname)
+  table.insert(quest_text, mobstring)
+  local roomstring = string.format("%-7s: %s", "Room", quest_stuff.mobroom)
+  table.insert(quest_text, roomstring)
+  local areastring = string.format("%-7s: %s", "Area", quest_stuff.mobarea)
+  table.insert(quest_text, areastring)
+
+  local style = {}
+  style.text = string.format ("Time to go: %s", quest_timer.text)
+  style.len = #style.text
+  --style.textcolour = 'time_colour'
+  style.style = 0
+  table.insert (quest_text, {style})
+  show_quest ()
+  --style = {}
+  --style.text = " Quest: On "
+  --style.textcolour = questwin.time_colour
+  --style.backcolour = questwin.bg_colour
+  --questwin.tabcolour = questwin:get_colour(questwin.bg_colour)
+  --questwin:tabbroadcast(true, {style})
+  --questwin:show(true)
+end
+
+function show_quest ()
+  -- do nothing if no quest
+  if #quest_text == 0 then
+    return
+  end -- if
+
+  eventwin:enable()
+  eventwin:addtab('Quest', quest_text, nil, false, false, 1)
+  if not eventwin:hastab('CP') then
+    eventwin:addtab('CP', quest_text)
+  end
+  if not eventwin:hastab('GQ') then
+    eventwin:addtab('GQ', quest_text)
+  end  
+  --questwin:show(winbetweenquest)
+end -- show_quest_text
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  if id == "aaa8a9eda20fa11787c6b438" then
+    if msg == 1 then
+      -- quest available
+      quest_stuff = {}
+      quest_timer = {}
+      quest_text = {}
+      local style = {}
+      style.style = 0
+      style.text = "You can quest again!"
+      style.backcolour = 'quest_avail_bg_colour'
+      style.textcolour = 'quest_avail_colour'
+      table.insert(quest_text, {style})
+      quest_text.backcolour = "quest_avail_bg_colour"
+      eventwin:settabnametext('Quest', {{text=" Now ",backcolour='quest_avail_bg_colour', textcolour='quest_avail_colour'}})
+      --eventwin:settabnametext('Quest', " Now ")
+      show_quest()
+      style = {}
+      style.text = ' Quest: Now '
+      style.textcolour = eventwin.quest_avail_colour
+      style.backcolour = eventwin.quest_avail_bg_colour
+      --questwin.tabcolour = questwin:get_colour(questwin.avail_bg_colour)
+      eventwin:tabbroadcast(true, {style})
+    elseif msg == 2 then
+      -- quest mob info
+      quest_timer = {}
+      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438", "quest_info" )
+
+      -- get the timer
+      loadstring( pvar )()
+      quest_stuff = quest_info
+    elseif msg == 3 then
+      -- quest time left
+      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438", "timer" )
+
+      -- get the timer
+      loadstring( pvar )()
+      quest_timer = timer
+      build_quest()
+    elseif msg == 4 then
+      -- quest mob dead
+      quest_text = {"  Quest Complete - Hand it in  "}
+      eventwin:settabnametext('Quest', ": Comp")      
+      show_quest()
+      style = {}
+      style.text = ' Event Q:C '
+      --style.textcolour = questwin.text_colour
+      --style.backcolour = questwin.bg_colour
+      --questwin.tabcolour = questwin.bg_colour
+      eventwin:tabbroadcast(true, {style})
+    elseif msg == 5 then
+      return
+    elseif msg == 6 then
+      return
+    elseif msg == 7 then
+      -- time until next quest
+      local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438", "timer" )
+
+      -- get the timer
+      loadstring( pvar )()
+      quest_text = {}
+      local style = {}
+      style.style = 0
+      style.text=  string.format ("Next quest: %s", timer.text)
+      style.len = #style.text
+      style.hjust = 'center'
+      --style.textcolour = 'time_colour'
+      --winbetweenquest = WindowInfo(questwin.id, 5)
+      table.insert(quest_text, {style})
+      eventwin:settabnametext('Quest', ": " .. timer.text)       
+      --quest_text.backcolour = nil      
+      show_quest()
+      style = {}
+      style.text = ' Events Q:' .. timer.text .. ' '
+      --style.textcolour = questwin.time_colour
+      --style.backcolour = questwin.bg_colour
+      tstyle = {style}
+      --questwin.tabcolour = questwin.bg_colour
+      eventwin:tabbroadcast(true, tstyle)
+    elseif msg == 8 then
+      --questwin:show(winbetweenquest)
+    end
+
+  end -- stats changed
+
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin("broadcast_cp")
+  ldplugin("broadcast_gq")
+  ldplugin("broadcast_quest")  
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
+
+  phelper:OnPluginEnable()
+
+  if not eventwin:hastab('Quest') then
+    eventwin:addtab('Quest', {{text='Unknown'}})
+  end
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'mev')
+phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:add_pobject('win', eventwin)
+
+phelper:enable()
+
+]]>
+
+</script>
+
+</muclient>
