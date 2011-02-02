@@ -236,7 +236,8 @@ function OnPluginEnable ()
   -- always create windows after OnPluginEnable due to default variable handling
   build_example_style()
   build_window()
-
+  examplewin:show(false)
+  
 end -- OnPluginEnable
 
 function OnPluginDisable ()
