@@ -21,6 +21,17 @@
 
 </plugin>
 
+<triggers>
+  <trigger
+   enabled="y"
+   match="Commander Barcett tells you 'Type 'campaign info' to see what you must kill.'"
+   sequence="100"
+   send_to="10"
+   script="set_show"
+  >
+  </trigger>
+</triggers>
+
 <!--  Script  -->
 <script>
 <![CDATA[
@@ -37,6 +48,17 @@ require 'pluginhelper'
 require 'ldplugin'
 require 'verify'
 require 'copytable'
+require 'aardutils'
+
+cpmobs = {}
+cptimer = {}
+level = nil
+curlevel = nil
+showwin = false
+
+function set_show()
+  showwin = true
+end
 
 quest_text = {}
 quest_stuff = {mob=nil, room=nil, area=nil}
@@ -46,6 +68,9 @@ eventwin = Miniwin:new{name="Events"}
 eventwin:set_default("maxtabs", 5)
 eventwin:add_setting("quest_avail_colour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
 eventwin:add_setting("quest_avail_bg_colour", {help="the background colour for when a quest available", type="colour", default=verify_colour("red"), sortlev=1})
+eventwin:add_setting("cp_mobdead_colour", {help="the colour for when a mob is dead", type="colour", default=verify_colour("red"), sortlev=1})
+eventwin:add_setting("cp_notlevel_colour", {help="the colour for when this cp is no longer from this level", type="colour", default=verify_colour("cyan"), sortlev=1})
+eventwin:add_setting("cp_time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
 
 
 function build_quest()
@@ -85,16 +110,80 @@ function show_quest ()
 
   eventwin:enable()
   eventwin:addtab('Quest', quest_text, nil, false, false, 1)
-  if not eventwin:hastab('CP') then
-    eventwin:addtab('CP', quest_text)
-  end
-  if not eventwin:hastab('GQ') then
-    eventwin:addtab('GQ', quest_text)
-  end  
+--  if not eventwin:hastab('CP') then
+--    eventwin:addtab('CP', quest_text)
+--  end
+--  if not eventwin:hastab('GQ') then
+--    eventwin:addtab('GQ', quest_text)
+--  else
+--    eventwin:removetab('GQ')  
+--  end  
   --questwin:show(winbetweenquest)
 end -- show_quest_text
 
 ]]>
+
+function show_cp_text ()
+
+  local texttable = {}
+  local header = {}
+  local style = {}
+
+  -- do nothing if no campaign
+  if #cpmobs == 0 or not next(cptimer) then
+    return
+  end -- if
+  -- heading
+
+  style = {}
+  style.text = string.format("Campaign mobs left: %s", #cpmobs)
+  table.insert (header, {style})
+
+  -- list of mobs
+  for i, v in ipairs (cpmobs) do
+    style = {}
+    style.text = string.format("%-30s %s", v.name, " (" .. v.room .. ")")
+    if verify_bool(v.mobdead) then
+      style.textcolour = "cp_mobdead_colour"
+    end
+    table.insert (texttable, {style})
+  end -- for
+
+  tstyle = {}
+  style = {}
+  style.text = string.format ("Time to go: %sd %sh %sm ", cptimer.days, cptimer.hours, cptimer.mins)
+  style.textcolour = "footer_text_colour"
+  table.insert(tstyle, style)
+  if level and level.level > 0 then
+    style = {}
+    style.text = "- Level: " .. tostring(level.level)
+    if tonumber(level.level) == tonumber(curlevel) then
+      style.textcolour = eventwin.text_colour
+    else
+      style.textcolour = "cp_notlevel_colour"
+    end
+    table.insert(tstyle, style)
+    tstyle.topborder = true
+    tstyle.backcolour = "footer_bg_colour"
+  end
+  table.insert (texttable, tstyle)
+
+  eventwin:enable()
+  eventwin:addtab('CP', texttable, header, true)
+  eventwin:settabnametext('CP', ": " .. #cpmobs)    
+  if showwin then
+    eventwin:show(true)
+    showwin = false
+    eventwin:changetotab('CP')
+  end
+
+
+  --style = {}
+  --style.text = " CP: " .. #cpmobs
+  --cpwin:tabbroadcast(true, {style})
+      
+
+end -- show_cp_text
 </script>
 
 <script>
@@ -183,7 +272,51 @@ function OnPluginBroadcast (msg, id, name, text)
       --questwin:show(winbetweenquest)
     end
 
-  end -- stats changed
+ elseif id == "aaa66f81c50828bbbfda7100" then
+    if msg == 1 then
+      local pvar = GetPluginVariable(  "aaa66f81c50828bbbfda7100", "mobs" )
+
+      -- get the mobs
+      loadstring( pvar )()
+      cpmobs = mobs
+
+      local pvar2 = GetPluginVariable(  "aaa66f81c50828bbbfda7100", "cp_info")
+      loadstring(pvar2)()
+      if cp_info.level then
+        level = convertlevel(cp_info.level)
+      else
+        level = convertlevel(-1)
+      end
+
+      show_cp_text()
+    elseif msg == 2 then
+      local pvar = GetPluginVariable(  "aaa66f81c50828bbbfda7100", "timer" )
+
+      -- get the timer
+      loadstring( pvar )()
+      cptimer = timer
+      show_cp_text()
+    elseif msg == 3 or msg == 4 then
+      cptimer = {}
+      mobs = {}
+      eventwin:removetab('CP')
+    end
+
+  elseif id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
+      tt = assert (loadstring ('return ' .. gmcparg or ""))()
+
+      if tt['status'] then
+        tcurlevel = tt.status.level
+        if curlevel ~= tcurlevel then
+          curlevel = tcurlevel
+          show_cp_text()
+        end
+      end
+
+    end
+  end
 
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
