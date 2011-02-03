@@ -39,6 +39,7 @@ require "chardb"
 
 char = {}
 db = Statdb:new{}
+linewidth = 44
 
 statwin = Miniwin:new{name="Stats"}
 statwin:set_default('width_padding', 5)
@@ -62,52 +63,60 @@ function build_stat_window()
   styles = {}
 
   tstyle = format_stat('Strength', char.stats.str, char.maxstats.maxstr, 13, 3)
-  table.insert(tstyle, {text="   "})
+  table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('HP', char.vitals.hp, char.maxstats.maxhp, 5, #tostring(char.maxstats.maxhp)))
   table.insert(styles, tstyle)
 
   tstyle = format_stat('Intelligence', char.stats.int, char.maxstats.maxint, 13, 3)
-  table.insert(tstyle, {text="   "})
+  table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('Mana', char.vitals.mana, char.maxstats.maxmana, 5, #tostring(char.maxstats.maxmana)))
   table.insert(styles, tstyle)
 
   tstyle = format_stat('Wisdom', char.stats.wis, char.maxstats.maxwis, 13, 3)
-  table.insert(tstyle, {text="   "})
+  table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('Moves', char.vitals.moves, char.maxstats.maxmoves, 5, #tostring(char.stats.max_moves)))
   table.insert(styles, tstyle)
 
   tstyle = format_stat('Dexterity', char.stats.dex, char.maxstats.maxdex, 13, 3)
-  table.insert(tstyle, {text="   "})
+  table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('Saves', char.stats.saves, nil, 5, #tostring(char.stats.hitroll)))
   table.insert(styles, tstyle)
 
   tstyle = format_stat('Constitution', char.stats.con, char.maxstats.maxcon, 13, 3)
-  table.insert(tstyle, {text="   "})
+  table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('HR', char.stats.hr, nil, 5, #tostring(char.stats.hr)))
   table.insert(styles, tstyle)
 
   tstyle = format_stat('Luck', char.stats.luck, char.maxstats.maxluck, 13, 3)
-  table.insert(tstyle, {text="   "})
+  table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('DR', char.stats.dr, nil, 5, #tostring(char.stats.dr)))
   table.insert(styles, tstyle)
 
+  local totalstats = (char.stats.str + char.stats.int + char.stats.wis 
+                      + char.stats.dex + char.stats.con + char.stats.luck)
+  local totaltrainstats = (char.maxstats.maxstr + char.maxstats.maxint + char.maxstats.maxwis
+                           + char.maxstats.maxdex + char.maxstats.maxcon + char.maxstats.maxluck)
+
+  tstyle = format_stat('Total', totalstats, totaltrainstats, 13, 4)
+  table.insert(tstyle, {text="  "})
+  local alignment = tonumber(char.status.align)
+  local zeroed_alignment = alignment+2500
+  local aligncolour = ((zeroed_alignment<=1625 and 0x0000ff) or ((zeroed_alignment>=3375 and 0x00ffff)))
+  tableExtend(tstyle, format_stat('Align', char.status.align, nil, 5, #tostring(char.status.align), aligncolour))  
+  table.insert(styles, tstyle)
+
   tstyle = format_stat('Trains', char.worth.trains, nil, 13, 7)
-  table.insert(tstyle, {text="   "})
+  table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('Pracs', char.worth.pracs, nil, 5, #tostring(char.worth.pracs)))
   table.insert(styles, tstyle)
 
   tstyle = format_stat('XP to Level', char.status.tnl, nil, 13, 7)
-  table.insert(tstyle, {text="   "})
+  table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('Level', char.status.level, nil, 5, #tostring(char.status.level), "#00EE00"))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Alignment', char.status.align, nil, 13, 7)
-  --table.insert(tstyle, {text="   "})
-  --tableExtend(tstyle, format_stat('Gold', char.worth.gold, nil, 5, #tostring(char.worth.gold), 'gold'))
-  table.insert(styles, tstyle)
-
   tstyle = format_stat('QP', char.worth.qp, nil, 13, 7)
-  table.insert(tstyle, {text="   "})
+  table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('TP', char.worth.tp, nil, 5, #tostring(char.worth.tp)))
   table.insert(styles, tstyle)
 
@@ -173,7 +182,7 @@ function build_level_window()
       local linestyles = format_row("Type", "Levels", "Pups", "lime", "lime")
       table.insert(allstyles, linestyles)
 
-      table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
 
       local linestyles = format_row("Total Overall", stats.levels['total'], stats.pups['total'])
       table.insert(allstyles, linestyles)
@@ -264,7 +273,7 @@ function build_quest_window()
 
       local linestyles = format_row("DB Stats", "Total", "In DB", "lime", "lime")
       table.insert(allstyles, linestyles)
-      table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("Quests", stats['questcomp'] + stats['questfailed'], stats['indb'])
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Quests Comp", stats['questcomp'], stats['qindb'])
@@ -276,7 +285,7 @@ function build_quest_window()
 
       local linestyles = format_row("QP Stats", "Total", "Average", "lime", "lime")
       table.insert(allstyles, linestyles)
-      table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("Overall QP", stats['qpearned'], string.format("%.3f", stats['qplevelave']) .. '/level')
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Quest QP", stats['qp'], string.format("%.3f", stats['qpquestave']) .. '/quest')
@@ -302,7 +311,7 @@ function build_quest_window()
 
       local linestyles = format_row("Bonus Rewards", "Total", "Average", "lime", "lime")
       table.insert(allstyles, linestyles)
-      table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("TP",
           stats['tp'],
           string.format("%.3f", stats['tpave']) .. '/quest')
@@ -365,7 +374,7 @@ function build_cp_window()
       local linestyles = format_row("DB Stats", "Total", "In DB", "lime", "lime")
       table.insert(allstyles, linestyles)
 
-      table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("CPs", stats['campaignsdone'] + stats['campaignsfld'], stats['indb'])
       table.insert(allstyles, linestyles)
       local linestyles = format_row("CPs Comp", stats['campaignsdone'], stats['cindb'])
@@ -377,7 +386,7 @@ function build_cp_window()
 
       local linestyles = format_row("CP Stats", "Total", "Average", "lime", "lime")
       table.insert(allstyles, linestyles)
-      table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("CP QP", stats['qp'], string.format("%.3f", stats['qpcpave']) .. '/CP')
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Time", "", convert_time(stats['avetime']))
@@ -387,7 +396,7 @@ function build_cp_window()
 
       local linestyles = format_row("Bonus Rewards", "Total", "Average", "lime", "lime")
       table.insert(allstyles, linestyles)
-      table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("TP",
           stats['tp'],
           string.format("%.3f", stats['tpave']) .. '/CP')
@@ -461,7 +470,7 @@ function build_gq_window()
       local linestyles = format_row("GQ Stats", "Total", "In DB", "lime", "lime")
       table.insert(allstyles, linestyles)
 
-      table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("GQs Won", stats['gquestswon'], stats['won']['indb'])
       table.insert(allstyles, linestyles)
       local linestyles = format_row("GQs Lost", "", stats['lost']['indb'])
@@ -475,7 +484,7 @@ function build_gq_window()
 
       local linestyles = format_row("GQ Won Stats", "Total", "Average", "lime", "lime")
       table.insert(allstyles, linestyles)
-      table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("GQ QP", stats['won']['qp'] or 0, string.format("%.3f", stats['won']['qpave'] or 0) .. '/GQ')
       table.insert(allstyles, linestyles)
       local linestyles = format_row("GQ Mobs QP", stats['won']['qpmobs'] or 0, string.format("%.3f", stats['won']['qpmobsave'] or 0) .. '/GQ')
@@ -499,7 +508,7 @@ function build_gq_window()
 
       local linestyles = format_row("GQ Lost Stats", "Total", "Average", "lime", "lime")
       table.insert(allstyles, linestyles)
-      table.insert(allstyles, {{text = '-------------------------------------------', textcolour = "lime"}})
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("GQ Mobs QP", stats['lost']['qpmobs'] or 0, string.format("%.3f", stats['lost']['qpmobsave'] or 0) .. '/GQ')
       table.insert(allstyles, linestyles)
 
