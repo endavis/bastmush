@@ -384,16 +384,24 @@ require "pluginhelper"
 require "verify"
 require "aardutils"
 
-function afterdebug()
+function toggleoutput(tflag)
   local trigstoupdate = {"invmon", "start_invdetails", "multi_line_invdetails", "start_eqdata",
                     "multi_line_eqdata" , "start_invdata", "multi_line_invdata"}
   for i,v in ipairs(trigstoupdate) do
-    if phelper.tdebug then
+    if tflag then
       SetTriggerOption(v, "omit_from_output", "n");
     else
       SetTriggerOption(v, "omit_from_output", "y");
     end
   end
+end
+
+function afterdebug()
+  toggleoutput(phelper.tdebug)
+end
+
+function aftershowset()
+  toggleoutput(phelper.showoutput)
 end
 
 item = {}
@@ -678,6 +686,14 @@ function invdata_redirect (name, line, wildcards, styles)
   invdata_cache[titem.objectid] = titem
 end
 
+--function cmd_showstuff(cmddict)
+--  phelper:set('showoutput', true)
+--end
+
+--function cmd_hidestuff(cmddict)
+--  phelper:set('showoutput', false)
+--end
+
 ]]>
 </script>
 
@@ -738,7 +754,11 @@ end -- function OnPluginSaveState
 phelper:set_default('plugin_colour', 'orange')
 phelper:set_default('cmd', 'binv')
 
+--phelper:add_cmd('showstuff', {func=cmd_showstuff, help="show all the tags"})
+--phelper:add_cmd('hidestuff', {func=cmd_hidestuff, help="hide all the tags"})
+
 phelper:add_setting('isinvmonon', {help="is the invmon command on", type="bool", readonly=true, default=verify_bool(false)})
+phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 phelper:add_setting( 'tdebug', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1, after=afterdebug})
 
 phelper:enable()
