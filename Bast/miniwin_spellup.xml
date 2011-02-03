@@ -406,7 +406,7 @@ function build_summary()
   local alines = {}
   
   local style = {}
-  style.text = "-------------------------------------------"
+  style.text = string.rep("-", 43)
   table.insert(alines, {style})
   
   local lstyle = {}
@@ -428,7 +428,7 @@ function build_summary()
   table.insert(alines, lstyle)
   
   local style = {}
-  style.text = "-------------------------------------------"
+  style.text = string.rep("-", 43)
   table.insert(alines, {style})
   
   local lstyle = {}
@@ -468,7 +468,7 @@ function build_summary()
   table.insert(alines, lstyle)
 
   local style = {}
-  style.text = "-------------------------------------------"
+  style.text = string.rep("-", 43)
   table.insert(alines, {style})
 
   local lstyle = {}
@@ -542,7 +542,7 @@ function print_affected(atable, name, colour)
   table.insert(alines, {style})
 
   if next(atable) then
-    table.insert(alines, {{text = '-------------------------------------------', textcolour = "white"}})    
+    table.insert(alines, {{text = string.rep("-", 43), textcolour = "white"}}) 
     for i,v in tableSort(atable, "duration") do
       local lstyle = {}
       local style = {}
@@ -641,8 +641,7 @@ function build_self()
   table.insert(lstyle, style)
 
   table.insert(hlines, lstyle)
-  table.insert(hlines, {{text = '---------------------------------------------------', textcolour = "white"}})   
-  
+  table.insert(hlines, {{text = string.rep("-", 51), textcolour = "white"}})   
   if #askedself == 0 then
     table.insert(alines, {{text = 'None', hjust='center', textcolour='white'}})
   else
@@ -757,8 +756,8 @@ function build_other()
   table.insert(lstyle, style)
 
   table.insert(hlines, lstyle)
-  table.insert(hlines, {{text = '---------------------------------------------------', textcolour = "white"}})   
-  
+  table.insert(hlines, {{text = string.rep("-", 51), textcolour = "white"}})   
+
   if #askedother == 0 then
     table.insert(alines, {{text = 'None', hjust='center', textcolour='white'}})
   else
@@ -854,15 +853,14 @@ function build_spells()
   table.insert(lstyle, style)
 
   local style = {}
-  style.text =  string.format("%-4s", " AO ") 
+  style.text =  string.format("%-4s", " FO ") 
   style.textcolour = "orange"
   style.hint = "Casted on others if 'fast' is used"
   style.mouseover = nofunc
   table.insert(lstyle, style)
 
   table.insert(hlines, lstyle)
-  table.insert(hlines, {{text = '---------------------------------------------------', textcolour = "white"}})    
-  
+  table.insert(hlines, {{text = string.rep("-", 51), textcolour = "white"}})    
   for i,v in tableSort(spells['all'], "spellup", 0, true) do
     if v.target == 2 or v.target == 3 then
       local lstyle = {}
@@ -948,7 +946,7 @@ function build_spells()
       style.textcolour = "orange"
       style.cellborder = true
       if cancastother(v.sn) and spells['learned'][v.sn] ~= nil then
-        style.text = string.format("%-4s", " AO ")
+        style.text = string.format("%-4s", " FO ")
       else
         style.text = string.format("%-4s", "   ")
       end
