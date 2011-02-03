@@ -453,14 +453,15 @@ end
 function Miniwin:removetab(tabname)
   for i,v in pairs(self.tablist) do
     if self.tabs[v].tabname == tabname then
-     table.remove(self.tablist, i)
+      table.remove(self.tablist, i)
     end
   end
   self.tabs[tabname] = nil
   if tabname == self.activetab then
-    self:changeactivetab(self.tablist[1].tabname)
+    self:changetotab(self.tablist[1].tabname)
+  else
+    self:resettabs()
   end
-  self:resettabs()
 end
 
 function Miniwin:counttabs()
