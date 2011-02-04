@@ -64,6 +64,8 @@ quest_text = {}
 quest_stuff = {mob=nil, room=nil, area=nil}
 quest_timer = {}
 
+gqmobs = {}
+
 eventwin = Miniwin:new{name="Events"}
 eventwin:set_default("maxtabs", 5)
 eventwin:add_setting("quest_avail_colour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
@@ -73,7 +75,7 @@ eventwin:add_setting("cp_notlevel_colour", {help="the colour for when this cp is
 eventwin:add_setting("cp_time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
 
 
-function build_quest()
+function build_quest(showflag)
   if (not next(quest_timer)) or (not next(quest_stuff)) then
     return
   end
@@ -92,7 +94,7 @@ function build_quest()
   --style.textcolour = 'time_colour'
   style.style = 0
   table.insert (quest_text, {style})
-  show_quest ()
+  show_quest (showflag)
   --style = {}
   --style.text = " Quest: On "
   --style.textcolour = questwin.time_colour
@@ -102,7 +104,7 @@ function build_quest()
   --questwin:show(true)
 end
 
-function show_quest ()
+function show_quest (showflag)
   -- do nothing if no quest
   if #quest_text == 0 then
     return
@@ -110,6 +112,9 @@ function show_quest ()
 
   eventwin:enable()
   eventwin:addtab('Quest', quest_text, nil, false, false, 1)
+  if showflag then
+    eventwin:changetotab('Quest')
+  end
 --  if not eventwin:hastab('CP') then
 --    eventwin:addtab('CP', quest_text)
 --  end
@@ -121,7 +126,6 @@ function show_quest ()
   --questwin:show(winbetweenquest)
 end -- show_quest_text
 
-]]>
 
 function show_cp_text ()
 
@@ -169,21 +173,76 @@ function show_cp_text ()
   table.insert (texttable, tstyle)
 
   eventwin:enable()
-  eventwin:addtab('CP', texttable, header, true)
+  eventwin:addtab('CP', texttable, header)
   eventwin:settabnametext('CP', ": " .. #cpmobs)    
   if showwin then
     eventwin:show(true)
     showwin = false
     eventwin:changetotab('CP')
   end
-
-
   --style = {}
   --style.text = " CP: " .. #cpmobs
   --cpwin:tabbroadcast(true, {style})
       
-
 end -- show_cp_text
+
+gqmobs = {}
+mobcount = 0
+
+function build_gq ()
+
+  local texttable = {}
+  local style = {}
+  local header = {}
+  -- do nothing if no gquest
+  if #gqmobs == 0 then
+    return
+  end -- if
+
+
+  -- list of mobs
+  local mobcount = 0
+  for i, v in ipairs (gqmobs) do
+    mobcount = mobcount + v.num
+    style = {}
+    style.text = string.format("%3s: %-30s %s", v.num, v.name, " (" .. v.room .. ")")
+    style.len = #style.text
+    style.style = 0
+    table.insert (texttable, {style})
+  end -- for
+
+  -- heading
+  style = {}
+  style.text = string.format("GQuest mobs left: %s", mobcount)
+  style.len = #style.text
+  style.style = 0
+  table.insert (header, {style})
+
+  gq_text = texttable
+  --gqwin.header_height = 1
+  eventwin:settabnametext('GQ', ": " .. mobcount)   
+  show_gq(texttable, header)
+
+  --style = {}
+  --style.text = " GQ: " .. mobcount
+  --gqwin:tabbroadcast(true, {style})
+  eventwin:show(true)
+    
+end -- build_gq
+
+function show_gq (text, header)
+  -- do nothing if no gq
+  if #text == 0 then
+    return
+  end -- if
+
+  eventwin:enable()
+  eventwin:addtab('GQ', text, header, true)
+  eventwin:changetotab('GQ')  
+  --gqwin:changetotab('default')
+  --gqwin:show(true)
+end -- show_quest_text
+]]>
 </script>
 
 <script>
@@ -227,7 +286,7 @@ function OnPluginBroadcast (msg, id, name, text)
       -- get the timer
       loadstring( pvar )()
       quest_timer = timer
-      build_quest()
+      build_quest(true)
     elseif msg == 4 then
       -- quest mob dead
       quest_text = {"  Quest Complete - Hand it in  "}
@@ -316,6 +375,27 @@ function OnPluginBroadcast (msg, id, name, text)
       end
 
     end
+  elseif id == "aaa77f81c5408278ccda7100" then
+    if msg == 1 then
+      -- gquest available
+      --local style = {}
+      --style.text = " GQ "
+      --style.textcolour = "red"
+      --gqwin:tabbroadcast(true, {style})
+      show_gq({"GQuest Available"})
+    elseif msg == 2 then
+      -- gquest joined
+      show_gq({"GQuest Joined - Waiting"})
+    elseif msg == 3 then
+      local pvar = GetPluginVariable(  "aaa77f81c5408278ccda7100", "mobs" )
+      -- get the mobs
+      loadstring( pvar )()
+      gqmobs = mobs
+      build_gq()
+    elseif msg == 4 or msg == 5 then
+      -- reward
+      eventwin:removetab('GQ')
+    end    
   end
 
   phelper:OnPluginBroadcast(msg, id, name, text)
