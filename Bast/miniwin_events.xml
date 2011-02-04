@@ -88,20 +88,17 @@ function build_quest(showflag)
   local areastring = string.format("%-7s: %s", "Area", quest_stuff.mobarea)
   table.insert(quest_text, areastring)
 
+  tstyle = {}
+  tstyle.topborder = true
+  tstyle.backcolour = "footer_bg_colour"
   local style = {}
   style.text = string.format ("Time to go: %s", quest_timer.text)
   style.len = #style.text
-  --style.textcolour = 'time_colour'
+  style.textcolour = 'cp_time_colour'
   style.style = 0
-  table.insert (quest_text, {style})
+  table.insert(tstyle, style)
+  table.insert (quest_text, tstyle)
   show_quest (showflag)
-  --style = {}
-  --style.text = " Quest: On "
-  --style.textcolour = questwin.time_colour
-  --style.backcolour = questwin.bg_colour
-  --questwin.tabcolour = questwin:get_colour(questwin.bg_colour)
-  --questwin:tabbroadcast(true, {style})
-  --questwin:show(true)
 end
 
 function show_quest (showflag)
@@ -115,15 +112,6 @@ function show_quest (showflag)
   if showflag then
     eventwin:changetotab('Quest')
   end
---  if not eventwin:hastab('CP') then
---    eventwin:addtab('CP', quest_text)
---  end
---  if not eventwin:hastab('GQ') then
---    eventwin:addtab('GQ', quest_text)
---  else
---    eventwin:removetab('GQ')  
---  end  
-  --questwin:show(winbetweenquest)
 end -- show_quest_text
 
 
@@ -154,6 +142,8 @@ function show_cp_text ()
   end -- for
 
   tstyle = {}
+  tstyle.topborder = true
+  tstyle.backcolour = "footer_bg_colour"
   style = {}
   style.text = string.format ("Time to go: %sd %sh %sm ", cptimer.days, cptimer.hours, cptimer.mins)
   style.textcolour = "footer_text_colour"
@@ -167,8 +157,7 @@ function show_cp_text ()
       style.textcolour = "cp_notlevel_colour"
     end
     table.insert(tstyle, style)
-    tstyle.topborder = true
-    tstyle.backcolour = "footer_bg_colour"
+
   end
   table.insert (texttable, tstyle)
 
@@ -180,14 +169,8 @@ function show_cp_text ()
     showwin = false
     eventwin:changetotab('CP')
   end
-  --style = {}
-  --style.text = " CP: " .. #cpmobs
-  --cpwin:tabbroadcast(true, {style})
       
 end -- show_cp_text
-
-gqmobs = {}
-mobcount = 0
 
 function build_gq ()
 
@@ -223,9 +206,6 @@ function build_gq ()
   eventwin:settabnametext('GQ', ": " .. mobcount)   
   show_gq(texttable, header)
 
-  --style = {}
-  --style.text = " GQ: " .. mobcount
-  --gqwin:tabbroadcast(true, {style})
   eventwin:show(true)
     
 end -- build_gq
@@ -239,8 +219,6 @@ function show_gq (text, header)
   eventwin:enable()
   eventwin:addtab('GQ', text, header, true)
   eventwin:changetotab('GQ')  
-  --gqwin:changetotab('default')
-  --gqwin:show(true)
 end -- show_quest_text
 ]]>
 </script>
@@ -373,8 +351,8 @@ function OnPluginBroadcast (msg, id, name, text)
           show_cp_text()
         end
       end
-
     end
+    
   elseif id == "aaa77f81c5408278ccda7100" then
     if msg == 1 then
       -- gquest available
