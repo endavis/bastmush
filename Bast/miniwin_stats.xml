@@ -34,6 +34,7 @@ require "tprint"
 require "commas"
 require "serialize"
 require "tablefuncs"
+require "stringfuncs"
 require "ldplugin"
 require "chardb"
 
@@ -241,7 +242,7 @@ function build_quest_window()
     if stats['totallevels'] then
       stats['qplevelave'] = stats['qpearned']/stats['totallevels']
     end
-    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), SUM(tier), AVG(tier), SUM(mccp), AVG(mccp), SUM(lucky), AVG(qp), AVG(lucky), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*), AVG(qp + mccp + lucky + tier) FROM quests where failed = 0") do
+    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), SUM(tier), AVG(tier), SUM(mccp), AVG(mccp), SUM(lucky), AVG(qp), AVG(lucky), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*), AVG(qp + mccp + lucky + tier), SUM(gold), AVG(gold) FROM quests where failed = 0") do
       stats['avetime'] = a[1]
       stats['qp'] = a[2]
       stats['tier'] = a[3]
@@ -262,6 +263,8 @@ function build_quest_window()
       stats['pracsave'] = a[15]
       stats['qindb'] = a[16]
       stats['dboverallave'] = a[17]
+      stats['gold'] = a[18]
+      stats['avegold'] = a[19]
     end
     if stats['qindb'] > 0 then
       for a in db.db:rows("SELECT COUNT(*) FROM quests where failed != 0") do
@@ -301,8 +304,11 @@ function build_quest_window()
       local linestyles = format_row("Tier",
           stats['tier'],
           string.format("%.3f", stats['avetier']) .. '/quest')
-      table.insert(allstyles, linestyles)
       local linestyles = format_row("QP Per Quest", "", string.format("%.3f", stats['dboverallave']) .. '/quest')
+      table.insert(allstyles, linestyles)
+      local linestyles = format_row("Gold",
+          ReadableNumber(stats['gold'], 2),
+          string.format("%d", stats['avegold']) .. '/quest')          
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Time", "", convert_time(stats['avetime']))
       table.insert(allstyles, linestyles)
@@ -349,7 +355,7 @@ function build_cp_window()
       stats['campaignsfld'] = a[2]
       stats['totallevels'] = a[3]
     end
-    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), AVG(qp), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*) FROM campaigns where failed = 0") do
+    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), AVG(qp), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*), SUM(gold), AVG(gold) FROM campaigns where failed = 0") do
       stats['avetime'] = a[1]
       stats['qp'] = a[2]
       stats['qpcpave'] = a[3]
@@ -360,6 +366,8 @@ function build_cp_window()
       stats['pracs'] = a[8]
       stats['pracsave'] = a[9]
       stats['cindb'] = a[10]
+      stats['gold'] = a[11]
+      stats['avegold'] = a[12]
     end
 
     for a in db.db:rows("SELECT COUNT(*) FROM campaigns where failed != 0") do
@@ -389,6 +397,10 @@ function build_cp_window()
       table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("CP QP", stats['qp'], string.format("%.3f", stats['qpcpave']) .. '/CP')
       table.insert(allstyles, linestyles)
+      local linestyles = format_row("Gold",
+          ReadableNumber(stats['gold'], 2),
+          string.format("%d", stats['avegold']) .. '/CP')          
+      table.insert(allstyles, linestyles)      
       local linestyles = format_row("Time", "", convert_time(stats['avetime']))
       table.insert(allstyles, linestyles)
 
@@ -435,7 +447,7 @@ function build_gq_window()
       stats['gquestswon'] = a[1]
     end
     stats['won'] = {}
-    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), AVG(qp), SUM(qpmobs), AVG(qpmobs), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*) FROM gquests where won = 1") do
+    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), AVG(qp), SUM(qpmobs), AVG(qpmobs), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*), SUM(gold), AVG(gold) FROM gquests where won = 1") do
       stats['won']['avetime'] = a[1]
       stats['won']['qp'] = a[2]
       stats['won']['qpave'] = a[3]
@@ -448,6 +460,8 @@ function build_gq_window()
       stats['won']['pracs'] = a[10]
       stats['won']['pracsave'] = a[11]
       stats['won']['indb'] = a[12]
+      stats['won']['gold'] = a[13]
+      stats['won']['avegold'] = a[14]
     end
     stats['lost'] = {}
     for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qpmobs), AVG(qpmobs), COUNT(*) FROM gquests where won != 1") do
@@ -491,6 +505,10 @@ function build_gq_window()
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Time", "", convert_time(stats['won']['avetime'] or 0))
       table.insert(allstyles, linestyles)
+      local linestyles = format_row("Gold",
+          ReadableNumber(stats['won']['gold'], 2),
+          string.format("%d", stats['won']['avegold']) .. '/GQ')          
+      table.insert(allstyles, linestyles)      
       local linestyles = format_row("TP",
           stats['won']['tp'] or 0,
           string.format("%.3f", stats['won']['tpave'] or 0) .. '/GQ')
