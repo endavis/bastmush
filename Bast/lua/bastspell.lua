@@ -1,4 +1,4 @@
--- $Id: aardutils.lua 845 2010-09-28 15:47:29Z endavis $
+-- $Id$
 --[[
 http://code.google.com/p/bastmush
  - Documentation and examples
