@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: miniwin_example.xml 879 2010-11-14 18:53:45Z endavis $ -->
+<!-- $Id$ -->
 
 <muclient>
 <plugin
@@ -22,7 +22,7 @@
 
 <script>
 <![CDATA[
-internalrevision = "$Rev: 879 $"
+internalrevision = "$Rev$"
 
 dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
 
