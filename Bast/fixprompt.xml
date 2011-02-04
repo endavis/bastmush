@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="fix"
+   author="Bast"
+   id="aaa6d1fa021c1b55534ef093"
+   language="Lua"
+   purpose="fix things so my plugins work, currently fixes the prompt"
+   date_written="2008-07-22"
+   requires="4.52"
+   version="6.0"
+   save_state="y"
+   >
+<description trim="y">
+<![CDATA[
+
+]]>
+</description>
+
+</plugin>
+
+<triggers>
+  <trigger
+   enabled="n"
+   regexp="y"
+   match="Your game prompt is  : (?&lt;prompt&gt;.*)"
+   sequence="100"
+   name="rprompt"
+   send_to="10"
+   script="prompt"
+   group="prompt"
+  >
+  </trigger>
+  
+  <trigger
+   enabled="n"
+   regexp="y"
+   match="Your battle prompt is: (?&lt;prompt&gt;.*)"
+   sequence="100"
+   send_to="10"
+   name="bprompt"
+   script="prompt"
+   group="prompt"
+  >
+  </trigger>
+  
+</triggers>
+
+<!--  Script  -->
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "commas"
+require 'var'
+require 'tprint'
+require 'pluginhelper'
+require 'ldplugin'
+require 'verify'
+
+rprompt = ""
+bprompt = ""
+
+stats = nil
+
+function cmd_checkprompt()
+  if not stats then
+    print('I could not determine you status')
+    return
+  end
+  
+  if stats and stats.status and stats.status.state and not
+         (tonumber(stats.status.state) == 3 or 
+         tonumber(stats.status.state) == 9 or
+         tonumber(stats.status.state) == 11) then
+    print('You are not active or resting or sleeping')
+  else
+    phelper:enabletriggroup('prompt', true)
+    SendNoEcho('config')
+  end
+end
+
+function pcheck(prompt)
+  local tprompt = prompt
+  local c = tprompt:sub(#tprompt - 1,#tprompt)
+
+  if c ~= "%c" then
+     return false
+  end
+  return true
+end
+
+function prompt (name, line, wildcards)
+  if name == 'rprompt' then
+    rprompt = wildcards.prompt
+  elseif name == 'bprompt' then
+    bprompt = wildcards.prompt
+
+    phelper:enabletriggroup('prompt', false)
+
+    --print('prompt =', rprompt)
+    --print('bprompt =', bprompt)
+    
+    if not pcheck(rprompt) then
+      DoAfterSpecial(1, "SendNoEcho('prompt " .. rprompt .. "%c')", 12)
+    else
+      DoAfterSpecial(1, "print('Your regular prompt is fine')", 12)
+    end
+    if not pcheck(bprompt) then
+      DoAfterSpecial(1, "SendNoEcho('bprompt " .. bprompt .. "%c')", 12)
+    else
+      DoAfterSpecial(1, "print('Your battle prompt is fine')", 12)
+    end
+  end
+  
+end
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
+      stats = assert (loadstring ('return ' .. gmcparg or ""))()
+    end
+  end
+
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
+
+  phelper:OnPluginEnable()
+
+  if IsConnected() then
+    res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+    stats = assert (loadstring ('return ' .. gmcparg or ""))()
+  end
+
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'fix')
+phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:add_cmd('prompt', {func=cmd_checkprompt, help="check if your prompt has a %c at the end"})
+
+phelper:enable()
+
+]]>
+
+</script>
+
+</muclient>
