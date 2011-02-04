@@ -47,3 +47,21 @@ function capitalize (s)
   return string.sub (s, 1, 1):upper () .. string.sub (s, 2):lower ()
 end -- capitalize
 
+function ReadableNumber(num, places)
+    local ret
+    local placeValue = ("%%.%df"):format(places or 0)
+    if not num then
+        return 0
+    elseif num >= 1000000000000 then
+        ret = placeValue:format(num / 1000000000000) .. " T" -- trillion
+    elseif num >= 1000000000 then
+        ret = placeValue:format(num / 1000000000) .. " B" -- billion
+    elseif num >= 1000000 then
+        ret = placeValue:format(num / 1000000) .. " M" -- million
+    elseif num >= 1000 then
+        ret = placeValue:format(num / 1000) .. " K" -- thousand
+    else
+        ret = num -- hundreds
+    end
+    return ret
+end
