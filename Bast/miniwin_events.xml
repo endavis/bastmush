@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- $Id: miniwin_cp.xml 1082 2011-01-29 00:31:37Z endavis $ -->
+<!-- $Id$ -->
 <muclient>
 <plugin
    name="miniwin_events"
@@ -35,7 +35,7 @@
 <!--  Script  -->
 <script>
 <![CDATA[
-internalrevision = "$Rev: 963 $"
+internalrevision = "$Rev$"
 
 dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
 
