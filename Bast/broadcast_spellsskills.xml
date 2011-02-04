@@ -32,7 +32,7 @@ change only to broadcast affected when get a stag
  <trigger
    enabled="y"
    regexp="y"
-   match="{spellheaders\s*(.*)\s*noprompt}"
+   match="^{spellheaders\s*(.*)\s*noprompt}$"
    script="spellheaders_redirect"
    omit_from_output="y"
    name="start_spellheaders"
@@ -54,7 +54,7 @@ change only to broadcast affected when get a stag
   <trigger
    enabled="y"
    regexp="y"   
-   match="{recoveries\s*(.*)\s*noprompt}"
+   match="^{recoveries\s*(.*)\s*noprompt}$"
    script="recoveries_redirect"
    omit_from_output="y"
    name="start_recoveries"
