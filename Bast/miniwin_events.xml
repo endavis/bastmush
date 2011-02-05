@@ -54,10 +54,10 @@ cpmobs = {}
 cptimer = {}
 level = nil
 curlevel = nil
-showwin = false
+showcpwin = false
 
 function set_show()
-  showwin = true
+  showcpwin = true
 end
 
 quest_text = {}
@@ -164,9 +164,9 @@ function show_cp_text ()
   eventwin:enable()
   eventwin:addtab('CP', texttable, header)
   eventwin:settabnametext('CP', ": " .. #cpmobs)    
-  if showwin then
+  if showcpwin then
     eventwin:show(true)
-    showwin = false
+    showcpwin = false
     eventwin:changetotab('CP')
   end
       
