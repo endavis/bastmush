@@ -65,10 +65,10 @@ cpmobs = {}
 cptimer = {}
 level = nil
 curlevel = nil
-showwin = false
+showcpwin = false
 
 function set_show()
-  showwin = true
+  showcpwin = true
 end
 
 function show_cp_text ()
@@ -116,9 +116,9 @@ function show_cp_text ()
 
   cpwin:enable()
   cpwin:addtab('default', texttable, header, true)
-  if showwin then
+  if showcpwin then
     cpwin:show(true)
-    showwin = false
+    showcpwin = false
   end
   --cpwin:changetotab('default')
 
