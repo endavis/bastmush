@@ -818,6 +818,31 @@ function Statdb:getlearnedskills()
   return spells  
 end
 
+function Statdb:getnotlearnedskills()
+  self:checkskillstable()  
+  local spells = {}
+  if self:open() then
+    for a in self.db:nrows("SELECT * FROM skills WHERE percent == 0") do
+      spells[a.sn] = a
+    end
+    self:close()
+  end  
+  return spells  
+end
+
+function Statdb:getnotpracticedskills()
+  self:checkskillstable()  
+  local spells = {}
+  if self:open() then
+    for a in self.db:nrows("SELECT * FROM skills WHERE percent == 1") do
+      spells[a.sn] = a
+    end
+    self:close()
+  end  
+  return spells  
+end
+
+
 function Statdb:getcombatskills()
   self:checkskillstable()  
   local spells = {}

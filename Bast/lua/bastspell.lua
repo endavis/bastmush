@@ -85,6 +85,10 @@ function load_spells(stype, client)
     tspell = db:getlearnedskills()    
   elseif stype == 'combat' then
     tspell = db:getcombatskills()
+  elseif stype == 'notpracticed' then
+    tspell = db:getnotpracticedskills()
+  elseif stype == 'notlearned' then
+    tspell = db:getnotlearnedskills()    
   elseif stype == 'affected' then
     if GetPluginInfo("aaa72f3b5453567e2bba9d50", 17) then
       local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "get_spells", stype)
