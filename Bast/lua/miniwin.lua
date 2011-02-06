@@ -457,8 +457,9 @@ function Miniwin:removetab(tabname)
     end
   end
   self.tabs[tabname] = nil
-  if tabname == self.activetab then
-    self:changetotab(self.tablist[1].tabname)
+  if tabname == self.activetab.tabname then
+    self:changetotab(self.tablist[1])
+    self:redraw()
   else
     self:resettabs()
   end
