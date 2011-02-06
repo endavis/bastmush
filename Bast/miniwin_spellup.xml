@@ -327,9 +327,9 @@ function build_windows(override)
       else
         if v.disabled then
           selfstuff['disabled'][v.sn] = spells['all'][v.sn]
-        elseif spells['learned'][tonumber(v.sn)] == nil and spells['all'][tonumber(v.sn)].percent == 1 then
-          selfstuff['noprac'][v.sn] = spells['all'][v.sn]
-        elseif spells['learned'][tonumber(v.sn)] == nil and spells['all'][tonumber(v.sn)].percent == 0 then
+        elseif spells['notpracticed'][v.sn] then
+          selfstuff['noprac'][tonumber(v.sn)] = spells['all'][v.sn]
+        elseif spells['notlearned'][tonumber(v.sn)] then
           selfstuff['nolearn'][v.sn] = spells['all'][v.sn]
         else
           if v.blockers then
@@ -351,10 +351,10 @@ function build_windows(override)
       local text = spells['all'][tonumber(v.sn)].name
       if v.disabled then
         otherstuff['disabled'][v.sn] = spells['all'][v.sn]
-      elseif spells['learned'][tonumber(v.sn)] == nil and spells['all'][tonumber(v.sn)].percent == 1 then
-        otherstuff['noprac'][v.sn] = spells['all'][v.sn]
-      elseif spells['learned'][tonumber(v.sn)] == nil and spells['all'][tonumber(v.sn)].percent == 0 then
-        otherstuff['nolearn'][v.sn] = spells['all'][v.sn]
+        elseif spells['notpracticed'][v.sn] then
+          otherstuff['noprac'][tonumber(v.sn)] = spells['all'][v.sn]
+        elseif spells['notlearned'][tonumber(v.sn)] then
+          otherstuff['nolearn'][v.sn] = spells['all'][v.sn]
       end -- disabled
     end -- for
 
@@ -1068,6 +1068,8 @@ function OnPluginBroadcast (msg, id, name, text)
       
     elseif msg == 8 then  
       load_spells('learned')
+      load_spells('notlearned')
+      load_spells('notpracticed')
       build_windows()
       
     elseif msg == 9 then  
@@ -1127,6 +1129,8 @@ function OnPluginEnable ()
     load_spells("affected")
     load_spells("spellup", true)
     load_spells("learned")
+    load_spells('notlearned')
+    load_spells('notpracticed')    
     load_recoveries("all")
     load_recoveries("affected")
     build_windows()

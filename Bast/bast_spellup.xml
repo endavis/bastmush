@@ -345,9 +345,9 @@ function cmd_slist(cmddict)
     local disabled = "   "
     local blocked = "   "
     local pending = "   "
-    if v.percent == 1 then
+    if spells['notpracticed'][tonumber(v.sn)] then
       noprac = " NP "  
-    elseif v.percent == 0 then
+    elseif spells['notlearned'][tonumber(v.sn)] then
       nolearn = " NL "
     end
     if j.disabled then
@@ -796,9 +796,9 @@ function cmd_olist(cmddict)
     local disabled = "   "
     local blocked = "   "
     local pending = "   "
-    if v.percent == 1 then
+    if spells['notpracticed'][tonumber(v.sn)] then
       noprac = " NP "  
-    elseif v.percent == 0 then
+    elseif spells['notlearned'][tonumber(v.sn)] then
       nolearn = " NL "
     end
     if j.disabled then
@@ -1062,6 +1062,8 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 8 then          
       -- learned spells
       load_spells('learned')
+      load_spells('notlearned')
+      load_spells('notpracticed')      
       noneed = false
       nextspellup('learned change')
       
@@ -1126,6 +1128,8 @@ function OnPluginEnable ()
     load_spells("affected")
     load_spells("spellup", true)
     load_spells("learned")
+    load_spells("notpracticed")
+    load_spells("notlearned")
     --print('loading recoveries in enable')
     load_recoveries("all")
     load_recoveries("affected")
