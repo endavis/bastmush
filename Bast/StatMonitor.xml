@@ -89,6 +89,74 @@ function DisplayInfo( info )
   ColourNote( "", "", "" )
 end
 
+function formatpup()
+  local starttime = 0
+  local finishtime = 0
+  local mobskilled = 0
+  local mobsavexp = 0
+  local pvar = GetPluginVariable(  "aaa0ab9ed92f8fc614664bd1" , "levelinfo")
+
+  --get the mob info
+  loadstring( pvar )()
+  levelgains = levelinfo
+
+  if levelgains.bonustrains and tonumber(levelgains.bonustrains) > 0 then
+    trains = levelgains.trains .. '+' .. levelgains.bonustrains
+  else
+    trains = levelgains.trains
+  end
+  local tmsg = { "Gained a "..levelgains.type..": " }
+  if levelgains.type == "pup" then
+    table.insert( tmsg, trains )
+    table.insert( tmsg, " trains " )
+  end
+  levelstats = ""
+  for i,v in ipairs({"str", "int", "wis", "dex", "con", "luc"}) do
+    if levelgains[v] > 0 then
+      levelstats = levelstats..v.." "
+    end
+  end
+  if levelstats ~= "" then
+    table.insert( tmsg, levelstats )
+    table.insert( tmsg, "bonus " )
+  end
+  local lastrow = db:getlastrow('levels')
+  lastrow = lastrow - 1
+  if db:open() then
+    if db:checkfortable('levels') then
+      for a in db.db:rows(string.format("SELECT starttime, finishtime FROM levels where level_id = %d;", lastrow)) do
+        starttime = a[1]
+        finishtime = a[2]
+      end
+      if starttime > 0 and finishtime > 0 then
+        length = finishtime - starttime
+        days, hours, mins, secs = SecondsToDHMS(length)
+        table.insert( tmsg, string.format( "%02d", days ) )
+        table.insert( tmsg, "d:" )
+        table.insert( tmsg, string.format( "%02d", hours) )
+        table.insert( tmsg, "h:" )
+        table.insert( tmsg, string.format( "%02d", mins ) )
+        table.insert( tmsg, "m " )
+      end
+      if db:checkfortable('mobkills') then
+        for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where time > %d and time < %d and xp > 0", starttime, finishtime)) do
+          mobskilled = a[1]
+          mobsavexp = a[2]
+        end
+        if mobskilled ~= nil and mobsavexp ~= nil then
+          table.insert( tmsg, mobskilled )
+          table.insert( tmsg, " mobs killed (" )
+          table.insert( tmsg, string.format( "%02.02f", mobsavexp ) )
+          table.insert( tmsg, "xp/mob)" )
+        end
+      end
+      db:close()
+    end
+  end
+  DisplayInfo( tmsg )
+
+end
+
 function formatlevel()
   local starttime = 0
   local finishtime = 0
@@ -146,10 +214,14 @@ function formatlevel()
         if starttime > 0 and finishtime > 0 then
           length = finishtime - starttime
           days, hours, mins, secs = SecondsToDHMS(length)
-          table.insert( tmsg, string.format( "%02d", days ) )
-          table.insert( tmsg, "d:" )
-          table.insert( tmsg, string.format( "%02d", hours) )
-          table.insert( tmsg, "h:" )
+          if days > 0 then
+            table.insert( tmsg, string.format( "%02d", days ) )
+            table.insert( tmsg, "d:" )
+          end
+          if hours > 0 then
+            table.insert( tmsg, string.format( "%02d", hours) )
+            table.insert( tmsg, "h:" )
+          end
           table.insert( tmsg, string.format( "%02d", mins ) )
           table.insert( tmsg, "m " )
         end
@@ -460,9 +532,18 @@ end -- cmd_report
 
 function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
-    DoAfterSpecial(.1 , 'formatquest()', 12)
+    DoAfterSpecial(.1 , 'formatquest()', 12)    
   elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
-    DoAfterSpecial(.1, 'formatlevel()', 12)
+    local pvar = GetPluginVariable(  "aaa0ab9ed92f8fc614664bd1", 'levelinfo' )
+
+    -- get the info
+    loadstring( pvar )()
+    local info = levelinfo
+    if info.type == 'level' then
+      DoAfterSpecial(.1, 'formatlevel()', 12)
+    else
+      DoAfterSpecial(.1, 'formatpup()', 12)
+    end      
   elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
     DoAfterSpecial(.1, 'formatcp()', 12)
   elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
