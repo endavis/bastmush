@@ -398,12 +398,14 @@ function cmd_sablocker(cmddict)
       colonplace, _ = string.find(item, ':')
       if colonplace and colonplace > 0 then
         tlist = utils.split(item, ':')
-        sn = tlist[1]
-        blck = tlist[2]
-        local test = add_blocker(sn, blck)
+        local spell = tlist[1]
+        local blck = tlist[2]
+        spell = find_spell(spell)
+        blck = find_spell(blck)
+        local test = add_blocker(spell.sn, blck.sn)
         if test then
           ablocked = true
-          ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tonumber(sn)].name .. " is now blocked by " .. spells['all'][tonumber(blck)].name)
+          ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tonumber(spell.sn)].name .. " is now blocked by " .. spells['all'][tonumber(blck.sn)].name)
         end
       end
     end
