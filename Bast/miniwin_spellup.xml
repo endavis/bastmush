@@ -340,7 +340,7 @@ function build_windows(override)
               end
             end
           end
-          if not spells['affected'][tonumber(v.sn)] and not isblocked and spells['learnedl'][tonumber(v.sn)] then
+          if not spells['affected'][tonumber(v.sn)] and not isblocked and spells['learned'][tonumber(v.sn)] then
             selfstuff['pending'][v.sn] = spells['all'][v.sn]
           end         
         end -- disabled
