@@ -1227,8 +1227,8 @@ function Miniwin:addhotspot(id, left, top, right, bottom, mouseover, cancelmouse
                 hint,
                 cursor or 1, 0)
 
-  if left > self.activetab.build_data.textarea.left and left < self.activetab.build_data.textarea.right and
-        top > self.activetab.build_data.textarea.top and top < self.activetab.build_data.textarea.bottom then
+  if left >= self.activetab.build_data.textarea.left and left <= self.activetab.build_data.textarea.right and
+        top >= self.activetab.build_data.textarea.top and top <= self.activetab.build_data.textarea.bottom then
      table.insert(self.textareahotspots, self.id .. ':' .. id)
      self:addscrollwheelhandler(id, self.wheelmove)
   end
@@ -1647,7 +1647,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
   end
 
   -- figure this out somehow
-  self.activetab.build_data.textarea.top = self.activetab.build_data[self.activetab.build_data.textstartline].linetop + 1
+  self.activetab.build_data.textarea.top = self.activetab.build_data[self.activetab.build_data.textstartline].linetop - 1
   self.activetab.build_data.textarea.bottom = top + 1
 
 end
