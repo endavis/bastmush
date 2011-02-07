@@ -336,7 +336,7 @@ function build_windows(override)
             for blocker, _ in pairs(v.blockers) do
               if not spells['affected'][tonumber(v.sn)] and spells['affected'][blocker] then
                 text = text.." (Blocked)"
-                selfstuff['blocked'][v.sn] = spells['all'][v.sn]
+                selfstuff['blocked'][v.sn] = spells['all'][blocker]
               end
             end
           end
@@ -668,6 +668,8 @@ function build_self()
       style.cellborder = true
       if selfstuff['blocked'][v.sn] then
         style.text = string.format("%-3s", " B ")
+        style.mouseover = empty
+        style.hint = "Blocked by: " .. selfstuff['blocked'][v.sn].name        
       else
         style.text = string.format("%-3s", "   ")
       end
