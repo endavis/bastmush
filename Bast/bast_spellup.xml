@@ -846,13 +846,18 @@ function cmd_sremove(cmddict)
 end
 
 function cmd_sadd(cmddict)
+  tprint(cmddict)
   if #cmddict >= 1 then
     local added = false
     phelper:plugin_header()
     if cmddict[1] == 'all' then
+      if next(phelper.askedself) then
+          ColourNote(RGBColourToName(var.plugin_colour), "black", "You have requested to add all spellups, if you want to use all please remove all requested spellups ")        
+          return
+      end
       phelper.askedself = {}    
       for i,v in pairs(spells['spellup']) do
-        if v.percent > 1 then
+        if spells['learned'][tonumber(v.sn)] then
           ColourNote(RGBColourToName(var.plugin_colour), "black", "Added " .. v.name)
           table.insert(phelper.askedself, {sn=tonumber(i)})          
         end
@@ -1009,6 +1014,7 @@ function OnPluginBroadcast (msg, id, name, text)
           nextspellup('spell fail')            
         end
       elseif tag.reason == 2 then    
+        local tagsn = tonumber(tag.sn)
         if askedself_xref[tonumber(tag.sn)] ~= nil then
           local tagsn = tonumber(tag.sn)
           if tagsn == waiting then
