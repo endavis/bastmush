@@ -130,13 +130,13 @@ function buildmenu(item, menutype)
   menu = strip_colours(spells['all'][item].name) .. "|"
   menu = menu .. "| showskill"
   menu = menu .. "| bspell info"
-  if spells['all'][412] and spells['all'][412].percent > 0 and spells['all'][item].percent > 1 then
+  if spells['all'][412] and spells['all'][412].percent > 0 and spells['learned'][item] then
     menu = menu .. "| disrupt"
   end
   if spellcures[item] then
     menu = menu .. "| >cure"
     for i,v in ipairs(spellcures[item]) do
-      if spells['all'][v] and spells['all'][v].percent > 1 then
+      if spells['all'][v] and spells['learned'][v] then
         menu = menu .. "| with : " .. spells['all'][v].name
       end
     end
@@ -340,7 +340,7 @@ function build_windows(override)
               end
             end
           end
-          if not spells['affected'][tonumber(v.sn)] and not isblocked and spells['all'][tonumber(v.sn)].percent > 1 then
+          if not spells['affected'][tonumber(v.sn)] and not isblocked and spells['learnedl'][tonumber(v.sn)] then
             selfstuff['pending'][v.sn] = spells['all'][v.sn]
           end         
         end -- disabled
