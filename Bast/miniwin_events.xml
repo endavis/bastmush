@@ -247,7 +247,7 @@ function OnPluginBroadcast (msg, id, name, text)
       style.text = ' Quest: Now '
       style.textcolour = eventwin.quest_avail_colour
       style.backcolour = eventwin.quest_avail_bg_colour
-      --questwin.tabcolour = questwin:get_colour(questwin.avail_bg_colour)
+      eventwin.tabcolour = eventwin:get_colour('quest_avail_bg_colour')
       eventwin:tabbroadcast(true, {style})
     elseif msg == 2 then
       -- quest mob info
@@ -274,7 +274,7 @@ function OnPluginBroadcast (msg, id, name, text)
       style.text = ' Event Q:C '
       --style.textcolour = questwin.text_colour
       --style.backcolour = questwin.bg_colour
-      --questwin.tabcolour = questwin.bg_colour
+      eventwin.tabcolour = eventwin.bg_colour
       eventwin:tabbroadcast(true, {style})
     elseif msg == 5 then
       return
