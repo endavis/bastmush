@@ -106,6 +106,7 @@ bad = {}
 spells_filter = ""
 
 status = "Unknown"
+waiting = false
 
 casting = ""
 toremove = ""
@@ -276,6 +277,14 @@ function onotherchange(args)
   build_windows()
 end
 
+function onwaitingchange(args)
+  local targs = assert (loadstring ('return ' .. args or ""))()
+  waiting = targs.waiting
+  if waiting == 'false' then
+    waiting = false
+  end
+  build_windows()
+end
 
 function onstatuschange(args)
   local targs = assert (loadstring ('return ' .. args or ""))()
@@ -515,6 +524,20 @@ function build_summary()
   if tableCountItems(selfstuff['nolearn']) > 0 or tableCountItems(otherstuff['nolearn']) > 0 then
     table.insert(alines, format_requested_line("Not Learned", tableCountItems(selfstuff['nolearn']), 
                                         tableCountItems(otherstuff['nolearn']), "disabledcolour"))
+  end
+
+  if waiting then
+    local style = {}
+    style.text = string.rep("-", 43)
+    table.insert(alines, {style})    
+    
+    local lstyle = {}
+    local style = {}
+    style.text = "Waiting: " .. spells['all'][waiting].name .. " (" .. tostring(waiting) .. ")"
+    style.hjust = 'center'
+    style.textcolour = "statuscolour"
+    table.insert(lstyle, style)
+    table.insert(alines, lstyle)
   end
 
   spellwin:enable()
@@ -1049,6 +1072,7 @@ function fixevents(rtype)
     CallPlugin("aaaf0c555a44169e0f1d9674", action, GetPluginID(), "askedself_change", "onspellschange")   
     CallPlugin("aaaf0c555a44169e0f1d9674", action, GetPluginID(), "askedother_change", "onotherchange")    
     CallPlugin("aaaf0c555a44169e0f1d9674", action, GetPluginID(), "status_change", "onstatuschange")   
+    CallPlugin("aaaf0c555a44169e0f1d9674", action, GetPluginID(), "waiting_change", "onwaitingchange") 
 end
 
 ]]>
