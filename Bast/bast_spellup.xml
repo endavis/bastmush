@@ -368,19 +368,23 @@ function cmd_slist(cmddict)
     elseif spells['notlearned'][tonumber(v.sn)] then
       nolearn = " NL "
     end
-    if j.disabled then
-      disabled = " D "
-    end  
-    if not spells['affected'][tonumber(v.sn)] and not j.disabled and not (v.percent <= 1) then
-      pending = " P "
-    end
     if j.blockers then
       for blocker, _ in pairs(j.blockers) do
         if not spells['affected'][tonumber(v.sn)] and spells['affected'][blocker] then
           blocked = " B "
         end
       end
-     end
+    end
+    local trec = spells['all'][tonumber(j.sn)].recovery
+    if trec and recoveries['affected'][tonumber(trec)] then
+      blocked = " B "
+    end
+    if j.disabled then
+      disabled = " D "
+    end  
+    if not spells['affected'][tonumber(v.sn)] and not j.disabled and not (v.percent <= 1) and blocked == "   " then
+      pending = " P "
+    end
     
     ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-30s", count .. ". " .. v.name),
                "yellow", "black", string.format("%-3s", pending), 
