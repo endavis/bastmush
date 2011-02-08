@@ -324,9 +324,14 @@ function build_windows(override)
     for i, v in ipairs (askedselfcombined) do
       v.name = spells['all'][v.sn].name
       if recoveries['affected'][spells['all'][tonumber(v.sn)].recovery] then
-        v.blockedrecovery = true
+        v.activerecovery = spells['all'][tonumber(v.sn)].recovery
       end
       if not v.disabled then
+        if recoveries['affected'][spells['all'][tonumber(v.sn)].recovery] then
+          if not spells['affected'][tonumber(v.sn)] then
+            v.blockedrecovery = spells['all'][tonumber(v.sn)].recovery
+          end
+        end      
         if v.blockers then
           for blocker, _ in pairs(v.blockers) do
             if not spells['affected'][tonumber(v.sn)] and spells['affected'][blocker] then
@@ -334,7 +339,7 @@ function build_windows(override)
             end
           end
         end
-        if not spells['affected'][tonumber(v.sn)] and not isblocked and spells['learned'][tonumber(v.sn)] then
+        if not spells['affected'][tonumber(v.sn)] and not v.blocked and not v.blockedrecovery and spells['learned'][tonumber(v.sn)] then
           v.pending = true
         end         
       end -- disabled
@@ -416,6 +421,17 @@ function build_summary()
   --print('build_summary')
   local alines = {}
   
+  local selfblocked = tableCountKeys(askedselfcombined, "blocked", nil, true)
+  local selfblockrec = tableCountKeys(askedselfcombined, "blockedrecovery", nil, true)
+  local selfactiverec = tableCountKeys(askedselfcombined, "activerecovery", nil, true)
+  local selfdisabled = tableCountKeys(askedselfcombined, "disabled", true)
+  local selfnoprac = tableCountKeys(askedselfcombined, "noprac", true)
+  local selfnolearn = tableCountKeys(askedselfcombined, "nolearn", true)
+  local selfpending = tableCountKeys(askedselfcombined, "pending", true)
+  local otherdisabled = tableCountKeys(askedothercombined, "disabled", true)
+  local othernoprac = tableCountKeys(askedothercombined, "noprac", true)
+  local othernolearn = tableCountKeys(askedothercombined, "nolearn", true)  
+  
   local style = {}
   style.text = string.rep("-", 43)
   table.insert(alines, {style})
@@ -452,11 +468,12 @@ function build_summary()
   table.insert(lstyle, style)
 
   local style = {}
-  style.text = string.format("%-15s: %3d", "Recoveries", tableCountKeys(askedselfcombined, "blockedrecovery", true))
+  style.text = string.format("%-15s: %3d", "Recoveries", selfactiverec)
   style.textcolour = "askedrecoverycolour"
   style.mouseup = function ()
             spellwin:changetotab('Affected')
          end
+  style.hint = "Recoveries for Self Requested Spellups"
   table.insert(lstyle, style)
   table.insert(alines, lstyle)
 
@@ -487,14 +504,6 @@ function build_summary()
   style.text = string.format("%-15s  %5s %7s %5s" , " ", "Self", " ", "Other")
   table.insert(lstyle, style)  
   table.insert(alines, lstyle)
-
-  local selfblocked = tableCountKeys(askedselfcombined, "blocked", nil, true)
-  local selfdisabled = tableCountKeys(askedselfcombined, "disabled", true)
-  local selfnoprac = tableCountKeys(askedselfcombined, "noprac", true)
-  local selfnolearn = tableCountKeys(askedselfcombined, "nolearn", true)
-  local otherdisabled = tableCountKeys(askedothercombined, "disabled", true)
-  local othernoprac = tableCountKeys(askedothercombined, "noprac", true)
-  local othernolearn = tableCountKeys(askedothercombined, "nolearn", true)
   
   table.insert(alines, format_requested_line("Can Cast", 
                                               #askedself 
@@ -510,11 +519,11 @@ function build_summary()
   table.insert(alines, format_requested_line("Requested", #askedself, 
                                          #askedother, "green"))
 
-  table.insert(alines, format_requested_line("Pending", tableCountKeys(askedselfcombined, "pending", true), 
+  table.insert(alines, format_requested_line("Pending", selfpending, 
                                          " ", "pendingcolour"))
 
-  if selfblocked > 0 then
-    table.insert(alines, format_requested_line("Blocked", selfblocked, 
+ if selfblocked > 0 or selfblockrec > 0 then
+    table.insert(alines, format_requested_line("Blocked", selfblocked + selfblockrec, 
                                          " ", "blockedcolour"))
   end
 
@@ -738,11 +747,15 @@ function build_self()
       local style = {}
       style.textcolour = "blockedcolour"
       style.cellborder = true
-      if v.blocked then
-        print(v.blocked)
+      if v.blocked or v.blockedrecovery then
         style.text = string.format("%-3s", " B ")
         style.mouseover = empty
-        style.hint = "Blocked by: " .. spells['all'][v.blocked].name        
+        if v.blocked then
+          style.hint = "Blocked by: " .. spells['all'][v.blocked].name        
+        else
+          print('blocked recovery', v.blockedrecovery, v.name)
+          style.hint = "Blocked by: Recovery - " .. recoveries['all'][tonumber(v.blockedrecovery)].name        
+        end          
       else
         style.text = string.format("%-3s", "   ")
       end
