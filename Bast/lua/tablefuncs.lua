@@ -31,7 +31,17 @@ tableSort
    a
 
 tableExtend
-    extend a table by adding another table
+  extend a table by adding another table
+
+tableCountItems(ttable)
+  count the items in a table
+
+tableCountKeys(ttable, key, value, tnot)
+  goes through a nested table and counts the tables that have key=value or key ~= value
+    ttable = a nested table
+    key = the key to check
+    value = the value to check
+    tnot = true if count the items that the tablevalue ~= value
 
 --]]
 function tableSort(ttable, sortkey, default, reverse)
@@ -40,6 +50,20 @@ function tableSort(ttable, sortkey, default, reverse)
     if sortkey then
       local akey = ttable[a][sortkey] or default
       local bkey = ttable[b][sortkey] or default
+      if type(akey) == 'boolean' then
+        if akey then
+          akey = 1
+        else
+          akey = 0
+        end
+      end
+      if type(bkey) == 'boolean' then
+        if bkey then
+          bkey = 1
+        else
+          bkey = 0
+        end
+      end
       if reverse then
         return (bkey < akey)
       else
@@ -98,5 +122,17 @@ function tableCountItems(ttable)
       count = count + 1
     end    
   end
+  return count
+end
+
+function tableCountKeys(ttable, key, value, tnot)
+  count = 0
+  for i,v in pairs(ttable) do
+    if tnot and v[key] ~= value then
+      count = count + 1
+    elseif not tnot and v[key] == value then
+      count = count + 1
+    end
+  end  
   return count
 end
