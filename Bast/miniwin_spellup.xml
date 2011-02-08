@@ -103,7 +103,7 @@ spellwin:add_setting("statuscolour", {help="the text colour for the status", typ
 good = {}
 bad = {}
 
-spells_filter = ""
+spells_filter = {stype="spellup", reverse=true, default=0}
 
 status = "Unknown"
 waiting = false
@@ -126,6 +126,8 @@ spellcures[65] = {25, 158}
 spellcures[237] = {238}
 spellcures[29] = {70}
 spellcures[115] = {332}
+
+combined = {}
 
 function buildmenu(item, menutype)
   menu = strip_colours(spells['all'][item].name) .. "|"
@@ -329,6 +331,8 @@ function build_windows(override)
       end -- if
     end
 
+    combined = copytable.deep(spells['all'])
+
     for _, v in ipairs (askedself) do
       local text = spells['all'][tonumber(v.sn)].name
       if recoveries['affected'][spells['all'][tonumber(v.sn)].recovery] then
@@ -360,12 +364,24 @@ function build_windows(override)
       local text = spells['all'][tonumber(v.sn)].name
       if v.disabled then
         otherstuff['disabled'][v.sn] = spells['all'][v.sn]
-        elseif spells['notpracticed'][v.sn] then
-          otherstuff['noprac'][tonumber(v.sn)] = spells['all'][v.sn]
-        elseif spells['notlearned'][tonumber(v.sn)] then
-          otherstuff['nolearn'][v.sn] = spells['all'][v.sn]
+      elseif spells['notpracticed'][v.sn] then
+        otherstuff['noprac'][tonumber(v.sn)] = spells['all'][v.sn]
+      elseif spells['notlearned'][tonumber(v.sn)] then
+        otherstuff['nolearn'][v.sn] = spells['all'][v.sn]
       end -- disabled
     end -- for
+
+    for i,v in pairs(combined) do
+      if askedself_xref[tonumber(v.sn)] then
+        v.askedself = 1
+      end
+      if askedother_xref[tonumber(v.sn)] then
+        v.askedother = 1
+      end
+      if cancastother(v.sn) then
+        v.fastother = 1
+      end
+    end
 
     for i,v in tableSort(windowtabs, "sort") do
       if not spellwin:hastab(i) or override then
@@ -837,6 +853,14 @@ function build_other()
   spellwin:addtab('Other', alines, hlines, false, true)  
 end
 
+function change_filter(stype, default, reverse)
+  if stype == spells_filter.stype then
+    spells_filter.reverse = not spells_filter.reverse
+  else
+    spells_filter = {stype=stype,default=default,reverse=reverse}
+  end
+  build_spells()
+end
 
 function build_spells()
   --print('build_spells')
@@ -845,48 +869,69 @@ function build_spells()
   
   local lstyle = {}
   local style = {}
-  style.text =  string.format("%-31s : ", "SN  - Name") 
+  style.text =  string.format("%-3s : ", "SN") 
   style.textcolour = "green"
+  style.mouseup = function ()
+    change_filter("sn", -1, false)
+  end
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text =  string.format("%-25s : ", "Name") 
+  style.textcolour = "green"
+  style.mouseup = function ()
+    change_filter("name", "", false)
+  end  
   table.insert(lstyle, style)
 
   local style = {}
   style.text =  string.format("%-3s", " R ") 
   style.textcolour = "green"
   style.hint = "Requested"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_filter("askedself", 0, true)
+  end 
   table.insert(lstyle, style)
   
   local style = {}
   style.text =  string.format("%-3s", " S ") 
   style.textcolour = "yellow"
   style.hint = "Mud Spellup"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_filter("spellup", 0, true)
+  end
   table.insert(lstyle, style)  
 
   local style = {}
   style.text =  string.format("%-3s", " C ") 
   style.textcolour = "yellow"
   style.hint = "Clientside Spellup"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_filter("clientspellup", 0, true)
+  end
   table.insert(lstyle, style)  
 
   local style = {}
   style.text =  string.format("%-4s", " RO ") 
   style.textcolour = "orange"
   style.hint = "Requested for Casting on Others"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_filter("askedother", 0, true)
+  end
   table.insert(lstyle, style)
 
   local style = {}
   style.text =  string.format("%-4s", " FO ") 
   style.textcolour = "orange"
   style.hint = "Casted on others if 'fast' is used"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_filter("fastother", 0, true)
+  end 
   table.insert(lstyle, style)
 
   table.insert(hlines, lstyle)
   table.insert(hlines, {{text = string.rep("-", 51), textcolour = "white"}})    
-  for i,v in tableSort(spells['all'], "spellup", 0, true) do
+  for i,v in tableSort(combined, spells_filter.stype, spells_filter.default, spells_filter.reverse) do
     if v.target == 2 or v.target == 3 then
       local lstyle = {}
       local style = {}
@@ -898,7 +943,7 @@ function build_spells()
       local style = {}
       style.textcolour = "green"
       style.cellborder = true
-      if askedself_xref[v.sn] then
+      if v.askedself then
         style.text = string.format("%-3s", " R ")
         style.mouseup = function ()
             Execute("bspell sremove " .. v.sn)
@@ -952,14 +997,14 @@ function build_spells()
       local style = {}
       style.textcolour = "orange"
       style.cellborder = true
-      if askedother_xref[v.sn] then
+      if v.askedother then
         style.text = string.format("%-4s", " RO ")
         style.mouseup = function ()
           Execute("bspell oremove " .. v.sn)
         end        
       else
         style.text = string.format("%-4s", "   ")
-        if cancastother(v.sn) then
+        if v.fastother then
           style.mouseup = function ()
             Execute("bspell oadd " .. v.sn)
           end        
@@ -970,7 +1015,7 @@ function build_spells()
       local style = {}
       style.textcolour = "orange"
       style.cellborder = true
-      if cancastother(v.sn) and spells['learned'][v.sn] ~= nil then
+      if v.fastother then
         style.text = string.format("%-4s", " FO ")
       else
         style.text = string.format("%-4s", "   ")
