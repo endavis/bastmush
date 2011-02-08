@@ -104,6 +104,8 @@ good = {}
 bad = {}
 
 spells_filter = {stype="spellup", reverse=true, default=0}
+self_filter = nil
+other_filter = nil
 
 status = "Unknown"
 waiting = false
@@ -127,7 +129,7 @@ spellcures[237] = {238}
 spellcures[29] = {70}
 spellcures[115] = {332}
 
-combined = {}
+spellscombined = {}
 
 function buildmenu(item, menutype)
   menu = strip_colours(spells['all'][item].name) .. "|"
@@ -331,47 +333,44 @@ function build_windows(override)
       end -- if
     end
 
-    combined = copytable.deep(spells['all'])
-
-    for _, v in ipairs (askedself) do
-      local text = spells['all'][tonumber(v.sn)].name
+    askedselfcombined = copytable.deep(askedself)    
+    for i, v in ipairs (askedselfcombined) do
+      v.name = spells['all'][v.sn].name
       if recoveries['affected'][spells['all'][tonumber(v.sn)].recovery] then
-        table.insert (selfstuff['trecoveries'], text)
-      else
-        if v.disabled then
-          selfstuff['disabled'][v.sn] = spells['all'][v.sn]
-        elseif spells['notpracticed'][v.sn] then
-          selfstuff['noprac'][tonumber(v.sn)] = spells['all'][v.sn]
-        elseif spells['notlearned'][tonumber(v.sn)] then
-          selfstuff['nolearn'][v.sn] = spells['all'][v.sn]
-        else
-          if v.blockers then
-            for blocker, _ in pairs(v.blockers) do
-              if not spells['affected'][tonumber(v.sn)] and spells['affected'][blocker] then
-                text = text.." (Blocked)"
-                selfstuff['blocked'][v.sn] = spells['all'][blocker]
-              end
+        v.blockedrecovery = true
+      end
+      if not v.disabled then
+        if v.blockers then
+          for blocker, _ in pairs(v.blockers) do
+            if not spells['affected'][tonumber(v.sn)] and spells['affected'][blocker] then
+              v.blocked = spells['all'][blocker].sn
             end
           end
-          if not spells['affected'][tonumber(v.sn)] and not isblocked and spells['learned'][tonumber(v.sn)] then
-            selfstuff['pending'][v.sn] = spells['all'][v.sn]
-          end         
-        end -- disabled
-      end -- if
-    end -- for
-
-    for _, v in ipairs (askedother) do
-      local text = spells['all'][tonumber(v.sn)].name
-      if v.disabled then
-        otherstuff['disabled'][v.sn] = spells['all'][v.sn]
-      elseif spells['notpracticed'][v.sn] then
-        otherstuff['noprac'][tonumber(v.sn)] = spells['all'][v.sn]
-      elseif spells['notlearned'][tonumber(v.sn)] then
-        otherstuff['nolearn'][v.sn] = spells['all'][v.sn]
+        end
+        if not spells['affected'][tonumber(v.sn)] and not isblocked and spells['learned'][tonumber(v.sn)] then
+          v.pending = true
+        end         
       end -- disabled
+      if spells['notpracticed'][v.sn] then
+        v.noprac = true
+      elseif spells['notlearned'][tonumber(v.sn)] then
+        v.nolearn = true
+      end
     end -- for
 
-    for i,v in pairs(combined) do
+    askedothercombined = copytable.deep(askedother)    
+    for _, v in ipairs (askedothercombined) do
+      v.name = spells['all'][tonumber(v.sn)].name
+      if spells['notpracticed'][v.sn] then
+        v.noprac = true
+      end
+      if spells['notlearned'][tonumber(v.sn)] then
+        v.nolearn = true
+      end
+    end -- for
+
+    spellscombined = copytable.deep(spells['all'])
+    for i,v in pairs(spellscombined) do
       if askedself_xref[tonumber(v.sn)] then
         v.askedself = 1
       end
@@ -501,45 +500,48 @@ function build_summary()
   style.text = string.format("%-15s  %5s %7s %5s" , " ", "Self", " ", "Other")
   table.insert(lstyle, style)  
   table.insert(alines, lstyle)
+
+  local selfblocked = tableCountKeys(askedselfcombined, "blocked", nil, true)
+  local selfdisabled = tableCountKeys(askedselfcombined, "disabled", true)
+  local selfnoprac = tableCountKeys(askedselfcombined, "noprac", true)
+  local selfnolearn = tableCountKeys(askedselfcombined, "nolearn", true)
+  local otherdisabled = tableCountKeys(askedothercombined, "disabled", true)
+  local othernoprac = tableCountKeys(askedothercombined, "noprac", true)
+  local othernolearn = tableCountKeys(askedothercombined, "nolearn", true)
   
   table.insert(alines, format_requested_line("Can Cast", 
                                               #askedself 
-                                                - tableCountItems(selfstuff['noprac']) 
-                                                - tableCountItems(selfstuff['nolearn']) 
-                                                - tableCountItems(selfstuff['disabled']), 
+                                                - selfnoprac 
+                                                - selfnolearn
+                                                - selfdisabled, 
                                               #askedother 
-                                                - tableCountItems(otherstuff['noprac'])
-                                                - tableCountItems(otherstuff['nolearn']) 
-                                                - tableCountItems(otherstuff['disabled']), 
+                                                - othernoprac
+                                                - othernolearn
+                                                - otherdisabled, 
                                               "lime"))
 
   table.insert(alines, format_requested_line("Requested", #askedself, 
                                          #askedother, "green"))
 
-  table.insert(alines, format_requested_line("Pending", tableCountItems(selfstuff['pending']), 
+  table.insert(alines, format_requested_line("Pending", tableCountKeys(askedselfcombined, "pending", true), 
                                          " ", "pendingcolour"))
 
-  if tableCountItems(selfstuff['blocked']) > 0 then
-    table.insert(alines, format_requested_line("Blocked", tableCountItems(selfstuff['blocked']), 
+  if selfblocked > 0 then
+    table.insert(alines, format_requested_line("Blocked", selfblocked, 
                                          " ", "blockedcolour"))
   end
 
-  -- add an or for otherdisabled > 0
-  if tableCountItems(selfstuff['disabled']) > 0 or tableCountItems(otherstuff['disabled']) > 0 then
-    table.insert(alines, format_requested_line("Disabled", tableCountItems(selfstuff['disabled']), 
-                                         tableCountItems(otherstuff['disabled']), "disabledcolour"))
+  if selfdisabled > 0 or otherdisabled > 0 then
+    table.insert(alines, format_requested_line("Disabled", selfdisabled, 
+                                         otherdisabled, "disabledcolour"))
   end
 
-  -- add an or for othernoprac > 0
-  if tableCountItems(selfstuff['noprac']) > 0 or tableCountItems(otherstuff['noprac']) > 0 then
-    table.insert(alines, format_requested_line("Not Practiced", tableCountItems(selfstuff['noprac']), 
-                                         tableCountItems(otherstuff['noprac']), "disabledcolour"))
+  if selfnoprac > 0 or othernoprac > 0 then
+    table.insert(alines, format_requested_line("Not Practiced", selfnoprac, othernoprac, "disabledcolour"))
   end
 
-  -- add an or for othernolearn > 0
-  if tableCountItems(selfstuff['nolearn']) > 0 or tableCountItems(otherstuff['nolearn']) > 0 then
-    table.insert(alines, format_requested_line("Not Learned", tableCountItems(selfstuff['nolearn']), 
-                                        tableCountItems(otherstuff['nolearn']), "disabledcolour"))
+  if selfnolearn > 0 or othernolearn > 0 then
+    table.insert(alines, format_requested_line("Not Learned", selfnolearn, othernolearn, "disabledcolour"))
   end
 
   if waiting then
@@ -626,6 +628,21 @@ function build_affected()
   spellwin:addtab('Affected', alines, nil, false, true)  
 end
 
+function change_self_filter(stype, default, reverse)
+  if self_filter == nil then
+    self_filter = {}
+  end
+  if stype == "requested" then
+    stype = nil
+  end
+  if stype == self_filter.stype then
+    self_filter.reverse = not self_filter.reverse
+  else
+    self_filter = {stype=stype,default=default,reverse=reverse}
+  end
+  build_self()
+end
+
 function build_self()
   --print('build_self')
 
@@ -640,54 +657,83 @@ function build_self()
   
   local lstyle = {}
   local style = {}
-  style.text =  string.format("%-31s : ", "#   - Name") 
+  style.text =  string.format("%-3s - ", "#") 
   style.textcolour = "green"
+  style.mouseup = function ()
+    change_self_filter("requested", false, false)
+  end    
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text =  string.format("%-25s : ", "Name") 
+  style.textcolour = "green"
+  style.mouseup = function ()
+    change_self_filter("name", "", false)
+  end    
   table.insert(lstyle, style)
 
   local style = {}
   style.text =  string.format("%-3s", " P ") 
   style.textcolour = "pendingcolour"
   style.hint = "Pending"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_self_filter("pending", false, true)
+  end
   table.insert(lstyle, style)
 
   local style = {}
   style.text =  string.format("%-3s", " B ") 
   style.textcolour = "blockedcolour"
   style.hint = "Blocked"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_self_filter("blocked", false, true)
+  end  
   table.insert(lstyle, style)
 
   local style = {}
   style.text =  string.format("%-3s", " D ") 
   style.textcolour = "disabledcolour"
   style.hint = "Disabled"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_self_filter("disabled", false, true)
+  end  
   table.insert(lstyle, style)
 
   local style = {}
   style.text =  string.format("%-4s", " NP ") 
   style.textcolour = "disabledcolour"
   style.hint = "Not Practiced"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_self_filter("noprac", false, true)
+  end  
   table.insert(lstyle, style)
 
   local style = {}
   style.text =  string.format("%-4s", " NL ") 
   style.hint = "Not Learned"
   style.textcolour = "disabledcolour"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_self_filter("nolearn", false, true)
+  end  
   table.insert(lstyle, style)
 
   table.insert(hlines, lstyle)
   table.insert(hlines, {{text = string.rep("-", 51), textcolour = "white"}})   
-  if #askedself == 0 then
+  if #askedselfcombined == 0 then
     table.insert(alines, {{text = 'None', hjust='center', textcolour='white'}})
   else
-    for i,v in ipairs(askedself) do
+    local stype = nil
+    local sdef = nil
+    local srev = nil
+    if self_filter ~= nil then
+      stype = self_filter.stype
+      sdef = self_filter.default
+      srev = self_filter.reverse
+    end
+    for i,v in tableSort(askedselfcombined, stype, sdef, srev) do
       local lstyle = {}
       local style = {}
-      style.text = string.format("%-3s - %-25s : ", i, spells['all'][v.sn].name)
+      style.text = string.format("%-3s - %-25s : ", i, v.name)
       style.mouseup = menuclick(v.sn, 'self')
       style.textcolour = "green"
       table.insert(lstyle, style)  
@@ -695,7 +741,7 @@ function build_self()
       local style = {}
       style.textcolour = "pendingcolour"
       style.cellborder = true
-      if selfstuff['pending'][v.sn] then
+      if v.pending then
         style.text = string.format("%-3s", " P ")
       else
         style.text = string.format("%-3s", "   ")
@@ -705,10 +751,11 @@ function build_self()
       local style = {}
       style.textcolour = "blockedcolour"
       style.cellborder = true
-      if selfstuff['blocked'][v.sn] then
+      if v.blocked then
+        print(v.blocked)
         style.text = string.format("%-3s", " B ")
         style.mouseover = empty
-        style.hint = "Blocked by: " .. selfstuff['blocked'][v.sn].name        
+        style.hint = "Blocked by: " .. spells['all'][v.blocked].name        
       else
         style.text = string.format("%-3s", "   ")
       end
@@ -717,7 +764,7 @@ function build_self()
       local style = {}
       style.textcolour = "disabledcolour"
       style.cellborder = true
-      if selfstuff['disabled'][v.sn] then
+      if v.disabled then
         style.text = string.format("%-3s", " D ")
         style.mouseup = function ()
               Execute("bspell senable " .. v.sn)
@@ -733,7 +780,7 @@ function build_self()
       local style = {}
       style.textcolour = "disabledcolour"
       style.cellborder = true
-      if selfstuff['noprac'][v.sn] then
+      if v.noprac then
         style.text = string.format("%-4s", " NP ")
       else
         style.text = string.format("%-4s", "    ")
@@ -743,7 +790,7 @@ function build_self()
       local style = {}
       style.textcolour = "disabledcolour"
       style.cellborder = true
-      if selfstuff['nolearn'][v.sn] then
+      if v.nolearn then
         style.text = string.format("%-4s", " NL ")
       else
         style.text = string.format("%-4s", "    ")
@@ -757,8 +804,23 @@ function build_self()
   spellwin:addtab('Self', alines, hlines, false, true)  
 end
 
+function change_other_filter(stype, default, reverse)
+  if other_filter == nil then
+    other_filter = {}
+  end
+  if stype == "requested" then
+    stype = nil
+  end
+  if stype == other_filter.stype then
+    other_filter.reverse = not other_filter.reverse
+  else
+    other_filter = {stype=stype,default=default,reverse=reverse}
+  end
+  build_other()
+end
+
 function build_other()
-  --print('build_self')
+  --print('build_other')
 
   local hlines = {}
   local alines = {}   
@@ -771,38 +833,63 @@ function build_other()
   
   local lstyle = {}
   local style = {}
-  style.text =  string.format("%-31s : ", "#   - Name") 
+  style.text =  string.format("%-3s - ", "#") 
   style.textcolour = "green"
+  style.mouseup = function ()
+    change_other_filter("requested", false, false)
+  end    
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text =  string.format("%-25s : ", "Name") 
+  style.textcolour = "green"
+  style.mouseup = function ()
+    change_other_filter("name", "", false)
+  end    
   table.insert(lstyle, style)
 
   local style = {}
   style.text =  string.format("%-3s", " D ") 
   style.textcolour = "disabledcolour"
   style.hint = "Disabled"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_other_filter("disabled", false, true)
+  end  
   table.insert(lstyle, style)
 
   local style = {}
   style.text =  string.format("%-4s", " NP ") 
   style.textcolour = "disabledcolour"
   style.hint = "Not Practiced"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_other_filter("noprac", false, true)
+  end  
   table.insert(lstyle, style)
 
   local style = {}
   style.text =  string.format("%-4s", " NL ") 
   style.hint = "Not Learned"
   style.textcolour = "disabledcolour"
-  style.mouseover = nofunc
+  style.mouseup = function ()
+    change_other_filter("nolearn", false, true)
+  end  
   table.insert(lstyle, style)
 
   table.insert(hlines, lstyle)
   table.insert(hlines, {{text = string.rep("-", 51), textcolour = "white"}})   
 
-  if #askedother == 0 then
+  if #askedothercombined == 0 then
     table.insert(alines, {{text = 'None', hjust='center', textcolour='white'}})
   else
-    for i,v in ipairs(askedother) do
+    local stype = nil
+    local sdef = nil
+    local srev = nil
+    if other_filter ~= nil then
+      stype = other_filter.stype
+      sdef = other_filter.default
+      srev = other_filter.reverse
+    end
+    for i,v in tableSort(askedothercombined, stype, sdef, srev) do
       local lstyle = {}
       local style = {}
       style.text = string.format("%-3s - %-25s : ", i, spells['all'][v.sn].name)
@@ -813,7 +900,7 @@ function build_other()
       local style = {}
       style.textcolour = "disabledcolour"
       style.cellborder = true
-      if otherstuff['disabled'][v.sn] then
+      if v.disabled then
         style.text = string.format("%-3s", " D ")
         style.mouseup = function ()
               Execute("bspell oenable " .. v.sn)
@@ -829,7 +916,7 @@ function build_other()
       local style = {}
       style.textcolour = "disabledcolour"
       style.cellborder = true
-      if otherstuff['noprac'][v.sn] then
+      if v.noprac then
         style.text = string.format("%-4s", " NP ")
       else
         style.text = string.format("%-4s", "    ")
@@ -839,7 +926,7 @@ function build_other()
       local style = {}
       style.textcolour = "disabledcolour"
       style.cellborder = true
-      if otherstuff['nolearn'][v.sn] then
+      if v.nolearn then
         style.text = string.format("%-4s", " NL ")
       else
         style.text = string.format("%-4s", "    ")
@@ -853,7 +940,7 @@ function build_other()
   spellwin:addtab('Other', alines, hlines, false, true)  
 end
 
-function change_filter(stype, default, reverse)
+function change_spells_filter(stype, default, reverse)
   if stype == spells_filter.stype then
     spells_filter.reverse = not spells_filter.reverse
   else
@@ -869,10 +956,10 @@ function build_spells()
   
   local lstyle = {}
   local style = {}
-  style.text =  string.format("%-3s : ", "SN") 
+  style.text =  string.format("%-3s - ", "SN") 
   style.textcolour = "green"
   style.mouseup = function ()
-    change_filter("sn", -1, false)
+    change_spells_filter("sn", -1, false)
   end
   table.insert(lstyle, style)
 
@@ -880,7 +967,7 @@ function build_spells()
   style.text =  string.format("%-25s : ", "Name") 
   style.textcolour = "green"
   style.mouseup = function ()
-    change_filter("name", "", false)
+    change_spells_filter("name", "", false)
   end  
   table.insert(lstyle, style)
 
@@ -889,7 +976,7 @@ function build_spells()
   style.textcolour = "green"
   style.hint = "Requested"
   style.mouseup = function ()
-    change_filter("askedself", 0, true)
+    change_spells_filter("askedself", 0, true)
   end 
   table.insert(lstyle, style)
   
@@ -898,7 +985,7 @@ function build_spells()
   style.textcolour = "yellow"
   style.hint = "Mud Spellup"
   style.mouseup = function ()
-    change_filter("spellup", 0, true)
+    change_spells_filter("spellup", 0, true)
   end
   table.insert(lstyle, style)  
 
@@ -907,7 +994,7 @@ function build_spells()
   style.textcolour = "yellow"
   style.hint = "Clientside Spellup"
   style.mouseup = function ()
-    change_filter("clientspellup", 0, true)
+    change_spells_filter("clientspellup", 0, true)
   end
   table.insert(lstyle, style)  
 
@@ -916,7 +1003,7 @@ function build_spells()
   style.textcolour = "orange"
   style.hint = "Requested for Casting on Others"
   style.mouseup = function ()
-    change_filter("askedother", 0, true)
+    change_spells_filter("askedother", 0, true)
   end
   table.insert(lstyle, style)
 
@@ -925,13 +1012,13 @@ function build_spells()
   style.textcolour = "orange"
   style.hint = "Casted on others if 'fast' is used"
   style.mouseup = function ()
-    change_filter("fastother", 0, true)
+    change_spells_filter("fastother", 0, true)
   end 
   table.insert(lstyle, style)
 
   table.insert(hlines, lstyle)
   table.insert(hlines, {{text = string.rep("-", 51), textcolour = "white"}})    
-  for i,v in tableSort(combined, spells_filter.stype, spells_filter.default, spells_filter.reverse) do
+  for i,v in tableSort(spellscombined, spells_filter.stype, spells_filter.default, spells_filter.reverse) do
     if v.target == 2 or v.target == 3 then
       local lstyle = {}
       local style = {}
