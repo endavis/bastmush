@@ -115,6 +115,7 @@ nocast = falseq
 nocast_rooms = {}
 current_room = -1
 
+
 function getstatus()
   if phelper.pause then
     return "Paused"
@@ -148,6 +149,20 @@ end
 function event_status_change()
   local status = getstatus()
   phelper:processevent('status_change', {status=status})
+end
+
+function setwaiting(twait)
+  waiting = twait
+  event_waiting_change()
+end
+
+function event_waiting_change()
+  local status = getstatus()
+  local twaiting = {waiting=waiting}
+  if waiting == nil or waiting == false then
+    twaiting = {waiting="false"}
+  end
+  phelper:processevent('waiting_change', twaiting)
 end
 
 function isblocked(sn)
@@ -217,7 +232,7 @@ function remove_blocker(spell, blocker)
 end
 
 function cmd_refresh(cmddict)
-  waiting= false
+  setwaiting(false)
   noneed = false
   SendNoEcho("slist affected noprompt")
   ColourNote(RGBColourToName(var.plugin_colour), "black", "Refreshing affected spells and resetting events")
@@ -260,7 +275,7 @@ function activatespell(sn, fast)
       if cast then
         if not fast then
           --print("setting waiting to", sn)
-          waiting = tonumber(sn)
+          setwaiting(tonumber(sn))
         end    
         if tonumber(spells['all'][sn]['type']) == 1 then
           SendNoEcho('cast ' .. tostring(sn))
@@ -332,6 +347,9 @@ end
 
 function cmd_slist(cmddict)
   phelper:plugin_header("Spells requested (" .. tostring(#phelper.askedself) .. ")")
+  if waiting then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Waiting: " .. spells['all'][waiting].name .. " (" .. waiting .. ")")  
+  end  
   formatheader()
   local tnoprac = {}
   local tgood = {}
@@ -499,8 +517,12 @@ end
 function cmd_export(cmddict)
   local tdict = {}
   local tblock = {}
+  local tdisabled = {}
   for i,v in ipairs(phelper.askedself) do
     table.insert(tdict, tostring(v.sn))
+    if v.disabled then
+      table.insert(tdisabled, tostring(v.sn))
+    end
     if v.blockers then
       for f,u in pairs(v.blockers) do
         table.insert(tblock, tostring(v.sn) .. ':' .. tostring(f))
@@ -511,20 +533,27 @@ function cmd_export(cmddict)
   ColourNote(RGBColourToName(var.plugin_colour), "black", phelper.cmd .. " sadd " .. table.concat(tdict, " "))
   local tstring = ""
   if next(tblock) then
-    local tblock = phelper.cmd .. " sba " .. table.concat(tblock, " ")
-    if tstring == "" then
-      tstring = tblock    
-    else
-      tstring = tstring .. ";" .. tblock
-    end
+    local tblocks = phelper.cmd .. " sba " .. table.concat(tblock, " ")
+    ColourNote(RGBColourToName(var.plugin_colour), "black", tblocks)    
   end
-  ColourNote(RGBColourToName(var.plugin_colour), "black", tstring)
+  if next(tdisabled) then
+    local tdis = phelper.cmd .. " sdisable " .. table.concat(tdisabled, " ")
+    ColourNote(RGBColourToName(var.plugin_colour), "black", tdis)    
+  end
   local tdict = {}
+  local tdisabled = {}
   for i,v in ipairs(phelper.askedother) do
+    if v.disabled then
+      table.insert(tdisabled, tostring(v.sn))    
+    end
     table.insert(tdict, tostring(v.sn))
   end
   ColourNote(RGBColourToName(var.plugin_colour), "black", phelper.cmd .. " oremove all")
   ColourNote(RGBColourToName(var.plugin_colour), "black", phelper.cmd .. " oadd " .. table.concat(tdict, " "))
+  if next(tdisabled) then
+    local tdis = phelper.cmd .. " odisable " .. table.concat(tdisabled, " ")
+    ColourNote(RGBColourToName(var.plugin_colour), "black", tdis)    
+  end
   
 end
 
@@ -729,8 +758,8 @@ function cmd_odisable(cmddict)
         local sn = tonumber(aspell.sn)
         if sn then
           if askedother_xref[sn] ~= nil then
-            phelper.askedother[askedself_xref[sn]].disabled = true
-            ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " disabled")    
+            phelper.askedother[askedother_xref[sn]].disabled = true
+            ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " disabled for casting on others")    
             disabled = true
           else
             ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " not in list")      
@@ -756,8 +785,8 @@ function cmd_oenable(cmddict)
         local sn = tonumber(aspell.sn)
         if sn then
           if askedother_xref[sn] ~= nil then
-            phelper.askedother[askedself_xref[sn]].disabled = false
-            ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " enabled")          
+            phelper.askedother[askedother_xref[sn]].disabled = false
+            ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " enabled for casting on others")          
             enabled = true
           else
             ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " not in list")      
@@ -1012,7 +1041,7 @@ function OnPluginBroadcast (msg, id, name, text)
       local tag = assert (loadstring ('return ' .. text or ""))()
       if tag.reason == 1 then
         if askedself_xref[tonumber(tag.sn)] ~= nil then
-          waiting = false
+          setwaiting(false)
           nextspellup('spell fail')            
         end
       elseif tag.reason == 2 then    
@@ -1023,39 +1052,39 @@ function OnPluginBroadcast (msg, id, name, text)
             phelper.askedself[askedself_xref[tagsn]].disabled = true
             ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because the affect already exists.")
             make_askedself_xrefs()
-            waiting = false
+            setwaiting(false)
             nextspellup('spell fail')            
           end
         end 
       elseif tag.reason == 3 then
-        waiting = false      
+        setwaiting(false      )
         nextspellup('spell fail')          
       elseif tag.reason == 4 then
-        waiting = false
+        setwaiting(false)
         need_mana = true
         event_status_change()
       elseif tag.reason == 5 then
         nocast_rooms[current_room] = true
         nocast = true
-        waiting = false
+        setwaiting(false)
         event_status_change()
       elseif tag.reason == 6 then
-        waiting = false
+        setwaiting(false)
       elseif tag.reason == 8 then
         -- remove from askedself list
       elseif tag.reason == 10 then
-        waiting = false
+        setwaiting(false)
       elseif tag.reason == 11 then
         -- remove from askedself list
         local tagsn = tonumber(tag.sn)
         if tagsn == waiting then        
           ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because it is disabled mudside.")
           phelper.askedself[askedself_xref[tagsn]].disabled = true
-          waiting = false
+          setwaiting(false)
         end
       elseif tag.reason == 12 then
         need_moves = true
-        waiting = false
+        setwaiting(false)
         event_status_change()        
       end
     elseif msg == 7 then          
@@ -1084,7 +1113,7 @@ function OnPluginBroadcast (msg, id, name, text)
       load_spells('affected')
       if waiting then
         if spells['affected'][waiting] then
-          waiting = false
+          setwaiting(false)
         end
       end
       if spells['all'] and recoveries['all'] then
