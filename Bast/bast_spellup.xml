@@ -877,7 +877,6 @@ function cmd_sremove(cmddict)
 end
 
 function cmd_sadd(cmddict)
-  tprint(cmddict)
   if #cmddict >= 1 then
     local added = false
     phelper:plugin_header()
