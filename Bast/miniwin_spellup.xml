@@ -118,9 +118,6 @@ askedself_xref = {}
 askedother = nil
 askedother_xref = {}
 
-selfstuff = {}
-otherstuff = {}
-
 spellcures = {}
 spellcures[6] = {23}
 spellcures[66] = {330, 27, 158}
@@ -314,16 +311,6 @@ function build_windows(override)
 
     good = {}
     bad = {}
-    selfstuff['trecoveries'] = {}
-    selfstuff['disabled'] = {}
-    selfstuff['pending'] = {}
-    selfstuff['blocked'] = {}
-    selfstuff['noprac'] = {}
-    selfstuff['nolearn'] = {}
-
-    otherstuff['disabled'] = {}
-    otherstuff['noprac'] = {}
-    otherstuff['nolearn'] = {}
 
     for k, v in pairs (spells['affected']) do
       if v.target == 1 and spells['spellup'][k] == nil then
@@ -465,7 +452,7 @@ function build_summary()
   table.insert(lstyle, style)
 
   local style = {}
-  style.text = string.format("%-15s: %3d", "Recoveries", #selfstuff['trecoveries'])
+  style.text = string.format("%-15s: %3d", "Recoveries", tableCountKeys(askedselfcombined, "blockedrecovery", true))
   style.textcolour = "askedrecoverycolour"
   style.mouseup = function ()
             spellwin:changetotab('Affected')
@@ -1048,11 +1035,11 @@ function build_spells()
       local style = {}
       style.textcolour = "yellow"
       style.cellborder = true
-      if old_spellup and old_spellup[v.sn] and not spells['spellup'][v.sn] then
-        print('----spellup changed----')
-        print(old_spellup[v.sn].name, 'changed from spellup to no spellup')
-        print('----------------------------')
-      end
+--      if old_spellup and old_spellup[v.sn] and not spells['spellup'][v.sn] then
+--        print('----spellup changed----')
+--        print(old_spellup[v.sn].name, 'changed from spellup to no spellup')
+--        print('----------------------------')
+--      end
       if spells['spellup'][v.sn] and spells['spellup'][v.sn].spellup == 1 then
         style.text = string.format("%-3s", " S ")
       else
