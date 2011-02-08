@@ -99,6 +99,13 @@ function build_quest(showflag)
   table.insert(tstyle, style)
   table.insert (quest_text, tstyle)
   show_quest (showflag)
+  style = {}
+  style.text = " Quest: On "
+  style.textcolour = eventwin.bg_time_colour
+  style.backcolour = eventwin.bg_colour
+  eventwin.tabcolour = eventwin:get_colour(eventwin.bg_colour)
+  eventwin:tabbroadcast(true, {style})
+  
 end
 
 function show_quest (showflag)
@@ -272,8 +279,8 @@ function OnPluginBroadcast (msg, id, name, text)
       show_quest()
       style = {}
       style.text = ' Event Q:C '
-      --style.textcolour = questwin.text_colour
-      --style.backcolour = questwin.bg_colour
+      style.textcolour = eventwin.text_colour
+      style.backcolour = eventwin.bg_colour
       eventwin.tabcolour = eventwin.bg_colour
       eventwin:tabbroadcast(true, {style})
     elseif msg == 5 then
@@ -293,20 +300,19 @@ function OnPluginBroadcast (msg, id, name, text)
       style.len = #style.text
       style.hjust = 'center'
       --style.textcolour = 'time_colour'
-      --winbetweenquest = WindowInfo(questwin.id, 5)
       table.insert(quest_text, {style})
       eventwin:settabnametext('Quest', ": " .. timer.text)       
       --quest_text.backcolour = nil      
       show_quest()
       style = {}
       style.text = ' Events Q:' .. timer.text .. ' '
-      --style.textcolour = questwin.time_colour
-      --style.backcolour = questwin.bg_colour
+      style.textcolour = eventwin.time_colour
+      style.backcolour = eventwin.bg_colour
       tstyle = {style}
-      --questwin.tabcolour = questwin.bg_colour
+      eventwin.tabcolour = eventwin.bg_colour
       eventwin:tabbroadcast(true, tstyle)
     elseif msg == 8 then
-      --questwin:show(winbetweenquest)
+      
     end
 
  elseif id == "aaa66f81c50828bbbfda7100" then
@@ -360,7 +366,15 @@ function OnPluginBroadcast (msg, id, name, text)
       --style.text = " GQ "
       --style.textcolour = "red"
       --gqwin:tabbroadcast(true, {style})
-      show_gq({"GQuest Available"})
+      local style = {}
+      style.text = "GQuest Available"
+      style.backcolour = 'quest_avail_bg_colour'
+      style.textcolour = 'quest_avail_colour'
+      local tstyle = {}
+      table.insert(tstyle, style)
+      tstyle.backcolour = "quest_avail_bg_colour"      
+      tprint(tstyle)
+      show_gq({tstyle})
     elseif msg == 2 then
       -- gquest joined
       show_gq({"GQuest Joined - Waiting"})
