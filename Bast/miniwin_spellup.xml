@@ -147,7 +147,7 @@ function buildmenu(item, menutype)
   if menutype == 'self' or menutype == 'other' then
     menu = menu .. "| Remove"
   end
-  if menutype == 'spellup' and not askedself_xref[item] then
+  if menutype == 'spellup' and not askedself_xref[item] and spells['spellup'][item] then
     menu = menu .. "| Add"
     menu = menu .. "| Add in Position"
   end
