@@ -77,8 +77,8 @@ function Pluginhelper:initialize(args)
   self.aardcmds = {}
   self.links = {}
 
-  self:add_cmd('objects', {func="cmd_objects", help="list objects associated with this plugin"})
-  self:add_cmd('windows', {func="cmd_windows", help="list windows and some info associated with this plugin"})
+  self:add_cmd('objects', {func="cmd_objects", help="list objects associated with this plugin", prio=99})
+  self:add_cmd('windows', {func="cmd_windows", help="list windows and some info associated with this plugin", prio=99})
 
   self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1, longname="Plugin Colour"})
   self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb", longname="Plugin Command"})
@@ -809,12 +809,12 @@ end
 
 function registerevent(pluginid, event, func)
   phelper:mdebug(GetPluginInfo(GetPluginID(), 1), "registered", pluginid, event, func)
-  phelper:addevent(event, {}, func, pluginid)
+  phelper:registerevent(event, {}, func, pluginid)
 end
 
 function unregisterevent(pluginid, event, func)
   phelper:mdebug(GetPluginInfo(GetPluginID(), 1), "unregistered", pluginid, event, func)
-  phelper:removeevent(event, {}, func, pluginid)  
+  phelper:unregisterevent(event, {}, func, pluginid)  
 end
 
 phelper = Pluginhelper:new{name='phelp'}
