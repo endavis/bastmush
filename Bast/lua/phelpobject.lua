@@ -12,12 +12,12 @@ Events for phelpobject:
     self:processevent('option-any', {option=option, value=value}) 
       - an event to notify on any option change
 
-to use events register with   self:addevent('option_textfont', object, object.onfontchange) if the target is a phelper object
-                              self:addevent('visibility', {}, toggleexample) if the target function is just a function
+to use events register with   self:registerevent('option_textfont', object, object.onfontchange) if the target is a phelper object
+                              self:registerevent('visibility', {}, toggleexample) if the target function is just a function
 
 the function must look like:
 function shadeexample(object, args)
-  -- object will be same as the second argument in addevent
+  -- object will be same as the second argument in registerevent
   -- args, see the actual event
   examplewin:show(not args.flag)
 end
@@ -55,18 +55,18 @@ function Phelpobject:initialize(args)
   self:add_setting( 'tdebug', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1})
   self:add_setting( 'ignorebsetting', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1, longname="Ignore Broadcast Settings"})
 
-  self:add_cmd('help', {func="cmd_help", help="show help"})
-  self:add_cmd('debug', {func="cmd_debug", help="toggle debugging"})
-  self:add_cmd('set', {func="cmd_set", help="set settings", nomenu=true})
-  self:add_cmd('reset', {func="cmd_reset", help="reset settings to default values"})
-  self:add_cmd('save', {func=SaveState, help="save plugin variables"})
-  self:add_cmd('showvars', {func="cmd_showvars", help="show plugin variables"})
-  self:add_cmd('showevents', {func="cmd_showevents", help="show functions registered for all events"})
+  self:add_cmd('help', {func="cmd_help", help="show help", prio=99})
+  self:add_cmd('debug', {func="cmd_debug", help="toggle debugging", prio=99})
+  self:add_cmd('set', {func="cmd_set", help="set settings", nomenu=true, prio=99})
+  self:add_cmd('reset', {func="cmd_reset", help="reset settings to default values", prio=99})
+  self:add_cmd('save', {func=SaveState, help="save plugin variables", prio=99})
+  self:add_cmd('showvars', {func="cmd_showvars", help="show plugin variables", prio=99})
+  self:add_cmd('showevents', {func="cmd_showevents", help="show functions registered for all events", prio=99})
   
 end
 
 
-function Phelpobject:addevent(tevent, object, tfunction, plugin)
+function Phelpobject:registerevent(tevent, object, tfunction, plugin)
   if self.events[tevent] == nil then
     self.events[tevent] = {}
   end
@@ -89,7 +89,7 @@ function Phelpobject:processevent(tevent, args)
   end
 end
 
-function Phelpobject:removeevent(tevent, object, tfunction, plugin)
+function Phelpobject:unregisterevent(tevent, object, tfunction, plugin)
   if self.events[tevent] then
     for i,v in ipairs(self.events[tevent]) do
       if v.func == tfunction and (v.object == object or v.plugin == plugin) then
@@ -452,7 +452,7 @@ function Phelpobject:find_cmd(cmd)
     return cmd, self.cmds_table[cmd]
   end
   fcmd = "^" .. cmd .. ".*$"
-  for tcmd,cmditem in pairs(self.cmds_table) do
+  for tcmd,cmditem in tableSort(self.cmds_table, "prio", 50) do
     tstart, tend =  string.find(string.lower(tcmd), fcmd)
     if tstart and tstart > 0 then
       return tcmd, self.cmds_table[tcmd]
