@@ -130,7 +130,10 @@ spellcures[115] = {332}
 spellscombined = {}
 
 function runspellupcmd(cmd)
-    Execute(bspellcmd .. " " .. cmd)
+  if bspellcmd == nil or bspellcmd == '' then
+    bspellcmd = GetPluginVariable('aaaf0c555a44169e0f1d9674', 'cmd')
+  end
+  Execute(bspellcmd .. " " .. cmd)
 end
 
 function buildmenu(item, menutype)
@@ -1485,8 +1488,6 @@ function OnPluginEnable ()
   ldplugin ("broadcast_spellsskills", "aaa72f3b5453567e2bba9d50")
   ldplugin ("bast_spellup", "aaaf0c555a44169e0f1d9674")
 
-  bspellcmd = GetPluginVariable('aaaf0c555a44169e0f1d9674', 'cmd')
-
   fixevents("register")  
     
   if IsConnected() then
@@ -1509,7 +1510,6 @@ function OnPluginEnable ()
     load_recoveries("all")
     load_recoveries("affected")
     build_windows()
-  
   end
 
 end -- OnPluginEnable
