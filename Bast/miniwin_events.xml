@@ -65,6 +65,7 @@ quest_stuff = {mob=nil, room=nil, area=nil}
 quest_timer = {}
 
 gqmobs = {}
+gqflag = false
 
 eventwin = Miniwin:new{name="Events"}
 eventwin:set_default("maxtabs", 5)
@@ -102,8 +103,11 @@ function build_quest(showflag)
   style = {}
   style.text = " Quest: On "
   style.textcolour = eventwin.bg_time_colour
-  style.backcolour = eventwin.bg_colour
   eventwin.tabcolour = eventwin:get_colour(eventwin.bg_colour)
+  if gqflag then
+    eventwin.tabcolour = eventwin:get_colour('quest_avail_bg_colour')
+    style.textcolour = 'black'
+  end
   eventwin:tabbroadcast(true, {style})
   
 end
@@ -253,8 +257,11 @@ function OnPluginBroadcast (msg, id, name, text)
       style = {}
       style.text = ' Quest: Now '
       style.textcolour = eventwin.quest_avail_colour
-      style.backcolour = eventwin.quest_avail_bg_colour
       eventwin.tabcolour = eventwin:get_colour('quest_avail_bg_colour')
+      if gqflag then
+        eventwin.tabcolour = eventwin:get_colour('quest_avail_bg_colour')
+        style.textcolour = 'black'
+      end
       eventwin:tabbroadcast(true, {style})
     elseif msg == 2 then
       -- quest mob info
@@ -280,8 +287,11 @@ function OnPluginBroadcast (msg, id, name, text)
       style = {}
       style.text = ' Event Q:C '
       style.textcolour = eventwin.text_colour
-      style.backcolour = eventwin.bg_colour
       eventwin.tabcolour = eventwin.bg_colour
+      if gqflag then
+        eventwin.tabcolour = eventwin:get_colour('quest_avail_bg_colour')
+        style.textcolour = 'black'        
+      end
       eventwin:tabbroadcast(true, {style})
     elseif msg == 5 then
       return
@@ -307,9 +317,12 @@ function OnPluginBroadcast (msg, id, name, text)
       style = {}
       style.text = ' Events Q:' .. timer.text .. ' '
       style.textcolour = eventwin.time_colour
-      style.backcolour = eventwin.bg_colour
       tstyle = {style}
       eventwin.tabcolour = eventwin.bg_colour
+      if gqflag then
+        eventwin.tabcolour = eventwin.quest_avail_bg_colour
+        style.textcolour = 'black'        
+      end
       eventwin:tabbroadcast(true, tstyle)
     elseif msg == 8 then
       
@@ -373,8 +386,10 @@ function OnPluginBroadcast (msg, id, name, text)
       local tstyle = {}
       table.insert(tstyle, style)
       tstyle.backcolour = "quest_avail_bg_colour"      
-      tprint(tstyle)
+      gqflag = true
       show_gq({tstyle})
+      eventwin.tabcolour = eventwin:get_colour('quest_avail_bg_colour')
+      eventwin:tabbroadcast(true)      
     elseif msg == 2 then
       -- gquest joined
       show_gq({"GQuest Joined - Waiting"})
@@ -386,7 +401,10 @@ function OnPluginBroadcast (msg, id, name, text)
       build_gq()
     elseif msg == 4 or msg == 5 then
       -- reward
+      gqflag = false
       eventwin:removetab('GQ')
+      eventwin.tabcolour = eventwin.bg_colour      
+      eventwin:tabbroadcast(true)      
     end    
   end
 
