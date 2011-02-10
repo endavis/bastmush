@@ -1566,7 +1566,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
     tabline = self:buildtabline()
     self.activetab.build_data.tabbarlinenum = linenum
     self.activetab.tabbarlineconv = self:convert_line(tabline, 1, 0, 0, 'tabbarline')[1]
-    self.activetab.maxwidth = math.max(self.activetab.maxwidth, self.activetab.tabbarlineconv.width)    
+    self.activetab.maxwidthwithtabline = math.max(self.activetab.maxwidth, self.activetab.tabbarlineconv.width)    
   end
   
   -- at this point everything has been converted
@@ -1580,8 +1580,12 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
       self.activetab.build_data.textarea.right = self.width - self.window_border_width - self.width_padding
     end
   else
-    self.activetab.build_data.actualwindowwidth =  self.activetab.maxwidth + self.width_padding + self.window_border_width
-    self.activetab.build_data.textarea.right = self.activetab.maxwidth + self.width_padding
+    local maxwidth = self.activetab.maxwidth
+    if self.showtabline and self.activetab.maxwidthwithtabline then
+      maxwidth = math.max(self.activetab.maxwidth, self.activetab.maxwidthwithtabline)
+    end  
+    self.activetab.build_data.actualwindowwidth =  maxwidth + self.width_padding + self.window_border_width
+    self.activetab.build_data.textarea.right = maxwidth + self.width_padding
     self.activetab.build_data.textarea.left = 0 + self.window_border_width
     if self.maxlines > 0 and #self.activetab.convtext > self.maxlines then
       self.activetab.build_data.actualwindowwidth = self.activetab.build_data.actualwindowwidth + self.scrollbarwidth + 1
