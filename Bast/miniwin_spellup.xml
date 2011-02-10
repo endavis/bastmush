@@ -16,7 +16,6 @@
 <description trim="y">
 
 TODO:
-create miniwin based on mine
 menu for each spell
  - show Help
  - showskill
@@ -132,6 +131,7 @@ function buildmenu(item, menutype)
   menu = strip_colours(spells['all'][item].name) .. "|"
   menu = menu .. "| showskill"
   menu = menu .. "| bspell info"
+  menu = menu .. "| help"
   if spells['all'][412] and spells['all'][412].percent > 0 and spells['learned'][item] then
     menu = menu .. "| disrupt"
   end
@@ -160,6 +160,8 @@ function mouseleft(result, item, menutype)
     SendNoEcho("showskill " .. tostring(item))
   elseif result:match("bspell") then
     Execute("bspell info " .. tostring(item))
+  elseif result:match("help") then
+    Execute("help " .. spells['all'][tonumber(item)].name)
   elseif result:match("disrupt") then
     SendNoEcho("c disrupt " .. item)
   elseif result:match('Remove') then
@@ -431,125 +433,305 @@ function build_summary()
   local otherdisabled = tableCountKeys(askedothercombined, "disabled", true)
   local othernoprac = tableCountKeys(askedothercombined, "noprac", true)
   local othernolearn = tableCountKeys(askedothercombined, "nolearn", true)  
+    
+  if phelper.brief then
+    --local style = {}
+    --style.text = string.rep("-", 25)
+    --table.insert(alines, {style})
+
+    local lstyle = {}
+    local style = {}
+    style.text = " F"
+    style.hint = "toggle to Full mode"
+    style.mouseup = function()
+      phelper:set('brief', not phelper.brief)
+    end
+    style.hjust = 'left'
+    style.textcolour = "white"
+    table.insert(lstyle, style)
+
+    local style = {}
+    if #status > 9 then
+      style.text = string.sub(tostring(status), 1, 9)
+    else
+      style.text = tostring(status)
+    end
+    style.hjust = 'center'
+    style.textcolour = "statuscolour"
+    style.mouseover = nofunc
+    style.hint = 'Status'
+    table.insert(lstyle, style)
+    
+    local style = {}
+    style.text = "A "
+    style.hjust = 'right'
+    style.textcolour = "white"
+    style.hint = "Add a spell"
+    style.mouseup = function ()
+              spellwin:changetotab('Spells')
+          end
+    table.insert(lstyle, style)
+    
+    table.insert(alines, lstyle)
+    
+    --local style = {}
+    --style.text = string.rep("-", 25)
+    --table.insert(alines, {style})
   
-  local style = {}
-  style.text = string.rep("-", 43)
-  table.insert(alines, {style})
-  
-  local lstyle = {}
-  local style = {}
-  style.text = "Status: " .. tostring(status)
-  style.hjust = 'center'
-  style.textcolour = "statuscolour"
-  table.insert(lstyle, style)
-  
-  local style = {}
-  style.text = "Add "
-  style.hjust = 'right'
-  style.textcolour = "white"
-  style.mouseup = function ()
-            spellwin:changetotab('Spells')
-         end
-  table.insert(lstyle, style)
-  
-  table.insert(alines, lstyle)
-  
-  local style = {}
-  style.text = string.rep("-", 43)
-  table.insert(alines, {style})
-  
-  local lstyle = {}
-  local style = {}
-  style.text = string.format("%-15s: %3d  " , "Good", #good)
-  style.textcolour = "goodcolour"
-  style.mouseup = function ()
-            spellwin:changetotab('Affected')
-         end
-  table.insert(lstyle, style)
+    local lstyle = {}
+    
+    local style = {}
+    style.text = " " .. tostring(#good)
+    style.textcolour = "goodcolour"
+    style.hint = "Good spells"
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style)    
 
-  local style = {}
-  style.text = string.format("%-15s: %3d", "Recoveries", selfactiverec)
-  style.textcolour = "askedrecoverycolour"
-  style.mouseup = function ()
-            spellwin:changetotab('Affected')
-         end
-  style.hint = "Recoveries for Self Requested Spellups"
-  table.insert(lstyle, style)
-  table.insert(alines, lstyle)
+    local style = {}
+    style.text = " "
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style)    
 
-  local lstyle = {}
-  local style = {}
-  style.text = string.format("%-15s: %3d  " , "Bad", #bad)
-  style.textcolour = "badcolour"
-  style.mouseup = function ()
-            spellwin:changetotab('Affected')
-         end
-  table.insert(lstyle, style)
+    local style = {}
+    style.text = tostring(#bad)
+    style.textcolour = "badcolour"
+    style.hint = "Bad Spells"
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style)
 
-  local style = {}
-  style.text = string.format("%-15s: %3d", "All Recoveries", counttable(recoveries['affected']))
-  style.textcolour = "recoverycolour"
-  style.mouseup = function ()
-            spellwin:changetotab('Affected')
-         end
-  table.insert(lstyle, style)       
-  table.insert(alines, lstyle)
+    local style = {}
+    style.text = " "
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style)    
 
-  local style = {}
-  style.text = string.rep("-", 43)
-  table.insert(alines, {style})
+    local style = {}
+    style.text = tostring(selfactiverec)
+    style.textcolour = "askedrecoverycolour"
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    style.hint = "Recoveries for Self Requested Spellups"
+    table.insert(lstyle, style)
 
-  local lstyle = {}
-  local style = {}
-  style.text = string.format("%-15s  %5s %7s %5s" , " ", "Self", " ", "Other")
-  table.insert(lstyle, style)  
-  table.insert(alines, lstyle)
-  
-  table.insert(alines, format_requested_line("Can Cast", 
-                                              #askedself 
-                                                - selfnoprac 
-                                                - selfnolearn
-                                                - selfdisabled
-                                                - selfblocked
-                                                - selfblockrec, 
-                                              #askedother 
-                                                - othernoprac
-                                                - othernolearn
-                                                - otherdisabled, 
-                                              "lime"))
+    local style = {}
+    style.text = " "
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style)    
 
-  table.insert(alines, format_requested_line("Requested", #askedself, 
-                                         #askedother, "green"))
+    local style = {}
+    style.text = tostring(counttable(recoveries['affected']))
+    style.textcolour = "recoverycolour"
+    style.hint = "All Recoveries"
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style)       
 
-  table.insert(alines, format_requested_line("Pending", selfpending, 
-                                         " ", "pendingcolour"))
+    local style = {}
+    style.text = " "
+    table.insert(lstyle, style)    
 
- if selfblocked > 0 or selfblockrec > 0 then
-    table.insert(alines, format_requested_line("Blocked", selfblocked + selfblockrec, 
-                                         " ", "blockedcolour"))
-  end
+    local style = {}
+    style.text = tostring(#askedself)
+    style.textcolour = "green"
+    style.hint = "Requested"
+    style.mouseup = function ()
+              spellwin:changetotab('Self')
+          end
+    table.insert(lstyle, style)  
 
-  if selfdisabled > 0 or otherdisabled > 0 then
-    table.insert(alines, format_requested_line("Disabled", selfdisabled, 
-                                         otherdisabled, "disabledcolour"))
-  end
+    local style = {}
+    style.text = ":"
+    table.insert(lstyle, style)    
 
-  if selfnoprac > 0 or othernoprac > 0 then
-    table.insert(alines, format_requested_line("Not Practiced", selfnoprac, othernoprac, "disabledcolour"))
-  end
+    local style = {}
+    style.text = tostring(#askedself - selfnoprac 
+                          - selfnolearn - selfdisabled
+                          - selfblocked - selfblockrec)
+    style.textcolour = "lime"
+    style.hint = "Can Cast Self"
+    style.mouseup = function ()
+              spellwin:changetotab('Self')
+          end
+    table.insert(lstyle, style)       
 
-  if selfnolearn > 0 or othernolearn > 0 then
-    table.insert(alines, format_requested_line("Not Learned", selfnolearn, othernolearn, "disabledcolour"))
-  end
+    local style = {}
+    style.text = " "
+    table.insert(lstyle, style)  
+    
+    local style = {}
+    style.text = tostring(#askedother)
+    style.textcolour = "green"
+    style.hint = "Requested"
+    style.mouseup = function ()
+              spellwin:changetotab('Self')
+          end
+    table.insert(lstyle, style)  
 
-  if waiting then
+    local style = {}
+    style.text = ":"
+    table.insert(lstyle, style)  
+    local style = {}
+    style.text = tostring(#askedother - othernoprac
+                          - othernolearn - otherdisabled) .. " "
+    style.textcolour = "lime"
+    style.hint = "Can Cast Other"
+    style.mouseup = function ()
+              spellwin:changetotab('Other')
+          end
+    table.insert(lstyle, style)       
+
+    table.insert(alines, lstyle)
+  else
     local style = {}
     style.text = string.rep("-", 43)
-    table.insert(alines, {style})    
+    table.insert(alines, {style})
+
+    local lstyle = {}
+    local style = {}
+    style.text = " B "
+    style.hint = "toggle to Brief mode"
+    style.mouseup = function()
+      phelper:set('brief', not phelper.brief)    
+    end
+    style.hjust = 'left'
+    style.textcolour = "white"
+    table.insert(lstyle, style)
+
+    local style = {}
+    style.text = "Status: " .. tostring(status)
+    style.hjust = 'center'
+    style.textcolour = "statuscolour"
+    table.insert(lstyle, style)
+    
+    local style = {}
+    style.text = "Add "
+    style.hjust = 'right'
+    style.textcolour = "white"
+    style.hint = 'Add a spell'
+    style.mouseup = function ()
+              spellwin:changetotab('Spells')
+          end
+    table.insert(lstyle, style)
+    
+    table.insert(alines, lstyle)
+    
+    local style = {}
+    style.text = string.rep("-", 43)
+    table.insert(alines, {style})
+
+    local lstyle = {}
+    local style = {}
+    style.text = string.format("%-15s: %3d  " , "Good", #good)
+    style.textcolour = "goodcolour"
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style)
+
+    local style = {}
+    style.text = string.format("%-15s: %3d", "Recoveries", selfactiverec)
+    style.textcolour = "askedrecoverycolour"
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    style.hint = "Recoveries for Self Requested Spellups"
+    table.insert(lstyle, style)
+    table.insert(alines, lstyle)
+
+    local lstyle = {}
+    local style = {}
+    style.text = string.format("%-15s: %3d  " , "Bad", #bad)
+    style.textcolour = "badcolour"
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style)
+
+    local style = {}
+    style.text = string.format("%-15s: %3d", "All Recoveries", counttable(recoveries['affected']))
+    style.textcolour = "recoverycolour"
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style)       
+    table.insert(alines, lstyle)
+
+    local style = {}
+    style.text = string.rep("-", 43)
+    table.insert(alines, {style})
+
+    local lstyle = {}
+    local style = {}
+    style.text = string.format("%-15s  %5s %7s %5s" , " ", "Self", " ", "Other")
+    table.insert(lstyle, style)  
+    table.insert(alines, lstyle)
+    
+    table.insert(alines, format_requested_line("Can Cast", 
+                                                #askedself 
+                                                  - selfnoprac 
+                                                  - selfnolearn
+                                                  - selfdisabled
+                                                  - selfblocked
+                                                  - selfblockrec, 
+                                                #askedother 
+                                                  - othernoprac
+                                                  - othernolearn
+                                                  - otherdisabled, 
+                                                "lime"))
+
+    table.insert(alines, format_requested_line("Requested", #askedself, 
+                                          #askedother, "green"))
+
+    table.insert(alines, format_requested_line("Pending", selfpending, 
+                                          " ", "pendingcolour"))
+
+  if selfblocked > 0 or selfblockrec > 0 then
+      table.insert(alines, format_requested_line("Blocked", selfblocked + selfblockrec, 
+                                          " ", "blockedcolour"))
+    end
+
+    if selfdisabled > 0 or otherdisabled > 0 then
+      table.insert(alines, format_requested_line("Disabled", selfdisabled, 
+                                          otherdisabled, "disabledcolour"))
+    end
+
+    if selfnoprac > 0 or othernoprac > 0 then
+      table.insert(alines, format_requested_line("Not Practiced", selfnoprac, othernoprac, "disabledcolour"))
+    end
+
+    if selfnolearn > 0 or othernolearn > 0 then
+      table.insert(alines, format_requested_line("Not Learned", selfnolearn, othernolearn, "disabledcolour"))
+    end
+  end
+  
+  if waiting then
+    if not phelper.brief then
+      local style = {}
+      style.text = string.rep("-", 43)
+      table.insert(alines, {style})    
+    end
     
     local lstyle = {}
     local style = {}
-    style.text = "Waiting: " .. spells['all'][waiting].name .. " (" .. tostring(waiting) .. ")"
+    if phelper.brief then
+      local name = spells['all'][waiting].name
+      local firstword = utils.split(name, " ")[1]
+      local firstletters = string.sub(firstword, 1, 5)
+      style.text = "W:" .. firstletters .. " (" .. tostring(waiting) .. ")"
+    else
+      style.text = "Waiting: " .. spells['all'][waiting].name .. " (" .. tostring(waiting) .. ")"
+    end
     style.hjust = 'center'
     style.textcolour = "statuscolour"
     table.insert(lstyle, style)
@@ -1329,6 +1511,7 @@ phelper:set_default('cmd', 'mspell')
 phelper:set_default('plugin_colour', 'lime')
 
 phelper:add_setting('refreshrate', {help="the number of seconds between window updates", type="number", after=settimer, default=5, longname="Refresh Window Rate"})
+phelper:add_setting('brief', {help="toggle brief mode", type="bool", default=verify_bool(false), longname="Brief Mode", after=build_windows})
 
 phelper:add_cmd('refresh', {func=cmd_refresh, help="refresh affected spells"})
 spellwin:add_cmd('refresh', {func=cmd_refresh, help="refresh affected spells"})
