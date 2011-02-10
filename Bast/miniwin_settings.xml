@@ -53,8 +53,8 @@ function shadeexample(object, args)
   examplewin:show(not args.flag)
 end
 
-settingwin:addevent('visibility', {}, toggleexample)
-settingwin:addevent('shade', examplewin, shadeexample)
+settingwin:registerevent('visibility', {}, toggleexample)
+settingwin:registerevent('shade', examplewin, shadeexample)
 
 settings = {}
 
