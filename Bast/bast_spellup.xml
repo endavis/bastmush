@@ -112,7 +112,6 @@ need_moves = false
 need_mana = false
 nocast = falseq
 
-nocast_rooms = {}
 current_room = -1
 
 
@@ -124,7 +123,7 @@ function getstatus()
   elseif need_moves then
     return "No moves"
   elseif nocast then
-    return "Nocast room"
+    return "Nocast"
   else
     return capitalize(statestrings[tonumber(stats.status.state)])
   end
@@ -971,7 +970,21 @@ function formatspells()
   end
 end
 
-
+function formatother()
+  if not next(phelper.askedother) then
+    return "None"
+  else
+    local ttable = {}
+    for i,v in ipairs(phelper.askedother) do
+      local tstring = v.sn
+      if v.disabled then
+        tstring = tstring .. " (disabled)"
+      end
+      table.insert(ttable, tstring)
+    end
+    return table.concat (ttable, ", ")
+  end
+end
 ]]>
 </script>
 
@@ -1029,7 +1042,7 @@ function OnPluginBroadcast (msg, id, name, text)
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
       local tt = assert (loadstring ('return ' .. gmcparg or ""))()
       current_room = tt.num
-      if nocast_rooms[current_room] then
+      if phelper.nocast_rooms[tonumber(current_room)] then
         phelper:mdebug('setting nocast true for', current_room, tt.name)
         nocast = true
         event_status_change()
@@ -1071,7 +1084,7 @@ function OnPluginBroadcast (msg, id, name, text)
         need_mana = true
         event_status_change()
       elseif tag.reason == 5 then
-        nocast_rooms[current_room] = true
+        phelper.nocast_rooms[tonumber(current_room)] = true
         nocast = true
         setwaiting(false)
         event_status_change()
@@ -1229,7 +1242,8 @@ phelper:set_default('cmd', 'bspell')
 phelper:set_default('plugin_colour', 'lime')
 
 phelper:add_setting( 'askedself', {type="table", help="the list of spells to use on self", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatspells, readonly=true, afterf=make_askedself_xrefs})
-phelper:add_setting( 'askedother', {type="table", help="the list of spells to use on other", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatspells, readonly=true, afterf=make_askedother_xrefs})
+phelper:add_setting( 'askedother', {type="table", help="the list of spells to use on other", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatother, readonly=true, afterf=make_askedother_xrefs})
+phelper:add_setting( 'nocast_rooms', {type="table", help="the list of rooms that are nocast", default=serialize.save_simple({}), sortlev=35, istable=true, readonly=true})
 phelper:add_setting( 'pause', {type="bool", help="pause spellup", default=false, sortlev=35, readonly=true})
 
 phelper:add_cmd('slist', {func=cmd_slist, help="list requested spells", default=true})
