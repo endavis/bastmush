@@ -344,10 +344,10 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
                         win:show(false)
                       end, hint="Click to close", place=99})
 
-  self:addevent('option_textfont', self, self.onfontchange)
-  self:addevent('option_use_tabwin', self, self.onuse_tabwinchange)
-  self:addevent('option_windowpos', self, self.onwindowposchange)
-  self:addevent('option-any', self, self.onanychange)
+  self:registerevent('option_textfont', self, self.onfontchange)
+  self:registerevent('option_use_tabwin', self, self.onuse_tabwinchange)
+  self:registerevent('option_windowpos', self, self.onwindowposchange)
+  self:registerevent('option-any', self, self.onanychange)
 end
 
 function Miniwin:updateheader(tabname, header)
