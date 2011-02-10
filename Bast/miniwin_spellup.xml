@@ -117,6 +117,8 @@ askedself_xref = {}
 askedother = nil
 askedother_xref = {}
 
+bspellcmd = ''
+
 spellcures = {}
 spellcures[6] = {23}
 spellcures[66] = {330, 27, 158}
@@ -127,10 +129,14 @@ spellcures[115] = {332}
 
 spellscombined = {}
 
+function runspellupcmd(cmd)
+    Execute(bspellcmd .. " " .. cmd)
+end
+
 function buildmenu(item, menutype)
   menu = strip_colours(spells['all'][item].name) .. "|"
   menu = menu .. "| showskill"
-  menu = menu .. "| bspell info"
+  menu = menu .. "| " .. bspellcmd .. " info"
   menu = menu .. "| help"
   if spells['all'][412] and spells['all'][412].percent > 0 and spells['learned'][item] then
     menu = menu .. "| disrupt"
@@ -158,28 +164,28 @@ end
 function mouseleft(result, item, menutype)
   if result:match("showskill") then
     SendNoEcho("showskill " .. tostring(item))
-  elseif result:match("bspell") then
-    Execute("bspell info " .. tostring(item))
+  elseif result:match(bspellcmd) then
+    runspellupcmd('info ' .. tostring(item))
   elseif result:match("help") then
     Execute("help " .. spells['all'][tonumber(item)].name)
   elseif result:match("disrupt") then
     SendNoEcho("c disrupt " .. item)
   elseif result:match('Remove') then
     if menutype == 'self' then
-      Execute("bspell sremove " .. item)
+      runspellupcmd("sremove " .. item)
     elseif menutype == 'other' then
-      Execute("bspell oremove " .. item)
+      runspellupcmd("oremove " .. item)      
     end
   elseif result:match('Add in Position') then
     pos = verify_number("", {low=1, high=#askedself + 1, msg="Add in position"})
     if pos then
-      Execute("bspell sadd " .. item .. ":" .. pos)
+      runspellupcmd("sadd " .. item .. ":" .. pos)  
     end      
   elseif result:match('Add') then
     if menutype == 'self' then
-      Execute("bspell sadd " .. item)
+      runspellupcmd("sadd " .. item)   
     elseif menutype == 'other' then
-      Execute("bspell oadd " .. item)    
+      runspellupcmd("oadd " .. item)
     end
   elseif result:match("with") then
     local tresult = utils.split(result, ':')
@@ -458,8 +464,18 @@ function build_summary()
     end
     style.hjust = 'center'
     style.textcolour = "statuscolour"
-    style.mouseover = nofunc
-    style.hint = 'Status'
+    style.mouseup = function ()
+      if status == 'Paused' then
+        runspellupcmd('resume')
+      else
+        runspellupcmd('pause')
+      end
+    end
+    if status == 'Paused' then
+      style.hint = 'Status: ' .. "click to resume"
+    else
+      style.hint = 'Status: ' .. "click to pause"    
+    end
     table.insert(lstyle, style)
     
     local style = {}
@@ -611,6 +627,18 @@ function build_summary()
     local style = {}
     style.text = "Status: " .. tostring(status)
     style.hjust = 'center'
+    style.mouseup = function ()
+      if status == 'Paused' then
+        runspellupcmd('resume')
+      else
+        runspellupcmd('pause')
+      end
+    end
+    if status == 'Paused' then
+      style.hint = 'Status: ' .. "click to resume"
+    else
+      style.hint = 'Status: ' .. "click to pause"    
+    end    
     style.textcolour = "statuscolour"
     table.insert(lstyle, style)
     
@@ -733,6 +761,10 @@ function build_summary()
       style.text = "Waiting: " .. spells['all'][waiting].name .. " (" .. tostring(waiting) .. ")"
     end
     style.hjust = 'center'
+    style.mouseup = function ()
+      runspellupcmd('refresh')
+    end
+    style.hint = 'Click to refresh spells'
     style.textcolour = "statuscolour"
     table.insert(lstyle, style)
     table.insert(alines, lstyle)
@@ -950,12 +982,12 @@ function build_self()
       if v.disabled then
         style.text = string.format("%-3s", " D ")
         style.mouseup = function ()
-              Execute("bspell senable " .. v.sn)
+              runspellupcmd("senable " .. tostring(v.sn))
           end
       else
         style.text = string.format("%-3s", "   ")
         style.mouseup = function ()
-              Execute("bspell sdisable " .. v.sn)
+              runspellupcmd("senable " .. tostring(v.sn))
           end
       end
       table.insert(lstyle, style)  
@@ -1086,12 +1118,12 @@ function build_other()
       if v.disabled then
         style.text = string.format("%-3s", " D ")
         style.mouseup = function ()
-              Execute("bspell oenable " .. v.sn)
+              runspellupcmd("oenable " .. tostring(v.sn))
           end
       else
         style.text = string.format("%-3s", "   ")
         style.mouseup = function ()
-              Execute("bspell odisable " .. v.sn)
+              runspellupcmd("odisable " .. tostring(v.sn))
           end
       end
       table.insert(lstyle, style)  
@@ -1216,13 +1248,13 @@ function build_spells()
       if v.askedself then
         style.text = string.format("%-3s", " R ")
         style.mouseup = function ()
-            Execute("bspell sremove " .. v.sn)
+            runspellupcmd("sremove " .. tostring(v.sn))        
          end        
       else
         style.text = string.format("%-3s", "   ")
         if v.spellup or v.clientspellup then
           style.mouseup = function ()
-            Execute("bspell sadd " .. v.sn)
+            runspellupcmd("sadd " .. tostring(v.sn))
           end        
         end
       end
@@ -1252,13 +1284,13 @@ function build_spells()
       if sp and sp.clientspellup == 1 then
         style.text = string.format("%-3s", " C ")
         style.mouseup = function ()
-          Execute("bspell togglespellup " .. v.sn)
+          runspellupcmd("togglespellup " .. tostring(v.sn))
         end          
       else
         style.text = string.format("%-3s", "   ")
         if not sp or (sp and sp.spellup ~= 1) then
           style.mouseup = function ()
-            Execute("bspell togglespellup " .. v.sn)
+            runspellupcmd("togglespellup " .. tostring(v.sn))
           end          
         end
       end
@@ -1270,13 +1302,13 @@ function build_spells()
       if v.askedother then
         style.text = string.format("%-4s", " RO ")
         style.mouseup = function ()
-          Execute("bspell oremove " .. v.sn)
+          runspellupcmd("oremove " .. tostring(v.sn))
         end        
       else
         style.text = string.format("%-4s", "   ")
         if v.fastother then
           style.mouseup = function ()
-            Execute("bspell oadd " .. v.sn)
+            runspellupcmd("sadd " .. tostring(v.sn))
           end        
         end
       end
@@ -1370,8 +1402,8 @@ function onbgcolourchange(object, args)
   spellwin:set('header_bg_colour', args.value)
 end
 
-spellwin:addevent('tabchange', spellwin, ontabchange)
-spellwin:addevent('option_bg_colour', spellwin, onbgcolourchange)
+spellwin:registerevent('tabchange', spellwin, ontabchange)
+spellwin:registerevent('option_bg_colour', spellwin, onbgcolourchange)
 
 function cmd_refresh(cmddict)
     if GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then    
@@ -1453,12 +1485,14 @@ function OnPluginEnable ()
   ldplugin ("broadcast_spellsskills", "aaa72f3b5453567e2bba9d50")
   ldplugin ("bast_spellup", "aaaf0c555a44169e0f1d9674")
 
+  bspellcmd = GetPluginVariable('aaaf0c555a44169e0f1d9674', 'cmd')
+
   fixevents("register")  
     
   if IsConnected() then
     if GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then    
-      local ret = 0
-      ret, status = CallPlugin("aaaf0c555a44169e0f1d9674", "getstatus") 
+      local ret, tstatus = CallPlugin("aaaf0c555a44169e0f1d9674", "getstatus") 
+      status = tstatus
       local ret, test = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedself") 
       askedself = assert (loadstring ('return ' .. test or ""))()
       local ret, test2 = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedother") 
