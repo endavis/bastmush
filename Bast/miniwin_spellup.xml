@@ -572,7 +572,7 @@ function build_summary()
     local style = {}
     style.text = tostring(#askedother)
     style.textcolour = "green"
-    style.hint = "Requested"
+    style.hint = "Requested Other"
     style.mouseup = function ()
               spellwin:changetotab('Self')
           end
