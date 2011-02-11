@@ -303,7 +303,7 @@ function convert_exits(styles)
     end
   end
 
-  style = popup_style(legwin, "LG", "yellow")
+  style = popup_style(legwin, "LG ", "yellow")
   style.hjust = "right"
   table.insert (tstyles, style)
   return tstyles
