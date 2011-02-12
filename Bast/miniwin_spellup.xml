@@ -306,15 +306,25 @@ end
 
 function build_windows(override)
 
+  if not GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then
+    return
+  end
+
   if askedself == nil and GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then    
     local ret, test = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedself") 
-    askedself = assert (loadstring ('return ' .. test or ""))()
+    askedself = assert (loadstring ('return ' .. test or "{}"))()
+    if askedself == nil then
+      askedself = {}
+    end
     make_askedself_xrefs()      
   end
 
   if askedother == nil and GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then    
     local ret, test2 = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedother") 
-    askedother = assert (loadstring ('return ' .. test2 or ""))()
+    askedother = assert (loadstring ('return ' .. test2 or "{}"))()
+    if askedother == nil then
+      askedother = {}
+    end
     make_askedother_xrefs()      
   end
 
@@ -360,7 +370,7 @@ function build_windows(override)
         v.nolearn = true
       end
     end -- for
-
+    
     askedothercombined = copytable.deep(askedother)    
     for _, v in ipairs (askedothercombined) do
       v.name = spells['all'][tonumber(v.sn)].name
@@ -758,7 +768,7 @@ function build_summary()
     if phelper.brief then
       local name = spells['all'][waiting].name
       local firstword = utils.split(name, " ")[1]
-      local firstletters = string.sub(firstword, 1, 5)
+      local firstletters = string.sub(firstword, 1, 8)
       style.text = "W:" .. firstletters .. " (" .. tostring(waiting) .. ")"
     else
       style.text = "Waiting: " .. spells['all'][waiting].name .. " (" .. tostring(waiting) .. ")"
