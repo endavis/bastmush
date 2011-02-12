@@ -289,8 +289,55 @@ function activatespell(sn, fast)
   return false
 end
 
+function cmd_check(cmddict)
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "have_slist: " .. tostring(have_slist))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "waiting: " .. tostring(waiting))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "noneed: " .. tostring(noneed))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "need_mana: " .. tostring(need_mana))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "need_moves: " .. tostring(need_moves))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "nocast: " .. tostring(nocast))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "paused: " .. tostring(phelper.paused))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "state: " .. tostring(stats.status.state))
+  
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "The below should all be yes")
+
+  if spells['all'] then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "spells['all']: yes")
+  else
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "spells['all']: no")
+  end
+  if spells['affected'] then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "spells['affected']: yes")
+  else
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "spells['affected']: no")
+  end  
+  if spells['learned'] then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "spells['learned']: yes")
+  else
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "spells['learned']: no")
+  end
+  if recoveries['all'] then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "recoveries['all']: yes")
+  else
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "recoveries['all']: no")
+  end
+  if recoveries['affected'] then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "recoveries['affected']: yes")
+  else
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "recoveries['affected']: no")
+  end
+  if stats ~= nil then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "stats: yes")
+  else
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "stats: no")
+  end
+  
+end
+
+
+
 function nextspellup (reason)
---  print("called nextspellup", reason, waiting)
+  --print("called nextspellup", reason)
   if have_slist and 
      stats ~= nil and 
      not waiting and 
@@ -662,7 +709,6 @@ function cmd_other(cmddict)
     return
   end
   if cmddict[2] == 'fast' then
-    print('got fast')
     for sn, v in pairs (spells['spellup']) do
       if spells['learned'][tonumber(v.sn)] and   -- we know it
         v.spellup == 1 and       -- it is a spellup
@@ -985,6 +1031,14 @@ function formatother()
     return table.concat (ttable, ", ")
   end
 end
+
+function check_slist()
+    if not have_slist and spells['all'] and recoveries['all'] and recoveries['affected'] and spells['affected'] and spells['learned'] then
+      --print("have slist")
+      have_slist = true
+      nextspellup('has slist')
+    end
+end
 ]]>
 </script>
 
@@ -1019,7 +1073,7 @@ function OnPluginBroadcast (msg, id, name, text)
         if tonumber(stats.vitals.mana) > old_mana then
           -- more mana
           need_mana = false
-          event_status_change()           
+          event_status_change() 
           nextspellup('more mana')
         end
         if tonumber(stats.vitals.moves) > old_moves then
@@ -1110,11 +1164,7 @@ function OnPluginBroadcast (msg, id, name, text)
     elseif msg == 7 then          
       -- all spells  
       load_spells('all')
-      if spells['all'] and recoveries['all'] then
-        --print("have slist")
-        have_slist = true
-        nextspellup('have slist')
-      end
+      check_slist()
       
     elseif msg == 8 then          
       -- learned spells
@@ -1123,6 +1173,7 @@ function OnPluginBroadcast (msg, id, name, text)
       load_spells('notpracticed')      
       noneed = false
       nextspellup('learned change')
+      check_slist()
       
     elseif msg == 9 then          
       -- spellup spells
@@ -1136,25 +1187,20 @@ function OnPluginBroadcast (msg, id, name, text)
           setwaiting(false)
         end
       end
-      if spells['all'] and recoveries['all'] then
-        --print('have slist')
-        have_slist = true
-      end
+      check_slist()
       noneed=false
       nextspellup('spells affected change')
       
     elseif msg == 11 then          
       -- recoveries all
       load_recoveries('all')
+      check_slist()
       
     elseif msg == 12 then          
       -- recoveries affected
       load_recoveries('affected')
       noneed=false
-      if spells['all'] and recoveries['all'] then
-        --print('have slist')
-        have_slist = true
-      end      
+      check_slist()
       nextspellup('recovery affected change')
       
     end  
@@ -1177,7 +1223,8 @@ end -- OnPluginClose
 function OnPluginEnable ()
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
   ldplugin ("broadcast_spellsskills", "aaa72f3b5453567e2bba9d50")
-
+  ldplugin ("pluginlist", "e8520531407cb4281bea544e")
+  
   phelper:OnPluginEnable()
   if IsConnected() then
     load_spells("all")
@@ -1241,12 +1288,13 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'bspell')
 phelper:set_default('plugin_colour', 'lime')
 
-phelper:add_setting( 'askedself', {type="table", help="the list of spells to use on self", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatspells, readonly=true, afterf=make_askedself_xrefs})
-phelper:add_setting( 'askedother', {type="table", help="the list of spells to use on other", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatother, readonly=true, afterf=make_askedother_xrefs})
+phelper:add_setting( 'askedself', {type="table", help="the list of spells to use on self", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatspells, readonly=true, after=make_askedself_xrefs})
+phelper:add_setting( 'askedother', {type="table", help="the list of spells to use on other", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatother, readonly=true, after=make_askedother_xrefs})
 phelper:add_setting( 'nocast_rooms', {type="table", help="the list of rooms that are nocast", default=serialize.save_simple({}), sortlev=35, istable=true, readonly=true})
 phelper:add_setting( 'pause', {type="bool", help="pause spellup", default=false, sortlev=35, readonly=true})
 
 phelper:add_cmd('slist', {func=cmd_slist, help="list requested spells", default=true})
+phelper:add_cmd('check', {func=cmd_check, help="lists everything that needs to be checked before spellups begin"})
 phelper:add_cmd('sadd', {func=cmd_sadd, help="add a spell, use 'all' to add all spellups"})
 phelper:add_cmd('sremove', {func=cmd_sremove, help="remove a spell, use 'all' to clear table"})
 phelper:add_cmd('sdisable', {func=cmd_sdisable, help="disable a spell"})
