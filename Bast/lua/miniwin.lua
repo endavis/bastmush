@@ -1884,6 +1884,7 @@ function Miniwin:create_window(height, width, x, y)
                  self:get_colour("bg_colour")) )
   end
 
+  self.dragscrolling = false
   WindowDeleteAllHotspots (self.id)
 
   if not self.shaded or self.shade_with_header then
