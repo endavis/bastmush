@@ -571,6 +571,19 @@ function build_summary()
     table.insert(lstyle, style)    
 
     local style = {}
+    style.text = tostring(selfpending)
+    style.textcolour = "pendingcolour"
+    style.hint = "Pending"
+    style.mouseup = function ()
+              spellwin:changetotab('Self')
+          end
+    table.insert(lstyle, style)  
+
+    local style = {}
+    style.text = " "
+    table.insert(lstyle, style)    
+
+    local style = {}
     style.text = tostring(#askedself)
     style.textcolour = "green"
     style.hint = "Requested"
