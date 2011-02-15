@@ -404,9 +404,121 @@ end
 
 function Pluginhelper:cmd_help(cmddict)
 
-  self.helpwin:show(true)
+  if cmddict and cmddict[1] == 'text' then
+    self:showhelptext()
+  else
+    self.helpwin:show(true)
+  end
 
   return true
+end
+
+function Pluginhelper:showhelptext()
+
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Name'), 
+             RGBColourToName(var.plugin_colour), "black", GetPluginName())
+
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Author'), 
+             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID(), 2))
+
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Version'), 
+             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID(), 19))
+
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Internal Version'), 
+             RGBColourToName(var.plugin_colour), "black", tostring(internalrevision))
+   
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Purpose'), 
+             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID(), 8))
+
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Alias'), 
+             RGBColourToName(var.plugin_colour), "black", self.cmd)
+
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'MUSHclient version'), 
+             RGBColourToName(var.plugin_colour), "black", GetInfo(72))
+
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "")
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "Commands")
+  
+  for i,v in tableSort(self.cmds_table) do
+    if v.help ~= '' then
+      ColourNote("white", "black", string.format("%-15s : ", i),
+                 RGBColourToName(var.plugin_colour), "black", v.help)
+    end
+  end  
+
+  ColourNote("white", "black", "")
+  ColourTell(RGBColourToName(var.plugin_colour), "black", 'Objects: ')
+  for i,v in pairs(self.pobjects) do
+    ColourTell("white", "black", ' ' .. i .. ' ')
+  end
+  ColourNote("white", "black", "")  
+  
+  if next(self.aardhelps) then
+    format_aard_helps_text(self.aardhelps)
+  end
+
+  if next(self.aardcmds) then
+    format_aard_cmds_text(self.aardcmds)
+  end
+  
+  if next(self.links) then
+    format_hyperlinks_text(self.links)
+  end
+  ColourNote("white", "black", "")  
+
+end
+
+function format_hyperlinks_text(t)
+
+  local count = 0
+
+  local printed = {}
+  for i,v in tableSort(t, 'ltype', 'Other') do
+    count = count + 1
+    if not printed[v.ltype] then
+      ColourNote("white", "black", "")
+      ColourNote("magenta", "black", v.ltype .. " Links")
+      printed[v.ltype] = true
+    end
+    ColourTell(RGBColourToName(var.plugin_colour), "black", '[')
+    Hyperlink(v.url, "Link", v.tip, 0xE16941, GetInfo(271), true)
+    ColourTell(RGBColourToName(var.plugin_colour), "black", ']  ')
+    ColourTell("white", "black", v.text)    
+    Tell("\n")    
+  end
+
+end
+
+function format_aard_helps_text(t)
+  
+  ColourNote("white", "black", "")
+  ColourNote("magenta", "black", "Aardwolf help files related to the plugin:")
+  count = 0
+  for i,v in ipairs(t) do --loop table and make help links
+    count = count + 1
+    if count == 1 then
+      Tell("   ")
+    end
+    ColourTell('white', 'black', ' ' .. v)
+  end
+  Tell("\n")    
+
+end
+
+function format_aard_cmds_text(t)
+  
+  ColourNote("white", "black", "")
+  ColourNote("magenta", "black", "Aardwolf commands related to the plugin:")
+  count = 0
+  for i,v in ipairs(t) do --loop table and make help links
+    count = count + 1
+    if count == 1 then
+      Tell("   ")
+    end
+    ColourTell('white', 'black', ' ' .. v)
+  end
+  Tell("\n")    
+
 end
 
 function Pluginhelper:createhelp()
