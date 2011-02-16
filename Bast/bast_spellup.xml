@@ -296,7 +296,7 @@ function cmd_check(cmddict)
   ColourNote(RGBColourToName(var.plugin_colour), "black", "need_mana: " .. tostring(need_mana))
   ColourNote(RGBColourToName(var.plugin_colour), "black", "need_moves: " .. tostring(need_moves))
   ColourNote(RGBColourToName(var.plugin_colour), "black", "nocast: " .. tostring(nocast))
-  ColourNote(RGBColourToName(var.plugin_colour), "black", "paused: " .. tostring(phelper.paused))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", "paused: " .. tostring(phelper.pause))
   ColourNote(RGBColourToName(var.plugin_colour), "black", "state: " .. tostring(stats.status.state))
   
   ColourNote(RGBColourToName(var.plugin_colour), "black", "The below should all be yes")
@@ -1285,7 +1285,7 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-phelper:set_default('cmd', 'bspell')
+phelper:set_default('cmd', 'bsp')
 phelper:set_default('plugin_colour', 'lime')
 
 phelper:add_setting( 'askedself', {type="table", help="the list of spells to use on self", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatspells, readonly=true, after=make_askedself_xrefs})
@@ -1295,7 +1295,7 @@ phelper:add_setting( 'pause', {type="bool", help="pause spellup", default=false,
 
 phelper:add_cmd('slist', {func=cmd_slist, help="list requested spells", default=true})
 phelper:add_cmd('check', {func=cmd_check, help="lists everything that needs to be checked before spellups begin"})
-phelper:add_cmd('sadd', {func=cmd_sadd, help="add a spell, use 'all' to add all spellups"})
+phelper:add_cmd('sadd', {func=cmd_sadd, help="add a spell, use 'all' to add all spellups, for spells with multiple words, surround with ' or use the sn"})
 phelper:add_cmd('sremove', {func=cmd_sremove, help="remove a spell, use 'all' to clear table"})
 phelper:add_cmd('sdisable', {func=cmd_sdisable, help="disable a spell"})
 phelper:add_cmd('senable', {func=cmd_senable, help="enable a spell"})
@@ -1306,7 +1306,7 @@ phelper:add_cmd('resume', {func=cmd_resume, help="resume spellup"})
 phelper:add_cmd('refresh', {func=cmd_refresh, help="refresh affected spells"})
 phelper:add_cmd('fast', {func=cmd_fast, help="cast all spells requested in one go"})
 phelper:add_cmd('other', {func=cmd_other, help="cast spells on another char, use 'fast' to cast all spellup spells, otherwise it only casts the ones added with oadd"})
-phelper:add_cmd('oadd', {func=cmd_oadd, help="add spells to cast on other"})
+phelper:add_cmd('oadd', {func=cmd_oadd, help="add spells to cast on other, for spells with multiple words, surround with ' or use the sn"})
 phelper:add_cmd('oremove', {func=cmd_oremove, help="remove spells to cast on other"})
 phelper:add_cmd('odisable', {func=cmd_odisable, help="disable a spell"})
 phelper:add_cmd('oenable', {func=cmd_oenable, help="enable a spell"})
