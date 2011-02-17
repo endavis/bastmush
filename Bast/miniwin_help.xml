@@ -96,8 +96,12 @@ require "serialize"
 require "copytable"
 require "aardutils"
 require "aarddb"
+require "ldplugin"
 
 nfile = scan_dir_for_file (GetInfo(60), "telnet_options.lua")
+
+state = -1
+statestring = 'unknown'
 
 if nfile then
   -- pull in telnet option handling
@@ -396,11 +400,14 @@ end -- remove_cache
 
 function OnPluginBroadcast (msg, id, name, text)
   -- playing status
-  if id == "aaa79afcb20fa11787c5a327" then
-      state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
-      statestring = GetPluginVariable ("aaa79afcb20fa11787c5a327", "statestring")
-  end -- playing status changed
-
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char.status") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+      state = char.status.state
+      statestring = statestrings[tonumber(state)]
+    end
+  end
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
@@ -417,12 +424,13 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  phelper:OnPluginEnable()
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
+  
   if IsConnected () then
-    state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
-    statestring = GetPluginVariable ("aaa79afcb20fa11787c5a327", "statestring")
+    CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request char")
   end -- if already connected
 
-  phelper:OnPluginEnable()
   -- always create windows after OnPluginEnable due to default variable handling
 end -- OnPluginEnable
 
