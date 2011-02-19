@@ -361,6 +361,7 @@ function Miniwin:addline(tabname, line)
 end
 
 function Miniwin:addtab(tabname, text, header, makeactive, sticky, position)
+ timer_start('miniwin:addtab')
  if self.tabs[tabname] == nil then
    self.tabs[tabname] = {}
    self.tabs[tabname].text = text
@@ -379,7 +380,9 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky, position)
  else
    self.tabs[tabname].text = text
    self.tabs[tabname].header = header
-   self.tabs[tabname].build_data = {}
+   self.tabs[tabname].build_data = nil
+   self.tabs[tabname].convtext = nil
+   self.tabs[tabname].convheader = nil
  end
  if not self.classinit then
   if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
@@ -400,6 +403,7 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky, position)
   self:resettabs()
   --self:redraw()
  end
+ timer_end('miniwin:addtab')
 end
 
 function Miniwin:changeactivetab(tabname)
@@ -439,15 +443,14 @@ function Miniwin:unstickytab(tabname)
 end
 
 function Miniwin:resettabs()
+ timer_start('miniwin:resettabs')
  for i,v in pairs(self.tabs) do
    v.build_data = nil
-   if not self.classinit then
-     self:convert_tab(i)
-   end
  end
  if not self.classinit then
    self:redraw()
  end
+ timer_end('miniwin:resettabs')
 end
 
 function Miniwin:removetab(tabname)
@@ -1482,6 +1485,7 @@ function Miniwin:convert_tab(tabname)
  -- goes through text and header and finds the max line width in pixels and max line width in characters
  -- go through and convert each text line
  -- will need to do this on font change, width change, height change
+ timer_start('miniwin:convert_tab:' .. tabname)
  self.tabs[tabname].convtext = {}
  self.tabs[tabname].convheader = {}
  local maxwidth = 0
@@ -1522,12 +1526,18 @@ function Miniwin:convert_tab(tabname)
  end
  self.tabs[tabname].maxwidth = maxwidth
  self.tabs[tabname].maxlinecharlength = maxcharlength
+ timer_end('miniwin:convert_tab:' .. tabname)
 end
 
 -- create the window and do things before text is drawn
 function Miniwin:pre_create_window_internal(height, width, x, y)
+  timer_start('miniwin:pre_create_window_internal')
   if self.activetab == nil then
     return
+  end
+  
+  if not self.activetab.convtext or not self.activetab.maxwidth then
+    self:convert_tab(self.activetab.tabname)
   end
   
   if self.activetab.startline == nil then
@@ -1653,7 +1663,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
   -- figure this out somehow
   self.activetab.build_data.textarea.top = self.activetab.build_data[self.activetab.build_data.textstartline].linetop - 1
   self.activetab.build_data.textarea.bottom = top + 1
-
+  timer_end('miniwin:pre_create_window_internal')
 end
 
 function Miniwin:removetextareahotspots()
@@ -2313,6 +2323,7 @@ end
 
 -- draw the window
 function Miniwin:drawwin()
+  timer_start('miniwin:drawwin')
   if self.activetab == nil then
     return
   end
@@ -2352,6 +2363,7 @@ function Miniwin:drawwin()
       self:drawtext(self.activetab)    
     end
   end
+  timer_end('miniwin:drawwin')
 end
 
 function Miniwin:onfontchange(args)
