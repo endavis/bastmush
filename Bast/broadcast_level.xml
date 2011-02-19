@@ -168,6 +168,7 @@ require "commas"
 require "pluginhelper"
 require "verify"
 require "ldplugin"
+require "aardutils"
 
 -- keys - type, time, newlevel, hp, mana, mov, trains, pracs, bonustrains, bonusstats = {}
 -- bonusstats subtable keys are the bonus stat names
@@ -249,15 +250,18 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  -- state change
-  if id == "aaa79afcb20fa11787c5a327" then
-    status = GetPluginVariableList("aaa79afcb20fa11787c5a327")
-    if status.statestring == 'active' and waitcreated then
-      waitcreated = false
-      broadcast(2)
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char.status") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+      state = char.status.state
+      statestring = statestrings[tonumber(state)]
+      if statestring == 'active' and waitcreated then
+        waitcreated = false
+        broadcast(2)
+      end
     end
-  end -- if
-
+  end
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
@@ -275,9 +279,13 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  phelper:OnPluginEnable()
+
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
 
-  phelper:OnPluginEnable()
+  if IsConnected () then
+    CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request char")
+  end -- if already connected
 end -- OnPluginEnable
 
 function OnPluginDisable ()
