@@ -71,6 +71,7 @@ require "tprint"
 --require "var"
 require "pluginhelper"
 require "commas"
+require "aardutils"
 
 stats = {}
 oldstats = {}
@@ -81,6 +82,8 @@ trywear = false
 regenrooms = {}
 runto = false
 
+state = -1
+statestring = 'unknown'
 
 function check_room(room_id)
   if not room_id or not current_room then
@@ -191,14 +194,7 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
 
-  -- state change
-  if id == "aaa79afcb20fa11787c5a327" then
-    oldstatus = status
-    status = GetPluginVariableList("aaa79afcb20fa11787c5a327")
-    if status.statestring == 'active' then
-       checkstand()
-    end
-  elseif id == '3e7dedbe37e44942dd46d264' then
+  if id == '3e7dedbe37e44942dd46d264' then
     if text:find("room.info") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room")
       room = assert (loadstring ('return ' .. gmcparg or ""))()
@@ -222,7 +218,15 @@ function OnPluginBroadcast (msg, id, name, text)
         return
       end
 
-    end
+    elseif text:find("char.status") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+      oldstatus = status
+      status={state=char.status.state,statestring=statestrings[tonumber(state)]}
+      if status.statestring == 'active' then
+        checkstand()
+      end      
+    end    
   elseif id == "aaa7b6edb20fa44565c5a327" then
     if msg == 1 then
       runto = true
@@ -277,7 +281,6 @@ function OnPluginEnable ()
 
   ldplugin ("broadcast_runto")
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
-  ldplugin ("broadcast_state")
   ldplugin ("broadcast_invmon")
 
   phelper:OnPluginEnable()
