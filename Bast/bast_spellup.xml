@@ -114,7 +114,6 @@ nocast = falseq
 
 current_room = -1
 
-
 function getstatus()
   if phelper.pause then
     return "Paused"
@@ -127,6 +126,10 @@ function getstatus()
   else
     return capitalize(statestrings[tonumber(stats.status.state)])
   end
+end
+
+function getwaiting()
+  return waiting
 end
 
 function getaskedself()
