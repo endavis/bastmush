@@ -296,12 +296,6 @@ function OnPluginBroadcast (msg, id, name, text)
     savemobkill()
   elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
     savegq()
---  elseif id == "aaa79afcb20fa11787c5a327" then
---    state = GetPluginVariable ("aaa79afcb20fa11787c5a327", "state")
---    statestring = GetPluginVariable ("aaa79afcb20fa11787c5a327", "statestring")
---    if statestring == 'active' and not verify_bool(phelper.seenwhois) then
---      Execute('whois')
---    end
   elseif id == '3e7dedbe37e44942dd46d264' then
     if text:find("char") then    
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
@@ -352,7 +346,6 @@ function OnPluginEnable ()
   ldplugin('broadcast_cp')
   ldplugin('broadcast_kills')
   ldplugin('broadcast_gq')
-  ldplugin('broadcast_state')
   ldplugin('broadcast_noexp')
 
   phelper:OnPluginEnable()
