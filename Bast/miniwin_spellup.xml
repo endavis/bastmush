@@ -300,16 +300,20 @@ end
 
 function onstatuschange(args)
   local targs = assert (loadstring ('return ' .. args or ""))()
+  local old_status = status
   status = targs.status
-  build_windows()
+  if old_status ~= status then
+    build_windows()
+  end
 end
 
 function build_windows(override)
-
+  timer_start('build_windows')
   if not GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then
     return
   end
 
+  timer_start('gettingaskedself')  
   if askedself == nil and GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then    
     local ret, test = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedself") 
     askedself = assert (loadstring ('return ' .. test or "{}"))()
@@ -318,7 +322,9 @@ function build_windows(override)
     end
     make_askedself_xrefs()      
   end
+  timer_end('gettingaskedself')  
 
+  timer_start('gettingaskedother')  
   if askedother == nil and GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then    
     local ret, test2 = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedother") 
     askedother = assert (loadstring ('return ' .. test2 or "{}"))()
@@ -327,12 +333,14 @@ function build_windows(override)
     end
     make_askedother_xrefs()      
   end
+  timer_end('gettingaskedother')  
 
   if spells['all'] and spells['affected'] and recoveries['affected'] and spells['spellup'] and spells['learned'] then
 
     good = {}
     bad = {}
 
+    timer_start('spells_affected')  
     for k, v in pairs (spells['affected']) do
       if v.target == 1 and spells['spellup'][k] == nil then
         table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
@@ -340,7 +348,9 @@ function build_windows(override)
         table.insert (good, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )
       end -- if
     end
-
+    timer_end('spells_affected')  
+    
+    timer_start('askedtable')
     askedselfcombined = copytable.deep(askedself)    
     for i, v in ipairs (askedselfcombined) do
       v.name = spells['all'][v.sn].name
@@ -370,7 +380,9 @@ function build_windows(override)
         v.nolearn = true
       end
     end -- for
+    timer_end('askedtable')
     
+    timer_start('othertable')
     askedothercombined = copytable.deep(askedother)    
     for _, v in ipairs (askedothercombined) do
       v.name = spells['all'][tonumber(v.sn)].name
@@ -381,28 +393,20 @@ function build_windows(override)
         v.nolearn = true
       end
     end -- for
-
-    spellscombined = copytable.deep(spells['all'])
-    for i,v in pairs(spellscombined) do
-      if askedself_xref[tonumber(v.sn)] then
-        v.askedself = 1
-      end
-      if askedother_xref[tonumber(v.sn)] then
-        v.askedother = 1
-      end
-      if cancastother(v.sn) then
-        v.fastother = 1
-      end
-    end
+    timer_end('othertable')
 
     for i,v in tableSort(windowtabs, "sort") do
       if not spellwin:hastab(i) or override then
+        timer_start(i)
         v.func()
+        timer_end(i)
       end
     end
     
     if windowtabs[spellwin.activetab.tabname] then
+      timer_start(spellwin.activetab.tabname)    
       windowtabs[spellwin.activetab.tabname].func()
+      timer_end(spellwin.activetab.tabname)    
     end
     
     if not GetTimerInfo ("display_timer", 6) then
@@ -410,6 +414,7 @@ function build_windows(override)
     end  
     
   end
+  timer_end('build_windows')
 end
 
 function format_requested_line(column, tself, tother, colour)
@@ -439,9 +444,9 @@ function format_requested_line(column, tself, tother, colour)
 end
 
 function build_summary()
-  --print('build_summary')
   local alines = {}
   
+  timer_start('countingstuff')
   local selfblocked = tableCountKeys(askedselfcombined, "blocked", nil, true)
   local selfblockrec = tableCountKeys(askedselfcombined, "blockedrecovery", nil, true)
   local selfactiverec = tableCountKeys(askedselfcombined, "activerecovery", nil, true)
@@ -452,6 +457,7 @@ function build_summary()
   local otherdisabled = tableCountKeys(askedothercombined, "disabled", true)
   local othernoprac = tableCountKeys(askedothercombined, "noprac", true)
   local othernolearn = tableCountKeys(askedothercombined, "nolearn", true)  
+  timer_end('countingstuff')
     
   if phelper.brief then
     --local style = {}
@@ -770,34 +776,42 @@ function build_summary()
   end
   
   if waiting then
-    if not phelper.brief then
+    local spellnum = tonumber(waiting)
+    if spellnum and not spells['affected'][spellnum] then
+      if not phelper.brief then
+        local style = {}
+        style.text = string.rep("-", 43)
+        table.insert(alines, {style})    
+      end
+      
+      local lstyle = {}
       local style = {}
-      style.text = string.rep("-", 43)
-      table.insert(alines, {style})    
+      if phelper.brief then
+        local name = spells['all'][waiting].name
+        local firstword = utils.split(name, " ")[1]
+        local firstletters = string.sub(firstword, 1, 8)
+        style.text = "W:" .. firstletters .. " (" .. tostring(waiting) .. ")"
+      else
+        style.text = "Waiting: " .. spells['all'][waiting].name .. " (" .. tostring(waiting) .. ")"
+      end
+      style.hjust = 'center'
+      style.mouseup = function ()
+        runspellupcmd('refresh')
+      end
+      style.hint = 'Click to refresh spells'
+      style.textcolour = "statuscolour"
+      table.insert(lstyle, style)
+      table.insert(alines, lstyle)
     end
-    
-    local lstyle = {}
-    local style = {}
-    if phelper.brief then
-      local name = spells['all'][waiting].name
-      local firstword = utils.split(name, " ")[1]
-      local firstletters = string.sub(firstword, 1, 8)
-      style.text = "W:" .. firstletters .. " (" .. tostring(waiting) .. ")"
-    else
-      style.text = "Waiting: " .. spells['all'][waiting].name .. " (" .. tostring(waiting) .. ")"
-    end
-    style.hjust = 'center'
-    style.mouseup = function ()
-      runspellupcmd('refresh')
-    end
-    style.hint = 'Click to refresh spells'
-    style.textcolour = "statuscolour"
-    table.insert(lstyle, style)
-    table.insert(alines, lstyle)
   end
 
+  timer_start('summary_enable_spellwin')
   spellwin:enable()
+  timer_end('summary_enable_spellwin')
+
+  timer_start('summary_addtab')
   spellwin:addtab('Summary', alines, nil, false, true, 1)
+  timer_end('summary_addtab')
 end
 
 function time_colour(time_to_go)
@@ -848,7 +862,6 @@ function print_affected(atable, name, colour)
 end
 
 function build_affected()
-  --print('build_affected')
   local alines = {}
 
   if #bad > 0 then
@@ -882,8 +895,6 @@ function change_self_filter(stype, default, reverse)
 end
 
 function build_self()
-  --print('build_self')
-
   local hlines = {}
   local alines = {}   
 
@@ -1013,7 +1024,7 @@ function build_self()
       else
         style.text = string.format("%-3s", "   ")
         style.mouseup = function ()
-              runspellupcmd("senable " .. tostring(v.sn))
+              runspellupcmd("sdisable " .. tostring(v.sn))
           end
       end
       table.insert(lstyle, style)  
@@ -1061,8 +1072,6 @@ function change_other_filter(stype, default, reverse)
 end
 
 function build_other()
-  --print('build_other')
-
   local hlines = {}
   local alines = {}   
 
@@ -1191,7 +1200,21 @@ function change_spells_filter(stype, default, reverse)
 end
 
 function build_spells()
-  --print('build_spells')
+  timer_start('spells_all')
+  spellscombined = copytable.deep(spells['all'])
+  for i,v in pairs(spellscombined) do
+    if askedself_xref[tonumber(v.sn)] then
+      v.askedself = 1
+    end
+    if askedother_xref[tonumber(v.sn)] then
+      v.askedother = 1
+    end
+    if cancastother(v.sn) then
+      v.fastother = 1
+    end
+  end
+  timer_end('spells_all')
+    
   local hlines = {}   
   local alines = {}
   
@@ -1432,7 +1455,9 @@ spellwin:registerevent('tabchange', spellwin, ontabchange)
 spellwin:registerevent('option_bg_colour', spellwin, onbgcolourchange)
 
 function cmd_refresh(cmddict)
-    if GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then    
+    if GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then
+      spells['affected'] = nil
+      recoveries['affected'] = nil
       local ret, status = CallPlugin("aaaf0c555a44169e0f1d9674", "cmd_refresh") 
     end
 end
@@ -1517,6 +1542,8 @@ function OnPluginEnable ()
     if GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then    
       local ret, tstatus = CallPlugin("aaaf0c555a44169e0f1d9674", "getstatus") 
       status = tstatus
+      local ret, tstatus = CallPlugin("aaaf0c555a44169e0f1d9674", "getwaiting") 
+      waiting = tstatus
       local ret, test = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedself") 
       askedself = assert (loadstring ('return ' .. test or ""))()
       local ret, test2 = CallPlugin("aaaf0c555a44169e0f1d9674", "getaskedother") 
