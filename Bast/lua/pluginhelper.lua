@@ -62,6 +62,7 @@ require "phelpobject"
 require "addxml"
 require "stringfuncs"
 require "miniwin"
+require "socket"
 
 Pluginhelper = Phelpobject:subclass()
 
@@ -82,6 +83,7 @@ function Pluginhelper:initialize(args)
 
   self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1, longname="Plugin Colour"})
   self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb", longname="Plugin Command"})
+  self:add_setting('time', {help="show function timers", type="bool", default=false})
 
   self:addlink('Plugin', "Bast's MUSHclient plugins homepage", "http://code.google.com/p/bastmush",
                         "Go to Bast's MUSHclient plugins homepage")
@@ -927,6 +929,27 @@ end
 function unregisterevent(pluginid, event, func)
   phelper:mdebug(GetPluginInfo(GetPluginID(), 1), "unregistered", pluginid, event, func)
   phelper:unregisterevent(event, {}, func, pluginid)  
+end
+
+starttime = {}
+
+function timer_start(name)
+  if phelper.time and starttime[name] then
+    print(name, 'already had a starttime')
+  end
+  starttime[name] = socket.gettime()*1000
+end
+
+function timer_end(name)
+  local endtime = socket.gettime()*1000
+  if phelper.time then
+    if not starttime[name] then
+      print('could not find starttime for', name)
+    else
+      print(name, 'took', endtime - starttime[name], 'milleseconds')
+    end
+  end
+  starttime[name] = nil
 end
 
 phelper = Pluginhelper:new{name='phelp'}
