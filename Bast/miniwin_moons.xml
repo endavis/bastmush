@@ -336,8 +336,11 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  if id == "aaa70b4680508448e19b8b25" and msg == 1 then
-    ontick()
+
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("comm.tick") then
+      ontick()      
+    end
   end
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
@@ -353,7 +356,7 @@ function OnPluginClose()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin("broadcast_tick")
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
