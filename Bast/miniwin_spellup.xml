@@ -156,6 +156,9 @@ function buildmenu(item, menutype)
   if menutype == 'self' or menutype == 'other' then
     menu = menu .. "| Remove"
   end
+  if menutype == 'self' then
+    menu = menu .. "| Add a Blocker"
+  end
   if menutype == 'spellup' and not askedself_xref[item] and spells['spellup'][item] then
     menu = menu .. "| Add"
     menu = menu .. "| Add in Position"
@@ -167,6 +170,21 @@ end
 function mouseleft(result, item, menutype)
   if result:match("showskill") then
     SendNoEcho("showskill " .. tostring(item))
+  elseif result:match("Blocker") then
+    local tresult = {}
+    local count = 0
+    for i,v in ipairs(askedself) do
+      count = count + 1
+      tresult[v.sn] = spells['all'][v.sn].name
+    end
+    if count <= 1 then
+      ColourNote(RGBColourToName(var.plugin_colour), "black", "You have no spells that can be used as a blocker")
+    else
+      result = utils.listbox ( "Pick a blocker", "Blockers", tresult)
+      if result then
+        runspellupcmd('sba ' .. item .. ':' .. result)
+      end
+    end    
   elseif result:match(bspellcmd) then
     runspellupcmd('info ' .. tostring(item))
   elseif result:match("help") then
@@ -1283,7 +1301,7 @@ function build_spells()
   table.insert(hlines, lstyle)
   table.insert(hlines, {{text = string.rep("-", 51), textcolour = "white"}})    
   for i,v in tableSort(spellscombined, spells_filter.stype, spells_filter.default, spells_filter.reverse) do
-    if v.target == 2 or v.target == 3 then
+    if v.target == 2 or v.target == 3 or v.spellup == 1 or v.clientspellup == 1 then
       local lstyle = {}
       local style = {}
       style.text = string.format("%-3s - %-25s : ", tostring(v.sn), spells['all'][v.sn].name)
