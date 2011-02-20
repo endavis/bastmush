@@ -14,48 +14,48 @@
    save_state="y"
    >
 <description trim="y">
-bspell slist      --> list requested self spells
+bsp slist      --> list requested self spells
   
-bspell sa all         --> cast all possible spellups
-bspell sr all         --> remove all spellups
+bsp sa all         --> cast all possible spellups
+bsp sr all         --> remove all spellups
 
-bspell sa blur  "champion's strength:3"    --> add more to the current list
+bsp sa blur  "champion's strength:3"    --> add more to the current list
   to add a spell in a certain place add a : then the place number
-bspell sd "night vision" "detect magic"   --> remove those from the list
+bsp sd "night vision" "detect magic"   --> remove those from the list
 
-bspell sba   --> block a spell with another spell
+bsp sba   --> block a spell with another spell
                            (eg. bspell sba 68:121)
-bspell sbr   --> remove a block
+bsp sbr   --> remove a block
                            (eg. bspell sbr 68:121)
 
-bspell sdisable --> disable a spell without taking it out of the list
-bspell senable --> enabled a disabled self spell
+bsp sdisable --> disable a spell without taking it out of the list
+bsp senable --> enabled a disabled self spell
 
-bspell fast    --> cast all spellups immediately, as fast as you can
+bsp fast    --> cast all spellups immediately, as fast as you can
 
-bspell olist      --> list requested other spells
+bsp olist      --> list requested other spells
 
-bspell other (name) --> try to spellup another player with picked spellups
+bsp other (name) --> try to spellup another player with picked spellups
                           (eg. bspell other johnsmith)
 
-bspell other (name) fast --> try to spellup another player with all spellups
+bsp other (name) fast --> try to spellup another player with all spellups
                           (eg. bspell other johnsmith fast)
 
-bspell oa aid --> add aid as a requested spellup on others
-bspell or aid --> remove aid as a requested spellup on others
+bsp oa aid --> add aid as a requested spellup on others
+bsp or aid --> remove aid as a requested spellup on others
 
-bspell odisable --> disable a requested other spell without taking it out of the list
-bspell oenable --> enable a disabled other spell
+bsp odisable --> disable a requested other spell without taking it out of the list
+bsp oenable --> enable a disabled other spell
 
-bspell pause   --> stop casting spellups until a resume
-bspell resume  --> resume casting
-bspell refresh --> requery server for current spells on us
+bsp pause   --> stop casting spellups until a resume
+bsp resume  --> resume casting
+bsp refresh --> requery server for current spells on us
 
-bspell info    --> request info about a spell, shows what the mudside slist returned
-bspell export  --> export the spells you have requested and their settings
-bspell togglespellup --> toggle a spell to be used as a spellup even if it isn't a mudside spellup spell
+bsp info    --> request info about a spell, shows what the mudside slist returned
+bsp export  --> export the spells you have requested and their settings
+bsp togglespellup --> toggle a spell to be used as a spellup even if it isn't a mudside spellup spell
 
-bspell help    --> this message
+bsp help    --> this message
 
 </description>
 
