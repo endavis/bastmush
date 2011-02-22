@@ -254,7 +254,7 @@ function ListMilestones(cmddict)
 end
 
 function checkcampaign(level)
-  local res, clevel = CallPlugin("aaa66f81c50828bbbfda7100", "isoncp")
+  local res, clevel = CallPlugin("aaa66f81c50828bbbfda7100", "isoncp") 
   clevel = tonumber(clevel)
   if clevel == -1 or clevel ~= level then
     db:checkcptable()
@@ -308,7 +308,8 @@ function OnPluginBroadcast (msg, id, name, text)
       if char.status and tonumber(char.status.tnl) < phelper.campaignxp then
         if phelper.dontlevelnocampaign and 
            not verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp')) and
-           not sentnoexp then 
+           not sentnoexp 
+           and not (tonumber(char.status.state) == 8) then 
           checkcampaign(tonumber(char.status.level))
         end
       end
