@@ -463,7 +463,7 @@ end
 
 function broadcast_invmon ( name, line, wildcards )
   phelper:mdebug(line)
-  local item = builditem(wildcards)
+  item = builditem(wildcards)
   if tonumber(wildcards.action) ~= 1 then
     local items = serialize.save( "item", item )
     phelper:broadcast(tonumber(wildcards.action), items, items)
