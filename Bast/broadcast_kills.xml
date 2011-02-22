@@ -118,7 +118,74 @@ kill_info = {}
    group="deadtrig"
   >
   </trigger>
-
+  <trigger
+   custom_colour="17"
+   regexp="y"
+   enabled="y"
+   group="counter"
+   match="^You assassinate (.*) with cold efficiency.$"
+   send_to="12"
+   sequence="990"
+   other_back_colour="blue"
+   script="assassinatemob"
+  >
+  </trigger>
+  <trigger
+    custom_colour="17"
+    enabled="y"
+    regexp="y"
+    group="counter"
+    make_bold="y"
+    match="^Your death blow CLEAVES (.*) in two!$"
+    send_to="12"
+    sequence="990"
+    other_back_colour="red"
+    other_text_colour="black"
+    script="deathblowmob"
+    >
+  </trigger>  
+  <trigger
+    custom_colour="17"
+    enabled="y"
+    regexp="y"
+    group="counter"
+    make_bold="y"
+    match="^You sneak behind (.*) and slit (.*) throat.$"
+    send_to="12"
+    sequence="990"
+    other_back_colour="red"
+    other_text_colour="black"
+    script="slitmob"
+    >
+  </trigger>  
+  <trigger
+    custom_colour="17"
+    enabled="y"
+    regexp="y"
+    group="counter"
+    make_bold="y"
+    match="^You have disintegrated (.*)!$"
+    send_to="12"
+    sequence="990"
+    other_back_colour="red"
+    other_text_colour="black"
+    script="disintegratemob"
+    >
+  </trigger>  
+  <trigger
+    custom_colour="17"
+    enabled="y"
+    regexp="y"
+    group="counter"
+    make_bold="y"
+    match="^You look at (.*) very strangely.$"
+    send_to="12"
+    sequence="990"
+    other_back_colour="red"
+    other_text_colour="black"
+    script="banishmob"
+    >
+  </trigger>  
 </triggers>
 
 
@@ -135,13 +202,25 @@ require "pluginhelper"
 require "verify"
 require "ldplugin"
 
-kill_info = {}
-kill_info.tp = 0
-kill_info.vorpal = 0
-kill_info.wielded_weapon = ''
-kill_info.second_weapon = ''
-kill_info.bcasted = true
+function reset_kill()
+  kill_info = {}
+  kill_info.tp = 0
+  kill_info.vorpal = 0
+  kill_info.assassinate = 0
+  kill_info.deathblow = 0
+  kill_info.slit = 0
+  kill_info.disintegrate = 0
+  kill_info.banishment = 0
+  kill_info.xp = 0
+  kill_info.gold = 0
+  kill_info.tp = 0
+  kill_info.wielded_weapon = ''
+  kill_info.second_weapon = ''
+  kill_info.bcasted = true
+end
 
+kill_info = {}
+reset_kill()
 var.cur_weapon = ''
 
 function mobxp( name, line, wildcards )
@@ -162,6 +241,37 @@ function vorpmob( name, line, wildcards)
   kill_info.vorpal = 1
   kill_info.wielded_weapon = phelper.weaponsn
   kill_info.second_weapon = phelper.secondsn
+end
+
+function assassinatemob( name, line, wildcards)
+  kill_info.mob = wildcards[1]
+  kill_info.assassinate = 1
+end
+
+function slitmob( name, line, wildcards)
+  kill_info.mob = wildcards[1]
+  kill_info.slit = 1
+  kill_info.bcasted = false
+  broadcast_kill()
+end
+
+function disintegratemob( name, line, wildcards)
+  kill_info.mob = wildcards[1]
+  kill_info.disintegrate = 1
+  kill_info.bcasted = false
+  broadcast_kill()
+end
+
+function banishmob( name, line, wildcards)
+  kill_info.mob = wildcards[1]
+  kill_info.banishment = 1
+  kill_info.bcasted = false
+  broadcast_kill()
+end
+
+function deathblowmob( name, line, wildcards)
+  kill_info.mob = wildcards[1]
+  kill_info.deathblow = 1
 end
 
 function mobgold( name, line, wildcards )
@@ -185,13 +295,7 @@ function broadcast_kill()
     --disable deadtrig
   end
   EnableTrigger ("deadtrig", false)
-  kill_info = {}
-  kill_info.tp = 0
-  kill_info.vorpal = 0
-  kill_info.wielded_weapon = ''
-  kill_info.second_weapon = ''
-  kill_info.bcasted = true
-  kill_info.mob = ""
+  reset_kill()
 end
 
 function trivmob( name, line, wildcards )
