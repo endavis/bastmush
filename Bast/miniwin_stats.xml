@@ -507,7 +507,7 @@ function build_gq_window()
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Gold",
           ReadableNumber(stats['won']['gold'], 2),
-          string.format("%d", stats['won']['avegold']) .. '/GQ')          
+          string.format("%d", stats['won']['avegold'] or 0) .. '/GQ')          
       table.insert(allstyles, linestyles)      
       local linestyles = format_row("TP",
           stats['won']['tp'] or 0,
