@@ -246,6 +246,15 @@ You are not on a global quest.
    regexp="y"
   >
   </trigger>
+ <trigger
+   enabled="n"
+   match="You are no longer part of the current quest."
+   sequence="100"
+   script="gq_quit"
+   group="gqdone"
+   regexp="y"
+  >
+  </trigger>
 
 </triggers>
 
@@ -416,6 +425,11 @@ function gq_none( name, line, wildcards)
   started = false
 end
 
+function gq_quit()
+  joined = false
+  started = false
+  phelper:broadcast(6)
+end
 
 function gq_new()
   gq_info = {}

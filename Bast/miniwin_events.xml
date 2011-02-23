@@ -399,7 +399,7 @@ function OnPluginBroadcast (msg, id, name, text)
       loadstring( pvar )()
       gqmobs = mobs
       build_gq()
-    elseif msg == 4 or msg == 5 then
+    elseif msg == 4 or msg == 5 or msg == 6 then
       -- reward
       gqflag = false
       eventwin:removetab('GQ')
