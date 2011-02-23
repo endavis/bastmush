@@ -127,7 +127,6 @@ function build_stat_window()
   tstyle = format_stat('Bank', char.worth.bank, nil, 13, #tostring(char.worth.bank), 'gold')
   table.insert(styles, tstyle)
 
-  statwin:enable()
   statwin:addtab('Stats', styles)
 
 end
@@ -214,8 +213,6 @@ function build_level_window()
 
       local linestyles = format_row("Ave Time", convert_time(stats.levels['avetime']), convert_time(stats.pups['avetime']))
       table.insert(allstyles, linestyles)
-
-      statwin:enable()
 
       statwin:addtab('Levels', allstyles)
     end
@@ -331,8 +328,6 @@ function build_quest_window()
           string.format("%.3f", stats['pracsave']) .. '/quest')
       table.insert(allstyles, linestyles)
 
-      statwin:enable()
-
       statwin:addtab('Quests', allstyles)
     end
     db:close()
@@ -421,8 +416,6 @@ function build_cp_window()
           stats['pracs'],
           string.format("%.3f", stats['pracsave']) .. '/CP')
       table.insert(allstyles, linestyles)
-
-      statwin:enable()
 
       statwin:addtab('CPs', allstyles)
 
@@ -529,8 +522,6 @@ function build_gq_window()
       table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
       local linestyles = format_row("GQ Mobs QP", stats['lost']['qpmobs'] or 0, string.format("%.3f", stats['lost']['qpmobsave'] or 0) .. '/GQ')
       table.insert(allstyles, linestyles)
-
-      statwin:enable()
 
       statwin:addtab('GQs', allstyles)
     end
