@@ -395,6 +395,10 @@ end
 
 function Miniwin:addtab(tabname, text, header, makeactive, sticky, position)
  timer_start('miniwin:addtab')
+ if self.disabled then
+   self:init(true)
+   self:enable()   
+ end
  if self.tabs[tabname] == nil then
    self.tabs[tabname] = {}
    self.tabs[tabname].text = text

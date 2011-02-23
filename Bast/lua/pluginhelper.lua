@@ -360,7 +360,6 @@ function Pluginhelper:OnPluginEnable()
   end -- if already connected
   self:broadcast(-2)
 
-  self.helpwin:enable()
   theader, ttext = self:createhelp()
   self.helpwin:addtab('Plugin', ttext, theader, true)
   self.helpwin:show(false)
@@ -371,11 +370,11 @@ function Pluginhelper:OnPluginDisable()
   if IsConnected() then
     OnPluginDisconnect()
   end
-    for i,v in pairs(self.pobjects) do
-      if not v.disabled then
-        v:shutdown(true)
-      end
+  for i,v in pairs(self.pobjects) do
+    if not v.disabled then
+      v:shutdown(true)
     end
+  end
   self:broadcast(-1)
 end
 

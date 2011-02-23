@@ -482,6 +482,10 @@ function Phelpobject:run_func(tfunc, args)
 end
 
 function Phelpobject:run_cmd(cmddict, silent)
+  if self.disabled then
+    self:init(true)
+    self:enable()   
+  end
   if silent == nil then
     silent = false
   end
