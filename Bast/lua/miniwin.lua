@@ -322,10 +322,10 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'font_warn', {type="bool", help="have been warned about font", default=verify_bool(false), sortlev=55, readonly=true})
   self:add_setting( 'shaded', {type="bool", help="window is shaded", default=verify_bool(false), sortlev=55, readonly=true, globalset=true})
   self:add_setting( 'shade_with_header', {type="bool", help="when window is shaded, still show header", default=verify_bool(false), sortlev=55, longname = "Shade with header"})
-  self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar", after="resettabs", globalset=true})
-  self:add_setting( 'showtabline', {type="bool", help="(don't) show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the tabline", after="resettabs", globalset=true})
+  self:add_setting( 'titlebar', {type="bool", help="don't show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the titlebar", globalset=true})
+  self:add_setting( 'showtabline', {type="bool", help="(don't) show the titlebar", default=verify_bool(true), sortlev=56, longname="Show the tabline", globalset=true})
   self:add_setting( 'showresize', {type="bool", help="show resize hotspots", default=verify_bool(true), sortlev=56, longname="Show Resize Hotspots"})
-  self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines", after="resettabs"})
+  self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines"})
   self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=1, low=0, sortlev=57, longname="Max Tabs"})
 
   self.default_font_id = '--NoFont--'
@@ -350,9 +350,42 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:registerevent('option-any', self, self.onanychange)
 end
 
+function Miniwin:onfontchange(args)
+  font = args.value
+  if self.disabled or self.classinit then
+    return    
+  else
+    fontid = self:addfont(font.name, font.size, font.bold, font.italic, font.underline, font.strikeout)
+    self:setdefaultfont(fontid)
+    self:resettabs()
+  end
+end
+
+function Miniwin:onwindowposchange(args)
+  if not self.classinit then
+    self.x = -1
+    self.y = -1
+  end
+end
+
+function Miniwin:onuse_tabwinchange(args)
+  self:tabbroadcast(self.use_tabwin)
+end
+
+function Miniwin:onanychange(args)
+  for i,v in pairs(self.tablist) do
+    self.tabs[v].convtext = nil
+    self.tabs[v].convheader = nil
+  end  
+  if not self.classinit then
+    self:resettabs()
+  end
+end
+
 function Miniwin:updateheader(tabname, header)
   if self.tabs[tabname] ~= nil then
-   self.tabs[tabname].header = header
+    self.tabs[tabname].header = header
+    self.tabs[tabname].convheader = nil
   end
 end
 
@@ -1536,7 +1569,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
     return
   end
   
-  if not self.activetab.convtext or not self.activetab.maxwidth then
+  if not self.activetab.convtext or (self.activetab.header and not self.activetab.convheader) or not self.activetab.maxwidth then
     self:convert_tab(self.activetab.tabname)
   end
   
@@ -2364,34 +2397,6 @@ function Miniwin:drawwin()
     end
   end
   timer_end('miniwin:drawwin')
-end
-
-function Miniwin:onfontchange(args)
-  font = args.value
-  if self.disabled or self.classinit then
-    return    
-  else
-    fontid = self:addfont(font.name, font.size, font.bold, font.italic, font.underline, font.strikeout)
-    self:setdefaultfont(fontid)
-    self:resettabs()
-  end
-end
-
-function Miniwin:onwindowposchange(args)
-  if not self.classinit then
-    self.x = -1
-    self.y = -1
-  end
-end
-
-function Miniwin:onuse_tabwinchange(args)
-  self:tabbroadcast(self.use_tabwin)
-end
-
-function Miniwin:onanychange(args)
-  if not self.classinit then
-    self:redraw()
-  end
 end
 
 function Miniwin:scrollermousedown(flags, hotspot_id)
