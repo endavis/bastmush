@@ -137,46 +137,50 @@ function build_level_window()
   stats['levels'] = {}
   stats['pups'] = {}
   if not db:checkfortable('stats') then
+    print('return on checkfortable("stats")')
     return
   end
   if not db:checkfortable('levels') then
+    print('return on checkfortable("levels")')
     return
   end
   if db:open() then
     for a in db.db:rows("SELECT totallevels, qpearned FROM stats WHERE milestone = 'current'") do
-      stats.levels['total'] = a[1]
-      stats.levels['qpearned'] = a[2]
+      stats.levels['total'] = a[1] or 0
+      stats.levels['qpearned'] = a[2] or 0
     end
     for a in db.db:rows("SELECT MAX(powerupsall) FROM stats") do
-      stats.pups['total'] = a[1]
+      stats.pups['total'] = a[1] or 0
     end
     if totallevels then
       stats.levels['qpave'] = qpearned/totallevels
+    else
+      stats.levels['qpave'] = 0
     end
     for a in db.db:rows("SELECT AVG(trains), AVG(bonustrains), SUM(trains + bonustrains), SUM(pracs), COUNT(*) FROM levels where type = 'level'") do
-      stats.levels['avetrains'] = a[1]
-      stats.levels['avebonustrains'] = a[2]
-      stats.levels['totaltrains'] = a[3]
-      stats.levels['totalpracs'] = a[4]
-      stats.levels['indb'] = a[5]
+      stats.levels['avetrains'] = a[1] or 0
+      stats.levels['avebonustrains'] = a[2] or 0
+      stats.levels['totaltrains'] = a[3] or 0
+      stats.levels['totalpracs'] = a[4] or 0
+      stats.levels['indb'] = a[5] or 0
     end
 
     for a in db.db:rows("SELECT AVG(finishtime - starttime) FROM levels where type = 'level' and finishtime <> -1" ) do
-      stats.levels['avetime'] = a[1]
+      stats.levels['avetime'] = a[1] or 0
     end
 
     for a in db.db:rows("SELECT AVG(trains), AVG(bonustrains), SUM(trains + bonustrains), COUNT(*) FROM levels where type = 'pup'") do
-      stats.pups['avetrains'] = a[1]
-      stats.pups['avebonustrains'] = a[2]
-      stats.pups['totaltrains'] = a[3]
-      stats.pups['indb'] = a[4]
+      stats.pups['avetrains'] = a[1] or 0
+      stats.pups['avebonustrains'] = a[2] or 0
+      stats.pups['totaltrains'] = a[3] or 0
+      stats.pups['indb'] = a[4] or 0
     end
 
     for a in db.db:rows("SELECT AVG(finishtime - starttime) FROM levels where type = 'pup' and finishtime <> -1" ) do
-      stats.pups['avetime'] = a[1]
+      stats.pups['avetime'] = a[1] or 0
     end
 
-    if stats.levels['indb'] > 0 and stats.pups['indb'] > 0 then
+    if stats.levels['indb'] > 1 or stats.pups['indb'] > 0 then
       local allstyles = {}
 
       local linestyles = format_row("Type", "Levels", "Pups", "lime", "lime")
