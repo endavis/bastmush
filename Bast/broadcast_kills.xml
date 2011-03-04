@@ -275,13 +275,11 @@ function deathblowmob( name, line, wildcards)
 end
 
 function mobgold( name, line, wildcards )
-  if kill_info.mob == nil then
-    kill_info = {}
-    kill_info.tp = 0
-    return
-  end
   if name == 'mobgold' then
-    kill_info.gold = wildcards[1]
+    kill_info.gold = wildcards[1] 
+    if not kill_info.mob then
+      kill_info.mob = wildcards[3]
+    end
   elseif name == 'splitgold' then
     kill_info.gold = wildcards[2]
   end
@@ -290,6 +288,9 @@ end
 
 function broadcast_kill()
   if kill_info.bcasted == false then
+    if kill_info.mob == nil then
+      kill_info.mob = 'did not get the mob name'
+    end
     var.kill_info = serialize.save( "kill_info", kill_info )
     phelper:broadcast(1, var.kill_info)
     --disable deadtrig
