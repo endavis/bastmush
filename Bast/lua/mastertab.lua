@@ -24,20 +24,22 @@ function Mastertabwin:initialize(args)
   self:add_setting( 'orientation', {type="number", help="orientation of the tabs, 0 = horizontal, 1 = vertical", low=0, high=1, default=1, sortlev=44, longname="Change Orientation"})
 
   local td = {}
-  td.id = GetPluginID()
+  td.pluginid = GetPluginID()
   td.text = " Show Windows "
   td.func = self.showall
   td.name = 'z1Show all'
-  td.win = self.id .. 'ShowAll'
+  td.objectid = self.id .. 'ShowAll'
+  td.winid = self.id .. 'ShowAll'
   td.popup = " Show Windows "
   td.fake = true
   self:addwtab(td)
   td = {}
-  td.id = GetPluginID()
+  td.pluginid = GetPluginID()
   td.text = " Hide Windows "
   td.func = self.hideall
+  td.objectid = self.id .. 'HideAll'
   td.name = 'z2Hide all'
-  td.win = self.id .. 'HideAll'
+  td.winid = self.id .. 'HideAll'
   td.popup = " Hide Windows "
   td.fake = true
   self:addwtab(td)
@@ -49,10 +51,10 @@ function Mastertabwin:hideall()
     self.alreadyhidden = true
     for i,v in pairs(self.wtabs) do
       if v.fake ~= true then
-        local id = v.win
-        local plugin = v.id
+        local id = v.objectid
+        local plugin = v.pluginid
         local ttable = {flag=false, id=id}
-        v.last = WindowInfo(v.win, 5)
+        v.last = WindowInfo(v.winid, 5)
         CallPlugin(plugin, 'showwin', serialize.save_simple( ttable ))
         --WindowShow(v.win, false)
       end
@@ -63,8 +65,8 @@ end
 function Mastertabwin:showall()
   for i,v in pairs(self.wtabs) do
     if v.last ~= nil and v.fake ~= true then
-      local id = v.win
-      local plugin = v.id
+      local id = v.objectid
+      local plugin = v.pluginid
       local ttable = {flag=v.last, id=id}
       CallPlugin(plugin, 'showwin', serialize.save_simple( ttable ))
       --indowShow(v.win, v.last)
@@ -74,15 +76,15 @@ function Mastertabwin:showall()
 end
 
 function Mastertabwin:addwtab(args)
-  if args.win ~= self.win then
+  if args.winid ~= self.winid then
     self:mdebug('addtab: ', args)
-    self.wtabs[args.win] = args
+    self.wtabs[args.objectid] = args
     self:drawtabs()
   end
 end
 
 function Mastertabwin:removewtab(args)
-  self.wtabs[args.win] = nil
+  self.wtabs[args.objectid] = nil
   self:drawtabs()
 end
 
@@ -91,7 +93,7 @@ function Mastertabwin:createtabstyle(start, key, newstyle)
   tstyle.start = start
   tstyle.text = newstyle.text
   tstyle.length = WindowTextWidth (self.id, self.default_font_id, strip_colours(tstyle.text))
-  if self.wtabs[key].win then
+  if self.wtabs[key].winid then
     tstyle.mousedown = self.wtabs[key].func or self.toggletab
     tstyle.hint = self.wtabs[key].popup or "Toggle " .. self.wtabs[key].name
     tstyle.hotspot_id = key
@@ -102,9 +104,9 @@ end
 
 function Mastertabwin:toggletab(flags, hotspot_id)
   self:mdebug('flags', flags, 'hotspot_id', hotspot_id)
-  local id = self.hotspots[hotspot_id]
-  local flag = not (WindowInfo(self.hotspots[hotspot_id], 5))
-  local plugin = self.wtabs[hotspot_id].id
+  local id = self.wtabs[hotspot_id].objectid
+  local flag = not (WindowInfo(self.wtabs[hotspot_id].winid, 5))
+  local plugin = self.wtabs[hotspot_id].pluginid
   local ttable = {flag=flag, id=id}
   CallPlugin(plugin, 'showwin', serialize.save_simple( ttable ))
   --WindowShow(self.hotspots[hotspot_id], not (WindowInfo(self.hotspots[hotspot_id], 5)))
