@@ -17,8 +17,56 @@
    version="6.0"
    >
 
-</plugin>
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
 
+Broadcasts everything from the areas command
+Broadcasts
+   1 - areas table ready
+       two tables will be available
+        - areas : the keys are the full area name
+        - areasbykeyword : the keys are the keyword for the area and will only
+            be available if "areas keywords" have been seen
+
+Example
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "aaa2beeda10fa11787c6b438" and msg == 1 then
+      local pvar = GetPluginVariable(  "aaa2beeda10fa11787c6b438", "areas" )
+      areas = assert (loadstring ('return ' .. pvar or ""))()
+      
+      local pvar = GetPluginVariable(  "aaa2beeda10fa11787c6b438", "areasbykeyword" )
+      areasbykeyword = assert (loadstring ('return ' .. pvar or ""))()
+      
+    end
+  end
+
+Samples:
+ areas:
+    "The Abyssal Caverns of Sahuagi":
+      "lock"="100"
+      "to"="160"
+      "from"="140"
+      "speedwalk"=""
+      "builder"=""
+      "keyword"="sahuagin"
+      "name"="The Abyssal Caverns of Sahuagi" 
+
+ areasbykeyword:
+    "longnight":
+      "lock"="60"
+      "to"="200"
+      "from"="100"
+      "speedwalk"=""
+      "builder"=""
+      "keyword"="longnight"
+      "name"="Into the Long Night" 
+      
+      
+]]>
+</description>
+
+</plugin>
 
 <!--  Get our standard constants -->
 
@@ -72,14 +120,23 @@
   <alias
    name="areastart"
    script="areas_start"
-   match="^areas (.*)$"
+   match="^(area|areas) (keyword|keywords)$"
    enabled="y"
    regexp="y"
    sequence="100"
   >
-  <send>areas %1</send>
+  <send>areas %2</send>
   </alias>
-
+  <alias
+   name="areastartnokeyword"
+   script="areas_start"
+   match="^(area|areas)$"
+   enabled="y"
+   regexp="y"
+   sequence="100"
+  >
+  <send>areas</send>
+  </alias>
 </aliases>
 
 <!--  Script  -->
@@ -96,35 +153,55 @@ require "serialize"
 require "commas"
 require "verify"
 require "tprint"
+require "copytable"
+
+oldareas = {}
+areas = {}
+areasbykeyword = {}
 
 fourthheader = ''
 
 function parseheaders(name, line, wildcards)
-  print('parseheaders')
-  print(line)
-  tprint(wildcards)
   fourthheader = string.lower(trim(wildcards['fourth']))
 end
 
 function parsearea (name, line, wildcards)
-  area = {}
-  area.name = trim(wildcards.name)
-  area.to = wildcards.to
-  area.from = wildcards.from
-  area.speedwalk = ''
-  area.keyword = ''
-  area.builder = ''
-  area[fourthheader] = wildcards['fourth']
-  if name == "nolock" then
-    area.lock = 0
+  local name = trim(wildcards.name)
+  if oldareas[name] then
+    areas[name] = copytable.shallow(oldareas[name])
+    areas[name]['to'] = wildcards.to
+    areas[name]['from'] = wildcards.from
+    areas[name][fourthheader] = wildcards['fourth']
+    if name == "nolock" then
+      areas[name]['lock'] = 0
+    else
+      areas[name]['lock'] = wildcards.lock
+    end    
   else
-    area.lock = wildcards.lock
+    area = {}
+    area.name = name
+    area.to = wildcards.to
+    area.from = wildcards.from
+    area.speedwalk = ''
+    area.keyword = ''
+    area.builder = ''
+    area[fourthheader] = wildcards['fourth']
+    if name == "nolock" then
+      area.lock = 0
+    else
+      area.lock = wildcards.lock
+    end
+    areas[name] = area
   end
-  areainfo = serialize.save( "area", area )
-  phelper:broadcast(1, areainfo, areainfo)
+  if areas[name].keyword ~= '' then
+    areasbykeyword[areas[name].keyword] = areas[name]
+  end
 end
 
 function areas_start(name, line, wildcards)
+  oldareas = areas
+  areas = {}
+  areasbykeyword = {}
   phelper:enabletriggroup("areareg", true)
   phelper:enabletriggroup("area", true)
 end
@@ -132,7 +209,9 @@ end
 function areas_done(name, line, wildcards)
   phelper:enabletriggroup("areareg", false)
   phelper:enabletriggroup("area", false)
-  phelper:broadcast(2)
+  var.areas = serialize.save_simple( areas )
+  var.areasbykeyword = serialize.save_simple( areasbykeyword )
+  phelper:broadcast(1)
 end
 
 ]]>
