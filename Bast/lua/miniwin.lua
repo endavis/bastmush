@@ -327,6 +327,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'showresize', {type="bool", help="show resize hotspots", default=verify_bool(true), sortlev=56, longname="Show Resize Hotspots"})
   self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines"})
   self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=1, low=0, sortlev=57, longname="Max Tabs"})
+  self:add_setting( 'firstshown', {type="bool", help="shown first", default=verify_bool(false), sortlev=57})
 
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
@@ -439,6 +440,10 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky, position)
   end
   self:resettabs()
   --self:redraw()
+ end
+ if not self.firstshown then
+   self:set('firstshown', true)
+   self:show(true)
  end
  timer_end('miniwin:addtab')
 end
@@ -1127,6 +1132,7 @@ function Miniwin:show(flag)
     flag = false
   end
   WindowShow(self.id, flag)
+  SaveState()
   self:processevent('visibility', {flag=flag})
 end
 
