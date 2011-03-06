@@ -2569,8 +2569,14 @@ function Miniwin:dragrelease(flags, hotspot_id)
   local newx, newy = WindowInfo (self.id, 17), WindowInfo (self.id, 18)
 
   -- don't let them drag it out of view
-  if newx < 0 or newx > GetInfo (281) or
-     newy < 0 or newy > GetInfo (280) then
+  if newx < 0 then
+    newx = 0
+  end
+  if newy < 0 then
+    newy = 0
+  end
+  if newx > GetInfo (281) or
+     newy > GetInfo (280) then
      -- put it back
     if self.x ~= -1 and self.y ~= -1 then
       WindowPosition(self.id, self.origx, self.origy, 0, 2)
