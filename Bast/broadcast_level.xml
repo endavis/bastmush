@@ -236,7 +236,7 @@ function levbonus (name, line, wildcards)
     levelinfo.bonustrains = wildcards[1]
   elseif name == "bonusstat" then
     levelinfo[string.lower(string.sub(wildcards[1], 1, 3))] = 1
-  elseif name == "finishlevel" and tonumber(levelinfo.trains) > 0 then
+  elseif name == "finishlevel" and trim(line) == "" then
     phelper:enabletriggroup( "linfo", false )
     var.levelinfo = serialize.save( "levelinfo", levelinfo )
     phelper:broadcast(1, var.levelinfo)
