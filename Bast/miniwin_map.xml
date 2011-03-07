@@ -140,8 +140,8 @@ Mapwinc = Miniwin:subclass()
 function Mapwinc:post_create_window_internal()
   super(self)
   if PKroom and self.changeborderpkroom then
-    check (WindowRectOp (self.id, 1, 0, 0, 0, 0, self:get_colour('pk_window_border_colour')))
-    check (WindowRectOp (self.id, 1, 1, 1, -1, -1, self:get_colour('pk_window_border_colour')))
+    check (WindowRectOp (self.winid, 1, 0, 0, 0, 0, self:get_colour('pk_window_border_colour')))
+    check (WindowRectOp (self.winid, 1, 1, 1, -1, -1, self:get_colour('pk_window_border_colour')))
   end
 end
 
