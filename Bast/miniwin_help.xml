@@ -115,8 +115,9 @@ TOPIC_REGEXP = "[-%a%d]+"
 helpdb = Aarddb:new{}
 
 helpwin = Miniwin:new{name="AardHelp"}
-helpwin.id = 'y' .. helpwin.id
+helpwin.winid = 'y' .. helpwin.id
 helpwin:set_default('header_height', 0)
+helpwin:set_default('layer', 1)
 helpwin:set_default('width_padding', 4)
 helpwin:set_default('bg_colour', 'black')
 helpwin:set_default('header_bg_colour', 'black')

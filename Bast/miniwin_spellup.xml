@@ -260,7 +260,7 @@ function menuclick(item, menutype)
       mousebutton = 'right'
     end
     menu = menus[menutype .. 'menu' .. mousebutton](item, menutype)
-    local result = WindowMenu (spellwin.id, WindowInfo (spellwin.id, 14), WindowInfo (spellwin.id, 15), menu) --do menu
+    local result = WindowMenu (spellwin.winid, WindowInfo (spellwin.winid, 14), WindowInfo (spellwin.winid, 15), menu) --do menu
     if result:match(' - ') then
       local tresult = utils.split(result, '-')
       result = trim(tresult[1])

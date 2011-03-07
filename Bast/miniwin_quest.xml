@@ -165,7 +165,7 @@ function OnPluginBroadcast (msg, id, name, text)
       style.text=  string.format ("Next quest: %s", timer.text)
       style.len = #style.text
       style.textcolour = 'time_colour'
-      winbetweenquest = WindowInfo(questwin.id, 5)
+      winbetweenquest = WindowInfo(questwin.winid, 5)
       table.insert(quest_text, {style})
       show_quest()
       style = {}
