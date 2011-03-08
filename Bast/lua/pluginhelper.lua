@@ -189,8 +189,9 @@ function Pluginhelper:enable()
   self.helpwin:set_default('windowpos', 12)
   self.helpwin:set_default('width_padding', 6)
   self.helpwin:set_default('maxlines', 30)
+  self.helpwin:set_default('layer', 1)
   self.helpwin.titlebartext = GetPluginName() .. ' Help'
-  self.helpwin.id = 'z_' .. self.helpwin.id
+  self.helpwin.winid = 'z_' .. self.helpwin.id
   self:add_pobject('win', self.helpwin)
 
   self:init_vars()
