@@ -118,7 +118,6 @@ function show_quest (showflag)
     return
   end -- if
 
-  eventwin:enable()
   eventwin:addtab('Quest', quest_text, nil, false, false, 1)
   if showflag then
     eventwin:changetotab('Quest')
@@ -172,7 +171,6 @@ function show_cp_text ()
   end
   table.insert (texttable, tstyle)
 
-  eventwin:enable()
   eventwin:addtab('CP', texttable, header)
   eventwin:settabnametext('CP', ": " .. #cpmobs)    
   if showcpwin then
@@ -227,9 +225,8 @@ function show_gq (text, header)
     return
   end -- if
 
-  eventwin:enable()
   eventwin:addtab('GQ', text, header, true)
-  eventwin:changetotab('GQ')  
+  
 end -- show_quest_text
 ]]>
 </script>
@@ -430,9 +427,6 @@ function OnPluginEnable ()
 
   phelper:OnPluginEnable()
 
-  if not eventwin:hastab('Quest') then
-    eventwin:addtab('Quest', {{text='Unknown'}})
-  end
 end -- OnPluginEnable
 
 function OnPluginDisable ()
