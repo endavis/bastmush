@@ -350,6 +350,9 @@ end
 
 function Pluginhelper:OnPluginEnable()
   self:mdebug('OnPluginEnable')
+
+  ldplugin ("pluginlist", "e8520531407cb4281bea544e")
+  
   -- if we are connected when the plugin loads, it must have been reloaded whilst playing
   for i,v in pairs(self.pobjects) do
     if v.disabled == false then
