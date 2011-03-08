@@ -12,7 +12,7 @@
    save_state="y"
    date_written="2009-02-28 20:14:46"
    requires="4.40"
-   version="6.0"
+   version="6.1"
    >
 
 </plugin>
@@ -214,7 +214,7 @@ function cmd_load(cmddict)
     return
   end
   for _, v in ipairs(cmddict) do
-    ldplugin(v, true)
+    ldplugin(v, nil, true)
   end
 end
 
