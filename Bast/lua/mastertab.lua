@@ -201,15 +201,15 @@ function Mastertabwin:drawtabs_horizontal()
   table.insert(alltext, ttext)
   --self:mdebug('ttext in drawtabs_horizontal', ttext)
   self:mdebug('alltext in drawtabs_horizontal', alltext)
-  self:addtab('default', ttext)
+  self:addtab('default', alltext)
   self:changetotab('default')
 
 end
 
 function Mastertabwin:set(option, value, args)
-   if option == 'orientation' then
-     self.change_orient = true
-   end
    retcode = super(self, option, value, args)
+   if retcode and option == 'orientation' and not self.classinit then
+     self:drawtabs()
+   end   
    return retcode
 end
