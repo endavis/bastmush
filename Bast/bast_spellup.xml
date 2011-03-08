@@ -10,7 +10,7 @@
    purpose="Bast's spellup plugin"
    date_written="2008-07-18"
    requires="4.52"
-   version="6.0"
+   version="6.1"
    save_state="y"
    >
 <description trim="y">

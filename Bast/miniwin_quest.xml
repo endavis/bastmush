@@ -10,7 +10,7 @@
    purpose="Shows quests in a miniwindow"
    date_written="2008-07-24"
    requires="4.52"
-   version="6.0"
+   version="6.1"
    save_state="y"
    >
 <description trim="y">

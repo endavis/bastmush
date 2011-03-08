@@ -10,7 +10,7 @@
    purpose="fix things so my plugins work, currently fixes the prompt"
    date_written="2008-07-22"
    requires="4.52"
-   version="6.0"
+   version="6.1"
    save_state="y"
    >
 <description trim="y">
