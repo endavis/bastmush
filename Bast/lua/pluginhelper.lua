@@ -63,6 +63,7 @@ require "addxml"
 require "stringfuncs"
 require "miniwin"
 require "socket"
+require "ldplugin"
 
 Pluginhelper = Phelpobject:subclass()
 
