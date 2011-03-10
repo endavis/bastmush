@@ -231,7 +231,7 @@ function OnPluginBroadcast (msg, id, name, text)
         quest_info['finishtime'] = GetInfo(304)
         quest_info['double'] = 0
         if tonumber(stuff.double) == 1 then
-          quest_info['double'] = stuff.qp
+          quest_info['double'] = 1
         end
         var.quest_info = serialize.save( "quest_info", quest_info )
         phelper:broadcast(6, var.quest_info)
