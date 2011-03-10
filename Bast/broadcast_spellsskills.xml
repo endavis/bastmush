@@ -329,7 +329,7 @@ function parse_spell_line (line)
   local sn, name, target, duration, percent, recovery, skilltype =
     string.match (line, "^(%d+)%,([A-Za-z0-9 ]+)%,(%d+)%,(%d+)%,(%d+),(-?%d+),(%d+)$")
   if not sn then
-    ColourNote ("white", "red", "Invalid spellheaders line: " .. line)
+    ColourNote ("white", "red", GetPluginInfo(GetPluginID(), 1) .. " - Invalid spellheaders line: " .. line)
     return nil
   end -- not a valid spell name
 
