@@ -44,6 +44,7 @@ require "ldplugin"
 db = Statdb:new{}
 
 sentnoexp = false
+sentwhois = false
 
 function savelevel()
   local pvar = GetPluginVariable(  "aaa0ab9ed92f8fc614664bd1" , "levelinfo")
@@ -76,12 +77,12 @@ function savecp()
 end
 
 function savewhois()
+  sentwhois = false
   local pvar = GetPluginVariable(  "aaaf9a8dc92f8fc614663ac0" , "whoisinfo")
 
   --get the whois stuff
   loadstring( pvar )()
   db:savewhois(  whoisinfo  )
-  phelper:set('seenwhois', true, {silent=true})
   if db:countlevels() == 0 then
     levelinfo = {}
     levelinfo.type = "level"
@@ -301,7 +302,8 @@ function OnPluginBroadcast (msg, id, name, text)
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
       local char = assert (loadstring ('return ' .. gmcparg or ""))()
       
-      if char.status and char.status.state and tonumber(char.status.state) == 3 and not verify_bool(phelper.seenwhois) then
+      if char.status and char.status.state and tonumber(char.status.state) == 3 and db:getstat('totallevels') == nil then
+        sentwhois = true
         Execute('whois')
       end
   
@@ -385,7 +387,6 @@ phelper:add_cmd('listmilestones', {func=ListMilestones, help="list all milestone
 phelper:set_default('cmd', 'statdb')
 phelper:set_default('plugin_colour', 'orange')
 
-phelper:add_setting('seenwhois', {help="have seen a whois for StatDB", type="bool", default=false, readonly=true})
 phelper:add_setting('dontlevelnocampaign', {help="set this to true to automatically set noexp at <campaignxp tnl if you haven't done a campaign this level", type="bool", default=false})
 phelper:add_setting('campaignxp', {help="tnl to check to set noexp if you haven't done a campaign this level", type="number", default=500})
 
