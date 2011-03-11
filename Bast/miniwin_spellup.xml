@@ -1375,7 +1375,7 @@ function build_spells()
         style.text = string.format("%-4s", "   ")
         if v.fastother then
           style.mouseup = function ()
-            runspellupcmd("sadd " .. tostring(v.sn))
+            runspellupcmd("oadd " .. tostring(v.sn))
           end        
         end
       end
