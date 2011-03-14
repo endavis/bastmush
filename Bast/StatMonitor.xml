@@ -419,7 +419,7 @@ function StatReport(minutes)
   hourtotals.tp = 0
   finishtime = GetInfo(304)
   minutes = tonumber(minutes) or var.reportminutes
-  starttime = finishtime - (minutes * 60)
+  local starttime = finishtime - (minutes * 60)
   if db:open() then
     if db:checkfortable('quests') then
       for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp + mccp + lucky + tier), SUM(gold), SUM(tp) FROM quests where finishtime > %d;", starttime)) do
