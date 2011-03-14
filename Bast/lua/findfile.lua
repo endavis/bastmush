@@ -11,7 +11,7 @@ function scan_dir_for_file (path, tfile, directoryonly)
       k:sub (1, 1) ~= "." then
       -- recurse to process file or subdirectory
       if v.directory then
-        found = scan_dir_for_file (path .. "\\" .. k, tfile)
+        found = scan_dir_for_file (path .. "\\" .. k, tfile, directoryonly)
         if found then
           return found
         end
