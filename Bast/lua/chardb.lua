@@ -38,18 +38,14 @@ tableids = {
   skills = 'sn',
 }
 
+ 
 function Statdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
-  self.dbname = "/stats.db"
-end
-
-function Statdb:open()
-  if self.db == nil then
-    self.db = assert(sqlite3.open(self.dbloc .. self.dbname))
-    --self.db:exec(string.format('ATTACH ' .. self.dbloc .. 'aardinfo.db AS aarddb'))
-  end
-  self.conns = self.conns + 1
-  return true
+  self.dbname = "\\stats.db"
+  self.version = 3
+  self.versionfuncs[2] = self.updatedblqp -- update double qp flag
+  self.versionfuncs[3] = self.updatemobkills -- slit, assassinate, etc..
+  self:checkversion()
 end
 
 function Statdb:getstat(stat)
@@ -221,6 +217,7 @@ function Statdb:checkquesttable()
         mobarea TEXT,
         mobroom TEXT,
         qp INT default 0,
+        double INT default 0,
         gold INT default 0,
         tier INT default 0,
         mccp INT default 0,
@@ -241,6 +238,9 @@ function Statdb:savequest( questinfo )
   if self:open() then
     questinfo['level'] = db:getstat('totallevels')
     totalqp = tonumber(questinfo.qp) + tonumber(questinfo.tier) + tonumber(questinfo.mccp) + tonumber(questinfo.lucky)
+    if questinfo.double == 1 then
+      totalqp = totalqp * 2
+    end
     if questinfo.failed == 1 then
       self:addtostat('questsfailed', 1)
     else
@@ -253,8 +253,8 @@ function Statdb:savequest( questinfo )
     
     assert (self.db:exec("BEGIN TRANSACTION"))   
     local stmt = self.db:prepare[[ INSERT INTO quests VALUES (NULL, :starttime, :finishtime,
-                                                          :mobname, :mobarea, :mobroom, :qp, :gold,
-                                                          :tier, :mccp, :lucky,
+                                                          :mobname, :mobarea, :mobroom, :qp, :double, 
+                                                          :gold, :tier, :mccp, :lucky,
                                                           :tp, :trains, :pracs, :level, :failed) ]]
     stmt:bind_names(  questinfo  )
     stmt:step()
@@ -431,6 +431,12 @@ function Statdb:checkmobkillstable()
         gold INT default 0,
         tp INT default 0,
         time INT default -1,
+        vorpal INT default 0,
+        banishment INT default 0,
+        assassinate INT default 0,
+        slit INT default 0,
+        disintegrate INT default 0,
+        deathblow INT default 0,
         wielded_weapon TEXT default '',
         second_weapon TEXT default '',
         level INT default -1
@@ -448,7 +454,9 @@ function Statdb:savemobkill( killinfo )
     killinfo['level'] = tonumber(db:getstat('totallevels'))
     assert (self.db:exec("BEGIN TRANSACTION"))     
     local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (NULL, :mob, :xp, :bonusxp,
-                                                          :gold, :tp, :time, :wielded_weapon, :second_weapon, :level) ]]
+                                            :gold, :tp, :time, :vorpal, :banishment,
+                                            :assassinate, :slit, :disintegrate, :deathblow,
+                                            :wielded_weapon, :second_weapon, :level) ]]
     stmt:bind_names(  killinfo  )
     stmt:step()
     stmt:finalize()
@@ -983,3 +991,72 @@ function Statdb:lookuprecoverybyname(name)
   return false  
 end
 
+function Statdb:updatedblqp()
+  if not self:checkfortable('quests') then
+    return
+  end
+  if self:open() then
+    local oldquests = {}
+    for a in self.db:nrows("SELECT * FROM quests") do
+      oldquests[a.quest_id] = a
+    end
+    self.db:exec([[DROP TABLE IF EXISTS quests;]])    
+    self:checkquesttable()
+    assert (self.db:exec("BEGIN TRANSACTION"))   
+    local stmt = self.db:prepare[[ INSERT INTO quests VALUES (:quest_id, :starttime, :finishtime,
+                                                          :mobname, :mobarea, :mobroom, :qp, :double, 
+                                                          :gold, :tier, :mccp, :lucky,
+                                                          :tp, :trains, :pracs, :level, :failed) ]]
+    for i,v in tableSort(oldquests, 'quest_id') do
+      v['double'] = 0
+      stmt:bind_names(v)
+      stmt:step()
+      stmt:reset()      
+    end
+    stmt:finalize()
+    assert (self.db:exec("COMMIT"))        
+    self:close() 
+  end    
+end
+
+function Statdb:updatemobkills()
+  if not self:checkfortable('mobkills') then
+    return
+  end
+  if self:open() then
+    local oldkills = {}
+    for a in self.db:nrows("SELECT * FROM mobkills") do
+      oldkills[a.mk_id] = a
+    end
+    self.db:exec([[DROP TABLE IF EXISTS mobkills;]])    
+    self:checkmobkillstable()
+    assert (self.db:exec("BEGIN TRANSACTION"))   
+    local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (:mk_id, :name, :xp, :bonusxp,
+                                                          :gold, :tp, :time, :vorpal, :banishment,
+                                                          :assassinate, :slit, :disintegrate, :deathblow,
+                                                          :wielded_weapon, :second_weapon, :level) ]]
+    for i,v in tableSort(oldkills, 'mk_id') do
+      if v.gold == nil or v.gold == "" or type(v.gold) == 'string' then
+        v.gold = 0
+      end
+      v['vorpal'] = 0
+      if v.wielded_weapon == nil then
+        v.wielded_weapon = ""
+      end
+      if v.wielded_weapon ~= "" then
+        v['vorpal'] = 1
+      end
+      v['banishment'] = 0
+      v['assassinate'] = 0
+      v['slit'] = 0
+      v['disintegrate'] = 0
+      v['deathblow'] = 0
+      stmt:bind_names(v)
+      stmt:step()
+      stmt:reset()      
+    end
+    stmt:finalize()
+    assert (self.db:exec("COMMIT"))        
+    self:close() 
+  end    
+end

@@ -20,6 +20,24 @@
 
 </plugin>
 
+<timers>
+  <timer
+      script="dbbackup"
+      enabled="y"
+      hour="12"
+      name="backuptimernoon"
+      at_time="y"
+      >
+  </timer>
+  <timer
+      script="dbbackup"
+      enabled="y"
+      hour="0"
+      name="backuptimermid"
+      at_time="y"
+      >
+  </timer>
+</timers>
 
 <!--  Get our standard constants -->
 
@@ -254,6 +272,14 @@ function ListMilestones(cmddict)
   end
 end
 
+function cmdBackup(cmddict)
+  if #cmddict == 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify an extension")
+    return true
+  end
+  db:backupdb(cmddict[1])
+end
+
 function checkcampaign(level)
   local res, clevel = CallPlugin("aaa66f81c50828bbbfda7100", "isoncp") 
   clevel = tonumber(clevel)
@@ -276,6 +302,16 @@ function checkcampaign(level)
   end
 end
 
+function dbbackup(name)
+  local day = os.date("%a", GetInfo(304))
+  if name == "backuptimermid" then
+    db:backupdb(day .. '.midnight')
+  elseif name == "backuptimernoon" then
+    db:backupdb(day .. '.noon')
+  else
+    db:backupdb(day)
+  end
+end
 ]]>
 </script>
 
@@ -352,6 +388,8 @@ function OnPluginEnable ()
   ldplugin('broadcast_noexp')
 
   phelper:OnPluginEnable()
+  
+  dbbackup()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
@@ -383,6 +421,7 @@ end -- function OnPluginSaveState
 phelper:add_cmd('addmilestone', {func=AddMilestone, help="add a milestone"})
 phelper:add_cmd('comparemilstone', {func=CompareMilestones, help="compare two milestones"})
 phelper:add_cmd('listmilestones', {func=ListMilestones, help="list all milestones"})
+phelper:add_cmd('backup', {func=cmdBackup, help="backup the database, the only argument is the extension"})
 
 phelper:set_default('cmd', 'statdb')
 phelper:set_default('plugin_colour', 'orange')

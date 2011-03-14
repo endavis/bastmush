@@ -12,8 +12,61 @@ Sqlitedb = Object:subclass()
 function Sqlitedb:initialize(args)
   self.dbloc = GetPluginVariable ("", "dblocation") or GetInfo(58)
   self.db = nil
-  self.dbname = "/stats.db"
+  self.dbname = "\\stats.db"
   self.conns = 0
+  self.version = 1
+  self.versionfuncs = {}  
+end
+
+function Sqlitedb:checkversion(args)
+  self:checkversiontable()
+  local dbversion = self:getversion()
+  if self.version < dbversion then
+    return
+  end
+  if self.version > dbversion then
+    self:updateversion(dbversion, self.version)
+  end
+end
+
+function Sqlitedb:checkversiontable()
+  if self:open() then
+    if not self:checkfortable('version') then
+      self.db:exec([[CREATE TABLE version(
+        version_id INTEGER NOT NULL PRIMARY KEY autoincrement,        
+        version INT default 1
+      )]])
+      assert (self.db:exec("BEGIN TRANSACTION"))       
+      local stmt = self.db:exec[[ INSERT INTO version VALUES (NULL, 1) ]]
+      assert (self.db:exec("COMMIT"))       
+    end
+    self:close()
+  end
+end
+
+function Sqlitedb:getversion()
+  local version = -1
+  if self:open() then
+    for a in self.db:nrows('SELECT * FROM version WHERE version_id = 1') do
+      version = a['version']
+    end    
+    self:close()
+  end
+  return version
+end
+
+function Sqlitedb:updateversion(oldversion, newversion)
+  print(self.dbloc .. self.dbname, ': upgrading database from', oldversion, 'to', newversion)
+  self:backupdb('v' .. oldversion)
+  if self:open() then
+    for i=oldversion+1,newversion do
+      self.versionfuncs[i](self)
+    end
+    if self:checkfortable('version') then
+      self.db:exec(string.format('update version set version=%s where version_id = 1', newversion))       
+    end
+    self:close()
+  end  
 end
 
 function Sqlitedb:open()
@@ -51,4 +104,58 @@ function Sqlitedb:checkfortable(tablename)
     self:close()
   end
   return false
+end
+
+function Sqlitedb:dbcheck (code)
+  if code ~= sqlite3.OK and    -- no error
+    code ~= sqlite3.ROW and   -- completed OK with another row of data
+    code ~= sqlite3.DONE then -- completed OK, no more rows
+    local err = db:errmsg ()  -- the rollback will change the error message
+    db:exec ("ROLLBACK")      -- rollback any transaction to unlock the database
+    error (err, 2)            -- show error in caller's context
+  end -- if
+end -- dbcheck 
+
+function Sqlitedb:backupdb(extension)
+  --in_backup = true
+  local dbpath = self.dbloc .. self.dbname
+  Note("PERFORMING DATABASE BACKUP. DON'T TOUCH ANYTHING!")
+  Note("db: " .. dbpath)
+  Note("CHECKING INTEGRITY")
+  BroadcastPlugin (999, "repaint")
+  -- If needed, force wal_checkpoint databases to make sure everything gets written out
+  -- this is a harmless no-op if not using journal_mode=WAL
+  self:open()
+  self.db:exec("PRAGMA wal_checkpoint;")
+  local integrityCheck = true
+  for row in self.db:nrows("PRAGMA integrity_check;") do
+     tprint(row)
+     if row.integrity_check ~= "ok" then 
+        integrityCheck = false
+     end
+  end
+  if not integrityCheck then
+    Note("FAILED INTEGRITY CHECK. CLOSE MUSHCLIENT AND RESTORE A KNOWN GOOD DATABASE.")
+    Note("for " .. dbpath)
+    Note("ABORTING CURRENT BACKUP")
+    --in_backup = false
+    return
+  end
+  Note("INTEGRITY CHECK PASSED")
+  Note("BACKING UP DATABASES")
+  BroadcastPlugin (999, "repaint")
+
+  backupdir = self.dbloc .. "\\db_backups\\"
+  
+  os.execute("md " .. backupdir)
+
+  self:close()
+  
+  -- make new backup
+  local copycmd = "copy /Y " .. dbpath .. " " .. backupdir .. self.dbname .. "." .. extension
+  Note('copying db to ', backupdir .. self.dbname .. "." .. extension)
+  
+  os.execute(copycmd)
+  Note("FINISHED DATABASE BACKUP. YOU MAY NOW GO BACK TO MUDDING.")
+  --in_backup = false
 end
