@@ -130,37 +130,19 @@ function ldplugin_helper(plugin, id, silent)
   end
   loaded = loadfromfile(plugin)
   if loaded == false then
-    if not silent then
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-      ColourNote("yellow", "black", GetPluginInfo (GetPluginID (), 1) .. " (1) will not work correctly without " .. plugin)
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-    else
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-      ColourNote("yellow", "black", " Could not load " .. plugin .. "(" .. id .. ")" )
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-    end
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+    ColourNote("yellow", "black", " Could not load " .. plugin .. "(" .. id .. ")" )
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     return false
   elseif loaded == "Not Found" then
-    if not silent then
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-      ColourNote("yellow", "black", GetPluginInfo (GetPluginID (), 1) .. " (2) will not work correctly without " .. plugin)
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-    else
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-      ColourNote("yellow", "black", " Could not load " .. plugin .. "(" .. id .. ")" .. " because the file was not found")
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-    end
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+    ColourNote("yellow", "black", " Could not load " .. plugin .. "(" .. id .. ")" .. " because the file was not found")
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     return false
   elseif loaded == "Problem" then
-    if not silent then
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-      ColourNote("yellow", "black", GetPluginInfo (GetPluginID (), 1) .. " (3) will not work correctly without " .. plugin)
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-    else
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-      ColourNote("yellow", "black", " Could not load " .. plugin .. "(" .. id .. ")" .. " because of loading problems" )
-      ColourNote("yellow", "black", "-----------------------------------------------------------------------")
-    end  
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------")
+    ColourNote("yellow", "black", " Could not load " .. plugin .. "(" .. id .. ")" .. " because of loading problems" )
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     return false
   end
   penable = GetPluginInfo(loaded, 17)
