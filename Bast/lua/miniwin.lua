@@ -1754,7 +1754,7 @@ end
 function Miniwin:drawtext(tabname)
   self:removetextareahotspots()
 
-  WindowRectOp(self.winid, 2, self.activetab.build_data.textarea.left, self.activetab.build_data.textarea.top,
+  WindowRectOp(self.winid, 2, self.activetab.build_data.textarea.left, self.activetab.build_data.textarea.top + 1,
                            self.activetab.build_data.textarea.right, self.activetab.build_data.textarea.bottom,
                self:get_colour('bg_colour'))
 
