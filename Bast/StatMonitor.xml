@@ -133,7 +133,7 @@ function formatpup()
         days, hours, mins, secs = SecondsToDHMS(length)
         if days == 0 and hours == 0 and mins == 0 then
           table.insert( tmsg, string.format( "%02d", secs ) )
-          table.insert( tmsg, "s" )        
+          table.insert( tmsg, "s " )        
         else
           table.insert( tmsg, string.format( "%02d", days ) )
           table.insert( tmsg, "d:" )
