@@ -131,12 +131,17 @@ function formatpup()
       if starttime > 0 and finishtime > 0 then
         length = finishtime - starttime
         days, hours, mins, secs = SecondsToDHMS(length)
-        table.insert( tmsg, string.format( "%02d", days ) )
-        table.insert( tmsg, "d:" )
-        table.insert( tmsg, string.format( "%02d", hours) )
-        table.insert( tmsg, "h:" )
-        table.insert( tmsg, string.format( "%02d", mins ) )
-        table.insert( tmsg, "m " )
+        if days == 0 and hours == 0 and mins == 0 then
+          table.insert( tmsg, string.format( "%02d", secs ) )
+          table.insert( tmsg, "s" )        
+        else
+          table.insert( tmsg, string.format( "%02d", days ) )
+          table.insert( tmsg, "d:" )
+          table.insert( tmsg, string.format( "%02d", hours) )
+          table.insert( tmsg, "h:" )
+          table.insert( tmsg, string.format( "%02d", mins ) )
+          table.insert( tmsg, "m " )
+        end          
       end
       if db:checkfortable('mobkills') then
         for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where time > %d and time < %d and xp > 0", starttime, finishtime)) do
