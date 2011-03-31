@@ -134,6 +134,9 @@ function verify_number(numberval, args)
      elseif args.high then
        msg = msg .. 'Must be less that or equal to '  .. tostring(args.high)
      end
+     if args.default then
+       msg = msg .. '\nThe default value is ' .. tostring(args.default)      
+     end
      local tmsg = args.default or ""   
      tvalue = tonumber(utils.inputbox(msg, "", tmsg))
   end
