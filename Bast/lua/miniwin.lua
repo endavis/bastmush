@@ -420,7 +420,7 @@ function Miniwin:addline(tabname, line)
  -- add a line to the end of the text
 end
 
-function Miniwin:addtab(tabname, text, header, makeactive, sticky, position)
+function Miniwin:addtab(tabname, text, header, makeactive, sticky, position, resetstart)
  timer_start('miniwin:addtab')
  if self.disabled then
    self:init(true)
@@ -447,6 +447,9 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky, position)
    self.tabs[tabname].build_data = nil
    self.tabs[tabname].convtext = nil
    self.tabs[tabname].convheader = nil
+ end
+ if resetstart then
+   self.tabs[tabname].startline = nil
  end
  if not self.classinit then
   if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
@@ -1310,7 +1313,9 @@ function Miniwin:addhotspot(id, left, top, right, bottom, mouseover, cancelmouse
   if left >= self.activetab.build_data.textarea.left and left <= self.activetab.build_data.textarea.right and
         top >= self.activetab.build_data.textarea.top and top <= self.activetab.build_data.textarea.bottom then
      table.insert(self.textareahotspots, self.id .. ':' .. id)
-     self:addscrollwheelhandler(id, self.wheelmove)
+     if self.activetab.build_data.drawscrollbar then
+       self:addscrollwheelhandler(id, self.wheelmove)
+     end
   end
 
 end
