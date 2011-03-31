@@ -849,6 +849,27 @@ function SecondsToDHMS(sSeconds)
   end
 end
 
+function format_time(length)
+  -- returns time in the format 10d:3h:4m:3s
+  local tmsg = {}
+  local days, hours, mins, secs = SecondsToDHMS(length)
+  if days > 0 then
+    table.insert( tmsg, string.format( "%02d", days ) )
+    table.insert( tmsg, "d:" )
+  end
+  if hours > 0 then
+    table.insert( tmsg, string.format( "%02d", hours) )
+    table.insert( tmsg, "h:" )
+  end
+  if mins > 0 then
+    table.insert( tmsg, string.format( "%02d", mins ) )
+    table.insert( tmsg, "m:" )
+  end
+  table.insert( tmsg, string.format( "%02d", secs ) )
+  table.insert( tmsg, "s " )           
+  return strjoin("", tmsg)
+end
+
 function convert_ticks(ticks)
   --string.format ("Time to go: %sd %sh %sm ", cptimer.days, cptimer.hours, cptimer.mins)
   tout = {}
@@ -957,4 +978,3 @@ function timer_end(name)
 end
 
 phelper = Pluginhelper:new{name='phelp'}
-
