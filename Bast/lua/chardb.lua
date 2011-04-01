@@ -420,6 +420,29 @@ function Statdb:savelevel( levelinfo, first )
   return -1
 end
 
+function Statdb:getmobstime(starttime, finishtime)
+  local mobs = {}
+  if self:open() then
+    for a in self.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where time > %d and time < %d and xp > 0", starttime, finishtime)) do
+      mobskilled = a[1]
+      mobsavexp = a[2]
+    end
+    self:close()
+  end  
+  return mobskilled, mobsavexp
+end
+
+function Statdb:getmobs(etype, eid)
+  local mobs = {}
+  if self:open() then
+    for a in self.db:nrows("SELECT * FROM " .. etype ..  " WHERE " .. tableids[etype] .. " = " .. eid) do
+      table.insert(mobs, a)
+    end
+    self:close()
+  end
+  return mobs
+end
+
 function Statdb:checkmobkillstable()
   if self:open() then
     if not self:checkfortable('mobkills') then
@@ -439,6 +462,7 @@ function Statdb:checkmobkillstable()
         deathblow INT default 0,
         wielded_weapon TEXT default '',
         second_weapon TEXT default '',
+        room_id INT default 0,
         level INT default -1
       )]])
     end
@@ -456,7 +480,7 @@ function Statdb:savemobkill( killinfo )
     local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (NULL, :mob, :xp, :bonusxp,
                                             :gold, :tp, :time, :vorpal, :banishment,
                                             :assassinate, :slit, :disintegrate, :deathblow,
-                                            :wielded_weapon, :second_weapon, :level) ]]
+                                            :wielded_weapon, :second_weapon, :room_id, :level) ]]
     stmt:bind_names(  killinfo  )
     stmt:step()
     stmt:finalize()
@@ -642,13 +666,29 @@ function Statdb:checkitemtable()
   end
 end
 
+function Statdb:getlast(ttable, num)
+  local colid = tableids[ttable]
+  local lastrow = self:getlastrow(ttable)
+  local lowestrow = lastrow - (num - 1)
+  local tstring = string.format("SELECT * FROM %s WHERE %s <= %d and %s >= %d", ttable, colid, lastrow, colid, lowestrow)
+  local items = {}
+  if self:open() then
+    if colid then
+      for a in self.db:nrows(tstring) do
+        items[a[colid]] = a
+      end
+    end
+    self:close()
+  end
+  return items
+end
 
 function Statdb:getlastrow(ttable)
   local colid = tableids[ttable]
   local lastid = nil
   if self:open() then
     if colid then
-      tstring = 'SELECT MAX(' .. colid .. ') AS MAX FROM ' .. ttable
+      local tstring = 'SELECT MAX(' .. colid .. ') AS MAX FROM ' .. ttable
       for a in self.db:nrows(tstring) do
         lastid = a['MAX']
       end
@@ -1007,6 +1047,7 @@ function Statdb:updatedblqp()
                                                           :mobname, :mobarea, :mobroom, :qp, :double, 
                                                           :gold, :tier, :mccp, :lucky,
                                                           :tp, :trains, :pracs, :level, :failed) ]]
+                                                          
     for i,v in tableSort(oldquests, 'quest_id') do
       v['double'] = 0
       stmt:bind_names(v)
@@ -1028,29 +1069,30 @@ function Statdb:updatemobkills()
     for a in self.db:nrows("SELECT * FROM mobkills") do
       oldkills[a.mk_id] = a
     end
-    self.db:exec([[DROP TABLE IF EXISTS mobkills;]])    
+    self.db:exec([[DROP TABLE IF EXISTS mobkills;]])
     self:checkmobkillstable()
     assert (self.db:exec("BEGIN TRANSACTION"))   
     local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (:mk_id, :name, :xp, :bonusxp,
                                                           :gold, :tp, :time, :vorpal, :banishment,
                                                           :assassinate, :slit, :disintegrate, :deathblow,
-                                                          :wielded_weapon, :second_weapon, :level) ]]
+                                                          :wielded_weapon, :second_weapon, :room_id, :level) ]]
     for i,v in tableSort(oldkills, 'mk_id') do
       if v.gold == nil or v.gold == "" or type(v.gold) == 'string' then
         v.gold = 0
       end
       v['vorpal'] = 0
+      v['room_id'] = -2
       if v.wielded_weapon == nil then
         v.wielded_weapon = ""
       end
       if v.wielded_weapon ~= "" then
         v['vorpal'] = 1
       end
-      v['banishment'] = 0
-      v['assassinate'] = 0
-      v['slit'] = 0
-      v['disintegrate'] = 0
-      v['deathblow'] = 0
+      v['banishment'] = v['banishment'] or 0
+      v['assassinate'] = v['assassinate'] or 0
+      v['slit'] = v['slit'] or 0
+      v['disintegrate'] = v['disintegrate'] or 0
+      v['deathblow'] = v['deathblow'] or 0
       stmt:bind_names(v)
       stmt:step()
       stmt:reset()      
