@@ -110,8 +110,8 @@ function Sqlitedb:dbcheck (code)
   if code ~= sqlite3.OK and    -- no error
     code ~= sqlite3.ROW and   -- completed OK with another row of data
     code ~= sqlite3.DONE then -- completed OK, no more rows
-    local err = db:errmsg ()  -- the rollback will change the error message
-    db:exec ("ROLLBACK")      -- rollback any transaction to unlock the database
+    local err = self.db:errmsg ()  -- the rollback will change the error message
+    self.db:exec ("ROLLBACK")      -- rollback any transaction to unlock the database
     error (err, 2)            -- show error in caller's context
   end -- if
 end -- dbcheck 
