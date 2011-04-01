@@ -251,7 +251,7 @@ function whois_end(name, line, wildcards)
   check(EnableTrigger("whois_end", false))
   phelper:enabletriggroup("whois", false)
   --SendNoEcho('nopretitle')
-  whoisinfo['totallevels'] = (whoisinfo.remorts - 1) * 201 + whoisinfo.level
+  whoisinfo['totallevels'] = getactuallevel(whoisinfo.level, whoisinfo.remorts, whoisinfo.tiers)
   var.whoisinfo = serialize.save( "whoisinfo", whoisinfo )
   phelper:broadcast(1, var.whoisinfo)
 end
