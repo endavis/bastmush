@@ -54,7 +54,6 @@ kill_info = {}
 <include name="constants.lua"/>
 
 <triggers>
-
   <trigger
    enabled="y"
    match="^You receive (\d+(?:\+\d+)*) experience points?\.$"
@@ -64,6 +63,36 @@ kill_info = {}
    sequence="100"
   >
   </trigger>
+  
+  <trigger
+   enabled="y"
+   match="^You switch targets and direct your attacks at (.*).\.$"
+   regexp="y"
+   name="mobswitch"
+   script="mobswitch"
+   sequence="100"
+  >
+  </trigger>
+  
+  <trigger
+   enabled="y"
+   match="^You flee from combat!$"
+   regexp="y"
+   name="mobnoneflee"
+   script="mobnone"
+   sequence="100"
+  >
+  </trigger>
+  
+  <trigger
+   enabled="y"
+   match="^You retreat from the combat!$"
+   regexp="y"
+   name="mobnoneretreat"
+   script="mobnone"
+   sequence="100"
+  >
+  </trigger>  
   <trigger
    enabled="y"
    match="You receive * bonus experience points *."
@@ -203,6 +232,7 @@ require "verify"
 require "ldplugin"
 
 function reset_kill()
+  local room_id = kill_info.room_id
   kill_info = {}
   kill_info.tp = 0
   kill_info.vorpal = 0
@@ -212,16 +242,25 @@ function reset_kill()
   kill_info.disintegrate = 0
   kill_info.banishment = 0
   kill_info.xp = 0
+  kill_info.bonusxp = 0
   kill_info.gold = 0
   kill_info.tp = 0
+  kill_info.mob = ""
   kill_info.wielded_weapon = ''
   kill_info.second_weapon = ''
   kill_info.bcasted = true
+  kill_info.room_id = room_id
 end
 
 kill_info = {}
 reset_kill()
 var.cur_weapon = ''
+lastroom = -1
+
+function mobnone(name, line, wildcards)
+  --print('setting mob to none')
+  kill_info.mob = ""
+end
 
 function mobxp( name, line, wildcards )
   if name == 'mobxp' then
@@ -243,6 +282,10 @@ function vorpmob( name, line, wildcards)
   kill_info.second_weapon = phelper.secondsn
 end
 
+function mobswitch( name, line, wildcards)
+  kill_info.mob = wildcards[1]
+end
+
 function assassinatemob( name, line, wildcards)
   kill_info.mob = wildcards[1]
   kill_info.assassinate = 1
@@ -252,6 +295,7 @@ function slitmob( name, line, wildcards)
   kill_info.mob = wildcards[1]
   kill_info.slit = 1
   kill_info.bcasted = false
+  kill_info.time = GetInfo(304)  
   broadcast_kill()
 end
 
@@ -259,6 +303,7 @@ function disintegratemob( name, line, wildcards)
   kill_info.mob = wildcards[1]
   kill_info.disintegrate = 1
   kill_info.bcasted = false
+  kill_info.time = GetInfo(304) 
   broadcast_kill()
 end
 
@@ -266,6 +311,7 @@ function banishmob( name, line, wildcards)
   kill_info.mob = wildcards[1]
   kill_info.banishment = 1
   kill_info.bcasted = false
+  kill_info.time = GetInfo(304)   
   broadcast_kill()
 end
 
@@ -277,7 +323,7 @@ end
 function mobgold( name, line, wildcards )
   if name == 'mobgold' then
     kill_info.gold = wildcards[1] 
-    if not kill_info.mob then
+    if kill_info.mob == "" then
       kill_info.mob = wildcards[3]
     end
   elseif name == 'splitgold' then
@@ -312,17 +358,29 @@ end
 function OnPluginBroadcast (msg, id, name, text)
 
   if id == '3e7dedbe37e44942dd46d264' then
-    if text:find("char") then
+    if text:find("char.status") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
       tt = assert (loadstring ('return ' .. gmcparg or ""))()
 
       if tt['status'] then
         kill_info.level = tt.status.level
-        if tt.status.enemy ~= "" then
+        if tt.status.enemy ~= "" and kill_info.mob == "" then
+          --print('setting mob to', tt.status.enemy)
           kill_info.mob = tt.status.enemy
         end
       end
-
+    elseif text:find('room.info') then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
+      tt = assert (loadstring ('return ' .. gmcparg or ""))()      
+      
+      kill_info.room_id = tonumber(tt.num)      
+      
+      if tonumber(tt.num) ~= lastroom and kill_info.mob ~= "" then
+        lastroom = tonumber(tt.num)
+        kill_info.mob = ""
+        --print('resetting mob to none')
+      end
+      
     end
   end
 
@@ -391,7 +449,7 @@ phelper:set_default('cmd', 'bkill')
 phelper:set_default('plugin_colour', 'orange')
 
 phelper:add_setting('weaponsn', {help="the sn of the weapon that is currently wielded", type="string", default="", readonly=true})
-phelper:add_setting('secondsn', {help="the sn of the weapon that is currently wielded", type="string", default="", readonly=true})
+phelper:add_setting('secondsn', {help="the sn of the weapon that is currently seconded", type="string", default="", readonly=true})
 
 phelper:enable()
 
