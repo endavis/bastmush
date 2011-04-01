@@ -333,6 +333,7 @@ function gq_start (name, line, wildcards)
   check( EnableTrigger ("gq_start", false) )
   started = true
   if joined then
+    gq_info['starttime'] = GetInfo(304)  
     phelper:enabletriggroup("gqin", true)
 
     Execute("gq check")
