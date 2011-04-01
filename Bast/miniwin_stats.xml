@@ -37,15 +37,18 @@ require "tablefuncs"
 require "stringfuncs"
 require "ldplugin"
 require "chardb"
+require "aardutils"
 
 char = {}
 db = Statdb:new{}
 linewidth = 44
 
 statwin = Miniwin:new{name="Stats"}
+statwin:set_default('maxlines', 21)
 statwin:set_default('width_padding', 5)
 statwin:set_default('header_height', 0)
 statwin:set_default("maxtabs", 5)
+statwin:add_setting("maxitems", {help="the number of last items to show for each tab", type="number", default=5, sortlev=1, longname="Number of last items to show"})
 
 function roundto(val, decimal)
   local tval = -1
@@ -217,7 +220,221 @@ function build_level_window()
 
       local linestyles = format_row("Ave Time", convert_time(stats.levels['avetime']), convert_time(stats.pups['avetime']))
       table.insert(allstyles, linestyles)
+      
+      local lstyle = {}
 
+      table.insert(allstyles, {{text = ''}})
+      local tstr = "  Last " .. statwin.maxitems .. "  "
+      local tstrlen = #tstr
+      local replen = (linewidth - tstrlen) / 2
+      --print(tstrlen, linewidth, replen)
+      
+      local style = {}      
+      style.text = string.rep('-', replen)
+      style.textcolour = "lime"
+      table.insert(lstyle, style)
+      
+      local style = {}  
+      style.text = tstr
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.rep('-', replen)
+      style.textcolour = "lime"
+      table.insert(lstyle, style)
+      table.insert(allstyles, lstyle)      
+
+      local lstyle = {}
+      local style = {}
+      style.text = string.format("%3s ", "Lvl")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Level or Pup"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "TR")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Trains"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "BT")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Bonus Trains"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "PR")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Practices"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%-2s ", "HP")        
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Hit Points"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "MN")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Mana"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "MV")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Moves"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%1s ", "S")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Str bonus"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%1s ", "I")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Int bonus"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%1s ", "W")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Wis bonus"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%1s ", "C")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Con bonus"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%1s ", "D")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Dex bonus"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%1s ", "L")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Luck bonus"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%7s ", "  Time")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Time in the format days:hours:minutes"
+      table.insert(lstyle, style)
+      
+      table.insert(allstyles, lstyle)
+
+      table.insert(allstyles, {{text = string.rep('-', linewidth)}})
+
+      local lastitems = db:getlast('levels', statwin.maxitems)
+--      tprint(lastitems)
+
+      for i,v in tableSort(lastitems, nil, nil, true) do
+        local level = convertlevel(v.level)
+        local length = v.finishtime - v.starttime
+        local days, hours, mins, secs = SecondsToDHMS(length)      
+        
+        local lstyle = {}
+        local style = {}
+        if v.type == 'level' then
+          style.text = string.format("%3s ", tostring(level.level))
+        else
+          style.text = string.format("%3s ", "Pup")        
+        end
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2s ", tostring(v.trains))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2s ", tostring(v.bonustrains))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2s ", tostring(v.pracs))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%-2s ", tostring(v.hp))        
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2s ", tostring(v.mp))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2s ", tostring(v.mv))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%1s ", tostring(v.str))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%1s ", tostring(v.int))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%1s ", tostring(v.wis))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        local style = {}
+        style.text = string.format("%1s ", tostring(v.con))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        local style = {}
+        style.text = string.format("%1s ", tostring(v.dex))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        local style = {}
+        style.text = string.format("%1s ", tostring(v.luc))
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        if v.finishtime ~= -1 then
+          local style = {}
+          style.text = string.format("%3s:%2s:%2s", tostring(days), tostring(hours), tostring(mins))
+          style.textcolour = "white"
+          table.insert(lstyle, style)
+        end
+      
+        table.insert(allstyles, lstyle)      
+      end
+      
       statwin:addtab('Levels', allstyles)
     end
     db:close()
@@ -311,7 +528,7 @@ function build_quest_window()
           ReadableNumber(stats['gold'], 2),
           string.format("%d", stats['avegold'] or 0) .. '/quest')          
       table.insert(allstyles, linestyles)
-      local linestyles = format_row("Time", "", convert_time(stats['avetime']))
+      local linestyles = format_row("Time", "", format_time(stats['avetime']))
       table.insert(allstyles, linestyles)
 
       table.insert(allstyles, {{text = ''}})
@@ -331,6 +548,216 @@ function build_quest_window()
           stats['pracs'],
           string.format("%.3f", stats['pracsave'] or 0) .. '/quest')
       table.insert(allstyles, linestyles)
+
+
+      local lstyle = {}
+
+      table.insert(allstyles, {{text = ''}})
+      local tstr = "  Last " .. statwin.maxitems .. "  "
+      local tstrlen = #tstr
+      local replen = (linewidth - tstrlen) / 2
+      --print(tstrlen, linewidth, replen)
+      
+      local style = {}      
+      style.text = string.rep('-', replen)
+      style.textcolour = "lime"
+      table.insert(lstyle, style)
+      
+      local style = {}  
+      style.text = tstr
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.rep('-', replen)
+      style.textcolour = "lime"
+      table.insert(lstyle, style)
+      table.insert(allstyles, lstyle)      
+
+      local lstyle = {}
+      local style = {}
+      style.text = string.format("%2s ", "QP")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Mouseover this column to see mob, room, area"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "MC")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "TR")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "LK")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%-3s ", "DBL")        
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "TL")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Total QP"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "TP")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "TN")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Trains"      
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "PR")
+      style.textcolour = "lightseagreen"
+      style.hint = "Practices"      
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%4s ", "Gold")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%3s ", "Lvl")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%4s", " Time")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+      table.insert(allstyles, lstyle)
+
+      table.insert(allstyles, {{text = string.rep('-', linewidth)}})
+
+      local lastitems = db:getlast('quests', statwin.maxitems)
+--      tprint(lastitems)
+      
+      for i,v in tableSort(lastitems, nil, nil, true) do
+        local lstyle = {}
+        
+        local total = tonumber(v.qp) + tonumber(v.mccp) + tonumber(v.lucky) + tonumber(v.tier)
+        if v.double == 1 then
+          total = total * 2
+        end
+        local tname = utils.split(v.mobname, " ")
+        local mname = tname[#tname]
+        local tname = utils.split(v.mobroom, " ")
+        local rname = tname[#tname]         
+        local tname = utils.split(v.mobarea, " ")
+        local aname = tname[#tname]
+        local level = convertlevel(v.level)        
+        local length = v.finishtime - v.starttime
+        local days, hours, mins, secs = SecondsToDHMS(length)
+
+        local style = {}
+        style.text = string.format("%2d ", v.qp)
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.mccp)
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.tier)
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.lucky)
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        if v.double == 1 then
+          style.text = string.format("%-3s ", "Yes")        
+        else
+          style.text = string.format("%-3s ", "")
+        end
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", total)
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.tp)
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.trains)
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.pracs)
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%4d ", v.gold)
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        local style = {}
+        style.text = string.format("%3d ", level.level)
+        style.hint = v.level
+        style.mouseup = nofunc
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        local style = {}
+        if v.failed ~= 1 then
+          style.text = string.format("%2dm:%2ds", mins, secs)
+        else
+          style.text = "Failed"
+        end        
+        style.mouseup = nofunc
+        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.textcolour = "white"        
+        table.insert(lstyle, style)
+        table.insert(allstyles, lstyle)
+        
+      end
 
       statwin:addtab('Quests', allstyles)
     end
@@ -400,7 +827,7 @@ function build_cp_window()
           ReadableNumber(stats['gold'], 2),
           string.format("%d", stats['avegold'] or 0) .. '/CP')          
       table.insert(allstyles, linestyles)      
-      local linestyles = format_row("Time", "", convert_time(stats['avetime']))
+      local linestyles = format_row("Time", "", format_time(stats['avetime']))
       table.insert(allstyles, linestyles)
 
       table.insert(allstyles, {{text = ''}})
@@ -500,7 +927,7 @@ function build_gq_window()
       table.insert(allstyles, linestyles)
       local linestyles = format_row("GQ Mobs QP", stats['won']['qpmobs'] or 0, string.format("%.3f", stats['won']['qpmobsave'] or 0) .. '/GQ')
       table.insert(allstyles, linestyles)
-      local linestyles = format_row("Time", "", convert_time(stats['won']['avetime'] or 0))
+      local linestyles = format_row("Time", "", format_time(stats['won']['avetime'] or 0))
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Gold",
           ReadableNumber(stats['won']['gold'], 2),
@@ -608,6 +1035,26 @@ function format_stat(statname, statcur, statother, colwidth, statlength, color)
 
     return allstyle
 end
+
+tab_funcs = {}
+tab_funcs['Stats'] = build_stat_window
+tab_funcs['Quests'] = build_quest_window
+tab_funcs['Levels'] = build_level_window
+tab_funcs['CPs'] = build_cp_window
+tab_funcs['GQs'] = build_gq_window
+
+function onmaxitemschange(object, args)
+  if not statwin.classinit then
+    for i,v in tableSort(tab_funcs) do
+      if statwin:hastab(i) then
+        v()
+      end
+    end
+  end
+end
+
+statwin:registerevent('option_maxitems', statwin, onmaxitemschange)
+
 
 ]]>
 </script>
