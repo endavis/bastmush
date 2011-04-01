@@ -828,7 +828,11 @@ function build_summary()
   timer_end('summary_enable_spellwin')
 
   timer_start('summary_addtab')
-  spellwin:addtab('Summary', alines, nil, false, true, 1)
+  local restartline = false
+  if phelper.brief then
+    restartline = true
+  end
+  spellwin:addtab('Summary', alines, nil, false, true, 1, restartline)
   timer_end('summary_addtab')
 end
 
