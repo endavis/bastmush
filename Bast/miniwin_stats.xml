@@ -50,6 +50,15 @@ statwin:set_default('header_height', 0)
 statwin:set_default("maxtabs", 5)
 statwin:add_setting("maxitems", {help="the number of last items to show for each tab", type="number", default=5, sortlev=1, longname="Number of last items to show"})
 
+popupwin = Miniwin:new{name="Stat Info"}
+popupwin:set_default('use_tabwin', false)
+popupwin:set_default('header_height', 0)
+popupwin:set_default("maxtabs", 1)
+popupwin:set_default('windowpos', 12)
+
+gqmobcache = {}
+cpmobcache = {}
+
 function roundto(val, decimal)
   local tval = -1
   --print('rounding', val, ' to ', decimal, 'places')
@@ -427,7 +436,7 @@ function build_level_window()
         
         if v.finishtime ~= -1 then
           local style = {}
-          style.text = string.format("%3s:%2s:%2s", tostring(days), tostring(hours), tostring(mins))
+          style.text = string.format("%3s:%02s:%02s", tostring(days), tostring(hours), tostring(mins))
           style.textcolour = "white"
           table.insert(lstyle, style)
         end
@@ -584,21 +593,29 @@ function build_quest_window()
       local style = {}
       style.text = string.format("%2s ", "MC")
       style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "MCCP QP"      
       table.insert(lstyle, style)
 
       local style = {}
       style.text = string.format("%2s ", "TR")
       style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Tier QP"
       table.insert(lstyle, style)
 
       local style = {}
       style.text = string.format("%2s ", "LK")
       style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Lucky QP"      
       table.insert(lstyle, style)
 
       local style = {}
       style.text = string.format("%-3s ", "DBL")        
       style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Was this during double?"      
       table.insert(lstyle, style)
 
       local style = {}
@@ -611,6 +628,8 @@ function build_quest_window()
       local style = {}
       style.text = string.format("%2s ", "TP")
       style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Trivia Points"         
       table.insert(lstyle, style)
 
       local style = {}
@@ -623,6 +642,7 @@ function build_quest_window()
       local style = {}
       style.text = string.format("%2s ", "PR")
       style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
       style.hint = "Practices"      
       table.insert(lstyle, style)
 
@@ -639,6 +659,8 @@ function build_quest_window()
       local style = {}
       style.text = string.format("%4s", " Time")
       style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Time in the format minutes:seconds"      
       table.insert(lstyle, style)
       table.insert(allstyles, lstyle)
 
@@ -747,7 +769,7 @@ function build_quest_window()
         
         local style = {}
         if v.failed ~= 1 then
-          style.text = string.format("%2dm:%2ds", mins, secs)
+          style.text = string.format("%2dm:%02ds", mins, secs)
         else
           style.text = "Failed"
         end        
@@ -848,12 +870,222 @@ function build_cp_window()
           string.format("%.3f", stats['pracsave'] or 0) .. '/CP')
       table.insert(allstyles, linestyles)
 
+      local lstyle = {}
+
+      table.insert(allstyles, {{text = ''}})
+      local tstr = "  Last " .. statwin.maxitems .. "  "
+      local tstrlen = #tstr
+      local replen = (linewidth - tstrlen) / 2
+      --print(tstrlen, linewidth, replen)
+      
+      local style = {}      
+      style.text = string.rep('-', replen)
+      style.textcolour = "lime"
+      table.insert(lstyle, style)
+      
+      local style = {}  
+      style.text = tstr
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.rep('-', replen)
+      style.textcolour = "lime"
+      table.insert(lstyle, style)
+      table.insert(allstyles, lstyle)
+  
+      local lstyle = {}
+      
+      local style = {}
+      style.text = string.format("%-12s ", "Lvl")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%2s ", "QP")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "TP")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "TP"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "TN")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Trains"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%2s ", "PR")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Practices"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%6s ", "Gold")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)      
+
+      local style = {}
+      style.text = string.format("%3s ", "Mobs")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Mouseover this column for a popup with the mobs"
+      table.insert(lstyle, style) 
+
+      local style = {}
+      style.text = string.format("%6s", " Time")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Time in the format hours:minutes:seconds"      
+      table.insert(lstyle, style)
+
+      table.insert(allstyles, lstyle)
+
+      table.insert(allstyles, {{text = string.rep('-', linewidth)}})
+
+      local lastitems = db:getlast('campaigns', statwin.maxitems)
+      --tprint(lastitems)
+      
+      local mobcounts = {}
+      if db:open() then
+        for a in db.db:nrows('SELECT cp_id, count(*) as mobcount from cpmobs group by cp_id') do
+          mobcounts[a.cp_id] = a.mobcount
+        end
+        db:close()
+      end      
+      
+      for i,v in tableSort(lastitems, nil, nil, true) do
+        local lstyle = {}
+
+        local level  = convertlevel(v.level)
+        local levelstr = 'T' .. tostring(level.tier) .. ' R' .. tostring(level.remort) .. ' L' .. tostring(level.level)
+        local length = v.finishtime - v.starttime
+        local days, hours, mins, secs = SecondsToDHMS(length)
+        
+        local style = {}
+        style.text = string.format("%-12s ", levelstr)
+        --style.mouseup = nofunc
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.qp)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.tp)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.trains)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        local style = {}
+        style.text = string.format("%2d ", v.pracs)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%6d ", v.gold)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        local style = {}
+        style.text = string.format("%3d ", mobcounts[v.cp_id])
+        style.mouseover = function()
+          create_cp_popup(v.cp_id)
+        end
+        style.cancelmouseover = function (flags, hotspotid)
+                      if not popupwin.clickshow then
+                        popupwin:show(false)
+                      end
+                    end
+        style.mousedown = function (flags, hotspotid)
+                      popupwin.clickshow = not popupwin.clickshow
+                    end                    
+        table.insert(lstyle, style)         
+
+        local style = {}
+        if v.failed ~= 1 then
+          style.text = string.format("%2d:%02d:%02d", hours, mins, secs)
+        else
+          style.text = "Failed"
+        end        
+        style.textcolour = "white"        
+        table.insert(lstyle, style)
+
+        table.insert(allstyles, lstyle)        
+      end
+
+
       statwin:addtab('CPs', allstyles)
 
     end
     db:close()
   end
 
+end
+
+function create_cp_popup(cp_id)
+  local allstyles = {}
+  
+  if cpmobcache[cp_id] then
+    allstyles = cpmobcache[cp_id]
+  else
+    local mobs = {}
+    
+    if db:open() then
+      for a in db.db:nrows('SELECT * from cpmobs where cp_id = ' .. cp_id) do
+        mobs[a.cpmob_id] = a
+      end
+      db:close()
+    end
+    
+    local lstyle = {}
+    
+    local style = {}
+    style.text = string.format("%-30s ", "Mob")
+    style.textcolour = "lightseagreen"
+    table.insert(lstyle, style)
+
+    local style = {}
+    style.text = string.format("%-s ", "Location")
+    style.textcolour = "lightseagreen"
+    table.insert(lstyle, style)
+
+    table.insert(allstyles, lstyle)
+    table.insert(allstyles, {{text = string.rep('-', linewidth)}})
+
+    for i,v in tableSort(mobs) do
+    
+      local lstyle = {}
+      
+      local style = {}
+      style.text = string.format("%-30s ", v.mobname)
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%-s ", v.mobarea)
+      table.insert(lstyle, style)
+
+      table.insert(allstyles, lstyle)
+      cpmobcache[cp_id] = allstyles
+    end
+    
+  end
+  
+  popupwin:addtab('Default', allstyles)  
+  popupwin:show(true)
+  
 end
 
 function build_gq_window()
@@ -954,11 +1186,237 @@ function build_gq_window()
       local linestyles = format_row("GQ Mobs QP", stats['lost']['qpmobs'] or 0, string.format("%.3f", stats['lost']['qpmobsave'] or 0) .. '/GQ')
       table.insert(allstyles, linestyles)
 
+      local lstyle = {}
+
+      table.insert(allstyles, {{text = ''}})
+      local tstr = "  Last " .. statwin.maxitems .. "  "
+      local tstrlen = #tstr
+      local replen = (linewidth - tstrlen) / 2
+      
+      local style = {}      
+      style.text = string.rep('-', replen)
+      style.textcolour = "lime"
+      table.insert(lstyle, style)
+      
+      local style = {}  
+      style.text = tstr
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.rep('-', replen)
+      style.textcolour = "lime"
+      table.insert(lstyle, style)
+      table.insert(allstyles, lstyle)
+  
+      local lstyle = {}      
+      
+      local style = {}
+      style.text = string.format("%-10s ", "Lvl")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%2s ", "QP")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "QP for Winning"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "QM")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "QP from Mobs"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "TP")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Trivia Points"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "TN")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Trains"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%2s ", "PR")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Practices"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%6s ", "Gold")
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)      
+
+      local style = {}
+      style.text = string.format("%3s ", "MB")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Mouseover this column for a popup with the mobs"
+      table.insert(lstyle, style) 
+
+      local style = {}
+      style.text = string.format("%6s", " Time")
+      style.mouseup = nofunc
+      style.hint = "Time in the format minutes:seconds"
+      style.textcolour = "lightseagreen"
+      table.insert(lstyle, style)
+
+      table.insert(allstyles, lstyle)
+
+      table.insert(allstyles, {{text = string.rep('-', linewidth)}})
+
+      local lastitems = db:getlast('gquests', statwin.maxitems)
+      --tprint(lastitems)
+      
+      local mobcounts = {}
+      if db:open() then
+        for a in db.db:nrows('SELECT gq_id, SUM(num) as mobcount from gqmobs group by gq_id') do
+          mobcounts[a.gq_id] = a.mobcount
+        end
+        db:close()
+      end      
+      
+      for i,v in tableSort(lastitems, nil, nil, true) do
+        local lstyle = {}
+
+        local level  = convertlevel(v.level)
+        local levelstr = 'T' .. tostring(level.tier) .. ' R' .. tostring(level.remort) .. ' L' .. tostring(level.level)
+        local length = v.finishtime - v.starttime
+        local days, hours, mins, secs = SecondsToDHMS(length)
+        
+        local style = {}
+        style.text = string.format("%-10s ", levelstr)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.qp)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.qpmobs)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.tp)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2d ", v.trains)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        local style = {}
+        style.text = string.format("%2d ", v.pracs)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%6d ", v.gold)
+        style.textcolour = "white"
+        table.insert(lstyle, style)
+        
+        local style = {}
+        style.text = string.format("%3d ", mobcounts[v.gq_id])
+        style.mouseover = function()
+          create_gq_popup(v.gq_id)
+        end
+        style.cancelmouseover = function (flags, hotspotid)
+                      if not popupwin.clickshow then
+                        popupwin:show(false)
+                      end
+                    end
+        style.mousedown = function (flags, hotspotid)
+                      popupwin.clickshow = not popupwin.clickshow
+                    end                    
+        table.insert(lstyle, style)         
+
+        local style = {}
+        style.text = string.format(" %02d:%02d", mins, secs)
+        style.textcolour = "white"        
+        table.insert(lstyle, style)
+
+        table.insert(allstyles, lstyle)        
+      end
+
+
       statwin:addtab('GQs', allstyles)
     end
     db:close()
   end
 
+end
+
+function create_gq_popup(gq_id)
+  local allstyles = {}
+  if gqmobcache[gq_id] then
+    allstyles = gqmobcache[gq_id]
+  else
+    local mobs = {}
+    
+    if db:open() then
+      for a in db.db:nrows('SELECT * from gqmobs where gq_id = ' .. gq_id) do
+        mobs[a.gqmob_id] = a
+      end
+      db:close()
+    end
+    
+    local lstyle = {}
+
+    local style = {}
+    style.text = string.format("%-1s ", "# *")
+    style.textcolour = "lightseagreen"
+    table.insert(lstyle, style)
+
+    local style = {}
+    style.text = string.format("%-30s ", "Mob")
+    style.textcolour = "lightseagreen"
+    table.insert(lstyle, style)
+
+    local style = {}
+    style.text = string.format("%-s ", "Location")
+    style.textcolour = "lightseagreen"
+    table.insert(lstyle, style)
+
+    table.insert(allstyles, lstyle)
+    table.insert(allstyles, {{text = string.rep('-', linewidth)}})
+
+    for i,v in tableSort(mobs) do
+    
+      local lstyle = {}
+
+      local style = {}
+      style.text = string.format("%-1d * ", v.num)
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%-30s ", v.mobname)
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%-s ", v.mobarea)
+      table.insert(lstyle, style)
+
+      table.insert(allstyles, lstyle)
+      gqmobcache[gq_id] = allstyles
+    end
+    
+  end
+  
+  popupwin:addtab('Default', allstyles)  
+  popupwin:show(true)
+  
 end
 
 function format_row(rowname, data1, data2, datacolour, headercolour, width1, width2, width3)
@@ -1174,6 +1632,7 @@ phelper:set_default('cmd', 'mstat')
 phelper:set_default('plugin_colour', 'steelblue')
 
 phelper:add_pobject('win', statwin)
+phelper:add_pobject('pwin', popupwin)
 
 phelper:enable()
 
