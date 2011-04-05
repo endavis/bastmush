@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="miniwin_vote"
+   author="Bast"
+   id="eee87d566a44169e0f1d9585"
+   language="Lua"
+   purpose="redirect map to miniwin"
+   date_written="2008-07-18"
+   requires="4.52"
+   version="6.1"
+   save_state="y"
+   >
+<description trim="y">
+Redirects the map to a mini window.
+</description>
+
+</plugin>
+
+<!--  Triggers  -->
+<triggers>
+
+  
+</triggers>
+
+ 
+<timers>
+  <timer 
+    enabled="n" 
+    second="0.00" 
+    hour="1" 
+    offset_second="0.00" 
+    script="check_vote"
+    active_closed="y"
+    name="votetimer"
+    >
+  </timer>
+</timers>
+  
+<!--  Script  -->
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require 'var'
+require 'pluginhelper'
+require "miniwin"
+require "tprint"
+require "commas"
+require "serialize"
+require "ldplugin"
+require "findfile"
+
+timestuff = {}
+timestuff['12.5'] = 12.5 * 60 * 60
+timestuff['24.5'] = 24.5 * 60 * 60
+
+votewin = Miniwin:new{name="Vote"}
+votewin:set_default("windowpos", 12)
+
+function votemudconnect()
+  OpenBrowser('http://www.mudconnect.com/cgi-bin/vote_rank.cgi?mud=Aardwolf')
+  phelper.lastvoted['mudconnect'] = GetInfo(304)
+  SaveState()
+  check_vote()
+end
+
+function votetms()
+  OpenBrowser('http://www.topmudsites.com/vote-Sirene.html')
+  phelper.lastvoted['topmudsites'] = GetInfo(304)
+  SaveState()
+  check_vote()
+end
+
+function formatvote()
+  if not next(phelper.lastvoted) then
+    return "None"
+  else
+    local ttable = {}
+    for i,v in pairs(phelper.lastvoted) do
+      local tstring = i .. " - Now"
+      if v ~= 'Now' then
+        tstring = i .. " - " .. os.date("%c", v)
+      end
+      table.insert(ttable, tstring)
+    end
+    return table.concat (ttable, "\n")
+  end
+end
+
+function check_vote()
+  local ntime = GetInfo(304)
+  local found = false
+  for i,v in pairs(phelper.lastvoted) do
+    if v ~= 'Now' then
+      local ttime = timestuff['12.5']
+      if i == 'mudconnect' then
+        ttime = timestuff['24.5']
+      end
+      if ntime - v > ttime then
+        found = true
+        phelper.lastvoted[i] = "Now"
+      end
+    elseif v == 'Now' then
+      found = true
+    end
+  end
+  
+  if found then
+    show_vote_window()
+  else
+    votewin:disable()
+  end
+end
+
+function show_vote_window()
+  local alines = {}
+
+  if phelper.lastvoted['topmudsites'] == 'Now' then
+    local style = {}
+    style.text = " Top Mud Sites "
+    style.mouseup = votetms
+    table.insert(alines, {style})
+  end
+
+  if phelper.showmudconnector and phelper.lastvoted['mudconnect'] == 'Now' then
+    local style = {}
+    style.text = " Mud Connector "
+    style.mouseup = votemudconnect
+    table.insert(alines, {style})
+  end
+  
+  votewin:addtab('Default', alines)  
+
+end
+
+function onshowmudconnectorchange(object, args)
+  if not votewin.classinit and verify_bool(args.value) then
+    phelper.lastvoted['mudconnect'] = 'Now'
+    check_vote()
+  end
+end
+
+phelper:registerevent('option_showmudconnector', nil, onshowmudconnectorchange)
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+
+  EnableTimer('votetimer', true)
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'mvote')
+phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:add_setting('lastvoted', {type="table", help="the last time a vote was cast", default=serialize.save_simple({topmudsites="Now", mudconnect="Now"}), sortlev=35, istable=true, formatfunc=formatvote, readonly=true})
+phelper:add_setting('showmudconnector', {type="bool", help="show the mud connector link", default=verify_bool(false), sortlev=36})
+
+phelper:add_pobject('vote', votewin)
+
+phelper:enable()
+
+phelper:addaardhelps{"voting"}
+
+]]>
+</script>
+</muclient>
