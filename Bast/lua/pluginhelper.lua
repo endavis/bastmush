@@ -947,11 +947,23 @@ function fix_hotspotid(hotspotid)
 end
 
 function registerevent(pluginid, event, func)
+  if not func then
+    print('function does not exist for event', event)
+    return
+  end
+  if PluginSupports (pluginid, func) ~= error_code.eOK then
+    print(pluginid, ':', func, 'is not available')
+    return
+  end
   phelper:mdebug(GetPluginInfo(GetPluginID(), 1), "registered", pluginid, event, func)
   phelper:registerevent(event, {}, func, pluginid)
 end
 
 function unregisterevent(pluginid, event, func)
+  if not func then
+    print('function does not exist for event', event)
+    return
+  end
   phelper:mdebug(GetPluginInfo(GetPluginID(), 1), "unregistered", pluginid, event, func)
   phelper:unregisterevent(event, {}, func, pluginid)  
 end
