@@ -15,6 +15,8 @@
    >
 <description trim="y">
 Redirects the map to a mini window.
+
+add a button to gq tab to toggle between won, lost, or all
 </description>
 
 </plugin>
@@ -49,6 +51,7 @@ statwin:set_default('width_padding', 5)
 statwin:set_default('header_height', 0)
 statwin:set_default("maxtabs", 5)
 statwin:add_setting("maxitems", {help="the number of last items to show for each tab", type="number", default=5, sortlev=1, longname="Number of last items to show"})
+statwin:add_setting("showwhichgqs", {help="which gqs to show, 1 = all, 2 = won, 3 = not won", type="number", low=1, high=3, default=1, sortlev=1, longname="Which GQs are shown"})
 
 popupwin = Miniwin:new{name="Stat Info"}
 popupwin:set_default('use_tabwin', false)
@@ -149,11 +152,9 @@ function build_level_window()
   stats['levels'] = {}
   stats['pups'] = {}
   if not db:checkfortable('stats') then
-    print('return on checkfortable("stats")')
     return
   end
   if not db:checkfortable('levels') then
-    print('return on checkfortable("levels")')
     return
   end
   if db:open() then
@@ -357,7 +358,7 @@ function build_level_window()
       table.insert(allstyles, {{text = string.rep('-', linewidth)}})
 
       local lastitems = db:getlast('levels', statwin.maxitems)
---      tprint(lastitems)
+      --tprint(lastitems)
 
       for i,v in tableSort(lastitems, nil, nil, true) do
         local level = convertlevel(v.level)
@@ -1186,11 +1187,21 @@ function build_gq_window()
       local linestyles = format_row("GQ Mobs QP", stats['lost']['qpmobs'] or 0, string.format("%.3f", stats['lost']['qpmobsave'] or 0) .. '/GQ')
       table.insert(allstyles, linestyles)
 
+      local whereclause = nil
+      local wherestring = "(All)"
+      if statwin.showwhichgqs == 2 then
+        whereclause = 'won = 1'
+        wherestring = "(Won)"
+      elseif statwin.showwhichgqs == 3 then
+        whereclause = 'won = 0'
+        wherestring = "(Lost)"
+      end
+
       local lstyle = {}
 
       table.insert(allstyles, {{text = ''}})
-      local tstr = "  Last " .. statwin.maxitems .. "  "
-      local tstrlen = #tstr
+      local tstr = "  Last " .. statwin.maxitems .. " "
+      local tstrlen = #tstr + 9
       local replen = (linewidth - tstrlen) / 2
       
       local style = {}      
@@ -1202,6 +1213,56 @@ function build_gq_window()
       style.text = tstr
       table.insert(lstyle, style)
 
+      local style = {}  
+      style.text = '('
+      table.insert(lstyle, style)
+
+      local style = {}  
+      style.text = 'A'
+      if statwin.showwhichgqs == 1 then
+        style.textcolour = 'lime'
+      end
+      style.mouseup = function ()
+        statwin:set('showwhichgqs', 1)
+      end
+      style.hint = 'Show All GQs'
+      table.insert(lstyle, style)
+
+      local style = {}  
+      style.text = '/'
+      table.insert(lstyle, style)
+
+      local style = {}  
+      style.text = 'W'
+      if statwin.showwhichgqs == 2 then
+        style.textcolour = 'lime'
+      end
+      style.mouseup = function ()
+        statwin:set('showwhichgqs', 2)
+      end
+      style.hint = 'Show only GQs that were won'
+      table.insert(lstyle, style)
+
+      local style = {}  
+      style.text = '/'
+      table.insert(lstyle, style)
+
+      local style = {}  
+      style.text = 'L'
+      if statwin.showwhichgqs == 3 then
+        style.textcolour = 'lime'
+      end
+      style.mouseup = function ()
+        statwin:set('showwhichgqs', 3)
+      end
+      style.hint = 'Show only GQs that were lost'
+      table.insert(lstyle, style)
+
+      local style = {}  
+      style.text = ')  '
+      table.insert(lstyle, style)
+
+
       local style = {}
       style.text = string.rep('-', replen)
       style.textcolour = "lime"
@@ -1209,7 +1270,7 @@ function build_gq_window()
       table.insert(allstyles, lstyle)
   
       local lstyle = {}      
-      
+
       local style = {}
       style.text = string.format("%-10s ", "Lvl")
       style.textcolour = "lightseagreen"
@@ -1273,7 +1334,7 @@ function build_gq_window()
 
       table.insert(allstyles, {{text = string.rep('-', linewidth)}})
 
-      local lastitems = db:getlast('gquests', statwin.maxitems)
+      local lastitems = db:getlast('gquests', statwin.maxitems, whereclause)
       --tprint(lastitems)
       
       local mobcounts = {}
@@ -1282,8 +1343,8 @@ function build_gq_window()
           mobcounts[a.gq_id] = a.mobcount
         end
         db:close()
-      end      
-      
+      end
+
       for i,v in tableSort(lastitems, nil, nil, true) do
         local lstyle = {}
 
@@ -1328,7 +1389,7 @@ function build_gq_window()
         table.insert(lstyle, style)
         
         local style = {}
-        style.text = string.format("%3d ", mobcounts[v.gq_id])
+        style.text = string.format("%3d ", mobcounts[v.gq_id] or -1)
         style.mouseover = function()
           create_gq_popup(v.gq_id)
         end
@@ -1511,8 +1572,15 @@ function onmaxitemschange(object, args)
   end
 end
 
+function onshowwhichgqschange(object, args)
+  if not statwin.classinit then
+    build_gq_window()
+  end
+end
+
 statwin:registerevent('option_maxitems', statwin, onmaxitemschange)
 
+statwin:registerevent('option_showwhichgqs', statwin, onshowwhichgqschange)
 
 ]]>
 </script>
