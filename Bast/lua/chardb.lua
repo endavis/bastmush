@@ -668,9 +668,8 @@ end
 
 function Statdb:getlast(ttable, num)
   local colid = tableids[ttable]
-  local lastrow = self:getlastrow(ttable)
-  local lowestrow = lastrow - (num - 1)
-  local tstring = string.format("SELECT * FROM %s WHERE %s <= %d and %s >= %d", ttable, colid, lastrow, colid, lowestrow)
+  local tstring = string.format("SELECT * FROM %s ORDER by %s desc limit %d", ttable, colid, num)
+
   local items = {}
   if self:open() then
     if colid then
