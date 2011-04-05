@@ -266,7 +266,11 @@ function Phelpobject:checkvalue(option, value, args)
     return 2, nil
   end
   if value == 'default' then
-    value = varstuff.default
+    if varstuff.istable then
+      value = loadstring('return ' .. varstuff.default or "")()
+    else
+      value = varstuff.default
+    end
   end
   local default = varstuff.default
   if self[option] then
@@ -313,7 +317,7 @@ end
 
 function Phelpobject:set_external(option, value, args)
   varstuff = self.set_options[option]
-  if varstuff.readonly and not self.classinit then
+  if varstuff.readonly and not self.classinit and value ~= 'default' then
     self:plugin_header()
     ColourNote(RGBColourToName(var.plugin_colour), "", "That is a read-only var")
     ColourNote("", "", "")
