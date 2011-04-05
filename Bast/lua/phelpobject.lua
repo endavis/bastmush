@@ -53,7 +53,7 @@ function Phelpobject:initialize(args)
   self.events = {}
 
   self:add_setting( 'tdebug', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1})
-  self:add_setting( 'ignorebsetting', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1, longname="Ignore Broadcast Settings"})
+  self:add_setting( 'ignorebsetting', {type="bool", help="ignore setting of options through broadcast", default=verify_bool(false), sortlev=1, longname="Ignore Broadcast Settings"})
 
   self:add_cmd('help', {func="cmd_help", help="show help", prio=99})
   self:add_cmd('debug', {func="cmd_debug", help="toggle debugging", prio=99})
