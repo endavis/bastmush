@@ -55,6 +55,7 @@ cptimer = {}
 level = nil
 curlevel = nil
 showcpwin = false
+firstflag = false
 
 function set_show()
   showcpwin = true
@@ -268,6 +269,7 @@ function OnPluginBroadcast (msg, id, name, text)
       -- get the timer
       loadstring( pvar )()
       quest_stuff = quest_info
+      firstflag = true
     elseif msg == 3 then
       -- quest time left
       local pvar = GetPluginVariable(  "aaa8a9eda20fa11787c6b438", "timer" )
@@ -275,7 +277,12 @@ function OnPluginBroadcast (msg, id, name, text)
       -- get the timer
       loadstring( pvar )()
       quest_timer = timer
-      build_quest(true)
+      if firstflag then
+        build_quest(true)
+        firstflag = false
+      else
+        build_quest()
+      end
     elseif msg == 4 then
       -- quest mob dead
       quest_text = {"  Quest Complete - Hand it in  "}
