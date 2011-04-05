@@ -67,6 +67,10 @@ end
 
 
 function Phelpobject:registerevent(tevent, object, tfunction, plugin)
+  if not tfunction then
+    print(self.id, 'function does not exist for', tevent)
+    return
+  end
   if self.events[tevent] == nil then
     self.events[tevent] = {}
   end
@@ -84,7 +88,9 @@ function Phelpobject:processevent(tevent, args)
       --print('calling', v.plugin, v.func, targs)
       CallPlugin(v.plugin, v.func, targs)
     else
-      v.func(v.object, args)
+      if v.func then
+        v.func(v.object, args)
+      end
     end
   end
 end
