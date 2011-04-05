@@ -666,9 +666,14 @@ function Statdb:checkitemtable()
   end
 end
 
-function Statdb:getlast(ttable, num)
+function Statdb:getlast(ttable, num, where)
   local colid = tableids[ttable]
-  local tstring = string.format("SELECT * FROM %s ORDER by %s desc limit %d", ttable, colid, num)
+  local tstring = ''
+  if where then
+    tstring = string.format("SELECT * FROM %s WHERE %s ORDER by %s desc limit %d", ttable, where, colid, num)    
+  else
+    tstring = string.format("SELECT * FROM %s ORDER by %s desc limit %d", ttable, colid, num)
+  end
 
   local items = {}
   if self:open() then
