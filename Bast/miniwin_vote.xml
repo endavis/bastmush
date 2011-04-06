@@ -96,16 +96,28 @@ function check_vote()
   local ntime = GetInfo(304)
   local found = false
   for i,v in pairs(phelper.lastvoted) do
-    if v ~= 'Now' then
-      local ttime = timestuff['12.5']
-      if i == 'mudconnect' then
+    local votenow = false
+    if i == 'mudconnect' and verify_bool(phelper.showmudconnector) then
+      if v == 'Now' then
+        votenow = true
+      else
         ttime = timestuff['24.5']
+        if ntime - v > ttime then
+          votenow = true
+        end
       end
-      if ntime - v > ttime then
-        found = true
-        phelper.lastvoted[i] = "Now"
-      end
-    elseif v == 'Now' then
+    elseif i ~= 'mudconnect' then
+      if v == 'Now' then
+        votenow = true
+      else
+        ttime = timestuff['12.5']
+        if ntime - v > ttime then
+          votenow = true
+        end
+      end      
+    end
+    if votenow then
+      phelper.lastvoted[i] = 'Now'
       found = true
     end
   end
