@@ -477,6 +477,14 @@ function cmd_sablocker(cmddict)
         local blck = tlist[2]
         spell = find_spell(spell)
         blck = find_spell(blck)
+        if not spell then 
+          ColourNote(RGBColourToName(var.plugin_colour), "black", 'Spell ' .. tlist[1] .. ' does not exist')
+          return
+        end
+        if not blck then 
+          ColourNote(RGBColourToName(var.plugin_colour), "black", 'Spell ' .. tlist[2] .. ' does not exist')
+          return
+        end        
         local test = add_blocker(spell.sn, blck.sn)
         if test then
           ablocked = true
