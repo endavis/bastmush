@@ -60,6 +60,7 @@ require "aardutils"
 require "ldplugin"
 
 db = Statdb:new{}
+char = {}
 
 sentnoexp = false
 sentwhois = false
@@ -280,6 +281,31 @@ function cmdBackup(cmddict)
   db:backupdb(cmddict[1])
 end
 
+function cmdCampaignxp(cmddict)
+  tprint(cmddict)
+  phelper:plugin_header("Campaign XP")      
+  if #cmddict == 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a xp amount")
+    return true
+  end
+  if cmddict[1] == 'off' then
+    phelper:set('dontlevelnocampaign', false)    
+    ColourNote(RGBColourToName(var.plugin_colour), "black", 'noexp will not be used when no campaign for a level')
+    return
+  end
+  local tnl = verify_number(cmddict[1])
+  if tnl then
+    if tnl < tonumber(char.base.perlevel) then
+      phelper:set('campaignxp', tnl)
+      phelper:set('dontlevelnocampaign', true)
+      ColourNote(RGBColourToName(var.plugin_colour), "black", "If you haven't taken a campaign for this level then at < " .. tostring(tnl) .. 'xp, noexp will be set')
+    else
+      ColourNote(RGBColourToName(var.plugin_colour), "black", tostring(tnl) .. ' is higher than your xp per level')
+      return
+    end
+  end
+end 
+
 function checkcampaign(level)
   local res, clevel = CallPlugin("aaa66f81c50828bbbfda7100", "isoncp") 
   clevel = tonumber(clevel)
@@ -336,7 +362,7 @@ function OnPluginBroadcast (msg, id, name, text)
   elseif id == '3e7dedbe37e44942dd46d264' then
     if text:find("char") then    
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
-      local char = assert (loadstring ('return ' .. gmcparg or ""))()
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
       
       if char.status and char.status.state and tonumber(char.status.state) == 3 and db:getstat('totallevels') == nil then
         sentwhois = true
@@ -389,6 +415,10 @@ function OnPluginEnable ()
 
   phelper:OnPluginEnable()
   
+  if IsConnected() then
+    res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+    char = assert (loadstring ('return ' .. gmcparg or ""))()
+  end
   dbbackup()
 end -- OnPluginEnable
 
@@ -422,12 +452,13 @@ phelper:add_cmd('addmilestone', {func=AddMilestone, help="add a milestone"})
 phelper:add_cmd('comparemilstone', {func=CompareMilestones, help="compare two milestones"})
 phelper:add_cmd('listmilestones', {func=ListMilestones, help="list all milestones"})
 phelper:add_cmd('backup', {func=cmdBackup, help="backup the database, the only argument is the extension"})
+phelper:add_cmd('campaignxp', {func=cmdCampaignxp, help="set noexp if a campaign hasn't been taken and tnl is less than the argument to this function, use 'off' (no quotes) disable"})
 
 phelper:set_default('cmd', 'statdb')
 phelper:set_default('plugin_colour', 'orange')
 
 phelper:add_setting('dontlevelnocampaign', {help="set this to true to automatically set noexp at <campaignxp tnl if you haven't done a campaign this level", type="bool", default=false})
-phelper:add_setting('campaignxp', {help="tnl to check to set noexp if you haven't done a campaign this level", type="number", default=500})
+phelper:add_setting('campaignxp', {help="tnl to check to set noexp if you haven't done a campaign this level", type="number", default=500, low=50})
 
 phelper:enable()
 
