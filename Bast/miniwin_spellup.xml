@@ -101,6 +101,7 @@ spellwin:add_setting("statuscolour", {help="the text colour for the status", typ
 
 good = {}
 bad = {}
+goodoneminute = {}
 
 spells_filter = {stype="spellup", reverse=true, default=0}
 self_filter = nil
@@ -356,6 +357,7 @@ function build_windows(override)
   if spells['all'] and spells['affected'] and recoveries['affected'] and spells['spellup'] and spells['learned'] then
 
     good = {}
+    goodoneminute = {}
     bad = {}
 
     timer_start('spells_affected')  
@@ -364,6 +366,9 @@ function build_windows(override)
         table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
       else
         table.insert (good, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )
+        if v.finish - GetInfo(304) < 60 then
+          table.insert (goodoneminute, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )         
+        end
       end -- if
     end
     timer_end('spells_affected')  
@@ -543,6 +548,19 @@ function build_summary()
     table.insert(lstyle, style)    
 
     local style = {}
+    style.text = ":"
+    table.insert(lstyle, style) 
+    
+    local style = {}
+    style.text = tostring(#goodoneminute) 
+    style.textcolour = time_colour(59)
+    style.hint = "Good spells that will wear off in less than one minute"
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style) 
+
+    local style = {}
     style.text = " "
     style.mouseup = function ()
               spellwin:changetotab('Affected')
@@ -710,8 +728,16 @@ function build_summary()
 
     local lstyle = {}
     local style = {}
-    style.text = string.format("%-15s: %3d  " , "Good", #good)
+    style.text = string.format("%-12s: %3d:" , "Good", #good)
     style.textcolour = "goodcolour"
+    style.mouseup = function ()
+              spellwin:changetotab('Affected')
+          end
+    table.insert(lstyle, style)
+
+    local style = {}
+    style.text = string.format("%-2d  " , #goodoneminute)
+    style.textcolour = time_colour(50)
     style.mouseup = function ()
               spellwin:changetotab('Affected')
           end
@@ -729,7 +755,7 @@ function build_summary()
 
     local lstyle = {}
     local style = {}
-    style.text = string.format("%-15s: %3d  " , "Bad", #bad)
+    style.text = string.format("%-12s: %3d     " , "Bad", #bad)
     style.textcolour = "badcolour"
     style.mouseup = function ()
               spellwin:changetotab('Affected')
@@ -1412,11 +1438,17 @@ function spell_display_timer()
   good = {}
   bad = {}  
 
+  local oldgoodoneminute = #goodoneminute
+  goodoneminute = {}
+  
   for k, v in pairs (spells['affected']) do
     if v.target == 1 and spells['spellup'][k] == nil then
       table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
     else
       table.insert (good, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )
+      if v.finish - GetInfo(304) < 60 then
+        table.insert (goodoneminute, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )         
+      end      
     end -- if
   end
   
@@ -1426,8 +1458,10 @@ function spell_display_timer()
 
   if spellwin.activetab.tabname == 'Affected' then
     build_affected()
+  elseif oldgoodoneminute ~= #goodoneminute and spellwin.activetab.tabname == 'Summary' then
+    build_summary()
   end
-
+  
 end
 
 windowtabs = {
