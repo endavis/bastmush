@@ -1094,7 +1094,8 @@ function OnPluginBroadcast (msg, id, name, text)
           nextspellup('more moves')
         end
         if tonumber(stats.status.state) == 3 and old_state ~= 3 then
-          -- state changed to active from something else     
+          -- state changed to active from something else
+          setwaiting(false)
           nextspellup('state change to active')
         end
         if old_state ~= tonumber(stats.status.state) then
@@ -1142,7 +1143,7 @@ function OnPluginBroadcast (msg, id, name, text)
           end
         end 
       elseif tag.reason == 3 then
-        setwaiting(false      )
+        setwaiting(false)
         nextspellup('spell fail')          
       elseif tag.reason == 4 then
         setwaiting(false)
