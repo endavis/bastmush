@@ -127,7 +127,6 @@ Button Notes:
 TODO: add footer, this could be used for resizing, tabs, status bar type things
 TODO: add a specific line width that can be used to wrap lines - see "help statmon" and the chat miniwindow
 TODO: add ability to add shapes as styles - see Bigmap_Graphical plugin and WindowCircleOp
-TODO: plugin to set colours on all my miniwindows, maybe a theme
 TODO: addline function that adds a single line to the text addline(line, tab) tab is optional, then I could just convert_line and adjust_line
 TODO: automatically detect urls: (.*)(http\:\/\/(?:[A-Za-z0-9\.\\\/\?])+)(.*)
 TODO: have adjust_line be the one that breaks up the lines
@@ -163,45 +162,7 @@ require 'serialize'
 require 'copytable'
 require 'commas'
 require 'wait'
-
-local BLACK = 1
-local RED = 2
-local GREEN = 3
-local YELLOW = 4
-local BLUE = 5
-local MAGENTA = 6
-local CYAN = 7
-local WHITE = 8
-
--- colour styles (eg. @r is normal red, @R is bold red)
-
--- @- is shown as ~
--- @@ is shown as @
-
--- This table uses the colours as defined in the MUSHclient ANSI tab, however the
--- defaults are shown on the right if you prefer to use those.
-
-colour_conversion = {
-   k = GetNormalColour (BLACK)   ,   -- 0x000000
-   r = GetNormalColour (RED)     ,   -- 0x000080
-   g = GetNormalColour (GREEN)   ,   -- 0x008000
-   y = GetNormalColour (YELLOW)  ,   -- 0x008080
-   b = GetNormalColour (BLUE)    ,   -- 0x800000
-   m = GetNormalColour (MAGENTA) ,   -- 0x800080
-   c = GetNormalColour (CYAN)    ,   -- 0x808000
-   w = GetNormalColour (WHITE)   ,   -- 0xC0C0C0
-   K = GetBoldColour   (BLACK)   ,   -- 0x808080
-   R = GetBoldColour   (RED)     ,   -- 0x0000FF
-   G = GetBoldColour   (GREEN)   ,   -- 0x00FF00
-   Y = GetBoldColour   (YELLOW)  ,   -- 0x00FFFF
-   B = GetBoldColour   (BLUE)    ,   -- 0xFF0000
-   M = GetBoldColour   (MAGENTA) ,   -- 0xFF00FF
-   C = GetBoldColour   (CYAN)    ,   -- 0xFFFF00
-   W = GetBoldColour   (WHITE)   ,   -- 0xFFFFFF
-
-   -- add custom colours here
-
-  }  -- end conversion table
+require 'colours'
 
 layer_table = {}
 layer_table[1] = "x"
@@ -214,14 +175,7 @@ layer_table[7] = "i"
 layer_table[8] = "f"
 layer_table[9] = "c"
 layer_table[10] = "a"
-   
--- take a string, and remove colour codes from it (eg. "@Ghello" becomes "hello"
-function strip_colours (s)
-  s = s:gsub ("@%-", "~")    -- fix tildes
-  s = s:gsub ("@@", "\0")  -- change @@ to 0x00
-  s = s:gsub ("@%a([^@]*)", "%1")
-  return (s:gsub ("%z", "@")) -- put @ back
-end -- strip_colours
+  
 
 -- subclass phelpobject
 Miniwin = Phelpobject:subclass()
@@ -1812,23 +1766,30 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
     local x = Left  -- current x position
     local need_caps = Capitalize
 
-    Text = Text:gsub ("@%-", "~")    -- fix tildes
-    Text = Text:gsub ("@@", "\0")  -- change @@ to 0x00
+    Text = Text:gsub ("@%-", "~") -- fix tildes
+    Text = Text:gsub ("@@", "\0") -- change @@ to 0x00
+    Text = Text:gsub ("@x([^%d])","%1") -- strip invalid xterm codes
+    Text = Text:gsub ("@[^xcmyrgbwCMYRGBWD]", "")  -- rip out hidden garbage
 
     -- make sure we start with @ or gsub doesn't work properly
     if Text:sub (1, 1) ~= "@" then
-      Text = "@x" .. Text
+      Text =  DEFAULT_COLOUR .. Text
     end -- if
 
     for colour, text in Text:gmatch ("@(%a)([^@]+)") do
       text = text:gsub ("%z", "@") -- put any @ characters back
+
+      if colour == "x" then -- xterm 256 colors
+        code,text = text:match("(%d%d?%d?)(.*)")
+        colour = colour..code
+      end
 
       if need_caps then
         local count
         text, count = text:gsub ("%a", string.upper, 1)
         need_caps = count == 0 -- if not done, still need to capitalize yet
       end -- if
-
+      
       if #text > 0 then
         x = x + wfunction (self.winid, font_id, text, x, Top, Right, Bottom,
                             colour_conversion [colour] or self.text_colour)
