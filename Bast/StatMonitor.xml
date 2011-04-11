@@ -64,29 +64,30 @@ require "chardb"
 require "aardutils"
 require "tprint"
 require "ldplugin"
+require "stringfuncs"
+require "colours"
 
 db = Statdb:new{}
 
 quest_stuff = {}
 hourtotals = {}
 
-colourcodes = { ["@r"]=RGBColourToName( GetNormalColour( 2 ) ), ["@g"]=RGBColourToName( GetNormalColour( 3 ) ),
-                ["@y"]=RGBColourToName( GetNormalColour( 4 ) ), ["@b"]=RGBColourToName( GetNormalColour( 5 ) ),
-		["@m"]=RGBColourToName( GetNormalColour( 6 ) ), ["@c"]=RGBColourToName( GetNormalColour( 7 ) ),
-		["@w"]=RGBColourToName( GetNormalColour( 8 ) ),
-		["@R"]=RGBColourToName( GetBoldColour( 2 ) ),   ["@G"]=RGBColourToName( GetBoldColour( 3 ) ),
-                ["@Y"]=RGBColourToName( GetBoldColour( 4 ) ),   ["@B"]=RGBColourToName( GetBoldColour( 5 ) ),
-		["@M"]=RGBColourToName( GetBoldColour( 6 ) ),   ["@C"]=RGBColourToName( GetBoldColour( 7 ) ),
-		["@W"]=RGBColourToName( GetBoldColour( 8 ) ) }
-
-colours = { [1] = GetVariable( "col1" ) or "@W",
-            [2] = GetVariable( "col2" ) or "@G" }
-
-function DisplayInfo( info )
-  for k,v in ipairs( info ) do
-    ColourTell( colourcodes[ colours[ ( k % 2 + 1 ) or 1 ] ], "", v )
+function DisplayInfo( info, type )
+  local typechan = phelper[type..'chan']
+  if typechan == 'None' or not typechan then
+    TextToColourTell(strjoin('', info))
+    ColourNote( "", "", "" )    
+  else
+    SendNoEcho(typechan .. ' ' .. strjoin('', info))
   end
-  ColourNote( "", "", "" )
+end
+
+function colourwrap(tstr, wtype)
+  if wtype == 'stat' then
+    return "@W" .. tostring(tstr) .. "@w"
+  else
+    return "@G" .. tostring(tstr) .. "@w"
+  end
 end
 
 function formatpup()
@@ -100,25 +101,25 @@ function formatpup()
   loadstring( pvar )()
   levelgains = levelinfo
 
+  local tmsg = { colourwrap("Gained a ") .. colourwrap(levelgains.type, 'stat') ..colourwrap(": ") }
+  table.insert(tmsg, colourwrap(levelgains.trains, 'stat'))
   if levelgains.bonustrains and tonumber(levelgains.bonustrains) > 0 then
-    trains = levelgains.trains .. '+' .. levelgains.bonustrains
-  else
-    trains = levelgains.trains
+    table.insert(tmsg, colourwrap('+'))
+    table.insert(tmsg, colourwrap(levelgains.bonustrains, 'stat'))
   end
-  local tmsg = { "Gained a "..levelgains.type..": " }
-  if levelgains.type == "pup" then
-    table.insert( tmsg, trains )
-    table.insert( tmsg, " trains " )
-  end
-  levelstats = ""
+  table.insert( tmsg, colourwrap(' trains '))
+  local statcount = 0
   for i,v in ipairs({"str", "int", "wis", "dex", "con", "luc"}) do
-    if levelgains[v] > 0 then
-      levelstats = levelstats..v.." "
+    if levelgains[v] > 0 then  
+      statcount = statcount + 1
+      if statcount ~= 1 then
+        table.insert(tmsg, colourwrap('+'))
+      end
+      table.insert(tmsg, colourwrap(v, 'stat'))
     end
   end
-  if levelstats ~= "" then
-    table.insert( tmsg, levelstats )
-    table.insert( tmsg, "bonus " )
+  if statcount > 0 then
+    table.insert( tmsg, colourwrap(" bonus ") )
   end
   local lastrow = db:getlastrow('levels')
   lastrow = lastrow - 1
@@ -132,19 +133,19 @@ function formatpup()
         length = finishtime - starttime
         days, hours, mins, secs = SecondsToDHMS(length)    
         if days > 0 then
-          table.insert( tmsg, string.format( "%02d", days ) )
-          table.insert( tmsg, "d:" )
+          table.insert( tmsg, colourwrap(string.format( "%02d", days ), 'stat') )
+          table.insert( tmsg, colourwrap("d:") )
         end
         if hours > 0 then
-          table.insert( tmsg, string.format( "%02d", hours) )
-          table.insert( tmsg, "h:" )
+          table.insert( tmsg, colourwrap(string.format( "%02d", hours), 'stat') )
+          table.insert( tmsg, colourwrap("h:") )
         end
         if mins > 0 then
-          table.insert( tmsg, string.format( "%02d", mins ) )
-          table.insert( tmsg, "m:" )
+          table.insert( tmsg, colourwrap(string.format( "%02d", mins), 'stat') )
+          table.insert( tmsg, colourwrap("m:") )
         end
-        table.insert( tmsg, string.format( "%02d", secs ) )
-        table.insert( tmsg, "s " )           
+        table.insert( tmsg, colourwrap(string.format( "%02d", secs ), 'stat') )
+        table.insert( tmsg, colourwrap("s ") )           
       end
       if db:checkfortable('mobkills') then
         for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where time > %d and time < %d and xp > 0", starttime, finishtime)) do
@@ -152,16 +153,16 @@ function formatpup()
           mobsavexp = a[2]
         end
         if mobskilled ~= nil and mobsavexp ~= nil then
-          table.insert( tmsg, mobskilled )
-          table.insert( tmsg, " mobs killed (" )
-          table.insert( tmsg, string.format( "%02.02f", mobsavexp ) )
-          table.insert( tmsg, "xp/mob)" )
+          table.insert( tmsg, colourwrap(mobskilled, 'stat') )
+          table.insert( tmsg, colourwrap(" mobs killed (") )
+          table.insert( tmsg, colourwrap(string.format( "%02.02f", mobsavexp ), 'stat') )
+          table.insert( tmsg, colourwrap("xp/mob)") )
         end
       end
       db:close()
     end
   end
-  DisplayInfo( tmsg )
+  DisplayInfo( tmsg, 'level' )
 
 end
 
@@ -178,36 +179,33 @@ function formatlevel()
 
   level = db:getstat('totallevels')
 
+  local tmsg = { colourwrap("Gained a "..levelgains.type..": ") }
+  table.insert( tmsg, colourwrap(levelgains.hp, 'stat') )
+  table.insert( tmsg, colourwrap("hp ") )
+  table.insert( tmsg, colourwrap(levelgains.mp, 'stat') )
+  table.insert( tmsg, colourwrap("mp ") )
+  table.insert( tmsg, colourwrap(levelgains.mv, 'stat') )
+  table.insert( tmsg, colourwrap("mvs ") )
+  table.insert(tmsg, colourwrap(levelgains.trains, 'stat'))
   if levelgains.bonustrains and tonumber(levelgains.bonustrains) > 0 then
-    trains = levelgains.trains .. '+' .. levelgains.bonustrains
-  else
-    trains = levelgains.trains
+    table.insert(tmsg, colourwrap('+'))
+    table.insert(tmsg, colourwrap(levelgains.bonustrains, 'stat'))
   end
-  local tmsg = { "Gained a "..levelgains.type..": " }
-  if levelgains.type == "pup" then
-    table.insert( tmsg, trains )
-    table.insert( tmsg, " trains " )
-  else
-    table.insert( tmsg, levelgains.hp )
-    table.insert( tmsg, "hp " )
-    table.insert( tmsg, levelgains.mp )
-    table.insert( tmsg, "mp " )
-    table.insert( tmsg, levelgains.mv )
-    table.insert( tmsg, "mvs " )
-    table.insert( tmsg, trains )
-    table.insert( tmsg, " trains " )
-    table.insert( tmsg, levelgains.pracs )
-    table.insert( tmsg, " pracs " )
-  end
-  levelstats = ""
+  table.insert( tmsg, colourwrap(' trains '))
+  table.insert( tmsg, colourwrap(levelgains.pracs, 'stat') )
+  table.insert( tmsg, colourwrap(" pracs ") )
+  local statcount = 0
   for i,v in ipairs({"str", "int", "wis", "dex", "con", "luc"}) do
-    if levelgains[v] > 0 then
-      levelstats = levelstats..v.." "
+    if levelgains[v] > 0 then  
+      statcount = statcount + 1
+      if statcount ~= 1 then
+        table.insert(tmsg, colourwrap('+'))
+      end
+      table.insert(tmsg, colourwrap(v, 'stat'))
     end
   end
-  if levelstats ~= "" then
-    table.insert( tmsg, levelstats )
-    table.insert( tmsg, "bonus " )
+  if statcount > 0 then
+    table.insert( tmsg, colourwrap(" bonus ") )
   end
   if level ~= nil then
     local lastrow = db:getlastrow('levels')
@@ -223,19 +221,19 @@ function formatlevel()
           length = finishtime - starttime
           days, hours, mins, secs = SecondsToDHMS(length)
           if days > 0 then
-            table.insert( tmsg, string.format( "%02d", days ) )
-            table.insert( tmsg, "d:" )
+            table.insert( tmsg, colourwrap(string.format( "%02d", days ), 'stat') )
+            table.insert( tmsg, colourwrap("d:") )
           end
           if hours > 0 then
-            table.insert( tmsg, string.format( "%02d", hours) )
-            table.insert( tmsg, "h:" )
+            table.insert( tmsg, colourwrap(string.format( "%02d", hours), 'stat') )
+            table.insert( tmsg, colourwrap("h:") )
           end
           if mins > 0 then
-            table.insert( tmsg, string.format( "%02d", mins ) )
-            table.insert( tmsg, "m:" )
+            table.insert( tmsg, colourwrap(string.format( "%02d", mins ), 'stat') )
+            table.insert( tmsg, colourwrap("m:") )
           end
-          table.insert( tmsg, string.format( "%02d", secs ) )
-          table.insert( tmsg, "s " )           
+          table.insert( tmsg, colourwrap(string.format( "%02d", secs ), 'stat') )
+          table.insert( tmsg, colourwrap("s ") )           
         end
       end
       if db:checkfortable('mobkills') then
@@ -244,16 +242,16 @@ function formatlevel()
           mobsavexp = a[2]
         end
         if mobskilled ~= nil and mobsavexp ~= nil then
-          table.insert( tmsg, mobskilled )
-          table.insert( tmsg, " mobs killed (" )
-          table.insert( tmsg, string.format( "%02.02f", mobsavexp ) )
-          table.insert( tmsg, "xp/mob)" )
+          table.insert( tmsg, colourwrap(mobskilled, 'stat') )
+          table.insert( tmsg, colourwrap(" mobs killed (") )
+          table.insert( tmsg, colourwrap(string.format( "%02.02f", mobsavexp ), 'stat') )
+          table.insert( tmsg, colourwrap("xp/mob)") )
         end
       end
       db:close()
     end
   end
-  DisplayInfo( tmsg )
+  DisplayInfo( tmsg, 'level' )
 end
 
 function formatquest()
@@ -266,38 +264,40 @@ function formatquest()
   loadstring( pvar )()
   quest_stuff = quest_info
 
-
+  local tmsg = { colourwrap("Quest finished for ")}
   length = quest_stuff.finishtime - quest_stuff.starttime
   days, hours, mins, secs = SecondsToDHMS(length)
-  questgains = tostring(quest_stuff.qp)
+  table.insert(tmsg, colourwrap(tostring(quest_stuff.qp), 'stat'))
   if quest_stuff.lucky and tonumber(quest_stuff.lucky) > 0 then
-    questgains = questgains .. '+' .. tostring(quest_stuff.lucky)
+    table.insert(tmsg, colourwrap('+'))
+    table.insert(tmsg, colourwrap(quest_stuff.lucky, 'stat'))
   end
   if quest_stuff.mccp and tonumber(quest_stuff.mccp) > 0 then
-    questgains = questgains .. '+' .. tostring(quest_stuff.mccp)
+    table.insert(tmsg, colourwrap('+'))
+    table.insert(tmsg, colourwrap(quest_stuff.mccp, 'stat'))
   end
   if quest_stuff.tier and tonumber(quest_stuff.tier) > 0 then
-    questgains = questgains .. '+' .. tostring(quest_stuff.tier)
+    table.insert(tmsg, colourwrap('+'))
+    table.insert(tmsg, colourwrap(quest_stuff.tier, 'stat'))
   end
-
-  local tmsg = { "Quest finished for ", questgains, "qp" }
+  table.insert(tmsg, colourwrap('qp'))
   if quest_stuff.tp and tonumber(quest_stuff.tp) > 0 then
-    table.insert( tmsg, " "..quest_stuff.tp )
-    table.insert( tmsg, "TP" )
+    table.insert( tmsg, " ".. colourwrap(quest_stuff.tp, 'stat') )
+    table.insert( tmsg, colourwrap("TP") )
   end
   if quest_stuff.trains and tonumber(quest_stuff.trains) > 0 then
-    table.insert( tmsg, " "..quest_stuff.trains )
-    table.insert( tmsg, "tr" )
+    table.insert( tmsg, " ".. colourwrap(quest_stuff.trains, 'stat') )
+    table.insert( tmsg, colourwrap("tr") )
   end
   if quest_stuff.pracs and tonumber(quest_stuff.pracs) > 0 then
-    table.insert( tmsg, " "..quest_stuff.pracs )
-    table.insert( tmsg, "pr" )
+    table.insert( tmsg, " ".. colourwrap(quest_stuff.pracs, 'stat') )
+    table.insert( tmsg, colourwrap("pr") )
   end
-  tmsg[#tmsg] = tmsg[#tmsg]..".  It took "
-  table.insert( tmsg, string.format( "%02d", mins ) )
-  table.insert( tmsg, "m:" )
-  table.insert( tmsg, string.format( "%02d", secs ) )
-  table.insert( tmsg, "s." )
+  table.insert( tmsg, colourwrap(". It took "))
+  table.insert( tmsg, colourwrap(string.format( "%02d", mins ), 'stat') )
+  table.insert( tmsg, colourwrap("m:") )
+  table.insert( tmsg, colourwrap(string.format( "%02d", secs ), 'stat') )
+  table.insert( tmsg, colourwrap("s.") )
   if db:open() then
     if db:checkfortable('quests') then
       for a in db.db:rows("SELECT COUNT(*), AVG(qp + mccp + lucky + tier), AVG(finishtime - starttime) FROM quests where failed = 0") do
@@ -306,16 +306,17 @@ function formatquest()
         quest_tavg = a[3]
       end
       if quest_total > 1 then
-        table.insert( tmsg, string.format( "  Avg: %02.2f", quest_avg ) )
-        table.insert( tmsg, " qp/quest" )
-        table.insert( tmsg, " over " )
-        table.insert( tmsg, string.format( "%0d", quest_total ) )
-        table.insert( tmsg, " quests." )
+        table.insert( tmsg, colourwrap(" Avg: ", quest_avg ) )
+        table.insert( tmsg, colourwrap(string.format( "%02.2f", quest_avg ), 'stat') )
+        table.insert( tmsg, colourwrap(" qp/quest") )
+        table.insert( tmsg, colourwrap(" over ") )
+        table.insert( tmsg, colourwrap(string.format( "%0d", quest_total ), 'stat') )
+        table.insert( tmsg, colourwrap(" quests.") )
       end
     end
     db:close()
   end
-  DisplayInfo( tmsg )
+  DisplayInfo( tmsg, 'quest' )
 end
 
 function formatcp()
@@ -324,33 +325,32 @@ function formatcp()
   loadstring( pvar )()
   cp_stuff = cp_info
   if cp_stuff.failed == 0 then
-    cpgains = tostring(cp_stuff.qp)
-    local tmsg = { "CP finished for ", cpgains, "qp" }
+    local tmsg = { colourwrap("CP finished for "), colourwrap(cp_stuff.qp, 'stat'), colourwrap("qp") }
     if cp_stuff.tp and tonumber(cp_stuff.tp) > 0 then
-      table.insert( tmsg, " "..cp_stuff.tp )
-      table.insert( tmsg, "TP" )
+      table.insert( tmsg, " ".. colourwrap(cp_stuff.tp, 'stat') )
+      table.insert( tmsg, colourwrap("TP") )
     end
     if cp_stuff.trains and tonumber(cp_stuff.trains) > 0 then
-      table.insert( tmsg, " "..cp_stuff.trains )
-      table.insert( tmsg, "tr" )
+      table.insert( tmsg, " ".. colourwrap(cp_stuff.trains, 'stat') )
+      table.insert( tmsg, colourwrap("tr") )
     end
     if cp_stuff.pracs and tonumber(cp_stuff.pracs) > 0 then
-      table.insert( tmsg, " "..cp_stuff.pracs )
-      table.insert( tmsg, "pr" )
+      table.insert( tmsg, " ".. colourwrap(cp_stuff.pracs, 'stat') )
+      table.insert( tmsg, colourwrap("pr") )
     end
     if cp_stuff.finishtime and cp_stuff.starttime then
       length = cp_stuff.finishtime - cp_stuff.starttime
       days, hours, mins, secs = SecondsToDHMS(length)
-      tmsg[#tmsg] = tmsg[#tmsg]..".  It took "
-      table.insert( tmsg, string.format( "%02d", days ) )
-      table.insert( tmsg, "d:" )
-      table.insert( tmsg, string.format( "%02d", hours ) )
-      table.insert( tmsg, "h:")
-      table.insert( tmsg, string.format( "%02d", mins ) )
-      table.insert( tmsg, "m" )
+      tmsg[#tmsg] = tmsg[#tmsg] .. colourwrap(".  It took ")
+      table.insert( tmsg, colourwrap(string.format( "%02d", days ), 'stat') )
+      table.insert( tmsg, colourwrap("d:") )
+      table.insert( tmsg, colourwrap(string.format( "%02d", hours ), 'stat') )
+      table.insert( tmsg, colourwrap("h:") )
+      table.insert( tmsg, colourwrap(string.format( "%02d", mins ), 'stat') )
+      table.insert( tmsg, colourwrap("m") )
     end
 
-    DisplayInfo( tmsg )
+    DisplayInfo( tmsg, 'cp' )
   end
 end
 
@@ -358,25 +358,26 @@ function formatgq()
   local pvar = GetPluginVariable(  "aaa77f81c5408278ccda7100", "gq_info")
   --get the gq info
   loadstring( pvar )()
-  gqgains = tostring(gq_info.qp)
+  local tmsg = { colourwrap("GQ finished for "), colourwrap(gq_info.qp, 'stat') }
   if gq_info.qpmobs and tonumber(gq_info.qpmobs) > 0 then
-    gqgains = gqgains .. '+' .. tostring(gq_info.qpmobs)
+    table.insert( tmsg, colourwrap('+') )
+    table.insert( tmsg, colourwrap(gq_info.qpmobs, 'stat') )   
   end
-  local tmsg = { "GQ finished for ", gqgains, "qp" }
+  table.insert(tmsg, colourwrap('qp'))
   if gq_info.tp and tonumber(gq_info.tp) > 0 then
-    table.insert( tmsg, " "..gq_info.tp )
-    table.insert( tmsg, "TP" )
+    table.insert( tmsg, " ".. colourwrap(gq_info.tp, 'stat') )
+    table.insert( tmsg, colourwrap("TP") )
   end
   if gq_info.trains and tonumber(gq_info.trains) > 0 then
-    table.insert( tmsg, " "..gq_info.trains )
-    table.insert( tmsg, "tr" )
+    table.insert( tmsg, " ".. colourwrap(gq_info.trains, 'stat') )
+    table.insert( tmsg, colourwrap("tr") )
   end
   if gq_info.pracs and tonumber(gq_info.pracs) > 0 then
-    table.insert( tmsg, " "..gq_info.pracs )
-    table.insert( tmsg, "pr" )
+    table.insert( tmsg, " ".. colourwrap(gq_info.pracs, 'stat') )
+    table.insert( tmsg, colourwrap("pr") )
   end
 
-  DisplayInfo( tmsg )
+  DisplayInfo( tmsg, 'gq' )
 end
 
 function formathour(type, stats)
@@ -616,8 +617,12 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'statmn')
 phelper:set_default('plugin_colour', 'orange')
 
-phelper:add_setting('showminutes', {help="the number of minutes between StatMon output, -1 to disable", type="number", after=settimer, default=59})
-phelper:add_setting('reportminutes', {help="the number of minutes that Statmon reports on", type="number", default=60})
+phelper:add_setting('showminutes', {help="the number of minutes between StatMon output, -1 to disable", type="number", after=settimer, default=59, sortlev=10})
+phelper:add_setting('reportminutes', {help="the number of minutes that Statmon reports on", type="number", default=60, sortlev=10})
+phelper:add_setting('questchan', {help="the channel to put quest results on", type="string", default="None", sortlev=20})
+phelper:add_setting('levelchan', {help="the channel to put level/pup results on", type="string", default="None", sortlev=20})
+phelper:add_setting('cpchan', {help="the channel to put cp results on", type="string", default="None", sortlev=20})
+phelper:add_setting('gqchan', {help="the channel to put gq results on", type="string", default="None", sortlev=20})
 
 phelper:add_cmd('report', {func=cmd_report, help="show stats for the last x minutes, x being what is passed as an argument"})
 
