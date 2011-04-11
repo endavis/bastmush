@@ -53,7 +53,7 @@ statwin:set_default("maxtabs", 5)
 statwin:add_setting("maxitems", {help="the number of last items to show for each tab", type="number", default=5, sortlev=1, longname="Number of last items to show"})
 statwin:add_setting("showwhichgqs", {help="which gqs to show, 1 = all, 2 = won, 3 = not won", type="number", low=1, high=3, default=1, sortlev=1, longname="Which GQs are shown"})
 
-popupwin = Miniwin:new{name="Stat Info"}
+popupwin = Miniwin:new{name="Info"}
 popupwin:set_default('use_tabwin', false)
 popupwin:set_default('header_height', 0)
 popupwin:set_default("maxtabs", 1)
