@@ -60,8 +60,10 @@ timestuff['12.5'] = 12.5 * 60 * 60
 timestuff['24.5'] = 24.5 * 60 * 60
 
 votewin = Miniwin:new{name="Vote"}
+votewin:set_default("textfont", {name='courier new', size=12})
 votewin:set_default("windowpos", 12)
 votewin.tabcolour = verify_colour('red')
+votewin:add_setting('showmudconnector', {type="bool", help="show the mud connector link", default=verify_bool(false), sortlev=36, longname='Show the link for mudconnector'})
 
 function votemudconnect()
   OpenBrowser('http://www.mudconnect.com/cgi-bin/vote_rank.cgi?mud=Aardwolf')
@@ -98,7 +100,7 @@ function check_vote()
   local found = false
   for i,v in pairs(phelper.lastvoted) do
     local votenow = false
-    if i == 'mudconnect' and verify_bool(phelper.showmudconnector) then
+    if i == 'mudconnect' and verify_bool(votewin.showmudconnector) then
       if v == 'Now' then
         votenow = true
       else
@@ -133,6 +135,8 @@ end
 function show_vote_window()
   local alines = {}
 
+  table.insert(alines, {{text=''}})
+
   if phelper.lastvoted['topmudsites'] == 'Now' then
     local style = {}
     style.text = " Top Mud Sites "
@@ -140,13 +144,17 @@ function show_vote_window()
     table.insert(alines, {style})
   end
 
-  if phelper.showmudconnector and phelper.lastvoted['mudconnect'] == 'Now' then
+  table.insert(alines, {{text=''}})
+
+  if votewin.showmudconnector and phelper.lastvoted['mudconnect'] == 'Now' then
     local style = {}
     style.text = " Mud Connector "
     style.mouseup = votemudconnect
     table.insert(alines, {style})
   end
-  
+
+  table.insert(alines, {{text=''}})
+
   votewin:addtab('Default', alines)  
 
 end
@@ -154,11 +162,11 @@ end
 function onshowmudconnectorchange(object, args)
   if not votewin.classinit and verify_bool(args.value) then
     phelper.lastvoted['mudconnect'] = 'Now'
-    check_vote()
   end
+  check_vote()
 end
 
-phelper:registerevent('option_showmudconnector', nil, onshowmudconnectorchange)
+votewin:registerevent('option_showmudconnector', nil, onshowmudconnectorchange)
 
 ]]>
 </script>
@@ -220,7 +228,6 @@ phelper:set_default('cmd', 'mvote')
 phelper:set_default('plugin_colour', 'steelblue')
 
 phelper:add_setting('lastvoted', {type="table", help="the last time a vote was cast", default=serialize.save_simple({topmudsites="Now", mudconnect="Now"}), sortlev=35, istable=true, formatfunc=formatvote, readonly=true})
-phelper:add_setting('showmudconnector', {type="bool", help="show the mud connector link", default=verify_bool(false), sortlev=36})
 
 phelper:add_pobject('vote', votewin)
 
