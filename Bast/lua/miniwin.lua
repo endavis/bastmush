@@ -1480,7 +1480,10 @@ function Miniwin:justify_line(line, top, linenum, ltype, linestart, lineend)
     end
     v.textstart = tstart
     v.texttop = ttop + 1
-    if v.textcolour ~= nil then
+    if v.nocolourconvert then
+        v.stylelen = WindowTextWidth (self.winid, v.font_id, v.text,
+                      v.textstart, v.texttop, 0, 0, self:get_colour(v.textcolour or self.text_colour))      
+    elseif v.textcolour ~= nil or v.nocolourconvert then
         v.stylelen = WindowTextWidth (self.winid, v.font_id, strip_colours(v.text),
                       v.textstart, v.texttop, 0, 0, self:get_colour(v.textcolour))
     else
@@ -1846,7 +1849,11 @@ function Miniwin:displayline (styles)
     elseif v.circleOp and v.circleOp.height then
       print('displayline: Got CircleOp')
     else
-      if v.textcolour ~= nil then
+      if v.nocolourconvert then
+        local tcolour = self:get_colour(v.textcolour or self.text_colour)
+        stylelen = WindowText (self.winid, v.font_id, v.text,
+                    v.textstart, v.texttop, 0, 0, tcolour)
+      elseif v.textcolour ~= nil then
         local tcolour = self:get_colour(v.textcolour)
         stylelen = WindowText (self.winid, v.font_id, strip_colours(v.text),
                     v.textstart, v.texttop, 0, 0, tcolour)

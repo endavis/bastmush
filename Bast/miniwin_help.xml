@@ -255,6 +255,9 @@ function convert_help(help)
       if inheader then
         table.insert(header, tstyle)
       else
+        for i,v in ipairs(tstyle) do
+          v.nocolourconvert = true
+        end
         table.insert(text, tstyle)
       end
     end
