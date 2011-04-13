@@ -160,7 +160,7 @@ function show_vote_window()
 end
 
 function onshowmudconnectorchange(object, args)
-  if not votewin.classinit and verify_bool(args.value) then
+  if not votewin.classinit and not phelper.classinit and verify_bool(args.value) then
     phelper.lastvoted['mudconnect'] = 'Now'
   end
   check_vote()
