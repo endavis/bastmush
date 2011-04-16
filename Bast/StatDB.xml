@@ -309,6 +309,9 @@ end
 function checkcampaign(level)
   local res, clevel = CallPlugin("aaa66f81c50828bbbfda7100", "isoncp") 
   clevel = tonumber(clevel)
+  if tonumber(char.status.level) == 200 or tonumber(char.status.level) == 201 then
+    return
+  end
   if clevel == -1 or clevel ~= level then
     db:checkcptable()
 
