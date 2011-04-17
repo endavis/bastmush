@@ -184,6 +184,11 @@ function superhero( name, line, wildcards )
 end
 
 function remort(name, line, wildcards)
+  resetinfo()
+  levelinfo.newlevel = 1
+  levelinfo.type = 'level'
+  levelinfo.time = GetInfo(304)
+  var.levelinfo = serialize.save( "levelinfo", levelinfo )  
   phelper:broadcast(5)
 end
 
@@ -214,6 +219,9 @@ function level ( name, line, wildcards )
     if tonumber(levelinfo.newlevel) == 200 then
       phelper:broadcast(3)
     end
+    if tonumber(levelinfo.newlevel) == 201 then
+      phelper:broadcast(4)
+    end
   end
   levelinfo.time = GetInfo(304)
   phelper:enabletriggroup( "linfo", true )
@@ -236,7 +244,7 @@ function levbonus (name, line, wildcards)
     levelinfo.bonustrains = wildcards[1]
   elseif name == "bonusstat" then
     levelinfo[string.lower(string.sub(wildcards[1], 1, 3))] = 1
-  elseif name == "finishlevel" and trim(line) == "" then
+  elseif name == "finishlevel" and trim(line) == "" and tonumber(levelinfo.trains) > 0 then
     phelper:enabletriggroup( "linfo", false )
     var.levelinfo = serialize.save( "levelinfo", levelinfo )
     phelper:broadcast(1, var.levelinfo)
@@ -307,6 +315,15 @@ function OnPluginSaveState ()
 
   phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
+
+function OnPluginCommand (stext)
+  stext = trim(stext)
+  if stext == 'superhero loud' or stext == 'superhero silent' or stext == 'superhero confirm' then
+    local wildcards = {}
+    wildcards.newlevel = 201
+    level ( 'level', 'You raise a level! You are now level 201.', wildcards )    
+  end
+end
 
 ]]>
 </script>
