@@ -357,7 +357,7 @@ function OnPluginBroadcast (msg, id, name, text)
     savelevel()
   elseif id == "aaa0ab9ed92f8fc614664bd1" and (msg == 3 or msg == 4 or msg == 6) then
     createmilestone()
-  elseif id == "aaa0ab9ed92f8fc614664bd1" or msg == 5 then
+  elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 5 then
     savelevel(1)
     createmilestone()
   elseif id == "aaaf9a8dc92f8fc614663ac0" and msg == 1 then
