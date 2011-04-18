@@ -479,7 +479,20 @@ function build_summary()
   local selfpending = tableCountKeys(askedselfcombined, "pending", true)
   local otherdisabled = tableCountKeys(askedothercombined, "disabled", true)
   local othernoprac = tableCountKeys(askedothercombined, "noprac", true)
-  local othernolearn = tableCountKeys(askedothercombined, "nolearn", true)  
+  local othernolearn = tableCountKeys(askedothercombined, "nolearn", true)
+  
+  local selfcannotcast = 0
+  for i,v in ipairs(askedselfcombined) do
+    if v.disabled or v.noprac or v.nolearn or v.blocked or v.blockedrecovery then
+      selfcannotcast = selfcannotcast + 1
+    end
+  end
+  local othercannotcast = 0
+  for i,v in ipairs(askedothercombined) do
+    if v.disabled or v.noprac or v.nolearn then
+      othercannotcast = othercannotcast + 1
+    end
+  end
   timer_end('countingstuff')
     
   if phelper.brief then
@@ -639,9 +652,7 @@ function build_summary()
     table.insert(lstyle, style)    
 
     local style = {}
-    style.text = tostring(#askedself - selfnoprac 
-                          - selfnolearn - selfdisabled
-                          - selfblocked - selfblockrec)
+    style.text = tostring(#askedself - selfcannotcast)
     style.textcolour = "lime"
     style.hint = "Can Cast Self"
     style.mouseup = function ()
@@ -658,7 +669,7 @@ function build_summary()
     style.textcolour = "green"
     style.hint = "Requested Other"
     style.mouseup = function ()
-              spellwin:changetotab('Self')
+              spellwin:changetotab('Other')
           end
     table.insert(lstyle, style)  
 
@@ -666,8 +677,7 @@ function build_summary()
     style.text = ":"
     table.insert(lstyle, style)  
     local style = {}
-    style.text = tostring(#askedother - othernoprac
-                          - othernolearn - otherdisabled) .. " "
+    style.text = tostring(#askedother - othercannotcast) .. " "
     style.textcolour = "lime"
     style.hint = "Can Cast Other"
     style.mouseup = function ()
@@ -782,16 +792,8 @@ function build_summary()
     table.insert(alines, lstyle)
     
     table.insert(alines, format_requested_line("Can Cast", 
-                                                #askedself 
-                                                  - selfnoprac 
-                                                  - selfnolearn
-                                                  - selfdisabled
-                                                  - selfblocked
-                                                  - selfblockrec, 
-                                                #askedother 
-                                                  - othernoprac
-                                                  - othernolearn
-                                                  - otherdisabled, 
+                                                #askedself - selfcannotcast, 
+                                                #askedother - othercannotcast, 
                                                 "lime"))
 
     table.insert(alines, format_requested_line("Requested", #askedself, 
