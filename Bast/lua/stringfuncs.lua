@@ -12,6 +12,10 @@ strjoin - usage: strjoin(delimiter, list)
   join the list with delimiter
 --]]
 
+function quote(str)
+  return "\""..str.."\""
+end
+
 function wrap(line, length)
   local lines = {}
   while #line > length do
