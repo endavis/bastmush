@@ -4,6 +4,7 @@ require 'tprint'
 require 'verify'
 require 'pluginhelper'
 require 'var'
+require 'stringfuncs'
 
 local Object = require 'objectlua.Object'
 
@@ -153,7 +154,7 @@ function Sqlitedb:backupdb(extension)
   self:close()
   
   -- make new backup
-  local copycmd = "copy /Y " .. dbpath .. " " .. backupdir .. self.dbname .. "." .. extension
+  local copycmd = "copy /Y " .. quote(dbpath) .. " " .. quote(backupdir .. self.dbname .. "." .. extension)
   Note('copying db to ', backupdir .. self.dbname .. "." .. extension)
   
   os.execute(copycmd)
