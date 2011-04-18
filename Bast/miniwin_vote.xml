@@ -96,6 +96,9 @@ function formatvote()
 end
 
 function check_vote()
+  if phelper.classinit then
+    return
+  end
   local ntime = GetInfo(304)
   local found = false
   for i,v in pairs(phelper.lastvoted) do
@@ -160,10 +163,12 @@ function show_vote_window()
 end
 
 function onshowmudconnectorchange(object, args)
-  if not votewin.classinit and not phelper.classinit and verify_bool(args.value) then
-    phelper.lastvoted['mudconnect'] = 'Now'
+  if not votewin.classinit and not phelper.classinit then
+     if verify_bool(args.value) then
+      phelper.lastvoted['mudconnect'] = 'Now'
+    end
+    check_vote()
   end
-  check_vote()
 end
 
 votewin:registerevent('option_showmudconnector', nil, onshowmudconnectorchange)
