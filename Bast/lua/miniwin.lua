@@ -50,6 +50,7 @@ These are the main ones
   style.text = 'text' -- the only one actually required
   style.textcolour
   style.backcolour
+  style.nocolourconvert -- don't convert inline ascii codes (@x123 or @b)
 
 Added for miniwin
   style.start - absolute position to start
