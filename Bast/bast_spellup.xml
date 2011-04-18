@@ -1093,7 +1093,7 @@ function OnPluginBroadcast (msg, id, name, text)
           event_status_change()           
           nextspellup('more moves')
         end
-        if tonumber(stats.status.state) == 3 and old_state ~= 3 then
+        if tonumber(stats.status.state) == 3 and old_state ~= 3 and old_state ~= 12 then
           -- state changed to active from something else
           setwaiting(false)
           nextspellup('state change to active')
