@@ -1480,6 +1480,248 @@ function create_gq_popup(gq_id)
   
 end
 
+function build_kills_window()
+  local styles = {}
+  local stats = {}
+  if not db:checkfortable('stats') then
+    return
+  end
+  if not db:checkfortable('mobkills') then
+    return
+  end
+  if db:open() then
+    for a in db.db:rows("SELECT monsterskilled FROM stats WHERE milestone = 'current'") do
+      stats['overall'] = a[1] or 0
+    end
+    
+    for a in db.db:rows("SELECT SUM(xp), SUM(bonusxp), AVG(xp), AVG(xp+bonusxp), SUM(tp), SUM(vorpal), SUM(assassinate), SUM(disintegrate), SUM(banishment), SUM(slit), SUM(deathblow), SUM(gold), AVG(gold), COUNT(*) FROM mobkills") do
+      stats['xp'] = a[1] or 0
+      stats['bonusxp'] = a[2] or 0
+      stats['avexp'] = a[3] or 0
+      stats['avetotalxp'] = a[4] or 0
+      stats['tp'] = a[5] or 0
+      stats['vorpal'] = a[6] or 0
+      stats['assassinate'] = a[7] or 0
+      stats['disintegrate'] = a[8] or 0
+      stats['banishment'] = a[9] or 0
+      stats['slit'] = a[10] or 0
+      stats['deathblow'] = a[11] or 0
+      stats['gold'] = a[12] or 0
+      stats['avegold'] = a[13] or 0
+      stats['indb'] = a[14] or 0
+    end
+    
+    for a in db.db:rows("SELECT AVG(bonusxp), COUNT(*) FROM mobkills where bonusxp > 0") do
+      stats['avebonusxp'] = a[1]
+      stats['bonusxpindb'] = a[2]
+    end
+
+    if stats['indb'] > 0 then
+      local allstyles = {}
+
+      local linestyles = format_row("DB Stats", "Total", "In DB", "lime", "lime")
+      table.insert(allstyles, linestyles)
+
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
+
+      local linestyles = format_row("Total Overall", stats['overall'] or 0, stats['indb'] or 0)
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("Mobs w/ Bonus", "", stats['bonusxpindb'] or 0)
+      table.insert(allstyles, linestyles)
+
+      table.insert(allstyles, {{text = ''}})
+
+      local linestyles = format_row("Stats", "Total", "Average", "lime", "lime")
+      table.insert(allstyles, linestyles)
+
+      table.insert(allstyles, {{text = string.rep('-', linewidth), textcolour = "lime"}})
+
+      local linestyles = format_row("XP", stats['xp'] or 0, string.format("%.3f", stats['avexp'] or 0) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("Bonus XP", stats['bonusxp'] or 0, string.format("%.3f", stats['avebonusxp'] or 0) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("All XP", (stats['xp'] or 0) + (stats['bonusxp']  or 0), string.format("%.3f", stats['avetotalxp']) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("Gold", stats['gold'] or 0, string.format("%.3f", stats['avegold'] or 0) .. '/Kill')
+      table.insert(allstyles, linestyles)
+      
+      local linestyles = format_row("Vorpal", stats['vorpal'] or 0, string.format("%.3f", (stats['vorpal'] or 0) / (stats['indb'] or 1)) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("Assassinate", stats['assassinate'] or 0, string.format("%.3f", (stats['assassinate'] or 0) / (stats['indb'] or 1)) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("Slit", stats['slit'] or 0, string.format("%.3f", (stats['slit'] or 0) / stats['indb']) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("Banishment", stats['banishment'] or 0, string.format("%.3f", (stats['banishment'] or 0) / stats['indb']) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("Deathblow", stats['deathblow'] or 0, string.format("%.3f", (stats['deathblow'] or 0) / stats['indb']) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("Disintegrate", stats['disintegrate'] or 0, string.format("%.3f", (stats['disintegrate'] or 0) / stats['indb']) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      table.insert(allstyles, {{text = ''}})
+
+      local lstyle = {}
+
+      local tstr = "  Last " .. statwin.maxitems .. "  "
+      local tstrlen = #tstr
+      local replen = (linewidth - tstrlen) / 2
+      --print(tstrlen, linewidth, replen)
+      
+      local style = {}      
+      style.text = string.rep('-', replen)
+      style.textcolour = "lime"
+      table.insert(lstyle, style)
+      
+      local style = {}  
+      style.text = tstr
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.rep('-', replen)
+      style.textcolour = "lime"
+      table.insert(lstyle, style)
+      table.insert(allstyles, lstyle)      
+
+      local lstyle = {}
+      local style = {}
+      style.text = string.format("%3s ", "Lvl")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Level"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%-20s ", "Mob")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Mob name"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%3s ", "XP")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "XP"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%3s ", "BXP")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Bonus XP"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%2s ", "S")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Killed by an insta-kill spell/skill"
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.text = string.format("%-2s ", "Gold")        
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Gold"
+      table.insert(lstyle, style)
+      
+      table.insert(allstyles, lstyle)
+
+      table.insert(allstyles, {{text = string.rep('-', linewidth)}})
+
+      local lastitems = db:getlast('mobkills', statwin.maxitems)
+--      tprint(lastitems)
+      
+      for i,v in tableSort(lastitems, nil, nil, true) do
+        local lstyle = {}
+        
+        local level  = convertlevel(v.level)
+        
+        local style = {}
+        style.text = string.format("%3d ", tonumber(level.level))
+        style.textcolour = "white"
+        style.mouseup = nofunc
+        style.hint = "Level"
+        table.insert(lstyle, style)
+      
+        local style = {}
+        style.text = string.format("%-20s ", string.sub(v.name, 1, 20))
+        style.textcolour = "white"
+        style.mouseup = nofunc
+        style.hint = v.name
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%3d ", tonumber(v.xp))
+        style.textcolour = "white"
+        style.mouseup = nofunc
+        style.hint = "XP"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%3d ", tonumber(v.bonusxp))
+        style.textcolour = "white"
+        style.mouseup = nofunc
+        style.hint = "Bonus XP"
+        table.insert(lstyle, style)
+
+        local style = {}
+        local tstr = ""
+        if v.vorpal == 1 then
+          tstr = "V"
+          style.hint = "Vorpal - " .. "W: " .. v.wielded_weapon .. " S: " .. v.second_weapon
+        elseif v.banishment == 1 then
+          tstr = "B"
+          style.hint = "Banishment"
+        elseif v.assassinate == 1 then
+          tstr = "A"
+          style.hint = "Assassinate"
+        elseif v.slit == 1 then
+          tstr = "S"
+          style.hint = "Slit"
+        elseif v.deathblow == 1 then
+          tstr = "D"
+          style.hint = "Deathblow"
+        elseif v.disintegrate == 1 then
+          tstr = "I"
+          style.hint = "Disintegrate"
+          
+        else
+        
+        end
+        style.text = string.format("%2s ", tstr)
+        style.textcolour = "white"
+        style.mouseup = nofunc
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%d", v.gold)        
+        style.textcolour = "white"
+        style.mouseup = nofunc
+        style.hint = "Gold"
+        table.insert(lstyle, style)
+        
+        table.insert(allstyles, lstyle)
+        
+      end
+
+
+      statwin:addtab('Kills', allstyles)
+    end
+    db:close()
+  end
+end
+
+
 function format_row(rowname, data1, data2, datacolour, headercolour, width1, width2, width3)
   if not width1 then
     width1 = 14
@@ -1561,6 +1803,7 @@ tab_funcs['Quests'] = build_quest_window
 tab_funcs['Levels'] = build_level_window
 tab_funcs['CPs'] = build_cp_window
 tab_funcs['GQs'] = build_gq_window
+tab_funcs['Kills'] = build_kills_window
 
 function onmaxitemschange(object, args)
   if not statwin.classinit then
@@ -1624,6 +1867,11 @@ function OnPluginBroadcast (msg, id, name, text)
               build_gq_window()
             end
           end
+          if not statwin:hastab('Kills') then
+            if db:checkfortable('stats') then
+              build_kills_window()
+            end
+          end
         end
       end
     end
@@ -1645,6 +1893,10 @@ function OnPluginBroadcast (msg, id, name, text)
         if db:checkfortable('stats') then
           DoAfterSpecial(.2, 'build_gq_window()', 12)
         end
+      elseif id == "aaa61c4570508448e19c7c14" and msg == 1 then        
+        if db:checkfortable('stats') then
+          DoAfterSpecial(.2, 'build_kills_window()', 12)
+        end      
       end
     end
   end
