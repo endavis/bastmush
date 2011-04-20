@@ -1600,7 +1600,7 @@ function build_kills_window()
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%-20s ", "Mob")
+      style.text = string.format("%-18s ", "Mob")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Mob name"
@@ -1621,14 +1621,21 @@ function build_kills_window()
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%2s ", "S")
+      style.text = string.format("%2s ", "TP")
+      style.textcolour = "lightseagreen"
+      style.mouseup = nofunc
+      style.hint = "Trivia Mob"
+      table.insert(lstyle, style)
+      
+      local style = {}
+      style.text = string.format("%s ", "S")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Killed by an insta-kill spell/skill"
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%-2s ", "Gold")        
+      style.text = string.format("%s ", "Gold")        
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Gold"
@@ -1654,7 +1661,7 @@ function build_kills_window()
         table.insert(lstyle, style)
       
         local style = {}
-        style.text = string.format("%-20s ", string.sub(v.name, 1, 20))
+        style.text = string.format("%-18s ", string.sub(v.name, 1, 18))
         style.textcolour = "white"
         style.mouseup = nofunc
         style.hint = v.name
@@ -1672,6 +1679,13 @@ function build_kills_window()
         style.textcolour = "white"
         style.mouseup = nofunc
         style.hint = "Bonus XP"
+        table.insert(lstyle, style)
+
+        local style = {}
+        style.text = string.format("%2s ", tostring(v.tp or ""))
+        style.textcolour = "white"
+        style.mouseup = nofunc
+        style.hint = "Trivia Mob"
         table.insert(lstyle, style)
 
         local style = {}
