@@ -1668,14 +1668,14 @@ function build_kills_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%3d ", tonumber(v.xp or 0))
+        style.text = string.format("%3d ", tonumber(v.xp or 0) or 0)
         style.textcolour = "white"
         style.mouseup = nofunc
         style.hint = "XP"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%3d ", tonumber(v.bonusxp or 0))
+        style.text = string.format("%3d ", tonumber(v.bonusxp or 0) or 0)
         style.textcolour = "white"
         style.mouseup = nofunc
         style.hint = "Bonus XP"
@@ -1718,7 +1718,7 @@ function build_kills_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%d", tonumber(v.gold or 0))        
+        style.text = string.format("%d", tonumber(v.gold or 0) or 0)        
         style.textcolour = "white"
         style.mouseup = nofunc
         style.hint = "Gold"
