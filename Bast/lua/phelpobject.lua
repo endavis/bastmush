@@ -232,8 +232,10 @@ function Phelpobject:init_vars(reset)
       gvalue = setting.default
     end
     if setting.istable then
-      local tvalue = loadstring('return ' .. gvalue or "")()
-      gvalue = tvalue
+      if not (type(gvalue) == 'table') then        
+        local tvalue = loadstring('return ' .. gvalue or "")()
+        gvalue = tvalue
+      end
     end
     local tvalue = verify(gvalue, setting.type, {silent = true, window = self})
     self:set(name, tvalue, {silent = true, window = self, istable=setting.istable})
@@ -492,10 +494,6 @@ function Phelpobject:run_func(tfunc, args)
 end
 
 function Phelpobject:run_cmd(cmddict, silent)
-  if self.disabled then
-    self:init(true)
-    self:enable()   
-  end
   if silent == nil then
     silent = false
   end
@@ -504,6 +502,12 @@ function Phelpobject:run_cmd(cmddict, silent)
     return false
   end
   fullcmd, cmd = self:find_cmd(cmddict.action)
+--  if fullcmd ~= 'help' and fullcmd ~= 'set' then
+--    if self.disabled then
+--      self:init(true)
+--      self:enable()   
+--    end
+--  end
   if fullcmd ~= nil then
     retcode = self:run_func(cmd.func, cmddict)
     return retcode
