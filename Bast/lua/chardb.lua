@@ -773,7 +773,7 @@ function Statdb:countskills()
   self:checkskillstable()
   local numskills = 0  
   if self:open() then
-    for a in db.db:rows("SELECT COUNT(*) FROM skills") do
+    for a in self.db:rows("SELECT COUNT(*) FROM skills") do
       numskills = a[1]
     end
     self:close()
