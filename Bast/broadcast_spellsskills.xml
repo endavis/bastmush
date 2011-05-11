@@ -510,6 +510,8 @@ function OnPluginBroadcast (msg, id, name, text)
         end        
       end
     end
+  elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 5 then
+    request_slist()    
   end
 end
 
@@ -571,6 +573,8 @@ end -- function OnPluginSaveState
 
 phelper:set_default('cmd', 'bsst')
 phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:add_cmd('refresh', {func=request_slist, help="refresh skills"})
 
 phelper:enable()
 
