@@ -70,11 +70,11 @@ gqflag = false
 
 eventwin = Miniwin:new{name="Events"}
 eventwin:set_default("maxtabs", 5)
-eventwin:add_setting("quest_avail_colour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("black"), sortlev=1})
-eventwin:add_setting("quest_avail_bg_colour", {help="the background colour for when a quest available", type="colour", default=verify_colour("red"), sortlev=1})
-eventwin:add_setting("cp_mobdead_colour", {help="the colour for when a mob is dead", type="colour", default=verify_colour("red"), sortlev=1})
-eventwin:add_setting("cp_notlevel_colour", {help="the colour for when this cp is no longer from this level", type="colour", default=verify_colour("cyan"), sortlev=1})
-eventwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1})
+eventwin:add_setting("quest_avail_colour", {help="the text colour for when a quest is available", type="colour", default=verify_colour("black"), sortlev=1, longname="Quest Available Background Colour"})
+eventwin:add_setting("quest_avail_bg_colour", {help="the background colour for when a quest available", type="colour", default=verify_colour("red"), sortlev=1, longname="Quest Available Text Colour"})
+eventwin:add_setting("cp_mobdead_colour", {help="the colour for when a mob is dead", type="colour", default=verify_colour("red"), sortlev=1, longname="Colour for a Dead CP mob"})
+eventwin:add_setting("cp_notlevel_colour", {help="the colour for when this cp is no longer from this level", type="colour", default=verify_colour("cyan"), sortlev=1, longname="Colour for when the CP was not taken at the current level"})
+eventwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1, longname="Time Colour"})
 
 
 function build_quest(showflag)
@@ -320,7 +320,6 @@ function OnPluginBroadcast (msg, id, name, text)
       show_quest()
       style = {}
       style.text = ' Events Q:' .. timer.text .. ' '
-      style.textcolour = eventwin.time_colour
       tstyle = {style}
       eventwin.tabcolour = eventwin.bg_colour
       if gqflag then
