@@ -110,6 +110,27 @@ kill_info = {}
    sequence="100"
   >
   </trigger>
+
+  <trigger
+   enabled="y"
+   regexp="y"
+   match="^You get (.+) corpse of (.+)\.$"
+   name="mobname"
+   script="mobname"
+   sequence="101"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   regexp="y"
+   match="^Ayla gives you (.+) for the perforated corpse of (.+).$"
+   name="saccorpse"
+   script="mobname"
+   sequence="100"
+  >
+  </trigger>
+
   <trigger
    enabled="y"
    regexp="y"
@@ -260,6 +281,15 @@ lastroom = -1
 function mobnone(name, line, wildcards)
   --print('setting mob to none')
   kill_info.mob = ""
+end
+
+function mobname(name, line, wildcards)
+  if kill_info.mob == "" then
+    kill_info.mob = wildcards[2]
+  end
+  if name == 'saccorpse' then
+    broadcast_kill()
+  end
 end
 
 function mobxp( name, line, wildcards )
