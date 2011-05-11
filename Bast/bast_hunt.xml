@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+
+<muclient>
+<plugin
+   name="bast_hunt"
+   author="Bast"
+   id="d67ae331407cb4281bea544e"
+   language="Lua"
+   purpose="use hunt trick or auto hunt"
+   save_state="y"
+   date_written="2009-02-28 20:14:46"
+   requires="4.40"
+   version="6.1"
+   >
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<triggers>
+
+  <trigger
+    enabled="n"
+    match="*"
+    script="where"
+    group="where"
+    regexp="n"
+    >
+  </trigger>
+
+
+  <trigger
+    enabled="n"
+    match="^You are confident that (.*?) passed through here, heading (.*?)\.$"
+    script="huntnext"
+    group="hunt"
+    regexp="y"
+    >
+  </trigger>
+
+  <trigger
+    enabled="n"
+    match="^The trail of (.*?) is confusing, but you're reasonably sure .*? headed (.*?)\.$"
+    script="huntnext"
+    group="hunt"
+    regexp="y"
+    >
+  </trigger>
+
+  <trigger
+    enabled="n"
+    match="^You are almost certain that (.*?) is (.*?) from here\.$"
+    script="huntnext"
+    group="hunt"
+    regexp="y"
+    >
+  </trigger>
+
+  <trigger
+    enabled="n"
+    match="^You are certain that (.*?) is (.*?) from here\.$"
+    script="huntnext"
+    group="hunt"
+    regexp="y"
+    >
+  </trigger>
+
+  <trigger
+    enabled="n"
+    match="^You have no idea what you're doing, but maybe (.*?) left (.*?)\?$"
+    script="huntnext"
+    group="hunt"
+    regexp="y"
+    >
+  </trigger>
+
+  <trigger
+    enabled="n"
+    match="There are traces of (.*?) having been here. Perhaps they lead (.*?)\?$"
+    script="huntnext"
+    group="hunt"
+    regexp="y"
+      >
+  </trigger>
+
+  <trigger
+    match="^(.*?) is here\!$"
+    regexp="y"
+    script="huntdone"
+    group="hunt"
+    name="ishere"
+    send_to="12"
+    sequence="100">
+  </trigger>
+
+  <trigger
+    enabled="n"
+    match="^You couldn\'t find a path to (.*?) from here\.$"
+    regexp="y"
+    script="huntdone"
+    group="hunt"
+    name="nopath"
+    send_to="12"
+    sequence="100">
+  </trigger>
+
+  <trigger
+    enabled="n"
+    match="You seem unable to hunt that target for some reason\.$"
+    regexp="y"
+    script="huntdone"
+    group="hunt"
+    name="cpmob"
+    send_to="12"
+    sequence="100">
+  </trigger>
+  
+  <trigger
+    enabled="n"
+    script="huntdone"
+    group="hunt"
+    name="notinarea"
+    match="^No one in this area by that name\.$"
+    regexp="y"
+      >
+  </trigger>
+
+  <trigger
+    enabled="n"
+    script="opendoor"
+    group="huntdoor"
+    name="nopass"
+    match="^Magical wards around the door bounce you back\.$"
+    regexp="y"
+      >
+  </trigger>
+  
+  <trigger
+    enabled="n"
+    script="opendoor"
+    group="huntdoor"
+    name="doorclose"
+    match="^.* is closed\.$"
+    regexp="y"
+      >
+  </trigger>
+  
+  <trigger
+    enabled="n"
+    script="opendoor"
+    group="huntdoor"
+    name="nokey"
+    match="^The door is locked and you do not have a key\.$"
+    regexp="y"
+      >
+  </trigger>
+  
+  <trigger
+    enabled="n"
+    script="opendoor"
+    group="huntdoor"
+    name="dooropen"
+    match="^You open .*\.$"
+    regexp="y"
+      >
+  </trigger>  
+  
+</triggers>
+
+<aliases>
+  <alias
+   name="huntrick"
+   match="^ht (.+)$"
+   enabled="y"
+   regexp="y"
+   sequence="100"
+   send_to="12"   
+  >
+  <send>Execute(phelper.cmd .. " trick " .. "%1")</send>
+  </alias>
+  <alias
+   name="huntauto"
+   match="^ha (.+)$"
+   enabled="y"
+   regexp="y"
+   sequence="100"
+   send_to="12"   
+  >
+  <send>Execute(phelper.cmd .. " auto " .. "%1")</send>
+  </alias>
+</aliases>
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "verify"
+require "tprint"
+require "ldplugin"
+require "aarddb"
+
+htype = ''
+mob = ''
+lastroom = -1
+count = 0
+lastdir = ""
+opening = false
+mobnum = 1
+
+
+function huntreset()
+  htype = ''
+  count = 0
+  lastroom = -1
+  mob = ""
+  mobnum = 1
+  phelper:enabletriggroup('hunt', false)
+  phelper:enabletriggroup('huntdoor', false) 
+end
+
+function opendoor(name, line, wildcards)
+  if name == 'nokey' and opening then
+    opening = false
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not open door")
+    huntdone()  
+  elseif name == 'nopass' or name == 'doorclose' then
+    opening = true
+    Send('open ' .. lastdir)  
+  elseif name == 'dooropen' then
+    Send(lastdir)
+  end
+end
+
+function huntinterrupted()
+  ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Autohunt: paused (Fighting), type " .. phelper.cmd .. " " .. htype .. " to restart")
+  
+  huntreset()
+end
+
+function where(name, line, wildcards)
+  if line ~= "" then
+    phelper:enabletriggroup('where', false)
+    local room = string.sub(line, 30, #line)
+    room = trim(room)
+    Execute('mapper area "' .. room .. '"')
+  end
+end
+
+function huntdone(name, line, wildcards)
+  if name == 'cpmob' and htype == 'trick' then
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Found at " .. tostring(mobnum) .. "." .. mob)
+    Send(string.format('where %d.%s', mobnum, mob))
+    if IsPluginInstalled("b6eae87ccedd84f510b74714") and phelper.automapper then
+        phelper:enabletriggroup('where', true)       
+    end
+  elseif htype == 'trick' and name ~= 'nopath' then
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not find " .. mob)
+--  elseif htype == 'auto' and (name == 'notinarea' or name == 'nopath') then
+--    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not find " .. mob)   
+  elseif htype == 'trick' and name == 'nopath' then
+    mobnum = mobnum + 1
+    Send(string.format('hunt %d.%s', mobnum, mob))
+    return
+  end
+  ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Autohunt: off")
+ 
+  huntreset()
+end
+
+function huntnext(name, line, wildcards)
+  local mobname = wildcards[1]
+  local tmob = string.match (mob, "[%d]*[\.]*(.*)")
+  --print(mobname, tmob, waiting, htype)  
+  if string.find(string.lower(mobname), string.lower(tmob)) ~= nil and not waiting and htype == 'auto' then
+    lastdir = wildcards[2]
+    Send(lastdir)
+  elseif htype == 'trick' then
+    mobnum = mobnum + 1
+    Send(string.format('hunt %d.%s', mobnum, mob))
+  end
+end
+
+function cmd_auto(cmddict)
+  if cmddict[1] then
+    mob = cmddict[1]
+  elseif not mob then
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "I don't have a mob to hunt!")
+  end
+  if htype ~= "" then
+    return
+  end
+  if mob then
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Hunting " .. mob)
+    phelper:enabletriggroup('hunt', true)
+    phelper:enabletriggroup('huntdoor', true)
+    htype = 'auto'
+    Send('hunt ' .. mob)
+    waiting = false
+  end
+end
+
+function cmd_trick(cmddict)
+  if cmddict[1] then
+    mob = cmddict[1]
+  elseif not mob then
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "I don't have a mob to try to find!")
+  end
+  if htype ~= "" then
+    return
+  end
+  if mob then
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Using hunttrick to hunt " .. mob)
+    phelper:enabletriggroup('hunt', true)
+    htype = 'trick'
+    SendNoEcho('hunt ' .. mob)
+  end
+end
+
+function cmd_stop(cmddict)
+ huntdone()
+end
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+  
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find('char.status') then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      local tt = assert (loadstring ('return ' .. gmcparg or ""))()    
+      
+      if tonumber(tt.status.state) == 8 and htype ~= "" then
+        huntinterrupted()
+      end
+    elseif text:find('room.info') then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
+      tt = assert (loadstring ('return ' .. gmcparg or ""))()      
+      
+      if tonumber(tt.num) ~= lastroom then
+        if htype == 'auto' then
+          SendNoEcho('hunt ' .. mob)          
+        end
+        count = 0
+        lastroom = tonumber(tt.num)
+      end
+    elseif text:find('room.wrongdir') then
+      count = count + 1
+      if count > 1 and htype == 'auto' then
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Autohunt: haven't moved in 2 hunts, so finishing")
+        huntdone()
+        return
+      end    
+    end
+  end  
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'bh')
+phelper:set_default('plugin_colour', 'blue')
+
+phelper:add_setting( 'automapper', {type="bool", help="do an automatic 'mapper area (room)' when using hunttrick", default=false, sortlev=35})
+
+phelper:add_cmd('auto', {func=cmd_auto, help="autohunt a mob"})
+phelper:add_cmd('trick', {func=cmd_trick, help="autohunt a mob"})
+phelper:add_cmd('stop', {func=cmd_stop, help="stop the autohunt"})
+phelper:add_cmd('off', {func=cmd_stop, help="stop the autohunt"})
+
+phelper:enable()
+
+]]>
+</script>
+
+</muclient>
