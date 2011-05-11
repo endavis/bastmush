@@ -250,11 +250,13 @@ function Phelpobject:enable()
   if self.disabled then
     self.disabled = false
   end
+  self:processevent('enabled', {})    
 end
 
 function Phelpobject:disable()
   self:savestate()
   self.disabled = true
+  self:processevent('disabled', {})    
 end
 
 function Phelpobject:checkvalue(option, value, args)
