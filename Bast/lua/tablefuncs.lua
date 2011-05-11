@@ -64,6 +64,14 @@ function tableSort(ttable, sortkey, default, reverse)
           bkey = 0
         end
       end
+      if akey == nil or bkey == nil then
+        if akey == nil then          
+          print('BUG: akey: ', sortkey, ' - is nil for item', a)
+        elseif bkey == nil then
+          print('BUG: bkey: ', sortkey, ' - is nil for item', b)
+        end
+        return false
+      end
       if reverse then
         return (bkey < akey)
       else
