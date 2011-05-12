@@ -46,7 +46,8 @@ function format_plugin(plugin)
   hcmd = string.format("%-10s", tostring(plugin.cmd))
   hdeb = string.format("%-8s", tostring(plugin.tdebug))
   hena = string.format("%-10s", tostring(plugin.enabled))
-  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hdeb .. hena)
+  hmem = string.format("%-10s", tostring(plugin.memusage))
+  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hdeb .. hena .. hmem)
 end
 
 function format_header()
@@ -55,7 +56,8 @@ function format_header()
   hcmd = string.format("%-10s", "Cmd/Short")
   hdeb = string.format("%-8s", "Debug")
   hena = string.format("%-10s", "Enabled")
-  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hdeb .. hena)
+  hmem = string.format("%-10s", "Mem Usage (KB)")
+  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hdeb .. hena .. hmem)
 end
 
 function plugins_list_helper(header, type, search)
@@ -69,15 +71,22 @@ function plugins_list_helper(header, type, search)
   numfound, plist = getmatches(search)
   for _, pdict in pairs(plist) do
     pluginsall[GetPluginInfo(pdict.id, 1)] = { id = pdict.id,
-                       name = pdict.name,
-                       cmd = pdict.cmd or "",
-                       tdebug = GetPluginVariable(pdict.id, 'tdebug') or "",
-                       enabled = GetPluginInfo(pdict.id, 17),
-                       version = GetPluginInfo(pdict.id, 19),
-                     }
-     if phelpplugins[pdict.id] then
-       pluginsall[GetPluginInfo(pdict.id, 1)].phelp = true
-     end
+                      name = pdict.name,
+                      cmd = pdict.cmd or "",
+                      tdebug = GetPluginVariable(pdict.id, 'tdebug') or "",
+                      enabled = GetPluginInfo(pdict.id, 17),
+                      version = GetPluginInfo(pdict.id, 19),
+                      memusage = ""
+                    }
+    if PluginSupports(pdict.id, "getmemoryusage") == error_code.eOK then
+      local throwaway, tmem = CallPlugin(pdict.id, "getmemoryusage")
+      pluginsall[GetPluginInfo(pdict.id, 1)].memusage = string.format("%0d", tonumber(tmem))
+    else
+      pluginsall[GetPluginInfo(pdict.id, 1)].memusage = ""
+    end                     
+    if phelpplugins[pdict.id] then
+      pluginsall[GetPluginInfo(pdict.id, 1)].phelp = true
+    end
   end
   for _,v in pairsByKeys(pluginsall) do
     if type then

@@ -81,6 +81,7 @@ function Pluginhelper:initialize(args)
 
   self:add_cmd('objects', {func="cmd_objects", help="list objects associated with this plugin", prio=99})
   self:add_cmd('windows', {func="cmd_windows", help="list windows and some info associated with this plugin", prio=99})
+  --self:add_cmd('info',  {func="cmd_sinfo", help="list some info about the plugin", prio=99})
 
   self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1, longname="Plugin Colour"})
   self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb", longname="Plugin Command"})
@@ -442,6 +443,9 @@ function Pluginhelper:showhelptext()
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'MUSHclient version'), 
              RGBColourToName(var.plugin_colour), "black", GetInfo(72))
 
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Mem Usage (KB)'), 
+             RGBColourToName(var.plugin_colour), "black", string.format('%0d KB', collectgarbage('count')))
+  
   ColourNote(RGBColourToName(var.plugin_colour), "black", "")
   ColourNote(RGBColourToName(var.plugin_colour), "black", "Commands")
   
@@ -565,6 +569,10 @@ function Pluginhelper:createhelp()
   style.text = string.format('%-20s : ', 'MUSHclient version')
   table.insert(header, {style, {text=tostring(GetInfo(72)), textcolour=var.plugin_colour}, backcolour="bg_colour"})
 
+  local style = {}
+  style.text = string.format('%-20s : ', 'Mem Usage (KB)')
+  table.insert(header, {style, {text=string.format("%0d", getmemoryusage())}, backcolour="bg_colour"})  
+  
   local style = {}
   style.text = ' '
   table.insert(header, {style, backcolour=var.plugin_colour})
@@ -987,6 +995,10 @@ function timer_end(name)
     end
   end
   starttime[name] = nil
+end
+
+function getmemoryusage()
+  return collectgarbage('count')
 end
 
 phelper = Pluginhelper:new{name='phelp'}
