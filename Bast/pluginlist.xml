@@ -78,7 +78,7 @@ function plugins_list_helper(header, type, search)
                       version = GetPluginInfo(pdict.id, 19),
                       memusage = ""
                     }
-    if PluginSupports(pdict.id, "getmemoryusage") == error_code.eOK then
+    if GetPluginInfo(pdict.id, 17) and PluginSupports(pdict.id, "getmemoryusage") == error_code.eOK then
       local throwaway, tmem = CallPlugin(pdict.id, "getmemoryusage")
       pluginsall[GetPluginInfo(pdict.id, 1)].memusage = string.format("%0d", tonumber(tmem))
     else
