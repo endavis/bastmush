@@ -34,6 +34,7 @@ The code is shamelessly copied from the Aardwolf MUSHclient package by Fiendish.
 
 <script>
 <![CDATA[
+internalrevision = "$Rev$"
 
 dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
 
