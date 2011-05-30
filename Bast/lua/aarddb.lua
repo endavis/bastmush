@@ -160,44 +160,46 @@ end
 
 function Aarddb:addhelplookup(lookup)
   self:checkhelplookuptable()
-  self:open()
-  local stmt = self.db:prepare[[ INSERT INTO helplookup VALUES (NULL, :lookup,
-                                                        :topic) ]]
+  if self:open() then
+    local stmt = self.db:prepare[[ INSERT INTO helplookup VALUES (NULL, :lookup,
+                                                          :topic) ]]
 
-  stmt:bind_names(  lookup  )
-  stmt:step()
-  stmt:finalize()
-  rowid = self.db:last_insert_rowid()
-  phelper:mdebug("inserted helplookup :", rowid)
-  self:close()
-  return rowid
+    stmt:bind_names(  lookup  )
+    stmt:step()
+    stmt:finalize()
+    rowid = self.db:last_insert_rowid()
+    phelper:mdebug("inserted helplookup :", rowid)
+    self:close()
+    return rowid
+  end
+  return nil
 end
 
 
 function Aarddb:addhelp(help)
   self:checkhelpstable()
-  self:open()
-  help.helptext = serialize.save("thelptext", help.helptext)
-  local hashelp = self:hashelp(help.keyword)
-  local message = 'inserted help:'
-  local stmt = nil
-  if hashelp then
-    stmt = self.db:prepare[[ UPDATE helps SET helptext=:helptext, added=:added WHERE keyword=:keyword ]]
-    message = 'updated help:'
-  else
-    stmt = self.db:prepare[[ INSERT INTO helps VALUES (NULL, :keyword,
-                                                          :helptext, :added) ]]
-
+  if self:open() then
+    help.helptext = serialize.save("thelptext", help.helptext)
+    local hashelp = self:hashelp(help.keyword)
+    local message = 'inserted help:'
+    local stmt = nil
+    if hashelp then
+      stmt = self.db:prepare[[ UPDATE helps SET helptext=:helptext, added=:added WHERE keyword=:keyword ]]
+      message = 'updated help:'
+    else
+      stmt = self.db:prepare[[ INSERT INTO helps VALUES (NULL, :keyword,
+                                                            :helptext, :added) ]]
+    end
+    stmt:bind_names(  help  )
+    stmt:step()
+    stmt:finalize()
+    rowid = self.db:last_insert_rowid()
+    phelper:mdebug(message, rowid)
+    self:close()
+    return rowid
   end
-  stmt:bind_names(  help  )
-  stmt:step()
-  stmt:finalize()
-  rowid = self.db:last_insert_rowid()
-  phelper:mdebug(message, rowid)
-  self:close()
-  return rowid
-
 end
+
 
 function Aarddb:hashelp(keyword)
   self:checkhelpstable()
