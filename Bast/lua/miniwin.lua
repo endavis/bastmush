@@ -378,6 +378,7 @@ end
 function Miniwin:addtab(tabname, text, header, makeactive, sticky, position, resetstart)
  timer_start('miniwin:addtab')
  if self.disabled then
+   self.classinit = true
    self:init(true)
    self:enable()   
  end
@@ -2381,7 +2382,7 @@ end
 
 -- draw the window
 function Miniwin:drawwin()
-  timer_start('miniwin:drawwin')
+--  timer_start('miniwin:drawwin')
   if self.activetab == nil then
     return
   end
@@ -2421,7 +2422,7 @@ function Miniwin:drawwin()
       self:drawtext(self.activetab)    
     end
   end
-  timer_end('miniwin:drawwin')
+--  timer_end('miniwin:drawwin')
 end
 
 function Miniwin:scrollermousedown(flags, hotspot_id)
