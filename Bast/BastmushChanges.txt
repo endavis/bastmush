@@ -1,6 +1,6 @@
 Bastmush Changes List
 
-r1389 snapshot
+r1391 snapshot
  - Internal
     - new: all plugin helps show mem usage
  - lua/miniwin.lua
