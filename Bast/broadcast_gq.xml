@@ -188,7 +188,7 @@ You are not on a global quest.
 
   <trigger
    enabled="n"
-   match="^You still have to kill (?&lt;num&gt;\d*) \* (?&lt;name&gt;.*) \((?&lt;room&gt;.*)\)\.*$"
+   match="^You still have to kill(?&lt;num&gt;[ \d]*) \* (?&lt;name&gt;.*?) \((?&lt;room&gt;.*?)(?&lt;dead&gt; - Dead|)\)(|\.)$"
    name="gq_item"
    script="gq_item"
    sequence="100"
@@ -358,8 +358,8 @@ function gq_item (name, line, wildcards)
   check( EnableTrigger ("finishgqcheck", true) )
   name = wildcards.name
   room = wildcards.room
-  num = wildcards.num
-  if not name or not room then
+  num = trim(wildcards.num)
+  if not name or not room or not num then
     print("error parsing line: ", line)
     tprint(wildcards)
   else

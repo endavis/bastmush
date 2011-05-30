@@ -256,7 +256,7 @@ cp_info = {}
 
   <trigger
    enabled="n"
-   match="^You still have to kill \* (?&lt;name&gt;.*) \((?&lt;room&gt;.*)\)\.*$"
+   match="^You still have to kill(?&lt;num&gt;[ \d]*) \* (?&lt;name&gt;.*?) \((?&lt;room&gt;.*?)(?&lt;dead&gt; - Dead|)\)(|\.)$"
    name="campaign_item"
    script="campaign_item"
    sequence="100"
@@ -391,9 +391,7 @@ function campaign_item (name, line, wildcards)
   name = wildcards.name
   mobdead = false
   room = wildcards.room
-  if string.find(room, '- Dead') then
-    tlist = utils.split(room, '-')
-    room = trim(tlist[1])
+  if wildcards.dead ==  '- Dead' then
     mobdead = true
   end
   if mobdead then
