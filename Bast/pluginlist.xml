@@ -346,7 +346,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-
+  ldplugin ("update_checker", "a7a2f5a3b1373cd99d6bfb47")
   phelper:OnPluginEnable()
 end -- OnPluginEnable
 
