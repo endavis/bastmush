@@ -428,10 +428,17 @@ function Pluginhelper:showhelptext()
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Author'), 
              RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID(), 2))
 
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Version'), 
-             RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID(), 19))
+  local version = 'Unknown'
+  if GetPluginID() == "e8520531407cb4281bea544e" then
+    version = getversion()
+  else
+    throwaway, version = CallPlugin("e8520531407cb4281bea544e", "getversion")  
+  end
+  
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Bastmush Version'), 
+             RGBColourToName(var.plugin_colour), "black", version)
 
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Internal Version'), 
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Internal Revision'), 
              RGBColourToName(var.plugin_colour), "black", tostring(internalrevision))
    
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Purpose'), 
@@ -547,13 +554,20 @@ function Pluginhelper:createhelp()
   style.text = string.format('%-20s : ', 'Author')
   table.insert(header, {style, {text=tostring(GetPluginInfo(GetPluginID(), 2)), textcolour=var.plugin_colour}, backcolour="bg_colour"})
 
+  local version = 'Unknown'
+  if GetPluginID() == "e8520531407cb4281bea544e" then
+    version = getversion()
+  else
+    throwaway, version = CallPlugin("e8520531407cb4281bea544e", "getversion")  
+  end
+    
   local style = {}
-  style.text = string.format('%-20s : ', 'Version')
-  table.insert(header, {style, {text=tostring(GetPluginInfo(GetPluginID(), 19)), textcolour=var.plugin_colour}, backcolour="bg_colour"})
+  style.text = string.format('%-20s : ', 'Bastmush Version')
+  table.insert(header, {style, {text=tostring(version), textcolour=var.plugin_colour}, backcolour="bg_colour"})
 
   if internalrevision then
     local style = {}
-    style.text = string.format('%-20s : ', 'Internal Version')
+    style.text = string.format('%-20s : ', 'Internal Revision')
     table.insert(header, {style, {text=tostring(internalrevision), textcolour=var.plugin_colour}, backcolour="bg_colour"})
   end
 
@@ -999,6 +1013,10 @@ end
 
 function getmemoryusage()
   return collectgarbage('count')
+end
+
+function isphelp()
+  return true
 end
 
 phelper = Pluginhelper:new{name='phelp'}
