@@ -10,12 +10,25 @@ Aarddb = Sqlitedb:subclass()
 function Aarddb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "/aardinfo.db"
+  self.version = 2
+  self.versionfuncs[2] = self.resetplanestable  
   if not self:checkplanespoolstable() then
     self:createplanespoolstable(planespools)
   end
   if not self:checkplanesmobstable() then
     self:createplanesmobstable(planesmobs)
   end  
+  self:checkversion()  
+end
+
+function Aarddb:resetplanestable()
+  if self:open() then
+    self.db:exec([[DROP TABLE IF EXISTS planespools;]]) 
+    self.db:exec([[DROP TABLE IF EXISTS planesmobs;]])     
+    self:createplanespoolstable(planespools)
+    self:createplanesmobstable(planesmobs)    
+    self:close()
+  end 
 end
 
 function Aarddb:checkplanespoolstable()
