@@ -123,8 +123,10 @@ function getstatus()
     return "No moves"
   elseif nocast then
     return "Nocast"
-  else
+  elseif stats and stats.status and stats.status.state then
     return capitalize(statestrings[tonumber(stats.status.state)])
+  else
+    return 'Unknown'
   end
 end
 
