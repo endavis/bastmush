@@ -1,5 +1,61 @@
 Bastmush Changes List
 
+r1389 snapshot
+ - Internal
+    - new: all plugin helps show mem usage
+ - lua/miniwin.lua
+    - bug fix: mouse scrolling in miniwindows is no longer broken
+ - lua/aarddb.lua
+    - bug fix: fixed mispellings of some planes mobs
+ - update_checker
+    - new: plugin that checks for new releases
+ - bast_hunt.xml
+    - new: hunting plugin with both an autohunt and hunttrick option
+       ht <mob> or ha <mob>
+ - bast_spellup.xml
+    - bug fix: fixed error when adding blockers but the spell doesn't exist
+    - bug fix: reset waiting when go from any other state to active
+    - bug fix: return unknown if state is not found
+ - miniwin_vote.xml
+    - new: plugin to remember to vote for those of us who do not use a
+        prompt anymore
+ - miniwin_events.xml
+    - bug fix: now will only go to the quest tab when the quest is requested and not
+        everytime the timer gets updated
+    - bug fix: time colour is now used on both cp and quest tab
+ - miniwin_stats.xml
+    - bug fix: fixes for null items
+    - new: added Kills tab
+    - new: added last X items to all tabs
+ - miniwin_spellup.xml
+    - new: added # of spells that will wear off in less than one minute on the
+        Summary tab
+ - StatDB
+    - bug fix: change the way that the stat table is initialized, basically it
+        checks for totallevels and then sends a whois
+    - new: added a backup command and the db is now saved every 12 hours
+    - new: added a campaign xp function to set the lower threshhold of xp when
+        no campaign has been taken this level
+    - bug fix: superheroing and remorting are now done correctly
+ - StatMonitor.xml
+    - bug fix: if a pup or level took less than a minute, then show seconds
+    - new: added the ability to have the output go to channels
+ - pluginlist.xml
+    - new: list mem usage in plugin list
+ - broadcast_whois.xml
+    - bug fix: tiers were not being taken into account for totallevels
+ - broadcast_gq.xml
+    - bug fix: time should be more accurate, the starttime is set when the gquest
+        actually starts, not when it is joined
+ - broadcast_kills.xml
+    - new: added time to the instakill functions
+    - bug fix: flee and retreat should now reset the mobname
+    - bug fix: aim now sets mobname
+    - bug fix: more ways to get mobname
+ - broadcast_spellsskills.xml
+    - new: added a refresh command
+    - bug fix: on remort, also refresh spells
+
 r1276 snapshot
 - Internal
     - new: miniwindows have layers, see the Intro page on the wiki
