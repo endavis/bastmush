@@ -392,7 +392,7 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky, position, res
    if sticky then
      self.tabs[tabname].sticky = true
    end
-   if position then
+   if position and #self.tablist >= position then
      table.insert(self.tablist, position, tabname)     
    else
      table.insert(self.tablist, tabname)
