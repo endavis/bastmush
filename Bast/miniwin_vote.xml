@@ -14,7 +14,7 @@
    save_state="y"
    >
 <description trim="y">
-Redirects the map to a mini window.
+
 </description>
 
 </plugin>
@@ -59,6 +59,8 @@ timestuff = {}
 timestuff['12.5'] = 12.5 * 60 * 60
 timestuff['24.5'] = 24.5 * 60 * 60
 
+check_votef = false
+
 votewin = Miniwin:new{name="Vote"}
 votewin:set_default("textfont", {name='courier new', size=12})
 votewin:set_default("windowpos", 12)
@@ -96,9 +98,10 @@ function formatvote()
 end
 
 function check_vote()
-  if phelper.classinit then
+  if phelper.classinit or check_votef then
     return
   end
+  check_votef = true
   local ntime = GetInfo(304)
   local found = false
   for i,v in pairs(phelper.lastvoted) do
@@ -133,6 +136,7 @@ function check_vote()
   else
     votewin:disable()
   end
+  check_votef = false
 end
 
 function show_vote_window()
@@ -145,25 +149,23 @@ function show_vote_window()
     style.text = " Top Mud Sites "
     style.mouseup = votetms
     table.insert(alines, {style})
+    table.insert(alines, {{text=''}})
   end
-
-  table.insert(alines, {{text=''}})
 
   if votewin.showmudconnector and phelper.lastvoted['mudconnect'] == 'Now' then
     local style = {}
     style.text = " Mud Connector "
     style.mouseup = votemudconnect
     table.insert(alines, {style})
+    table.insert(alines, {{text=''}})
   end
-
-  table.insert(alines, {{text=''}})
 
   votewin:addtab('Default', alines)  
 
 end
 
 function onshowmudconnectorchange(object, args)
-  if not votewin.classinit and not phelper.classinit then
+  if not votewin.classinit and not phelper.classinit and not votewin.disabled then
      if verify_bool(args.value) then
       phelper.lastvoted['mudconnect'] = 'Now'
     end
