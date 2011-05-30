@@ -1,0 +1,72 @@
+Bastmush Changes List
+
+r1276 snapshot
+- Internal
+    - new: miniwindows have layers, see the Intro page on the wiki
+    - bug fix: miniwindows will always be shown the first time the plugin
+        is loaded and data is added to the window
+    - bug fix: miniwindows will now stick to the left or top of the 
+        mushclient window when moving them and the mouse goes 
+        out of the window
+ - bast_spellup
+    - bug fix: fixed help (had wrong command) 
+ - miniwin_stats
+    - bug fix: avegold being nil is now accounted for
+    - bug fix: levels tab was not showing if no pups were found even though
+        levels were found
+    - bug fix: everything defaults to 0 if it wasn't found in the tables 
+ - broadcast_level
+    - bug fix: "Info" showing levels and not getting levelgains 
+ - broadcast_kills
+    - bug fix: one hit kills will now be accounted for, autogold has to be
+        on though 
+ - broadcast_gq
+    - bug fix: gq tab is now removed if you quit from a gq 
+ - StatDB
+    - bug fix: leveling and having no campaign which would set noexp when it
+        wasn't needed 
+ - broadcast_area
+    - bug fix: now only broadcasts 1, you have to GetVariable the result 
+ - Aardwolf_Regen
+    - bug fix: now works with gmcp
+ - miniwin_tabbar
+    - bug fix: horizontal mode now works, set orientation to 0
+
+r1220 snapshot
+ - Internal
+    - new: event system in pluginhelper
+    - enhancement: wrapped all sql statements in transactions
+    - enhancement: speedup improvements in the miniwin code
+    - new: all plugins now have a "help text" option which prints help
+        to the output window instead of the miniwin
+ - New Plugins (see wiki)
+    - bast_spellup: a cmd line spellup solution
+    - miniwin_spellup: a miniwindow spellup solution
+    - miniwin_events: combines the quest/cp/gq miniwindows
+    - fix: can fix the prompt if needed by adding a cr
+ - StatDB
+    - new: added dontlevelnocampaign and campaignxp settings
+ - miniwin_moons
+    - enhancement: changed to use gmcp for tick 
+ - miniwin_cp
+    - enchancement: will now automatically show when a cp is requested
+        the first time 
+ - broadcast_invmon
+    - enhancement: added commands showstuff which shows all the tags and
+        hidestuff which hides all the tags 
+    - bug fix: no longer sends an invdetails for every item that is bought 
+ - broadcast_spellsskills
+    - enhancement: now gets all info about spells/skills and saves it into
+        a sqlite db 
+ - miniwin_help
+    - enhancement: now uses gmcp instead of broadcast_state 
+ - StatMonitor
+    - bug fix: no longer shows the same info over and over for each pup 
+ - broadcast_runto
+    - bug fix: no longer loads with errors 
+ - PotionQuaffer
+    - bug fix: no longer errors on buying multiple potions 
+ - Aardwolf_disarm
+    - bug fix: now works 
+ - broadcast_kills
+    - bug fix: now sets vorpal weapons correctly 

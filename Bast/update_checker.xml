@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="xBastmush_Update_Checker"
+   author="Bast/Fiendish"
+   id="a7a2f5a3b1373cd99d6bfb47"
+   language="Lua"
+   purpose="Checks online for newer versions of the Bastmush plugin package"
+   date_written="2011-04-23 11:51:55"
+   requires="4.72"
+   version="1.0"
+   >
+<description trim="y">
+Checks online for new versions of the Bastmush plugin package.
+
+The code is shamelessly copied from the Aardwolf MUSHclient package by Fiendish. 
+</description>
+</plugin>
+<!--  Script  -->
+
+<timers>
+  <timer
+   name="bastmushupdate"
+   script="main"
+   enabled="y"
+   second="20"
+   one_shot="y"
+   >
+  </timer>
+
+</timers>
+
+<script>
+<![CDATA[
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require 'var'
+require 'pluginhelper'
+require "miniwin"
+require "tprint"
+require "commas"
+require "ldplugin"
+require "findfile"
+require "stringfuncs"
+
+updatewin = Miniwin:new{name="Update"}
+updatewin:set_default('windowpos', 12)
+updatewin:set_default('bg_colour', 'black')
+updatewin:set_default('header_bg_colour', 'black')
+updatewin:set_default('header_text_colour', 0xDCDCDC)
+updatewin:set_default('maxlines', 30)
+
+http = require "socket.http"	-- loads http and various dlls
+download_url = "http://code.google.com/p/bastmush/downloads/detail?name=bastmush.zip"
+window_title = "Bastmush Package Update Checker"
+ErrorMessage = ""
+
+-- converts special character codes in html source to their ascii 
+-- equivalents for display. Also specially escapes things that need to be.
+function convertHTMLcodesToStandardText(str)
+    if not str then
+        return nil
+    end
+    
+    local replacements = { -- minimal set. can add more later if needed.
+    {"&gt;",">"},
+    {"&lt;","<"},
+    {"&quot;","\""},
+    {"&#39;","'"},
+    {"&amp;","&"}
+    }
+    for i,v in ipairs(replacements) do
+        str = string.gsub(str, v[1],v[2])
+    end
+    return str
+end
+
+function gotourl()
+  OpenBrowser(download_url)
+  updatewin:disable()  
+end
+
+function disablewin()
+  updatewin:disable()  
+end
+
+-- Shows an editbox dialog detailing the posted differences between
+-- the newest available download and the currently downloaded package
+function newversion(header, message, list)
+  local tlines = {}
+  local theader = {}
+  
+  local style = {}
+  style.text = string.rep('-', 80)
+  style.textcolour = 'cyan'
+  table.insert(theader, {style})
+  
+  for i,v in ipairs(header) do
+    local style = {}
+    style.text = v
+    table.insert (theader, {style})  
+  end
+
+  local style = {}
+  style.text = string.rep('-', 80)
+  style.textcolour = 'cyan'
+  table.insert(theader, {style})
+  
+  local lstyles = {}
+  
+  local style = {}
+  style.text = string.format("%-20s", " ")
+  table.insert(lstyles, style)
+  
+  local style = {}
+  style.text = " Get it "
+  style.mouseup = gotourl
+  style.textcolour = "black"
+  style.backcolour = "gray"
+  table.insert(lstyles, style)
+
+  local style = {}
+  style.text = string.format("%-15s", " ")
+  table.insert(lstyles, style)
+
+  local style = {}
+  style.text = " Maybe Later "
+  style.mouseup = disablewin
+  style.textcolour = "black"
+  style.backcolour = "gray"
+  table.insert(lstyles, style)
+
+  table.insert (theader, lstyles)  
+
+  local style = {}
+  style.text = string.rep('-', 80)
+  style.textcolour = 'cyan'
+  table.insert(theader, {style})
+
+  for i,v in ipairs(message) do
+    local style = {}
+    style.text = v
+    table.insert (tlines, {style})  
+  end
+
+  table.insert(tlines, {{text = ''}})
+  
+  string.gsub(list, '\r\n','\n')
+  string.gsub(list, '\n\r','\n')
+  local tlist = utils.split(list, '\n')
+  
+  for i,v in ipairs(tlist) do
+    local style = {}
+    style.text = trimr(v)
+    table.insert (tlines, {style})
+  end
+
+  updatewin:addtab('Default', tlines, theader, true)
+  updatewin:show(true)
+      
+end
+
+-- Something went wrong when trying to check for updates
+function errorMessage(msg)
+   if utils.inputbox(msg,"ERROR: "..window_title,download_url,nil,nil,{ok_button="Ok, Show Me", cancel_button="Maybe Later", read_only=true, no_default=true}) then
+       OpenBrowser(download_url)
+   end
+end
+
+function manualCheck()
+    EnableTimer("bastmushupdate", false)
+    main()
+end
+
+function main()
+    SetStatus("Checking online for Bastmush script package updates")
+    ErrorMessage = ""
+    if checkLocalFile() then
+        if checkRemoteFile() then
+            showUpdate()
+        end
+    end
+    checkErrors()
+    SetStatus("")
+end
+
+function checkLocalFile()
+    -- open the local version file
+    local changesfile = scan_dir_for_file (GetInfo(60), "BastmushChanges.txt")
+
+    version_file,err = io.open (changesfile, "r")
+    if not version_file then -- the file is missing or unreadable
+       ErrorMessage = "The file \'BastmushChanges.txt\' appears to be missing or unreadable (this is bad), so the version check cannot proceed.\n\nThe system returned the error:\n"..err.."\n\nYou should download the latest development snapshot from:"
+       return false
+    end
+    --- read the snapshot revision from the third line
+    line = version_file:read ("*l") -- read one line
+    line = version_file:read ("*l") -- read one line
+    line = version_file:read ("*l") -- read one line
+    local_version = nil
+    if line then -- if we got something
+       local_version = tonumber(string.match(line, "r(%d+) snapshot"))
+    end
+    if not local_version then -- the file is messed up such that the third line doesn't contain "r<###> snapshot"
+       ErrorMessage = "The file \'BastmushChanges.txt\' appears to have been modified (this is bad), so the version check cannot proceed. You should download the latest development snapshot from:"
+       return false
+    end
+    version_file:close ()
+    return true
+end
+
+function checkRemoteFile()
+    -- grab the download page
+    local page, status, headers = http.request(download_url)
+    if status == 200 then -- 200 is the HTTP status code for "OK"
+        update_list, latest_version = string.match(page, "Bastmush Changes List\r\n\r\n(r(%d+) snapshot.*)")
+        -- extract the snapshot revision number
+        latest_version = tonumber(latest_version)
+    else -- http access error
+        ErrorMessage = "Could not access the Bastmush Package download page to check for the latest version number. Please make sure that you are able to access the url below in your browser and then type \'PACKAGE UPDATE CHECK\' to try again..."
+        return false
+    end
+    
+    if not latest_version then -- string.match failed to find the right pattern above
+        ErrorMessage = "There appears to be a problem with the version information on the Bastmush Package download page. Please send Bast an email about this."
+        return false
+    end
+    return true
+end
+
+function showUpdate()
+    if local_version and latest_version then -- sanity check
+        if local_version < latest_version then
+            final_update_list = (string.match(update_list,"(.*)r"..local_version.." snapshot") or "<ERROR! Please don't modify your BastmushChanges.txt file>\r\n")
+            final_update_list = convertHTMLcodesToStandardText(final_update_list)
+            header = {"There's a new Bastmush Package development snapshot available.",
+                       "Your version: r"..local_version,
+                       "New  version: r"..latest_version,
+                     }
+                    
+            message = {"The major differences between your version and the latest version are:"}
+            newversion(header, message, final_update_list)
+        elseif local_version > latest_version then
+            ErrorMessage = "Oh, dear...this is embarrassing. The Bastmush Package update checker has detected that you have a version NEWER than what is available online! Go to the following url in your browser to get the latest package and contact Bast about this message, because clearly this situation is impossible. :/"
+            return false
+        end
+    else
+        ErrorMessage = "Impossible Error"
+        return false
+    end
+    return true
+end
+
+function checkErrors()
+    if ErrorMessage ~= "" then
+       errorMessage(ErrorMessage)
+       return true
+    end
+    return false
+end
+
+]]>
+
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'bup')
+phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:add_pobject('win', updatewin)
+
+phelper:add_cmd('check', {func=manualCheck, help="check for an update for the Bastmush script package"})
+
+phelper:enable()
+
+]]>
+</script>
+
+</muclient>
