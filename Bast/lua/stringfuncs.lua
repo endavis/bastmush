@@ -5,11 +5,24 @@ http://code.google.com/p/bastmush
  
 functions in this module
 
+quote - usage: quote(str)
+  quote a string
+
 wrap - usage: wrap(line, length)
   wrap the line at length, will try to find closest comma or space
 
 strjoin - usage: strjoin(delimiter, list)
   join the list with delimiter
+
+capitalize - usage: capitalize(str)
+  capitalize a string
+
+ReadableNumber- usage: ReadableNumber(num, places)
+  format a number into readable string of num places
+   10000000 would be turned into "10 M"
+
+trimr - usage: trimr(str)
+  trim whitespace from the right side of a string
 --]]
 
 function quote(str)
@@ -52,20 +65,24 @@ function capitalize (s)
 end -- capitalize
 
 function ReadableNumber(num, places)
-    local ret
-    local placeValue = ("%%.%df"):format(places or 0)
-    if not num then
-        return 0
-    elseif num >= 1000000000000 then
-        ret = placeValue:format(num / 1000000000000) .. " T" -- trillion
-    elseif num >= 1000000000 then
-        ret = placeValue:format(num / 1000000000) .. " B" -- billion
-    elseif num >= 1000000 then
-        ret = placeValue:format(num / 1000000) .. " M" -- million
-    elseif num >= 1000 then
-        ret = placeValue:format(num / 1000) .. " K" -- thousand
-    else
-        ret = num -- hundreds
-    end
-    return ret
+  local ret
+  local placeValue = ("%%.%df"):format(places or 0)
+  if not num then
+      return 0
+  elseif num >= 1000000000000 then
+      ret = placeValue:format(num / 1000000000000) .. " T" -- trillion
+  elseif num >= 1000000000 then
+      ret = placeValue:format(num / 1000000000) .. " B" -- billion
+  elseif num >= 1000000 then
+      ret = placeValue:format(num / 1000000) .. " M" -- million
+  elseif num >= 1000 then
+      ret = placeValue:format(num / 1000) .. " K" -- thousand
+  else
+      ret = num -- hundreds
+  end
+  return ret
+end
+
+function trimr(s)
+  return s:find'^%s*$' and '' or s:match'^(.*%S)'
 end
