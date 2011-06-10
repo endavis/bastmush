@@ -310,23 +310,11 @@ end -- wheelmove
 
 function Pluginhelper:OnPluginBroadcast(msg, id, name, text)
 --  mdebug('OnPluginBroadcast')
-  if id == "eee96e233d11e6910f1d9e8e" and msg == -2 then
-    for i,v in pairs(self.pobjects) do
-      if not v.disabled then
-        v:tabbroadcast(true)
-      end
-    end
+  
+  for i,v in pairs(self.pobjects) do
+    v:OnPluginBroadcast(msg, id, name, text)
   end
-  if id == "eee8dcaf925c1bbb534ef093" and msg == 1002 then
-    newset = assert (loadstring ('return ' .. text or ""))()
-    for i,v in pairs(self.pobjects) do
-      if v.otype == 'Miniwin' then
-        if not v.disabled then
-          v:onSettingChange(newset)
-        end
-      end
-    end
-  end
+  
 end
 
 --function Pluginhelper:__newindex(name, val)
@@ -341,11 +329,20 @@ function Pluginhelper:OnPluginInstall()
     return
   end -- they didn't enable us last time
 
+  for i,v in pairs(self.pobjects) do
+    v:OnPluginInstall()
+  end    
+  
   OnPluginEnable ()  -- do initialization stuff
+  
 end
 
 function Pluginhelper:OnPluginClose()
   self:mdebug('OnPluginClose')
+
+  for i,v in pairs(self.pobjects) do
+    v:OnPluginClose()
+  end  
 
   OnPluginDisable()
 end
@@ -357,10 +354,9 @@ function Pluginhelper:OnPluginEnable()
   
   -- if we are connected when the plugin loads, it must have been reloaded whilst playing
   for i,v in pairs(self.pobjects) do
-    if v.disabled == false then
-      v:init(true)
-    end
+    v:OnPluginEnable()
   end
+  
   if IsConnected () then
     OnPluginConnect ()
   end -- if already connected
@@ -369,29 +365,37 @@ function Pluginhelper:OnPluginEnable()
   theader, ttext = self:createhelp()
   self.helpwin:addtab('Plugin', ttext, theader, true)
   self.helpwin:show(false)
+  WindowSetZOrder(self.helpwin.winid, 999)
 end
 
 function Pluginhelper:OnPluginDisable()
   self:mdebug('OnPluginDisable')
+
+  for i,v in pairs(self.pobjects) do
+    v:OnPluginDisable()
+  end  
+  
   if IsConnected() then
     OnPluginDisconnect()
   end
-  for i,v in pairs(self.pobjects) do
-    if not v.disabled then
-      v:shutdown(true)
-    end
-  end
+  
   self:broadcast(-1)
 end
 
 function Pluginhelper:OnPluginConnect()
   self:mdebug('OnPluginConnect')
 
+  for i,v in pairs(self.pobjects) do
+    v:OnPluginConnect()
+  end  
 end
 
 function Pluginhelper:OnPluginDisconnect()
   self:mdebug('OnPluginDisConnect')
 
+  for i,v in pairs(self.pobjects) do
+    v:OnPluginDisconnect()
+  end    
 end
 
 function Pluginhelper:OnPluginSaveState()
@@ -401,11 +405,10 @@ function Pluginhelper:OnPluginSaveState()
   --]]
   self:savestate(true)
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
+  
   for i,v in pairs(self.pobjects) do
-    if not v.disabled then
-      v:savestate(true)
-    end
-  end
+    v:OnPluginSaveState()
+  end  
 
 end
 
