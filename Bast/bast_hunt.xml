@@ -417,7 +417,7 @@ phelper:set_default('plugin_colour', 'blue')
 phelper:add_setting( 'automapper', {type="bool", help="do an automatic 'mapper area (room)' when using hunttrick", default=false, sortlev=35})
 
 phelper:add_cmd('auto', {func=cmd_auto, help="autohunt a mob"})
-phelper:add_cmd('trick', {func=cmd_trick, help="autohunt a mob"})
+phelper:add_cmd('trick', {func=cmd_trick, help="use hunt trick on a mob"})
 phelper:add_cmd('stop', {func=cmd_stop, help="stop the autohunt"})
 phelper:add_cmd('off', {func=cmd_stop, help="stop the autohunt"})
 
