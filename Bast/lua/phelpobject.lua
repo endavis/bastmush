@@ -584,3 +584,44 @@ function Phelpobject:onSettingChange(settable)
     end
   end
 end
+
+function Phelpobject:OnPluginBroadcast (msg, id, name, text)
+  
+end
+
+function Phelpobject:OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+end -- OnPluginInstall
+
+function Phelpobject:OnPluginClose ()
+
+end -- OnPluginClose
+
+function Phelpobject:OnPluginEnable ()
+  if self.disabled == false then
+    self:init(true)
+  end
+end -- OnPluginEnable
+
+function Phelpobject:OnPluginDisable ()
+
+  if not self.disabled then
+    self:shutdown(true)
+  end
+end -- OnPluginDisable
+
+function Phelpobject:OnPluginConnect ()
+
+end -- function OnPluginConnect
+
+function Phelpobject:OnPluginDisconnect ()
+
+end -- function OnPluginConnect
+
+function Phelpobject:OnPluginSaveState ()
+    if not self.disabled then
+      self:savestate(true)
+    end
+end -- function OnPluginSaveState
+  
