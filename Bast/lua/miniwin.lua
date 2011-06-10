@@ -244,7 +244,11 @@ function Miniwin:initialize(args)
   self:add_cmd('shade', {func="shade", help="shade the miniwin", nomenu=true})
   self:add_cmd('snapshot', {func="cmd_snapshot", help="make a snapshot of the miniwin"})
   self:add_cmd('info', {func="cmd_info", help="show some info about the window"})
-
+  self:add_cmd('show', {func="cmd_show", help="show the window"})
+  self:add_cmd('hide', {func="cmd_hide", help="hide the window"})
+  self:add_cmd('front', {func="cmd_front", help="bring the window to the front"})
+  self:add_cmd('back', {func="cmd_back", help="put the window in the back"})
+  
   self:add_setting( 'disabled', {type="bool", help="is this window disabled", default=verify_bool(false), sortlev=1, readonly=true})
   self:add_setting( 'windowpos', {type="number", help="position for this window: see http://www.gammon.com.au/scripts/function.php?name=WindowCreate", low=-1, high=13, default=6,sortlev=2, longname="Window Position", msg=[[
 see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
@@ -295,7 +299,8 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'maxlines', {type="number", help="window only shows this number of lines, 0 = no limit", default=0, low=-1, sortlev=57, longname="Max Lines"})
   self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=1, low=0, sortlev=57, longname="Max Tabs"})
   self:add_setting( 'firstshown', {type="bool", help="shown first", default=verify_bool(false), sortlev=57})
-  self:add_setting( 'layer', {type="number", help="the layer this miniwin is on", default=5, low=1, high=10, longname="Set the Layer", sortlev=57})
+  self:add_setting( 'lockwindow', {type="bool", help="make the window non draggable", default=verify_bool(false), sortlev=57, longname="Lock the Window in place"})
+  self:add_setting( 'layer', {type="number", help="the layer this miniwin is on, set to -123 to use the Z order for the Aardwolf MUSHclient", default=0, low=-200, high=200, longname="Set the Layer", sortlev=57})
     
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
@@ -332,14 +337,10 @@ function Miniwin:onfontchange(args)
 end
 
 function Miniwin:onlayerchange(args)
-  WindowDelete(self.winid)
-  self.winid = layer_table[self.layer] .. '_' .. self.id
-  self.resizewinid = 'z' .. self.winid .. ':movewin'  
-  self:reloadfonts()
-  if self.disabled or self.classinit then
-    return
+  if IsPluginInstalled("462b665ecb569efbf261422f") then
+    CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
   else
-    self:resettabs()
+    WindowSetZOrder(self.winid, self.layer)
   end
 end
 
@@ -603,6 +604,22 @@ end
 -- Command to toggle window
 function Miniwin:cmd_toggle(cmddict)
   self:toggle()
+end
+
+function Miniwin:cmd_show(cmddict)
+  self:show(true)
+end
+
+function Miniwin:cmd_hide(cmddict)
+  self:show(false)
+end
+
+function Miniwin:cmd_front(cmddict)
+  self:front()
+end
+
+function Miniwin:cmd_back(cmddict)
+  self:back()
 end
 
 -- Command to take snapshot of this window
@@ -959,7 +976,9 @@ function Miniwin:buildmousemenu()
       menu = menu .. '|' .. name .. ' - ' .. cmd.help
     end
   end
-  menu = menu .. '| < || Help'
+  menu = menu .. '| < '
+  menu = menu .. '|| Bring to Front | Send to Back '  
+  menu = menu .. '|| Help'
   return menu
 end
 
@@ -1004,6 +1023,7 @@ function Miniwin:movewindow()
   WindowPosition(self.winid, self.x, self.y, self.windowpos, flags);
 end
 
+
 -- the function called when the mouse is clicked in the menu button
 function Miniwin:windowmenu(result)
   if result:match("Set font") then
@@ -1020,6 +1040,20 @@ function Miniwin:windowmenu(result)
     self:set('textfont', 'default')
   elseif result == 'Reset All' then
     self:cmd_reset()
+  elseif result == 'Bring to Front' then
+    if IsPluginInstalled("462b665ecb569efbf261422f") then
+      CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
+      CallPlugin("462b665ecb569efbf261422f","boostMe", self.winid)      
+    else
+      self:set('layer', 200)
+    end    
+  elseif result == 'Send to Back' then
+    if IsPluginInstalled("462b665ecb569efbf261422f") then
+      CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
+      CallPlugin("462b665ecb569efbf261422f","dropMe", self.winid)      
+    else
+      self:set('layer', -200)
+    end    
   elseif result == "Reset Size" then
     self.width = self.set_options.width.default
     self.height = self.set_options.height.default
@@ -1127,6 +1161,24 @@ function Miniwin:show(flag)
   WindowShow(self.winid, flag)
   SaveState()
   self:processevent('visibility', {flag=flag})
+end
+
+function Miniwin:front()
+  if IsPluginInstalled("462b665ecb569efbf261422f") then
+    CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
+    CallPlugin("462b665ecb569efbf261422f","boostMe", self.winid)      
+  else
+    self:set('layer', 200)
+  end    
+end
+
+function Miniwin:back()
+  if IsPluginInstalled("462b665ecb569efbf261422f") then
+    CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
+    CallPlugin("462b665ecb569efbf261422f","dropMe", self.winid)      
+  else
+    self:set('layer', -200)
+  end  
 end
 
 -- init the window after the plugin has been initialized
@@ -1977,14 +2029,16 @@ function Miniwin:create_window(height, width, x, y)
       local bottom = self.activetab.build_data[1].linebottom
 
       -- add windowdraghandler
-      self:addhotspot('drag_hotspot', self.window_border_width, top, width - self.window_border_width, bottom,
-                    empty,
-                    empty,
-                    empty,
-                    empty,
-                    empty,
-                    'Click and Drag to move window', 1)
-      self:adddraghandler('drag_hotspot', self.dragmove, self.dragrelease, 0)
+      if not self.lockwindow then
+        self:addhotspot('drag_hotspot', self.window_border_width, top, width - self.window_border_width, bottom,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      empty,
+                      'Click and Drag to move window', 1)
+        self:adddraghandler('drag_hotspot', self.dragmove, self.dragrelease, 0)
+      end
     end
   end
 
@@ -2647,6 +2701,21 @@ function Miniwin:tabbroadcast(flag, text)
       td.winid = self.winid
       local wins = serialize.save( "windowstuff", td )
       self:broadcast(5001, wins, wins)
+    end
+  end
+end
+
+function Miniwin:OnPluginBroadcast(msg, id, name, text)
+  super(self, msg, id, name, text)
+  
+  if id == "eee96e233d11e6910f1d9e8e" and msg == -2 then
+    if not self.disabled then
+      self:tabbroadcast(true)
+    end
+  elseif id == "eee8dcaf925c1bbb534ef093" and msg == 1002 then
+    newset = assert (loadstring ('return ' .. text or ""))()
+    if not self.disabled then
+      self:onSettingChange(newset)
     end
   end
 end
