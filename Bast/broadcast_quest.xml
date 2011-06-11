@@ -249,9 +249,22 @@ function OnPluginBroadcast (msg, id, name, text)
       elseif stuff.action == 'status' then
         if stuff.status == 'ready' then
           quest_available()
-        else
+        elseif stuff.wait then
           when_required = os.time() + (stuff.wait * 60)
           update_timer()
+        elseif stuff.target == 'killed' then
+          phelper:broadcast(4)
+        elseif stuff.target == 'missing' then
+
+        else
+          onquest = true
+          quest_info['starttime'] = GetInfo(304)
+          quest_info['mobname'] = stuff.targ
+          quest_info['mobroom'] = stuff.room
+          quest_info['mobarea'] = stuff.area
+          var.quest_info = serialize.save( "quest_info", quest_info )
+          phelper:broadcast(2, var.quest_info)          
+          questor_time (tonumber(stuff.timer))          
         end
       elseif stuff.action == 'reset' then
         when_required = os.time() + (stuff.timer * 60)
