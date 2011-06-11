@@ -4,7 +4,10 @@ r1401 snapshot
  - Internal
     - new: all miniwindows now have the following new commands
         front, back, show, hide
-    - all miniwindows now have a Bring to Front and Send to Back option
+    - new: all miniwindows now have a Bring to Front and Send to Back option
+ - broadcast_quest
+    - bug fix: quests will now show on reconnect if you quit/disconnected 
+        during a quest
 
 r1391 snapshot
  - Internal
