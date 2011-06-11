@@ -1,5 +1,11 @@
 Bastmush Changes List
 
+r1401 snapshot
+ - Internal
+    - new: all miniwindows now have the following new commands
+        front, back, show, hide
+    - all miniwindows now have a Bring to Front and Send to Back option
+
 r1391 snapshot
  - Internal
     - new: all plugin helps show mem usage
