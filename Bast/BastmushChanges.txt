@@ -5,6 +5,7 @@ r1401 snapshot
     - new: all miniwindows now have the following new commands
         front, back, show, hide
     - new: all miniwindows now have a Bring to Front and Send to Back option
+    - new: there is now a Lock Miniwindow function which will lock the miniwindow in place
  - broadcast_quest
     - bug fix: quests will now show on reconnect if you quit/disconnected 
         during a quest
