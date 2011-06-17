@@ -212,6 +212,7 @@ require "aarddb"
 
 htype = ''
 mob = ''
+hmob = ''
 lastroom = -1
 count = 0
 lastdir = ""
@@ -249,7 +250,7 @@ function huntinterrupted()
 end
 
 function where(name, line, wildcards)
-  if line ~= "" then
+  if line ~= "" and string.find(string.lower(line), string.lower(hmob)) then
     phelper:enabletriggroup('where', false)
     local room = string.sub(line, 30, #line)
     room = trim(room)
@@ -262,6 +263,7 @@ function huntdone(name, line, wildcards)
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Found at " .. tostring(mobnum) .. "." .. mob)
     Send(string.format('where %d.%s', mobnum, mob))
     if IsPluginInstalled("b6eae87ccedd84f510b74714") and phelper.automapper then
+        hmob = mob
         phelper:enabletriggroup('where', true)       
     end
   elseif htype == 'trick' and name ~= 'nopath' then
