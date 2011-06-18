@@ -155,7 +155,7 @@ You are not on a global quest.
   </trigger>
 
  <trigger
-   enabled="n"
+   enabled="y"
    match="^You have now joined the quest. See 'help gquest' for available commands.$"
    name="gq_join"
    script="gq_join"
@@ -320,7 +320,6 @@ end
 
 function gq_join (name, line, wildcards)
   joined = true
-  check( EnableTrigger ("gq_join", false) )
   mobsleft = {}
   gq_new()
   phelper:broadcast(2)
@@ -416,7 +415,6 @@ function gq_none( name, line, wildcards)
     phelper:broadcast(4, var.gq_info)
   end
   phelper:broadcast(5)
-  check( EnableTrigger ("gq_join", false) )
   check( EnableTrigger ("gq_start", false) )
   phelper:enabletriggroup("gqcheck", false)
   phelper:enabletriggroup("gqin", false)
