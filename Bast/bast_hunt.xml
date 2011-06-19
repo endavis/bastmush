@@ -245,7 +245,7 @@ end
 
 function huntinterrupted()
   ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Autohunt: paused (Fighting), type " .. phelper.cmd .. " " .. htype .. " to restart")
-  
+  mobinterrupted = mob
   huntreset()
 end
 
@@ -294,7 +294,11 @@ function huntnext(name, line, wildcards)
 end
 
 function cmd_auto(cmddict)
-  if cmddict[1] then
+  mob = false
+  if cmddict[1] == nil and mobinterrupted then
+   mob = mobinterrupted
+   mobinterrupted = nil
+  elseif cmddict[1] then
     mob = cmddict[1]
   elseif not mob then
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "I don't have a mob to hunt!")
