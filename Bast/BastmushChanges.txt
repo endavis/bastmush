@@ -1,5 +1,15 @@
 Bastmush Changes List
 
+r1411 snapshot
+ - miniwin_spellup
+    - new: added a critical spells display to both the brief and full summary tabs
+ - bast_hunt
+    - bug fix: fixes for autohunting and being interrupted with a fight
+    - bug fix: for people who have no prompt when using automapper and hunt trick
+ - broadcast_gq
+    - bug fix: gquests will now show mobs if you join but hadn't seen
+       the announcement
+
 r1401 snapshot
  - Internal
     - new: all miniwindows now have the following new commands
