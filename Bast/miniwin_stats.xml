@@ -677,7 +677,8 @@ function build_quest_window()
         if v.double == 1 then
           total = total * 2
         end
-        local tname = utils.split(v.mobname, " ")
+        local hint = strip_colours(v.mobname) .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        local tname = utils.split(strip_colours(v.mobname), " ")
         local mname = tname[#tname]
         local tname = utils.split(v.mobroom, " ")
         local rname = tname[#tname]         
@@ -690,28 +691,28 @@ function build_quest_window()
         local style = {}
         style.text = string.format("%2d ", v.qp)
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
         style.text = string.format("%2d ", v.mccp)
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
         style.text = string.format("%2d ", v.tier)
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
         style.text = string.format("%2d ", v.lucky)
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
@@ -722,48 +723,48 @@ function build_quest_window()
           style.text = string.format("%-3s ", "")
         end
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
         style.text = string.format("%2d ", total)
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
         style.text = string.format("%2d ", v.tp)
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
         style.text = string.format("%2d ", v.trains)
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
         style.text = string.format("%2d ", v.pracs)
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
         style.text = string.format("%4d ", v.gold)
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
         
         local style = {}
         style.text = string.format("%3d ", level.level)
-        style.hint = v.level
+        style.hint = hint
         style.mouseup = nofunc
         style.textcolour = "white"
         table.insert(lstyle, style)
@@ -775,7 +776,7 @@ function build_quest_window()
           style.text = "Failed"
         end        
         style.mouseup = nofunc
-        style.hint = v.mobname .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
+        style.hint = hint
         style.textcolour = "white"        
         table.insert(lstyle, style)
         table.insert(allstyles, lstyle)
@@ -1071,7 +1072,7 @@ function create_cp_popup(cp_id)
       local lstyle = {}
       
       local style = {}
-      style.text = string.format("%-30s ", v.mobname)
+      style.text = string.format("%-30s ", strip_colours(v.mobname))
       table.insert(lstyle, style)
 
       local style = {}
@@ -1462,7 +1463,7 @@ function create_gq_popup(gq_id)
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%-30s ", v.mobname)
+      style.text = string.format("%-30s ", strip_colours(v.mobname))
       table.insert(lstyle, style)
 
       local style = {}
@@ -1661,10 +1662,10 @@ function build_kills_window()
         table.insert(lstyle, style)
       
         local style = {}
-        style.text = string.format("%-18s ", string.sub(v.name, 1, 18))
+        style.text = string.format("%-18s ", string.sub(strip_colours(v.name), 1, 18))
         style.textcolour = "white"
         style.mouseup = nofunc
-        style.hint = v.name
+        style.hint = strip_colours(v.name)
         table.insert(lstyle, style)
 
         local style = {}
