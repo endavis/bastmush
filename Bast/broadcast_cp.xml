@@ -391,7 +391,7 @@ function campaign_item (name, line, wildcards)
   name = wildcards.name
   mobdead = false
   room = wildcards.room
-  if wildcards.dead ==  '- Dead' then
+  if wildcards.dead ==  ' - Dead' then
     mobdead = true
   end
   if mobdead then
