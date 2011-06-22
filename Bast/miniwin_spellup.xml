@@ -351,6 +351,29 @@ function onstatuschange(args)
   end
 end
 
+function buildgoodbad()
+  good = {}
+  goodbysn = {}
+  goodoneminute = {}
+  bad = {}
+  badbysn = {}
+
+  timer_start('spells_affected')  
+  for k, v in pairs (spells['affected']) do
+    if (v.target == 1 or v.target == 0) and spells['spellup'][k] == nil then
+      table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
+      badbysn = { name = v.name, duration = v.finish - GetInfo(304), sn=k }
+    else
+      table.insert (good, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )
+      goodbysn[k] = { name = v.name, duration = v.finish - GetInfo(304), sn=k}
+      if v.finish - GetInfo(304) < 60 then
+        table.insert (goodoneminute, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )         
+      end
+    end -- if
+  end
+  timer_end('spells_affected')  
+end
+
 function build_windows(override)
   timer_start('build_windows')
   if not GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then
@@ -381,27 +404,9 @@ function build_windows(override)
 
   if spells['all'] and spells['affected'] and recoveries['affected'] and spells['spellup'] and spells['learned'] then
 
-    good = {}
-    goodbysn = {}
-    goodoneminute = {}
-    bad = {}
-    badbysn = {}
     hascritical = false
-
-    timer_start('spells_affected')  
-    for k, v in pairs (spells['affected']) do
-      if v.target == 1 and spells['spellup'][k] == nil then
-        table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
-        badbysn = { name = v.name, duration = v.finish - GetInfo(304), sn=k }
-      else
-        table.insert (good, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )
-        goodbysn[k] = { name = v.name, duration = v.finish - GetInfo(304), sn=k}
-        if v.finish - GetInfo(304) < 60 then
-          table.insert (goodoneminute, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )         
-        end
-      end -- if
-    end
-    timer_end('spells_affected')  
+    
+    buildgoodbad()
     
     timer_start('askedtable')
     askedselfcombined = copytable.deep(askedself)
@@ -1588,26 +1593,9 @@ function build_combat()
 end
 
 function spell_display_timer()
-  good = {}
-  goodbysn = {}
-  bad = {}  
-  badbysn = {}  
-
   local oldgoodoneminute = #goodoneminute
-  goodoneminute = {}
-  
-  for k, v in pairs (spells['affected']) do
-    if v.target == 1 and spells['spellup'][k] == nil then
-      table.insert (bad, { name = v.name, duration = v.finish - GetInfo(304), sn=k } )
-      badbysn[k] = { name = v.name, duration = v.finish - GetInfo(304), sn=k }
-    else
-      table.insert (good, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )
-      goodbysn[k] = { name = v.name, duration = v.finish - GetInfo(304), sn=k}
-      if v.finish - GetInfo(304) < 60 then
-        table.insert (goodoneminute, { name = v.name, duration = v.finish - GetInfo(304), sn=k} )         
-      end      
-    end -- if
-  end
+
+  buildgoodbad()
   
   for k,v in pairs(recoveries['affected']) do
     v.duration = v.finish - GetInfo(304)
