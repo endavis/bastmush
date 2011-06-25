@@ -14,7 +14,7 @@
    purpose="Save char info to a sqlite3 db"
    save_state="y"
    date_written="2009-05-01 21:24:06"
-   requires="4.40"
+   requires="4.73"
    version="6.1"
    >
 

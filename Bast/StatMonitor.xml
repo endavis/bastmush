@@ -14,7 +14,7 @@
    purpose="Monitor and Show Stats"
    save_state="y"
    date_written="2009-04-11 21:11:47"
-   requires="4.40"
+   requires="4.73"
    version="6.1"
    >
 
