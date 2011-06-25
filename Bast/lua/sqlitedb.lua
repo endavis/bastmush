@@ -147,17 +147,35 @@ function Sqlitedb:backupdb(extension)
   Note("BACKING UP DATABASES")
   BroadcastPlugin (999, "repaint")
 
+ 
+ 
+  n = GetInfo(66).."bastmush_temp_file.txt" -- temp file for catching os.execute output
+    
   backupdir = self.dbloc .. "\\db_backups\\"
   
-  os.execute("md " .. backupdir)
+  ChangeDir("C:")
 
+  mdcmd = "md " .. quote(backupdir) .. " >" .. quote(n) .. " 2>&1"
+  Note(mdcmd)
+  os.execute(mdcmd)
+  local lines = {}
+  for line in io.lines (n) do
+    Note(line)
+  end
+  
   self:close()
   
   -- make new backup
-  local copycmd = "copy /Y " .. quote(dbpath) .. " " .. quote(backupdir .. self.dbname .. "." .. extension)
+  local copycmd = "copy /Y " .. quote(dbpath) .. " " .. quote(backupdir .. self.dbname .. "." .. extension) .. " >" .. quote(n) .. " 2>&1"
   Note('copying db to ', backupdir .. self.dbname .. "." .. extension)
-  
+  Note(copycmd)
   os.execute(copycmd)
+ 
+  for line in io.lines (n) do
+    Note(line)
+  end
+
+  ChangeDir(GetInfo(66)) -- Go back to default directory 
   Note("FINISHED DATABASE BACKUP. YOU MAY NOW GO BACK TO MUDDING.")
   --in_backup = false
 end
