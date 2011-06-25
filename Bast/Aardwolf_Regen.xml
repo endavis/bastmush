@@ -14,7 +14,7 @@
    purpose="wear a ring of regen at certain times"
    save_state="y"
    date_written="2008-12-01 15:06:56"
-   requires="4.37"
+   requires="4.73"
    version="6.1"
    >
 <description trim="y">

@@ -11,7 +11,7 @@
    purpose="plugin functions such as reload, list, etc"
    save_state="y"
    date_written="2009-02-28 20:14:46"
-   requires="4.40"
+   requires="4.73"
    version="6.1"
    >
 

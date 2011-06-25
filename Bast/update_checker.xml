@@ -9,7 +9,7 @@
    language="Lua"
    purpose="Checks online for newer versions of the Bastmush plugin package"
    date_written="2011-04-23 11:51:55"
-   requires="4.72"
+   requires="4.73"
    version="1.0"
    >
 <description trim="y">
