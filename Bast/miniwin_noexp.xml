@@ -9,7 +9,7 @@
    language="Lua"
    purpose="Shows noexp in a miniwin"
    date_written="2008-07-24"
-   requires="4.52"
+   requires="4.73"
    version="6.1"
    save_state="y"
    >

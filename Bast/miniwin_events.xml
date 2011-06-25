@@ -9,7 +9,7 @@
    language="Lua"
    purpose="Shows quests/CPs/GQs in a tabbed miniwindow"
    date_written="2008-07-22"
-   requires="4.52"
+   requires="4.73"
    version="6.1"
    save_state="y"
    >

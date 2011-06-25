@@ -10,7 +10,7 @@
    purpose="put gquest targets in  a minwin"
    save_state="y"
    date_written="2009-02-22 21:20:25"
-   requires="4.52"
+   requires="4.73"
    version="6.1"
    >
 <description trim="y">

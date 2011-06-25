@@ -14,7 +14,7 @@
    purpose="moon phase tracker"
    save_state="y"
    date_written="2007-05-17 09:28:14"
-   requires="4.52"
+   requires="4.73"
    version="6.1"
    >
 <description trim="y">
