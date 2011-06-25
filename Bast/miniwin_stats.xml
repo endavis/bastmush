@@ -9,7 +9,7 @@
    language="Lua"
    purpose="display stats in a miniwindow, includes quests, cps, etc"
    date_written="2008-07-18"
-   requires="4.52"
+   requires="4.73"
    version="6.1"
    save_state="y"
    >
@@ -76,34 +76,34 @@ end
 
 
 function build_stat_window()
-  styles = {}
+  local styles = {}
 
-  tstyle = format_stat('Strength', char.stats.str, char.maxstats.maxstr, 13, 3)
+  local tstyle = format_stat('Strength', char.stats.str, char.maxstats.maxstr, 13, 3)
   table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('HP', char.vitals.hp, char.maxstats.maxhp, 5, #tostring(char.maxstats.maxhp)))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Intelligence', char.stats.int, char.maxstats.maxint, 13, 3)
+  local tstyle = format_stat('Intelligence', char.stats.int, char.maxstats.maxint, 13, 3)
   table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('Mana', char.vitals.mana, char.maxstats.maxmana, 5, #tostring(char.maxstats.maxmana)))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Wisdom', char.stats.wis, char.maxstats.maxwis, 13, 3)
+  local tstyle = format_stat('Wisdom', char.stats.wis, char.maxstats.maxwis, 13, 3)
   table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('Moves', char.vitals.moves, char.maxstats.maxmoves, 5, #tostring(char.stats.max_moves)))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Dexterity', char.stats.dex, char.maxstats.maxdex, 13, 3)
+  local tstyle = format_stat('Dexterity', char.stats.dex, char.maxstats.maxdex, 13, 3)
   table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('Saves', char.stats.saves, nil, 5, #tostring(char.stats.hitroll)))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Constitution', char.stats.con, char.maxstats.maxcon, 13, 3)
+  local tstyle = format_stat('Constitution', char.stats.con, char.maxstats.maxcon, 13, 3)
   table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('HR', char.stats.hr, nil, 5, #tostring(char.stats.hr)))
   table.insert(styles, tstyle)
 
-  tstyle = format_stat('Luck', char.stats.luck, char.maxstats.maxluck, 13, 3)
+  local tstyle = format_stat('Luck', char.stats.luck, char.maxstats.maxluck, 13, 3)
   table.insert(tstyle, {text="    "})
   tableExtend(tstyle, format_stat('DR', char.stats.dr, nil, 5, #tostring(char.stats.dr)))
   table.insert(styles, tstyle)
@@ -1749,8 +1749,8 @@ function format_row(rowname, data1, data2, datacolour, headercolour, width1, wid
   end
   local linestyles = {}
 
-  headercolour = headercolour or "lightseagreen"
-  datacolour = datacolour or "white"
+  local headercolour = headercolour or "lightseagreen"
+  local datacolour = datacolour or "white"
 
   local style = {}
   style.text = string.format( "%-" .. tostring(width1) .. "s", tostring(rowname) )
@@ -1798,12 +1798,12 @@ function format_stat(statname, statcur, statother, colwidth, statlength, color)
     table.insert(allstyle, style)
 
     if statother then
-    local style = {}
+      local style = {}
       style.text = '/'
       style.textcolour = "lightseagreen"
       table.insert(allstyle, style)
 
-    local style = {}
+      local style = {}
       style.text = string.format( "%-" .. tostring(statlength) .. "s",  statother)
       style.textcolour = 'white'
       table.insert(allstyle, style)
