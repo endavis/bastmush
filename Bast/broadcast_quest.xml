@@ -10,7 +10,7 @@
    purpose="Broadcast whenever anything happens with a quest"
    save_state="y"
    date_written="2009-02-20 12:31:01"
-   requires="4.34"
+   requires="4.73"
    version="6.1"
    >
 

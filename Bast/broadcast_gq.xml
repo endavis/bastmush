@@ -10,7 +10,7 @@
    purpose="Broadcasts when anything happens related to a gq"
    save_state="y"
    date_written="2009-02-21 1:10:01"
-   requires="4.38"
+   requires="4.73"
    version="6.1"
    >
 

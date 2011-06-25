@@ -10,7 +10,7 @@
    purpose="Sends updates when using runto"
    save_state="y"
    date_written="2009-08-02"
-   requires="4.28"
+   requires="4.73"
    version="6.1"
    >
 

@@ -10,7 +10,7 @@
    purpose="broadcast info from leveling"
    save_state="y"
    date_written="2009-02-22 14:20:07"
-   requires="4.38"
+   requires="4.73"
    version="6.1"
    >
 
