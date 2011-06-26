@@ -88,7 +88,7 @@ You currently display 30 lines per page.
 <triggers>
   <trigger
    script="whois_line1"
-   match="^\[\s*(\d+)\s+T(\d)\s+([-\w]+)\s+(\w+)\]\s+(\w+)\s+(.*)\s+\((\w+)\s+(\w+)\)$"
+   match="^\[\s*(\d+)\s+T(\d)\s+([-\w]+)\s+(\w+)\]\s+(\w+)\s*(.*)\s*\((\w+)\s+(\w+)\)$"
    enabled="n"
    regexp="y"
    ignore_case="y"
