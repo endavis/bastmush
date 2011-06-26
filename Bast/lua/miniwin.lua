@@ -1990,7 +1990,7 @@ function Miniwin:create_window(height, width, x, y)
   if WindowInfo(self.winid, 1) ~= nil then
     --print('window exists, resizing and repositioning')
     WindowResize(self.winid, width, height, self:get_colour("bg_colour"))
-    if tx > 0 and ty > 0 then
+    if tx >= 0 and ty >= 0 then
       WindowPosition(self.winid, tx, ty, 0, 2)
     else
       WindowPosition(self.winid, 0, 0, self.windowpos, 0)
