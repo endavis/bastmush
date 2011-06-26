@@ -112,7 +112,6 @@ status = "Unknown"
 waiting = false
 
 casting = ""
-toremove = ""
 hascritical = false
 
 askedself = nil
@@ -153,7 +152,7 @@ function runspellupcmd(cmd)
 end
 
 function buildmenu(item, menutype)
-  menu = strip_colours(spells['all'][item].name) .. "|"
+  local menu = strip_colours(spells['all'][item].name) .. "|"
   menu = menu .. "| showskill"
   menu = menu .. "| " .. bspellcmd .. " info"
   menu = menu .. "| help"
@@ -224,7 +223,7 @@ function mouseleft(result, item, menutype)
       runspellupcmd("oremove " .. item)      
     end
   elseif result:match('Add in Position') then
-    pos = verify_number("", {low=1, high=#askedself + 1, msg="Add in position"})
+    local pos = verify_number("", {low=1, high=#askedself + 1, msg="Add in position"})
     if pos then
       runspellupcmd("sadd " .. item .. ":" .. pos)  
     end      
@@ -239,7 +238,6 @@ function mouseleft(result, item, menutype)
     local spell = find_spell(trim(tresult[2]))
     if spell then      
       casting = spell.sn
-      toremove = item
       if spell.type == 1 then
         SendNoEcho('cast ' .. tostring(spell.sn))
       else
@@ -298,7 +296,7 @@ function menuclick(item, menutype)
 end
 
 function counttable(ttable)
-  count = 0
+  local count = 0
   for i,v in pairs(ttable) do
     count = count + 1
   end
@@ -1623,7 +1621,7 @@ windowtabs = {
 function settimer()
   local minutes = 0
   local seconds = 0
-  numb = tonumber(var.refreshrate)
+  local numb = tonumber(var.refreshrate)
   if numb > 59 then
     minutes = math.floor(numb/60)
     seconds = numb - (hours * 60)
