@@ -115,9 +115,9 @@ function verify_number(numberval, args)
   -- set args.silent to not show inputbox when set to nil
   -- set args.low to set the low threshhold
   -- set args.high to set the high threshhold
-  args = args or {}
+  local args = args or {}
   -- turn it into a number
-  tvalue = tonumber(numberval)
+  local tvalue = tonumber(numberval)
 
   if tvalue == nil and not args.silent then
      local msg = ''
@@ -174,7 +174,7 @@ function verify_bool(boolval, args)
   end
 
   -- check to see if we have a 1 or 0
-  tvalue = tonumber(boolval)
+  local tvalue = tonumber(boolval)
   if tvalue == 1 then
     return true
   elseif tvalue == 0 then

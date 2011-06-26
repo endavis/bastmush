@@ -130,7 +130,7 @@ function Pluginhelper:run_cmd(cmddict)
   tcmddict.action = cmddict.action
 
   self:mdebug('tcmddict after parse_cmdline', tcmddict)
-  retcode = super(self, tcmddict, true)
+  local retcode = super(self, tcmddict, true)
 
   if not retcode then
 
@@ -205,12 +205,12 @@ function Pluginhelper:set_plugin_alias()
     the first word will be the action to take, the rest will be arguments to that action
   --]]
   --match="^(shortcmd|longcmd)(:|\\s+|$)((?<action>[+\\-A-za-z0-9]*)\\s*)?(?<list>[\\+\\-A-Za-z0-9, :_#]+)?$"
-  match="^(cmdstring)(:|\\s+|$)((?<action>[+\\-A-za-z0-9]*)\\s*)?(?<list>.+)?$"
-  match, n = string.gsub (match, "cmdstring", self.cmd or "")
+  local match="^(cmdstring)(:|\\s+|$)((?<action>[+\\-A-za-z0-9]*)\\s*)?(?<list>.+)?$"
+  local match, n = string.gsub (match, "cmdstring", self.cmd or "")
   SetAliasOption ("plugin_parse", "match", match)
   DoAfterSpecial (10, 'BroadcastPlugin (1001)', sendto.script)
   if not self.helpwin.classinit then
-    theader, ttext = self:createhelp()
+    local theader, ttext = self:createhelp()
     self.helpwin:addtab('Plugin', ttext, theader, true)
     self.helpwin:show(false)
   end
@@ -240,7 +240,7 @@ function Pluginhelper:set(option, value, args)
     args = {}
   end
   args.putvar = true
-  retcode = super(self, option, value, args)
+  local retcode = super(self, option, value, args)
   return retcode
 end
 
@@ -362,7 +362,7 @@ function Pluginhelper:OnPluginEnable()
   end -- if already connected
   self:broadcast(-2)
 
-  theader, ttext = self:createhelp()
+  local theader, ttext = self:createhelp()
   self.helpwin:addtab('Plugin', ttext, theader, true)
   self.helpwin:show(false)
   WindowSetZOrder(self.helpwin.winid, 999)
@@ -432,6 +432,7 @@ function Pluginhelper:showhelptext()
              RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID(), 2))
 
   local version = 'Unknown'
+  local throwaway = ""
   if GetPluginID() == "e8520531407cb4281bea544e" then
     version = getversion()
   else
@@ -513,7 +514,7 @@ function format_aard_helps_text(t)
   
   ColourNote("white", "black", "")
   ColourNote("magenta", "black", "Aardwolf help files related to the plugin:")
-  count = 0
+  local count = 0
   for i,v in ipairs(t) do --loop table and make help links
     count = count + 1
     if count == 1 then
@@ -529,7 +530,7 @@ function format_aard_cmds_text(t)
   
   ColourNote("white", "black", "")
   ColourNote("magenta", "black", "Aardwolf commands related to the plugin:")
-  count = 0
+  local count = 0
   for i,v in ipairs(t) do --loop table and make help links
     count = count + 1
     if count == 1 then
@@ -558,6 +559,7 @@ function Pluginhelper:createhelp()
   table.insert(header, {style, {text=tostring(GetPluginInfo(GetPluginID(), 2)), textcolour=var.plugin_colour}, backcolour="bg_colour"})
 
   local version = 'Unknown'
+  local throwaway = ""
   if GetPluginID() == "e8520531407cb4281bea544e" then
     version = getversion()
   else
@@ -829,12 +831,12 @@ function do_cmd()
 end
 
 function parse_cmdline(cmdline)
-  re = rex.new ("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'")
+  local re = rex.new ("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'")
 
-  rtable = {}
+  local rtable = {}
 
   function f (m, t)
-    newstring, found = string.gsub(m, "^['\"](.-)['\"]$", "%1")
+    local newstring, found = string.gsub(m, "^['\"](.-)['\"]$", "%1")
     table.insert(rtable, newstring)
   end
 
@@ -866,10 +868,10 @@ function SecondsToDHMS(sSeconds)
   if nSeconds == 0 then
     return 0, 0, 0, 0
   else
-    nDays = math.floor(nSeconds/(3600 * 24))
-    nHours = math.floor(nSeconds/3600 - (nDays * 24))
-    nMins = math.floor(nSeconds/60 - (nHours * 60) - (nDays * 24 * 60))
-    nSecs = sSeconds % 60
+    local nDays = math.floor(nSeconds/(3600 * 24))
+    local nHours = math.floor(nSeconds/3600 - (nDays * 24))
+    local nMins = math.floor(nSeconds/60 - (nHours * 60) - (nDays * 24 * 60))
+    local nSecs = sSeconds % 60
     return nDays, nHours, nMins, nSecs
   end
 end
@@ -897,13 +899,13 @@ end
 
 function convert_ticks(ticks)
   --string.format ("Time to go: %sd %sh %sm ", cptimer.days, cptimer.hours, cptimer.mins)
-  tout = {}
+  local tout = {}
   if not ticks then
     return tout
   end
-  seconds = (ticks / 2) * 60
+  local seconds = (ticks / 2) * 60
   tout.days, tout.hours, tout.mins, tout.secs = SecondsToDHMS(seconds)
-  tstring = {}
+  local tstring = {}
   if tout.days ~= 0 then
     table.insert(tstring, string.format('%sd', tostring(tout.days)))
     table.insert(tstring, string.format('%sh', tostring(tout.hours)))
@@ -967,7 +969,7 @@ function wheelcallback(flags, hotspotid)
 end
 
 function fix_hotspotid(hotspotid)
-  _place = string.find(hotspotid, ':')
+  local _place = string.find(hotspotid, ':')
   return string.sub(hotspotid, 0, _place - 1), string.sub(hotspotid, _place + 1)
 end
 

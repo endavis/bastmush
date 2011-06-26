@@ -326,7 +326,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
 end
 
 function Miniwin:onfontchange(args)
-  font = args.value
+  local font = args.value
   if self.disabled or self.classinit then
     return    
   else
@@ -410,6 +410,7 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky, position, res
  end
  if not self.classinit then
   if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
+    local tabremoved = false
     for i,v in pairs(self.tablist) do
       if not self.tabs[v].sticky then
         tabremoved = table.remove(self.tablist, i)
@@ -624,8 +625,8 @@ end
 
 -- Command to take snapshot of this window
 function Miniwin:cmd_snapshot(cmddict)
-  tfile = cmddict[1]
-  tdir = GetInfo(64)
+  local tfile = cmddict[1]
+  local tdir = GetInfo(64)
   if tfile == nil then
      tfile = tostring(utils.inputbox("Enter a filename, will be saved in \n  " .. tdir))
   end
@@ -701,7 +702,7 @@ end
 
 -- check if a font is installed
 function Miniwin:isfontinstalled(fontid, font_name, win)
-  twin = win or self.winid
+  local twin = win or self.winid
   if string.lower(WindowFontInfo (twin, fontid, 21)) == string.lower(font_name) then
     return true
   end
@@ -711,7 +712,7 @@ end
 
 -- check to see if a fontid exists in the miniwindow
 function Miniwin:checkfontid(font)
-  font = string.lower(font)
+  local font = string.lower(font)
   local fontv = self.fonts[font]
   if fontv == nil then
     return false
@@ -775,7 +776,7 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
     return fontid
   end
 
-  tfontt = verify_font(fontt, {})
+  local tfontt = verify_font(fontt, {})
   if tfontt ~= nil then
     tfontt.id = fontid    
   end
@@ -818,7 +819,7 @@ function Miniwin:getdefaultfont()
 
   check (WindowFont (tempid, "--NoFont--", "--NoFont--", 8, false, false, false, false, 0, 49))  -- normal
 
-  rstring = string.lower(WindowFontInfo (tempid, "--NoFont--", 21))
+  local rstring = string.lower(WindowFontInfo (tempid, "--NoFont--", 21))
 
   WindowDelete(tempid)
 
@@ -937,7 +938,7 @@ function Miniwin:menusetfont()
         fonttable.size = tfont.size
         local newtable = copytable.shallow(self.set_options['textfont'])
         newtable.ask = true
-        wanted_font = verify_font(fonttable, newtable)
+        local wanted_font = verify_font(fonttable, newtable)
         if wanted_font then
                 self:set('textfont', wanted_font)
         end
@@ -945,7 +946,7 @@ end
 
 -- build the mousemenu, looks for anything in the settings table with a longname
 function Miniwin:buildmousemenu()
-  menu = "Window Menu || >Font | Set font - Currently: " .. tostring(self.textfont.name) .. ', ' .. tostring(self.textfont.size) .. " | Increase font size | Decrease font size | Default Font | < | >Colours "
+  local menu = "Window Menu || >Font | Set font - Currently: " .. tostring(self.textfont.name) .. ', ' .. tostring(self.textfont.size) .. " | Increase font size | Decrease font size | Default Font | < | >Colours "
   --local colours = {}
   for name,setting in tableSort(self.set_options, 'sortlev', 50) do
     if setting.longname ~= nil and setting.type == 'colour' then
@@ -983,7 +984,7 @@ function Miniwin:buildmousemenu()
 end
 
 function Miniwin:buildpluginmousemenu()
-  menu = "Plugin Menu || >Colours "
+  local menu = "Plugin Menu || >Colours "
   --local colours = {}
   for name,setting in tableSort(self.phelper.set_options, 'sortlev', 50) do
     if setting.longname ~= nil and setting.type == 'colour' then
@@ -1015,10 +1016,9 @@ function Miniwin:buildpluginmousemenu()
 end
 
 function Miniwin:movewindow()
+  local flags = 0
   if self.x >= 0 and self.y >= 0 then
     flags = 2
-  else
-    flags = 0
   end
   WindowPosition(self.winid, self.x, self.y, self.windowpos, flags);
 end
@@ -1137,7 +1137,7 @@ end -- ListMenu
 function Miniwin:redraw(justtext)
    local shown = WindowInfo(self.winid, 5)
    if self.firstdrawn then
-    flag = verify_bool(GetVariable ("shown"..self.cname))
+    local flag = verify_bool(GetVariable ("shown"..self.cname))
     self.firstdrawn = false
     if flag == nil then
       flag = false
@@ -1184,7 +1184,7 @@ end
 -- init the window after the plugin has been initialized
 function Miniwin:init()
   super(self)
-  font = self.textfont
+  local font = self.textfont
   self:setdefaultfont(self:addfont(font.name, font.size, font.bold, font.italic, font.underline, font.strikeout))
 end
 
@@ -1425,7 +1425,7 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
   if type(line) == 'table' then
     for i,style in ipairs(line) do
       table.insert(linet.text, i, copytable.deep(style))
-      font_id = self:addfont(style.font_name or self.fonts[def_font_id].name,
+      local font_id = self:addfont(style.font_name or self.fonts[def_font_id].name,
                       style.font_size or self.fonts[def_font_id].size,
                       style.bold or self.fonts[def_font_id].bold,
                       style.italic or self.fonts[def_font_id].italic,
@@ -1587,7 +1587,7 @@ function Miniwin:convert_tab(tabname)
  if self.tabs[tabname].text then
    local linenum = 0
    for i,v in ipairs(self.tabs[tabname].text) do
-     tlines = self:convert_line(v)
+     local tlines = self:convert_line(v)
      for ii,vv in ipairs(tlines) do
        linenum = linenum + 1
        self.tabs[tabname].convtext[linenum] = vv
@@ -1659,14 +1659,14 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
 
   if self.titlebar then
     linenum = linenum + 1
-    titlebar = self:buildtitlebar()
+    local titlebar = self:buildtitlebar()
     self.activetab.build_data.titlebarlinenum = linenum
     self.activetab.titlebarconv = self:convert_line(titlebar, 2, 2, 1, 'titlebarline')[1]
   end
 
   if self:counttabs() > 1 then
     linenum = linenum + 1
-    tabline = self:buildtabline()
+    local tabline = self:buildtabline()
     self.activetab.build_data.tabbarlinenum = linenum
     self.activetab.tabbarlineconv = self:convert_line(tabline, 1, 0, 0, 'tabbarline')[1]
     self.activetab.maxwidthwithtabline = math.max(self.activetab.maxwidth, self.activetab.tabbarlineconv.width)    
@@ -1701,7 +1701,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
 
   -- build initial window here and justify lines
   linenum = 0
-  top = self.window_border_width
+  local top = self.window_border_width
 
   if self.titlebar then
     linenum = linenum + 1
@@ -1775,7 +1775,7 @@ function Miniwin:drawtext(tabname)
                self:get_colour('bg_colour'))
 
   -- find top
-  linenum = self.activetab.build_data.textstartline - 1
+  local linenum = self.activetab.build_data.textstartline - 1
   local top = self.activetab.build_data.textarea.top - 1
   for i=self.activetab.startline,#self.activetab.convtext do
     -- adjust the line then display it
@@ -1814,7 +1814,7 @@ end
 -- lengthonly : if true, return the length of the style only
 
 function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize, lengthonly)
-  wfunction = WindowText
+  local wfunction = WindowText
   if lengthonly then
     wfunction = WindowTextWidth
   end
@@ -1834,7 +1834,7 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
     end -- if
 
     for colour, text in Text:gmatch ("@(%a)([^@]+)") do
-      text = text:gsub ("%z", "@") -- put any @ characters back
+      local text = text:gsub ("%z", "@") -- put any @ characters back
 
       if colour == "x" then -- xterm 256 colors
         code,text = text:match("(%d%d?%d?)(.*)")
@@ -1915,8 +1915,8 @@ function Miniwin:displayline (styles)
         stylelen = self:colourtext(v.font_id, v.text, v.textstart, v.texttop, 0, 0)
       end
     end
-    tborderwidth = v.borderwidth or 1
-    tborderstyle = v.borderstyle or 0
+    local tborderwidth = v.borderwidth or 1
+    local tborderstyle = v.borderstyle or 0
     if v.cellborder then
        if tborderstyle == 0 then
          tborderstyle = 1
@@ -1947,9 +1947,9 @@ function Miniwin:displayline (styles)
     end
   end -- for each style run
 
-  tbordercolour = styles.bordercolour
-  tborderwidth = styles.borderwidth or 1
-  tborderstyle = styles.borderstyle or 0
+  local tbordercolour = styles.bordercolour
+  local tborderwidth = styles.borderwidth or 1
+  local tborderstyle = styles.borderstyle or 0
    if styles.lineborder then
        if tborderstyle == 0 then
          tborderstyle = 1
@@ -1984,25 +1984,38 @@ function Miniwin:create_window(height, width, x, y)
   local width = width or self.activetab.build_data.actualwindowwidth
 
 
-  -- recreate the window the correct size
   local tx = x or self.x
   local ty = y or self.y
-  if tx >= 0 and ty >= 0 then
-    check (WindowCreate (self.winid,
-                 tx, ty,   -- left, top (auto-positions)
-                 width,     -- width
-                 height,  -- height
-                 0,
-                 2,  -- flags
-                 self:get_colour("bg_colour")) )
+  
+  if WindowInfo(self.winid, 1) ~= nil then
+    --print('window exists, resizing and repositioning')
+    WindowResize(self.winid, width, height, self:get_colour("bg_colour"))
+    if tx > 0 and ty > 0 then
+      WindowPosition(self.winid, tx, ty, 0, 2)
+    else
+      WindowPosition(self.winid, 0, 0, self.windowpos, 0)
+    end
+    WindowRectOp(self.winid, 2, 0, 0, -1, -1, self:get_colour("bg_colour"))
   else
-    check (WindowCreate (self.winid,
-                 0, 0,   -- left, top (auto-positions)
-                 width,     -- width
-                 height,  -- height
-                 self.windowpos,
-                 0,  -- flags
-                 self:get_colour("bg_colour")) )
+    --print('window does not exist, creating')
+    -- recreate the window the correct size
+    if tx >= 0 and ty >= 0 then
+      check (WindowCreate (self.winid,
+                  tx, ty,   -- left, top (auto-positions)
+                  width,     -- width
+                  height,  -- height
+                  0,
+                  2,  -- flags
+                  self:get_colour("bg_colour")) )
+    else
+      check (WindowCreate (self.winid,
+                  0, 0,   -- left, top (auto-positions)
+                  width,     -- width
+                  height,  -- height
+                  self.windowpos,
+                  0,  -- flags
+                  self:get_colour("bg_colour")) )
+    end
   end
 
   self.dragscrolling = false
@@ -2082,15 +2095,15 @@ function Miniwin:post_create_window_internal()
     self.activetab.build_data.shuttle = {}
 
 
-    downbutton = self.activetab.build_data.downbutton
-    upbutton = self.activetab.build_data.upbutton
+    local downbutton = self.activetab.build_data.downbutton
+    local upbutton = self.activetab.build_data.upbutton
     self:drawshuttle()
 
     WindowRectOp(self.winid, 5, upbutton.left, upbutton.top, upbutton.right, upbutton.bottom, 5, 15 + 0x800) -- top scroll button
     WindowRectOp(self.winid, 5, downbutton.left, downbutton.top, downbutton.right, downbutton.bottom, 5,  15 + 0x800) -- bottom scroll button
 
     -- draw triangle in up button
-    points = string.format ("%i,%i,%i,%i,%i,%i", upbutton.left + 3, upbutton.top + 9,
+    local points = string.format ("%i,%i,%i,%i,%i,%i", upbutton.left + 3, upbutton.top + 9,
 	                      upbutton.left + 7, upbutton.top + 5, upbutton.left + 11, upbutton.top + 9)
     WindowPolygon (self.winid, points,
         ColourNameToRGB("black"), 0, 1,   -- pen (solid, width 1)
@@ -2099,7 +2112,7 @@ function Miniwin:post_create_window_internal()
         false)  --alt fill
 
     -- draw triangle in down button
-    points = string.format ("%i,%i,%i,%i,%i,%i", downbutton.left + 3, downbutton.bottom - 11,
+    local points = string.format ("%i,%i,%i,%i,%i,%i", downbutton.left + 3, downbutton.bottom - 11,
 	                   downbutton.left + 7, downbutton.bottom - 7, downbutton.left + 11,
 			   downbutton.bottom - 11)
     WindowPolygon (self.winid, points,
@@ -2380,15 +2393,15 @@ function Miniwin:createwindowborder()
 end
 
 function Miniwin:drawshuttle()
-    downbutton = self.activetab.build_data.downbutton
-    upbutton = self.activetab.build_data.upbutton
-    shuttle = self.activetab.build_data.shuttle
-    sliderheight = downbutton.top - upbutton.bottom
+    local downbutton = self.activetab.build_data.downbutton
+    local upbutton = self.activetab.build_data.upbutton
+    local shuttle = self.activetab.build_data.shuttle
+    local sliderheight = downbutton.top - upbutton.bottom
     shuttle.top = math.ceil(upbutton.bottom + ((sliderheight / #self.activetab.convtext) * (self.activetab.startline - 1)))
     shuttle.left = upbutton.left
     shuttle.right = upbutton.right
-    percentage = self.maxlines/#self.activetab.convtext
-    scrollbarheight = downbutton.top - upbutton.bottom
+    local percentage = self.maxlines/#self.activetab.convtext
+    local scrollbarheight = downbutton.top - upbutton.bottom
     shuttle.height = math.ceil(scrollbarheight * percentage)
     shuttle.bottom = shuttle.top + shuttle.height
 
@@ -2727,7 +2740,7 @@ end
 
 -- create a popup style with another miniwindow
 function popup_style(win, text, colour)
-  style = {}
+  local style = {}
   style.text = text
   style.textcolour = colour
   style.mouseover = function (flags, hotspotid)

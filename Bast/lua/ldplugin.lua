@@ -85,8 +85,8 @@ end
 function getidbyfile(file)
   local loadedplugins = GetPluginList() or {}
   for _, p in ipairs (loadedplugins) do
-    tfile = GetPluginInfo(p, 6)
-    llist = utils.split(tfile, "\\")
+    local tfile = GetPluginInfo(p, 6)
+    local llist = utils.split(tfile, "\\")
     tfile = llist[#llist]
     if string.lower(tfile) == string.lower(file) then
       return p
@@ -99,15 +99,15 @@ function loadfromfile(file)
   if string.find(file, ".xml") == nil then
     file = file .. ".xml"
   end
-  id = getidbyfile(file)
+  local id = getidbyfile(file)
   if id ~= nil then
     return id
   else
-    nfile = scan_dir_for_file (GetInfo(60), file)
+    local nfile = scan_dir_for_file (GetInfo(60), file)
     if nfile then
-      retcode = LoadPlugin(nfile)
+      local retcode = LoadPlugin(nfile)
       if retcode == 0 then
-        id = getidbyfile(file)
+        local id = getidbyfile(file)
         return id
       elseif retcode == ePluginFileNotFound then
         return "Not Found"
@@ -145,7 +145,7 @@ function ldplugin_helper(plugin, id, silent)
     ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     return false
   end
-  penable = GetPluginInfo(loaded, 17)
+  local penable = GetPluginInfo(loaded, 17)
   if not penable then
     EnablePlugin(loaded, true)
   end

@@ -21,9 +21,9 @@ function SecondsToClock(sSeconds)
   elseif nSeconds < 0 then
     return tostring(sSeconds)
   else
-    nHours = string.format("%02.f", math.floor(nSeconds/3600));
-    nMins = string.format("%02.f", math.floor(nSeconds/60 - (nHours*60)));
-    nSecs = string.format("%02.f", math.floor(nSeconds - nHours*3600 - nMins *60));
+    local nHours = string.format("%02.f", math.floor(nSeconds/3600));
+    local nMins = string.format("%02.f", math.floor(nSeconds/60 - (nHours*60)));
+    local nSecs = string.format("%02.f", math.floor(nSeconds - nHours*3600 - nMins *60));
     if nHours ~= "00" then
       return nHours..":"..nMins..":"..nSecs
     else

@@ -260,7 +260,7 @@ function Statdb:savequest( questinfo )
     stmt:step()
     stmt:finalize()
     assert (self.db:exec("COMMIT"))        
-    rowid = self.db:last_insert_rowid()
+    local rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted quest:", rowid)
     self:close()
     return rowid
@@ -316,7 +316,7 @@ function Statdb:savecp( cpinfo )
       self:addtostat('totaltrivia', cpinfo.tp)      
     end
 
-    newlevel = getactuallevel(cpinfo.level, db:getstat('remorts'), db:getstat('tiers'))
+    local newlevel = getactuallevel(cpinfo.level, db:getstat('remorts'), db:getstat('tiers'))
     cpinfo.level = newlevel
     assert (self.db:exec("BEGIN TRANSACTION"))      
     local stmt = self.db:prepare[[ INSERT INTO campaigns VALUES (NULL, :starttime, :finishtime,
@@ -326,7 +326,7 @@ function Statdb:savecp( cpinfo )
     stmt:step()
     stmt:finalize()
     assert (self.db:exec("COMMIT"))    
-    rowid = self.db:last_insert_rowid()
+    local rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted cp:", rowid)
     assert (self.db:exec("BEGIN TRANSACTION"))    
     local stmt2 = self.db:prepare[[ INSERT INTO cpmobs VALUES
@@ -385,7 +385,7 @@ function Statdb:countlevels()
 end
 
 function Statdb:savelevel( levelinfo, first )
-  first = first or false
+  local first = first or false
   self:checklevelstable()
   if self:open() then
     if not first then
@@ -406,9 +406,9 @@ function Statdb:savelevel( levelinfo, first )
     stmt:step()
     stmt:finalize()
     assert (self.db:exec("COMMIT")) 
-    rowid = self.db:last_insert_rowid()
+    local rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted", levelinfo['type'], ":", rowid)
-    stmt2 = self.db:exec(string.format("UPDATE levels SET finishtime = %d WHERE level_id = %d;" ,
+    local stmt2 = self.db:exec(string.format("UPDATE levels SET finishtime = %d WHERE level_id = %d;" ,
                                           levelinfo.time, rowid - 1))
     rowid = self.db:last_insert_rowid()
     self:close()
@@ -422,6 +422,8 @@ end
 
 function Statdb:getmobstime(starttime, finishtime)
   local mobs = {}
+  local mobskilled = -1
+  local mobsavexp = -1
   if self:open() then
     for a in self.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where time > %d and time < %d and xp > 0", starttime, finishtime)) do
       mobskilled = a[1]
@@ -485,7 +487,7 @@ function Statdb:savemobkill( killinfo )
     stmt:step()
     stmt:finalize()
     assert (self.db:exec("COMMIT"))     
-    rowid = self.db:last_insert_rowid()
+    local rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted mobkill:", rowid)
     self:close()
   end
@@ -540,7 +542,7 @@ function Statdb:savegq( gqinfo )
     if gqinfo.won == 1 then
       self:addtostat('gquestswon', 1)
     end
-    newlevel = getactuallevel(gqinfo.level, db:getstat('remorts'), db:getstat('tiers'))
+    local newlevel = getactuallevel(gqinfo.level, db:getstat('remorts'), db:getstat('tiers'))
     gqinfo.level = newlevel
     assert (self.db:exec("BEGIN TRANSACTION"))     
     local stmt = self.db:prepare[[ INSERT INTO gquests VALUES (NULL, :starttime, :finishtime,
@@ -550,7 +552,7 @@ function Statdb:savegq( gqinfo )
     stmt:step()
     stmt:finalize()
     assert (self.db:exec("COMMIT"))     
-    rowid = self.db:last_insert_rowid()
+    local rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted gq:", rowid)
     assert (self.db:exec("BEGIN TRANSACTION"))    
     local stmt2 = self.db:prepare[[ INSERT INTO gqmobs VALUES
@@ -600,7 +602,7 @@ end
 
 function Statdb:hasclass(class)
   local remortn = -1
-  class = string.sub(class, 0, 3)
+  local class = string.sub(class, 0, 3)
   if self:open() then
     for a in self.db:nrows('SELECT * FROM classes WHERE class = "' .. class .. '"') do
       remortn = a['remort']
@@ -734,7 +736,7 @@ function Statdb:updateskills(skills)
     for a in db.db:rows("SELECT COUNT(*) FROM skills") do
       numskills = a[1]
     end
-    oldskills = self:getallskills()
+    local oldskills = self:getallskills()
 --    if numskills == 0 or numskills ~= tableCountItems(skills) then
       --print('updating table')
       assert (self.db:exec("BEGIN TRANSACTION"))
@@ -912,7 +914,7 @@ function Statdb:getspellupskills(client)
   self:checkskillstable()  
   local spells = {}
   if self:open() then
-    tstring = "SELECT * FROM skills WHERE spellup = 1"
+    local tstring = "SELECT * FROM skills WHERE spellup = 1"
     if client then
       tstring = "SELECT * FROM skills WHERE spellup = 1 or clientspellup = 1"
     end

@@ -121,7 +121,7 @@ function tableExtend(t, ...)
 end
 
 function tableCountItems(ttable)
-  count = 0
+  local count = 0
   for i,v in pairs(ttable) do
     count = count + 1
   end
@@ -134,7 +134,7 @@ function tableCountItems(ttable)
 end
 
 function tableCountKeys(ttable, key, value, tnot)
-  count = 0
+  local count = 0
   for i,v in pairs(ttable) do
     if tnot and v[key] ~= value then
       count = count + 1

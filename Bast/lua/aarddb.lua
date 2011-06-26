@@ -167,7 +167,7 @@ function Aarddb:addhelplookup(lookup)
     stmt:bind_names(  lookup  )
     stmt:step()
     stmt:finalize()
-    rowid = self.db:last_insert_rowid()
+    local rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted helplookup :", rowid)
     self:close()
     return rowid
@@ -182,7 +182,7 @@ function Aarddb:addhelp(help)
     help.helptext = serialize.save("thelptext", help.helptext)
     local hashelp = self:hashelp(help.keyword)
     local message = 'inserted help:'
-    local stmt = nil
+    local stmt
     if hashelp then
       stmt = self.db:prepare[[ UPDATE helps SET helptext=:helptext, added=:added WHERE keyword=:keyword ]]
       message = 'updated help:'
@@ -193,7 +193,7 @@ function Aarddb:addhelp(help)
     stmt:bind_names(  help  )
     stmt:step()
     stmt:finalize()
-    rowid = self.db:last_insert_rowid()
+    local rowid = self.db:last_insert_rowid()
     phelper:mdebug(message, rowid)
     self:close()
     return rowid

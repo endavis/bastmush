@@ -31,8 +31,8 @@ wearlocs table
 --]]
 
 function hasmore(text)
-  _place = string.find(text, '}')
-  _stlen = string.len(text)
+  local _place = string.find(text, '}')
+  local _stlen = string.len(text)
   if _place == _stlen then
     return false
   else
@@ -45,8 +45,8 @@ function removetag(styles)
     if not hasmore(styles[1].text) then
       table.remove (styles, 1)  -- get rid of tag
     else
-      ttext = styles[1].text
-      _place = string.find(ttext, '}')
+      local ttext = styles[1].text
+      local _place = string.find(ttext, '}')
       if _place then
         styles[1].text = string.sub(ttext, _place + 1)
       end
@@ -56,8 +56,8 @@ function removetag(styles)
 end
 
 function findkeyword(item)
-  wlist = utils.split(item, " ")
-  badwords = {
+  local wlist = utils.split(item, " ")
+  local badwords = {
     ring = 1,
     aardwolf = 1,
     of = 1,
@@ -68,7 +68,7 @@ function findkeyword(item)
   }
   local name = ""
   for i,v in ipairs(wlist) do
-    tfind = string.find(v, "'")
+    local tfind = string.find(v, "'")
     if badwords[string.lower(v)] ~= 1 and tfind == nil then
       name = v
       break
@@ -81,25 +81,23 @@ function getactuallevel(level, remorts, tier)
   if level == nil then
     return -1
   end
-  tier = tier or 0
+  local tier = tier or 0
   return (tier * 7 * 201) + (remorts - 1) * 201 + level
 end
 
 function convertlevel(level)
-  level = tonumber(level)
+  local level = tonumber(level)
   if level < 1 then
     return {tier = -1, remort = -1, level = -1}
   end
+  local tier = math.floor(level / (7 * 201))
   if level % (7 * 201) == 0 then
     tier = math.floor(level / (7 * 201)) - 1
-  else
-    tier = math.floor(level / (7 * 201))
   end
-  remort = math.floor((level - (tier * 7 * 201)) / 202) + 1
+  local remort = math.floor((level - (tier * 7 * 201)) / 202) + 1
+  local alevel = level % 201
   if level % 201 == 0 then
     alevel = 201
-  else
-    alevel = level % 201
   end
   return {tier = tier, remort = remort, level = alevel}
 end
