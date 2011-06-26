@@ -967,8 +967,12 @@ function build_cp_window()
 
         local level  = convertlevel(v.level)
         local levelstr = 'T' .. tostring(level.tier) .. ' R' .. tostring(level.remort) .. ' L' .. tostring(level.level)
-        local length = v.finishtime - v.starttime
-        local days, hours, mins, secs = SecondsToDHMS(length)
+        local length = 'Unknown'
+        local days, hours, mins, secs = -1
+        if v.starttime then
+          local length = v.finishtime - v.starttime
+          local days, hours, mins, secs = SecondsToDHMS(length)
+        end
         
         local style = {}
         style.text = string.format("%-12s ", levelstr)
