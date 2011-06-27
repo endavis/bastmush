@@ -1,5 +1,23 @@
 Bastmush Changes List
 
+r1429 snapshot
+ - Internal changes
+    - bug fix: localized as many variables as possible to cut down on mem leaks
+    - new: all plugins now have their required MUSHclient version set to 4.73
+ - broadcast_cp
+    - bug fix: dead mobs now show in red again
+ - miniwin_stats
+    - bug fix: strip out colours for mob names
+    - bug fix: nil starttime for a cp should no longer crash the window
+ - miniwin_spellup
+    - bug fix: bad spells are now both target 0 and 1
+ - PotionQuaffer
+    - bug fix: fixed trigger for shopkeepers with more than one word in thei name
+ - broadcast_whois
+    - bug fix: should now work with people who have no title (title clear)
+ - lua/sqlitedb
+    - bug fix: fix database backup with spaces in path
+ - 
 r1411 snapshot
  - miniwin_spellup
     - new: added a critical spells display to both the brief and full summary tabs
