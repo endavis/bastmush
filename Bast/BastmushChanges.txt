@@ -17,7 +17,7 @@ r1429 snapshot
     - bug fix: should now work with people who have no title (title clear)
  - lua/sqlitedb
     - bug fix: fix database backup with spaces in path
- - 
+
 r1411 snapshot
  - miniwin_spellup
     - new: added a critical spells display to both the brief and full summary tabs
