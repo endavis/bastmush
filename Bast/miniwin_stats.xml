@@ -981,27 +981,27 @@ function build_cp_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.qp)
+        style.text = string.format("%2d ", v.qp or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.tp)
+        style.text = string.format("%2d ", v.tp or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.trains)
+        style.text = string.format("%2d ", v.trains or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
         
         local style = {}
-        style.text = string.format("%2d ", v.pracs)
+        style.text = string.format("%2d ", v.pracs or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%6d ", v.gold)
+        style.text = string.format("%6d ", v.gold or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
         
