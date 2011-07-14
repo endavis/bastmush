@@ -1,5 +1,9 @@
 Bastmush Changes List
 
+r1433 snapshot
+ - miniwin_stats
+    - bug fix: nil values
+
 r1429 snapshot
  - Internal changes
     - bug fix: localized as many variables as possible to cut down on mem leaks
