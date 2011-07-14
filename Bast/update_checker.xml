@@ -342,7 +342,7 @@ phelper:set_default('plugin_colour', 'steelblue')
 
 phelper:add_pobject('win', updatewin)
 
-phelper:add_setting('sleepver', {help="the version that the sleep button was hit on", type="number", readonly=true})
+phelper:add_setting('sleepver', {help="the version that the sleep button was hit on", type="number", default=0, readonly=true})
 
 phelper:add_cmd('check', {func=manualCheck, help="check for an update for the Bastmush script package"})
 
