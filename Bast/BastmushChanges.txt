@@ -1,5 +1,10 @@
 Bastmush Changes List
 
+r1436 snapshot
+ - update_checker
+    - new: added a sleep button that will not show the window again until
+       the next  update
+
 r1433 snapshot
  - miniwin_stats
     - bug fix: nil values
