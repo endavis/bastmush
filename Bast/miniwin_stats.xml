@@ -689,28 +689,28 @@ function build_quest_window()
         local days, hours, mins, secs = SecondsToDHMS(length)
 
         local style = {}
-        style.text = string.format("%2d ", v.qp)
+        style.text = string.format("%2d ", v.qp or 0)
         style.mouseup = nofunc
         style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.mccp)
+        style.text = string.format("%2d ", v.mccp or 0)
         style.mouseup = nofunc
         style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.tier)
+        style.text = string.format("%2d ", v.tier or 0)
         style.mouseup = nofunc
         style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.lucky)
+        style.text = string.format("%2d ", v.lucky or 0)
         style.mouseup = nofunc
         style.hint = hint
         style.textcolour = "white"
@@ -735,28 +735,28 @@ function build_quest_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.tp)
+        style.text = string.format("%2d ", v.tp or 0)
         style.mouseup = nofunc
         style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.trains)
+        style.text = string.format("%2d ", v.trains or 0)
         style.mouseup = nofunc
         style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.pracs)
+        style.text = string.format("%2d ", v.pracs or 0)
         style.mouseup = nofunc
         style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%4d ", v.gold)
+        style.text = string.format("%4d ", v.gold or 0)
         style.mouseup = nofunc
         style.hint = hint
         style.textcolour = "white"
@@ -1364,32 +1364,32 @@ function build_gq_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.qp)
+        style.text = string.format("%2d ", v.qp or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.qpmobs)
+        style.text = string.format("%2d ", v.qpmobs or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.tp)
+        style.text = string.format("%2d ", v.tp or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.trains)
+        style.text = string.format("%2d ", v.trains or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
         
         local style = {}
-        style.text = string.format("%2d ", v.pracs)
+        style.text = string.format("%2d ", v.pracs or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%6d ", v.gold)
+        style.text = string.format("%6d ", v.gold or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
         
