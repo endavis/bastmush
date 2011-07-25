@@ -11,7 +11,7 @@ local Object = require 'objectlua.Object'
 Sqlitedb = Object:subclass()
 
 function Sqlitedb:initialize(args)
-  local path, throw = GetInfo(58):gsub("^\.\\",GetInfo(56))
+  local path, throw = GetInfo(58):gsub("^.\\",GetInfo(56))
   self.dbloc = GetPluginVariable ("", "dblocation") or path
   self.db = nil
   self.dbname = "\\stats.db"
