@@ -283,6 +283,7 @@ end
 function huntnext(name, line, wildcards)
   local mobname = wildcards[1]
   local tmob = string.match (mob, "[%d]*[\.]*(.*)")
+  seenhunt = true
   --print(mobname, tmob, waiting, htype)  
   if string.find(string.lower(mobname), string.lower(tmob)) ~= nil and not waiting and htype == 'auto' then
     lastdir = wildcards[2]
@@ -357,13 +358,14 @@ function OnPluginBroadcast (msg, id, name, text)
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
       tt = assert (loadstring ('return ' .. gmcparg or ""))()      
       
-      if tonumber(tt.num) ~= lastroom then
+      if tonumber(tt.num) ~= lastroom and seenhunt then
         if htype == 'auto' then
-          SendNoEcho('hunt ' .. mob)          
+          SendNoEcho('hunt ' .. mob)
+          seenhunt = false
         end
         count = 0
-        lastroom = tonumber(tt.num)
       end
+      lastroom = tonumber(tt.num)
     elseif text:find('room.wrongdir') then
       count = count + 1
       if count > 1 and htype == 'auto' then
