@@ -1,9 +1,15 @@
 Bastmush Changes List
 
+r1443 snapshot
+ - bast_hunt
+    - bug fix: moving while hunting will no longer do multiple hunt commands
+ - lua/sqlitedb
+    - bug fix: removed invalid escape sequences
+
 r1436 snapshot
  - update_checker
     - new: added a sleep button that will not show the window again until
-       the next  update
+       the next update
 
 r1433 snapshot
  - miniwin_stats
