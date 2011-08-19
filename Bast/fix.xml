@@ -25,7 +25,7 @@
   <trigger
    enabled="n"
    regexp="y"
-   match="Your game prompt is  : (?&lt;prompt&gt;.*)"
+   match="@cYour game prompt is  @w: (?&lt;prompt&gt;.*)"
    sequence="100"
    name="rprompt"
    send_to="10"
@@ -37,7 +37,7 @@
   <trigger
    enabled="n"
    regexp="y"
-   match="Your battle prompt is: (?&lt;prompt&gt;.*)"
+   match="@cYour battle prompt is@w: (?&lt;prompt&gt;.*)"
    sequence="100"
    send_to="10"
    name="bprompt"
@@ -80,18 +80,29 @@ function cmd_checkprompt()
     print('You are not active or resting or sleeping')
   else
     phelper:enabletriggroup('prompt', true)
+    SendNoEcho('rawcolors')
     SendNoEcho('config')
+    SendNoEcho('rawcolors')
   end
 end
 
 function pcheck(prompt)
   local tprompt = prompt
   local c = tprompt:sub(#tprompt - 1,#tprompt)
-
   if c ~= "%c" then
      return false
   end
   return true
+end
+
+function stripw(prompt)
+  local c = prompt:sub(#prompt - 1,#prompt)
+
+  if c == '@w' then
+    prompt = prompt:sub(0,#prompt - 2)
+  end  
+
+  return prompt
 end
 
 function prompt (name, line, wildcards)
@@ -104,7 +115,10 @@ function prompt (name, line, wildcards)
 
     --print('prompt =', rprompt)
     --print('bprompt =', bprompt)
-    
+
+    rprompt = stripw(rprompt)
+    bprompt = stripw(bprompt)
+
     if not pcheck(rprompt) then
       DoAfterSpecial(1, "SendNoEcho('prompt " .. rprompt .. "%c')", 12)
     else
