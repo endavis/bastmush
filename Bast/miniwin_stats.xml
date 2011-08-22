@@ -108,7 +108,7 @@ function build_stat_window()
   tableExtend(tstyle, format_stat('DR', char.stats.dr, nil, 5, #tostring(char.stats.dr)))
   table.insert(styles, tstyle)
 
-  local totalstats = (char.stats.str + char.stats.int + char.stats.wis 
+  local totalstats = (char.stats.str + char.stats.int + char.stats.wis
                       + char.stats.dex + char.stats.con + char.stats.luck)
   local totaltrainstats = (char.maxstats.maxstr + char.maxstats.maxint + char.maxstats.maxwis
                            + char.maxstats.maxdex + char.maxstats.maxcon + char.maxstats.maxluck)
@@ -118,7 +118,7 @@ function build_stat_window()
   local alignment = tonumber(char.status.align)
   local zeroed_alignment = alignment+2500
   local aligncolour = ((zeroed_alignment<=1625 and 0x0000ff) or ((zeroed_alignment>=3375 and 0x00ffff)))
-  tableExtend(tstyle, format_stat('Align', char.status.align, nil, 5, #tostring(char.status.align), aligncolour))  
+  tableExtend(tstyle, format_stat('Align', char.status.align, nil, 5, #tostring(char.status.align), aligncolour))
   table.insert(styles, tstyle)
 
   tstyle = format_stat('Trains', char.worth.trains, nil, 13, 7)
@@ -143,7 +143,7 @@ function build_stat_window()
   table.insert(styles, tstyle)
 
   statwin:addtab('Stats', styles, nil, nil, true, 1)
- 
+
 end
 
 function build_level_window()
@@ -230,7 +230,7 @@ function build_level_window()
 
       local linestyles = format_row("Ave Time", convert_time(stats.levels['avetime']), convert_time(stats.pups['avetime']))
       table.insert(allstyles, linestyles)
-      
+
       local lstyle = {}
 
       table.insert(allstyles, {{text = ''}})
@@ -238,13 +238,13 @@ function build_level_window()
       local tstrlen = #tstr
       local replen = (linewidth - tstrlen) / 2
       --print(tstrlen, linewidth, replen)
-      
-      local style = {}      
+
+      local style = {}
       style.text = string.rep('-', replen)
       style.textcolour = "lime"
       table.insert(lstyle, style)
-      
-      local style = {}  
+
+      local style = {}
       style.text = tstr
       table.insert(lstyle, style)
 
@@ -252,7 +252,7 @@ function build_level_window()
       style.text = string.rep('-', replen)
       style.textcolour = "lime"
       table.insert(lstyle, style)
-      table.insert(allstyles, lstyle)      
+      table.insert(allstyles, lstyle)
 
       local lstyle = {}
       local style = {}
@@ -284,7 +284,7 @@ function build_level_window()
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%-2s ", "HP")        
+      style.text = string.format("%-2s ", "HP")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Hit Points"
@@ -324,21 +324,21 @@ function build_level_window()
       style.mouseup = nofunc
       style.hint = "Wis bonus"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%1s ", "C")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Con bonus"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%1s ", "D")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Dex bonus"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%1s ", "L")
       style.textcolour = "lightseagreen"
@@ -352,7 +352,7 @@ function build_level_window()
       style.mouseup = nofunc
       style.hint = "Time in the format days:hours:minutes"
       table.insert(lstyle, style)
-      
+
       table.insert(allstyles, lstyle)
 
       table.insert(allstyles, {{text = string.rep('-', linewidth)}})
@@ -363,14 +363,14 @@ function build_level_window()
       for i,v in tableSort(lastitems, nil, nil, true) do
         local level = convertlevel(v.level)
         local length = v.finishtime - v.starttime
-        local days, hours, mins, secs = SecondsToDHMS(length)      
-        
+        local days, hours, mins, secs = SecondsToDHMS(length)
+
         local lstyle = {}
         local style = {}
         if v.type == 'level' then
           style.text = string.format("%3s ", tostring(level.level))
         else
-          style.text = string.format("%3s ", "Pup")        
+          style.text = string.format("%3s ", "Pup")
         end
         style.textcolour = "white"
         table.insert(lstyle, style)
@@ -391,7 +391,7 @@ function build_level_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%-2s ", tostring(v.hp))        
+        style.text = string.format("%-2s ", tostring(v.hp))
         style.textcolour = "white"
         table.insert(lstyle, style)
 
@@ -419,32 +419,32 @@ function build_level_window()
         style.text = string.format("%1s ", tostring(v.wis))
         style.textcolour = "white"
         table.insert(lstyle, style)
-        
+
         local style = {}
         style.text = string.format("%1s ", tostring(v.con))
         style.textcolour = "white"
         table.insert(lstyle, style)
-        
+
         local style = {}
         style.text = string.format("%1s ", tostring(v.dex))
         style.textcolour = "white"
         table.insert(lstyle, style)
-        
+
         local style = {}
         style.text = string.format("%1s ", tostring(v.luc))
         style.textcolour = "white"
         table.insert(lstyle, style)
-        
+
         if v.finishtime ~= -1 then
           local style = {}
           style.text = string.format("%3s:%02s:%02s", tostring(days), tostring(hours), tostring(mins))
           style.textcolour = "white"
           table.insert(lstyle, style)
         end
-      
-        table.insert(allstyles, lstyle)      
+
+        table.insert(allstyles, lstyle)
       end
-      
+
       statwin:addtab('Levels', allstyles, nil, nil, nil, 2)
     end
     db:close()
@@ -470,29 +470,49 @@ function build_quest_window()
     if stats['totallevels'] then
       stats['qplevelave'] = stats['qpearned']/stats['totallevels']
     end
-    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), SUM(tier), AVG(tier), SUM(mccp), AVG(mccp), SUM(lucky), AVG(qp), AVG(lucky), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*), AVG(qp + mccp + lucky + tier), SUM(gold), AVG(gold) FROM quests where failed = 0") do
-      stats['avetime'] = a[1]
-      stats['qp'] = a[2]
-      stats['tier'] = a[3]
-      stats['avetier'] = a[4] or 0
+    for a in db.db:nrows([[SELECT AVG(finishtime - starttime) as avetime,
+                                 SUM(qp) as qp,
+                                 SUM(tier) as tier,
+                                 AVG(tier) as avetier,
+                                 SUM(mccp) as mccp,
+                                 AVG(mccp) as mccpave,
+                                 SUM(lucky) as lucky,
+                                 AVG(qp) as qpquestave,
+                                 AVG(lucky) as luckave,
+                                 SUM(tp) as tp,
+                                 AVG(tp) as tpave,
+                                 SUM(trains) as trains,
+                                 AVG(trains) as trainsave,
+                                 SUM(pracs) as pracs,
+                                 AVG(pracs) as pracsave,
+                                 COUNT(*) as qindb,
+                                 SUM(totqp) as dboverall,
+                                 AVG(totqp) as dboverallave,
+                                 SUM(gold) as gold,
+                                 AVG(gold) as avegold FROM quests where failed = 0]]) do
+      stats['avetime'] = a['avetime']
+      stats['qp'] = a['qp']
+      stats['tier'] = a['tier']
+      stats['avetier'] = a['avetier'] or 0
       if stats['avetier'] == "" then
         stats['avetier'] = 0
       end
-      stats['mccp'] = a[5]
-      stats['mccpave'] = a[6]
-      stats['lucky'] = a[7]
-      stats['qpquestave'] = a[8]
-      stats['luckyave'] = a[9]
-      stats['tp'] = a[10]
-      stats['tpave'] = a[11]
-      stats['trains'] = a[12]
-      stats['trainsave'] = a[13]
-      stats['pracs'] = a[14]
-      stats['pracsave'] = a[15]
-      stats['qindb'] = a[16]
-      stats['dboverallave'] = a[17]
-      stats['gold'] = a[18]
-      stats['avegold'] = a[19]
+      stats['mccp'] = a['mccp']
+      stats['mccpave'] = a['mccpave']
+      stats['lucky'] = a['lucky']
+      stats['qpquestave'] = a['qpquestave']
+      stats['luckyave'] = a['luckave']
+      stats['tp'] = a['tp']
+      stats['tpave'] = a['tpave']
+      stats['trains'] = a['trains']
+      stats['trainsave'] = a['trainsave']
+      stats['pracs'] = a['pracs']
+      stats['pracsave'] = a['pracsave']
+      stats['qindb'] = a['qindb']
+      stats['dboverall'] = a['dboverall']
+      stats['dboverallave'] = a['dboverallave']
+      stats['gold'] = a['gold']
+      stats['avegold'] = a['avegold']
     end
     if stats['qindb'] > 0 then
       for a in db.db:rows("SELECT COUNT(*) FROM quests where failed != 0") do
@@ -536,7 +556,7 @@ function build_quest_window()
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Gold",
           ReadableNumber(stats['gold'], 2),
-          string.format("%d", stats['avegold'] or 0) .. '/quest')          
+          string.format("%d", stats['avegold'] or 0) .. '/quest')
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Time", "", format_time(stats['avetime']))
       table.insert(allstyles, linestyles)
@@ -567,13 +587,13 @@ function build_quest_window()
       local tstrlen = #tstr
       local replen = (linewidth - tstrlen) / 2
       --print(tstrlen, linewidth, replen)
-      
-      local style = {}      
+
+      local style = {}
       style.text = string.rep('-', replen)
       style.textcolour = "lime"
       table.insert(lstyle, style)
-      
-      local style = {}  
+
+      local style = {}
       style.text = tstr
       table.insert(lstyle, style)
 
@@ -581,7 +601,7 @@ function build_quest_window()
       style.text = string.rep('-', replen)
       style.textcolour = "lime"
       table.insert(lstyle, style)
-      table.insert(allstyles, lstyle)      
+      table.insert(allstyles, lstyle)
 
       local lstyle = {}
       local style = {}
@@ -595,7 +615,7 @@ function build_quest_window()
       style.text = string.format("%2s ", "MC")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "MCCP QP"      
+      style.hint = "MCCP QP"
       table.insert(lstyle, style)
 
       local style = {}
@@ -609,14 +629,14 @@ function build_quest_window()
       style.text = string.format("%2s ", "LK")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "Lucky QP"      
+      style.hint = "Lucky QP"
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%-3s ", "DBL")        
+      style.text = string.format("%-3s ", "DBL")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "Was this during double?"      
+      style.hint = "Was this during double? D for Double QP, E for Blessing"
       table.insert(lstyle, style)
 
       local style = {}
@@ -630,38 +650,38 @@ function build_quest_window()
       style.text = string.format("%2s ", "TP")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "Trivia Points"         
+      style.hint = "Trivia Points"
       table.insert(lstyle, style)
 
       local style = {}
       style.text = string.format("%2s ", "TN")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "Trains"      
+      style.hint = "Trains"
       table.insert(lstyle, style)
 
       local style = {}
       style.text = string.format("%2s ", "PR")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "Practices"      
+      style.hint = "Practices"
       table.insert(lstyle, style)
 
       local style = {}
       style.text = string.format("%4s ", "Gold")
       style.textcolour = "lightseagreen"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%3s ", "Lvl")
       style.textcolour = "lightseagreen"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%4s", " Time")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "Time in the format minutes:seconds"      
+      style.hint = "Time in the format minutes:seconds"
       table.insert(lstyle, style)
       table.insert(allstyles, lstyle)
 
@@ -669,22 +689,18 @@ function build_quest_window()
 
       local lastitems = db:getlast('quests', statwin.maxitems)
 --      tprint(lastitems)
-      
+
       for i,v in tableSort(lastitems, nil, nil, true) do
         local lstyle = {}
-        
-        local total = tonumber(v.qp) + tonumber(v.mccp) + tonumber(v.lucky) + tonumber(v.tier)
-        if v.double == 1 then
-          total = total * 2
-        end
+
         local hint = strip_colours(v.mobname) .. ' - ' .. v.mobroom .. ' - ' .. v.mobarea
         local tname = utils.split(strip_colours(v.mobname), " ")
         local mname = tname[#tname]
         local tname = utils.split(v.mobroom, " ")
-        local rname = tname[#tname]         
+        local rname = tname[#tname]
         local tname = utils.split(v.mobarea, " ")
         local aname = tname[#tname]
-        local level = convertlevel(v.level)        
+        local level = convertlevel(v.level)
         local length = v.finishtime - v.starttime
         local days, hours, mins, secs = SecondsToDHMS(length)
 
@@ -717,20 +733,42 @@ function build_quest_window()
         table.insert(lstyle, style)
 
         local style = {}
+        local ttext = ""
+        local thint = ""
         if v.double == 1 then
-          style.text = string.format("%-3s ", "Yes")        
-        else
-          style.text = string.format("%-3s ", "")
+          ttext = ttext .. "D"
+          thint = thint .. "Double "
         end
+        if v.daily == 1 then
+          ttext = ttext .. "E"
+          thint = thint .. "Blessing"
+        end
+        style.text = string.format("%3s ", ttext)
         style.mouseup = nofunc
-        style.hint = hint
+        style.hint = thint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", total)
+        style.text = string.format("%2d ", v.totqp)
         style.mouseup = nofunc
-        style.hint = hint
+        local thint = tostring(v.qp)
+        if v.mccp > 0 then
+          thint = thint .. "+" .. tostring(v.mccp) .. "(mccp)"
+        end
+        if v.tier > 0 then
+          thint = thint .. "+" .. tostring(v.tier) .. "(tier)"
+        end
+        if v.lucky > 0 then
+          thint = thint .. "+" .. tostring(v.lucky) .. "(lucky)"
+        end
+        if v.double == 1 then
+          thint = thint .. "+" .. "D"
+        end
+        if v.daily == 1 then
+          thint = thint .. "+" .. "E"
+        end
+        style.hint = thint
         style.textcolour = "white"
         table.insert(lstyle, style)
 
@@ -761,26 +799,26 @@ function build_quest_window()
         style.hint = hint
         style.textcolour = "white"
         table.insert(lstyle, style)
-        
+
         local style = {}
         style.text = string.format("%3d ", level.level)
         style.hint = hint
         style.mouseup = nofunc
         style.textcolour = "white"
         table.insert(lstyle, style)
-        
+
         local style = {}
         if v.failed ~= 1 then
           style.text = string.format("%2dm:%02ds", mins, secs)
         else
           style.text = "Failed"
-        end        
+        end
         style.mouseup = nofunc
         style.hint = hint
-        style.textcolour = "white"        
+        style.textcolour = "white"
         table.insert(lstyle, style)
         table.insert(allstyles, lstyle)
-        
+
       end
 
       statwin:addtab('Quests', allstyles, nil, nil, nil, 3)
@@ -849,8 +887,8 @@ function build_cp_window()
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Gold",
           ReadableNumber(stats['gold'], 2),
-          string.format("%d", stats['avegold'] or 0) .. '/CP')          
-      table.insert(allstyles, linestyles)      
+          string.format("%d", stats['avegold'] or 0) .. '/CP')
+      table.insert(allstyles, linestyles)
       local linestyles = format_row("Time", "", format_time(stats['avetime']))
       table.insert(allstyles, linestyles)
 
@@ -879,13 +917,13 @@ function build_cp_window()
       local tstrlen = #tstr
       local replen = (linewidth - tstrlen) / 2
       --print(tstrlen, linewidth, replen)
-      
-      local style = {}      
+
+      local style = {}
       style.text = string.rep('-', replen)
       style.textcolour = "lime"
       table.insert(lstyle, style)
-      
-      local style = {}  
+
+      local style = {}
       style.text = tstr
       table.insert(lstyle, style)
 
@@ -894,14 +932,14 @@ function build_cp_window()
       style.textcolour = "lime"
       table.insert(lstyle, style)
       table.insert(allstyles, lstyle)
-  
+
       local lstyle = {}
-      
+
       local style = {}
       style.text = string.format("%-12s ", "Lvl")
       style.textcolour = "lightseagreen"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%2s ", "QP")
       style.textcolour = "lightseagreen"
@@ -920,31 +958,31 @@ function build_cp_window()
       style.mouseup = nofunc
       style.hint = "Trains"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%2s ", "PR")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Practices"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%6s ", "Gold")
       style.textcolour = "lightseagreen"
-      table.insert(lstyle, style)      
+      table.insert(lstyle, style)
 
       local style = {}
       style.text = string.format("%3s ", "Mobs")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Mouseover this column for a popup with the mobs"
-      table.insert(lstyle, style) 
+      table.insert(lstyle, style)
 
       local style = {}
       style.text = string.format("%6s", " Time")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "Time in the format hours:minutes:seconds"      
+      style.hint = "Time in the format hours:minutes:seconds"
       table.insert(lstyle, style)
 
       table.insert(allstyles, lstyle)
@@ -953,15 +991,15 @@ function build_cp_window()
 
       local lastitems = db:getlast('campaigns', statwin.maxitems)
       --tprint(lastitems)
-      
+
       local mobcounts = {}
       if db:open() then
         for a in db.db:nrows('SELECT cp_id, count(*) as mobcount from cpmobs group by cp_id') do
           mobcounts[a.cp_id] = a.mobcount
         end
         db:close()
-      end      
-      
+      end
+
       for i,v in tableSort(lastitems, nil, nil, true) do
         local lstyle = {}
 
@@ -973,7 +1011,7 @@ function build_cp_window()
           length = v.finishtime - v.starttime
           days, hours, mins, secs = SecondsToDHMS(length)
         end
-        
+
         local style = {}
         style.text = string.format("%-12s ", levelstr)
         --style.mouseup = nofunc
@@ -994,7 +1032,7 @@ function build_cp_window()
         style.text = string.format("%2d ", v.trains or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
-        
+
         local style = {}
         style.text = string.format("%2d ", v.pracs or 0)
         style.textcolour = "white"
@@ -1004,7 +1042,7 @@ function build_cp_window()
         style.text = string.format("%6d ", v.gold or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
-        
+
         local style = {}
         style.text = string.format("%3d ", mobcounts[v.cp_id])
         style.mouseover = function()
@@ -1017,19 +1055,19 @@ function build_cp_window()
                     end
         style.mousedown = function (flags, hotspotid)
                       popupwin.clickshow = not popupwin.clickshow
-                    end                    
-        table.insert(lstyle, style)         
+                    end
+        table.insert(lstyle, style)
 
         local style = {}
         if v.failed ~= 1 then
           style.text = string.format("%2d:%02d:%02d", hours, mins, secs)
         else
           style.text = "Failed"
-        end        
-        style.textcolour = "white"        
+        end
+        style.textcolour = "white"
         table.insert(lstyle, style)
 
-        table.insert(allstyles, lstyle)        
+        table.insert(allstyles, lstyle)
       end
 
 
@@ -1043,21 +1081,21 @@ end
 
 function create_cp_popup(cp_id)
   local allstyles = {}
-  
+
   if cpmobcache[cp_id] then
     allstyles = cpmobcache[cp_id]
   else
     local mobs = {}
-    
+
     if db:open() then
       for a in db.db:nrows('SELECT * from cpmobs where cp_id = ' .. cp_id) do
         mobs[a.cpmob_id] = a
       end
       db:close()
     end
-    
+
     local lstyle = {}
-    
+
     local style = {}
     style.text = string.format("%-30s ", "Mob")
     style.textcolour = "lightseagreen"
@@ -1072,9 +1110,9 @@ function create_cp_popup(cp_id)
     table.insert(allstyles, {{text = string.rep('-', linewidth)}})
 
     for i,v in tableSort(mobs) do
-    
+
       local lstyle = {}
-      
+
       local style = {}
       style.text = string.format("%-30s ", strip_colours(v.mobname))
       table.insert(lstyle, style)
@@ -1086,12 +1124,12 @@ function create_cp_popup(cp_id)
       table.insert(allstyles, lstyle)
       cpmobcache[cp_id] = allstyles
     end
-    
+
   end
-  
-  popupwin:addtab('Default', allstyles)  
+
+  popupwin:addtab('Default', allstyles)
   popupwin:show(true)
-  
+
 end
 
 function build_gq_window()
@@ -1109,21 +1147,34 @@ function build_gq_window()
       stats['gquestswon'] = a[1]
     end
     stats['won'] = {}
-    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), AVG(qp), SUM(qpmobs), AVG(qpmobs), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*), SUM(gold), AVG(gold) FROM gquests where won = 1") do
-      stats['won']['avetime'] = a[1]
-      stats['won']['qp'] = a[2]
-      stats['won']['qpave'] = a[3]
-      stats['won']['qpmobs'] = a[4]
-      stats['won']['qpmobsave'] = a[5]
-      stats['won']['tp'] = a[6]
-      stats['won']['tpave'] = a[7]
-      stats['won']['trains'] = a[8]
-      stats['won']['trainsave'] = a[9]
-      stats['won']['pracs'] = a[10]
-      stats['won']['pracsave'] = a[11]
-      stats['won']['indb'] = a[12]
-      stats['won']['gold'] = a[13]
-      stats['won']['avegold'] = a[14]
+    for a in db.db:nrows([[SELECT AVG(finishtime - starttime) as avetime,
+                                 SUM(qp) as qp,
+                                 AVG(qp) as qpave,
+                                 SUM(qpmobs) as qpmobs,
+                                 AVG(qpmobs) as qpmobsave,
+                                 SUM(tp) as tp,
+                                 AVG(tp) as tpave,
+                                 SUM(trains) as trains,
+                                 AVG(trains) as trainsave,
+                                 SUM(pracs) as pracs,
+                                 AVG(pracs) as pracsave,
+                                 COUNT(*) as indb,
+                                 SUM(gold) as gold,
+                                 AVG(gold) as avegold FROM gquests where won = 1]]) do
+      stats['won']['avetime'] = a['avetime']
+      stats['won']['qp'] = a['qp']
+      stats['won']['qpave'] = a['qpave']
+      stats['won']['qpmobs'] = a['qpmobs']
+      stats['won']['qpmobsave'] = a['qpmobsave']
+      stats['won']['tp'] = a['tp']
+      stats['won']['tpave'] = a['tpave']
+      stats['won']['trains'] = a['trains']
+      stats['won']['trainsave'] = a['trainsave']
+      stats['won']['pracs'] = a['pracs']
+      stats['won']['pracsave'] = a['pracsave']
+      stats['won']['indb'] = a['indb']
+      stats['won']['gold'] = a['gold']
+      stats['won']['avegold'] = a['avegold']
     end
     stats['lost'] = {}
     for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qpmobs), AVG(qpmobs), COUNT(*) FROM gquests where won != 1") do
@@ -1169,8 +1220,8 @@ function build_gq_window()
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Gold",
           ReadableNumber(stats['won']['gold'], 2),
-          string.format("%d", stats['won']['avegold'] or 0) .. '/GQ')          
-      table.insert(allstyles, linestyles)      
+          string.format("%d", stats['won']['avegold'] or 0) .. '/GQ')
+      table.insert(allstyles, linestyles)
       local linestyles = format_row("TP",
           stats['won']['tp'] or 0,
           string.format("%.3f", stats['won']['tpave'] or 0) .. '/GQ')
@@ -1208,21 +1259,21 @@ function build_gq_window()
       local tstr = "  Last " .. statwin.maxitems .. " "
       local tstrlen = #tstr + 9
       local replen = (linewidth - tstrlen) / 2
-      
-      local style = {}      
+
+      local style = {}
       style.text = string.rep('-', replen)
       style.textcolour = "lime"
       table.insert(lstyle, style)
-      
-      local style = {}  
+
+      local style = {}
       style.text = tstr
       table.insert(lstyle, style)
 
-      local style = {}  
+      local style = {}
       style.text = '('
       table.insert(lstyle, style)
 
-      local style = {}  
+      local style = {}
       style.text = 'A'
       if statwin.showwhichgqs == 1 then
         style.textcolour = 'lime'
@@ -1233,11 +1284,11 @@ function build_gq_window()
       style.hint = 'Show All GQs'
       table.insert(lstyle, style)
 
-      local style = {}  
+      local style = {}
       style.text = '/'
       table.insert(lstyle, style)
 
-      local style = {}  
+      local style = {}
       style.text = 'W'
       if statwin.showwhichgqs == 2 then
         style.textcolour = 'lime'
@@ -1248,11 +1299,11 @@ function build_gq_window()
       style.hint = 'Show only GQs that were won'
       table.insert(lstyle, style)
 
-      local style = {}  
+      local style = {}
       style.text = '/'
       table.insert(lstyle, style)
 
-      local style = {}  
+      local style = {}
       style.text = 'L'
       if statwin.showwhichgqs == 3 then
         style.textcolour = 'lime'
@@ -1263,7 +1314,7 @@ function build_gq_window()
       style.hint = 'Show only GQs that were lost'
       table.insert(lstyle, style)
 
-      local style = {}  
+      local style = {}
       style.text = ')  '
       table.insert(lstyle, style)
 
@@ -1273,14 +1324,14 @@ function build_gq_window()
       style.textcolour = "lime"
       table.insert(lstyle, style)
       table.insert(allstyles, lstyle)
-  
-      local lstyle = {}      
+
+      local lstyle = {}
 
       local style = {}
       style.text = string.format("%-10s ", "Lvl")
       style.textcolour = "lightseagreen"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%2s ", "QP")
       style.textcolour = "lightseagreen"
@@ -1308,25 +1359,25 @@ function build_gq_window()
       style.mouseup = nofunc
       style.hint = "Trains"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%2s ", "PR")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Practices"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%6s ", "Gold")
       style.textcolour = "lightseagreen"
-      table.insert(lstyle, style)      
+      table.insert(lstyle, style)
 
       local style = {}
       style.text = string.format("%3s ", "MB")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Mouseover this column for a popup with the mobs"
-      table.insert(lstyle, style) 
+      table.insert(lstyle, style)
 
       local style = {}
       style.text = string.format("%6s", " Time")
@@ -1341,7 +1392,7 @@ function build_gq_window()
 
       local lastitems = db:getlast('gquests', statwin.maxitems, whereclause)
       --tprint(lastitems)
-      
+
       local mobcounts = {}
       if db:open() then
         for a in db.db:nrows('SELECT gq_id, SUM(num) as mobcount from gqmobs group by gq_id') do
@@ -1357,7 +1408,7 @@ function build_gq_window()
         local levelstr = 'T' .. tostring(level.tier) .. ' R' .. tostring(level.remort) .. ' L' .. tostring(level.level)
         local length = v.finishtime - v.starttime
         local days, hours, mins, secs = SecondsToDHMS(length)
-        
+
         local style = {}
         style.text = string.format("%-10s ", levelstr)
         style.textcolour = "white"
@@ -1382,7 +1433,7 @@ function build_gq_window()
         style.text = string.format("%2d ", v.trains or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
-        
+
         local style = {}
         style.text = string.format("%2d ", v.pracs or 0)
         style.textcolour = "white"
@@ -1392,7 +1443,7 @@ function build_gq_window()
         style.text = string.format("%6d ", v.gold or 0)
         style.textcolour = "white"
         table.insert(lstyle, style)
-        
+
         local style = {}
         style.text = string.format("%3d ", mobcounts[v.gq_id] or -1)
         style.mouseover = function()
@@ -1405,15 +1456,15 @@ function build_gq_window()
                     end
         style.mousedown = function (flags, hotspotid)
                       popupwin.clickshow = not popupwin.clickshow
-                    end                    
-        table.insert(lstyle, style)         
+                    end
+        table.insert(lstyle, style)
 
         local style = {}
         style.text = string.format(" %02d:%02d", mins, secs)
-        style.textcolour = "white"        
+        style.textcolour = "white"
         table.insert(lstyle, style)
 
-        table.insert(allstyles, lstyle)        
+        table.insert(allstyles, lstyle)
       end
 
 
@@ -1430,14 +1481,14 @@ function create_gq_popup(gq_id)
     allstyles = gqmobcache[gq_id]
   else
     local mobs = {}
-    
+
     if db:open() then
       for a in db.db:nrows('SELECT * from gqmobs where gq_id = ' .. gq_id) do
         mobs[a.gqmob_id] = a
       end
       db:close()
     end
-    
+
     local lstyle = {}
 
     local style = {}
@@ -1459,7 +1510,7 @@ function create_gq_popup(gq_id)
     table.insert(allstyles, {{text = string.rep('-', linewidth)}})
 
     for i,v in tableSort(mobs) do
-    
+
       local lstyle = {}
 
       local style = {}
@@ -1477,12 +1528,12 @@ function create_gq_popup(gq_id)
       table.insert(allstyles, lstyle)
       gqmobcache[gq_id] = allstyles
     end
-    
+
   end
-  
-  popupwin:addtab('Default', allstyles)  
+
+  popupwin:addtab('Default', allstyles)
   popupwin:show(true)
-  
+
 end
 
 function build_kills_window()
@@ -1498,27 +1549,47 @@ function build_kills_window()
     for a in db.db:rows("SELECT monsterskilled FROM stats WHERE milestone = 'current'") do
       stats['overall'] = a[1] or 0
     end
-    
-    for a in db.db:rows("SELECT SUM(xp), SUM(bonusxp), AVG(xp), AVG(xp+bonusxp), SUM(tp), SUM(vorpal), SUM(assassinate), SUM(disintegrate), SUM(banishment), SUM(slit), SUM(deathblow), SUM(gold), AVG(gold), COUNT(*) FROM mobkills") do
-      stats['xp'] = a[1] or 0
-      stats['bonusxp'] = a[2] or 0
-      stats['avexp'] = a[3] or 0
-      stats['avetotalxp'] = a[4] or 0
-      stats['tp'] = a[5] or 0
-      stats['vorpal'] = a[6] or 0
-      stats['assassinate'] = a[7] or 0
-      stats['disintegrate'] = a[8] or 0
-      stats['banishment'] = a[9] or 0
-      stats['slit'] = a[10] or 0
-      stats['deathblow'] = a[11] or 0
-      stats['gold'] = a[12] or 0
-      stats['avegold'] = a[13] or 0
-      stats['indb'] = a[14] or 0
+
+    for a in db.db:nrows([[SELECT SUM(xp) AS xp,
+                                 SUM(bonusxp) AS bonusxp,
+                                 SUM(blessingxp) AS blessingxp,
+                                 AVG(xp) AS avexp,
+                                 AVG(totalxp) AS avetotalxp,
+                                 SUM(tp) AS tp,
+                                 SUM(vorpal) AS vorpal,
+                                 SUM(assassinate) AS assassinate,
+                                 SUM(disintegrate) AS disintegrate,
+                                 SUM(banishment) AS banishment,
+                                 SUM(slit) AS slit,
+                                 SUM(deathblow) AS deathblow,
+                                 SUM(gold) AS gold,
+                                 AVG(gold) AS avegold,
+                                 COUNT(*) AS indb FROM mobkills]]) do
+      stats['xp'] = a['xp'] or 0
+      stats['bonusxp'] = a['bonusxp'] or 0
+      stats['blessingxp'] = a['blessingxp'] or 0
+      stats['avexp'] = a['avexp'] or 0
+      stats['avetotalxp'] = a['avetotalxp'] or 0
+      stats['tp'] = a['tp'] or 0
+      stats['vorpal'] = a['vorpal'] or 0
+      stats['assassinate'] = a['assassinate'] or 0
+      stats['disintegrate'] = a['disintegrate'] or 0
+      stats['banishment'] = a['banishment'] or 0
+      stats['slit'] = a['slit'] or 0
+      stats['deathblow'] = a['deathblow'] or 0
+      stats['gold'] = a['gold'] or 0
+      stats['avegold'] = a['avegold'] or 0
+      stats['indb'] = a['indb'] or 0
     end
-    
+
     for a in db.db:rows("SELECT AVG(bonusxp), COUNT(*) FROM mobkills where bonusxp > 0") do
       stats['avebonusxp'] = a[1]
       stats['bonusxpindb'] = a[2]
+    end
+
+    for a in db.db:rows("SELECT AVG(blessingxp), COUNT(*) FROM mobkills where blessingxp > 0") do
+      stats['aveblessingxp'] = a[1]
+      stats['blessingxpindb'] = a[2]
     end
 
     if stats['indb'] > 0 then
@@ -1535,6 +1606,9 @@ function build_kills_window()
       local linestyles = format_row("Mobs w/ Bonus", "", stats['bonusxpindb'] or 0)
       table.insert(allstyles, linestyles)
 
+      local linestyles = format_row("Mobs w/ Bless", "", stats['blessingxpindb'] or 0)
+      table.insert(allstyles, linestyles)
+
       table.insert(allstyles, {{text = ''}})
 
       local linestyles = format_row("Stats", "Total", "Average", "lime", "lime")
@@ -1548,12 +1622,15 @@ function build_kills_window()
       local linestyles = format_row("Bonus XP", stats['bonusxp'] or 0, string.format("%.3f", stats['avebonusxp'] or 0) .. '/Kill')
       table.insert(allstyles, linestyles)
 
-      local linestyles = format_row("All XP", (stats['xp'] or 0) + (stats['bonusxp']  or 0), string.format("%.3f", stats['avetotalxp']) .. '/Kill')
+      local linestyles = format_row("Blessing XP", stats['blessingxp'] or 0, string.format("%.3f", stats['aveblessingxp'] or 0) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("All XP", (stats['xp'] or 0) + (stats['bonusxp']  or 0) + (stats['blessingxp']  or 0), string.format("%.3f", stats['avetotalxp']) .. '/Kill')
       table.insert(allstyles, linestyles)
 
       local linestyles = format_row("Gold", stats['gold'] or 0, string.format("%.3f", stats['avegold'] or 0) .. '/Kill')
       table.insert(allstyles, linestyles)
-      
+
       local linestyles = format_row("Vorpal", stats['vorpal'] or 0, string.format("%.3f", (stats['vorpal'] or 0) / (stats['indb'] or 1)) .. '/Kill')
       table.insert(allstyles, linestyles)
 
@@ -1580,13 +1657,13 @@ function build_kills_window()
       local tstrlen = #tstr
       local replen = (linewidth - tstrlen) / 2
       --print(tstrlen, linewidth, replen)
-      
-      local style = {}      
+
+      local style = {}
       style.text = string.rep('-', replen)
       style.textcolour = "lime"
       table.insert(lstyle, style)
-      
-      local style = {}  
+
+      local style = {}
       style.text = tstr
       table.insert(lstyle, style)
 
@@ -1594,7 +1671,7 @@ function build_kills_window()
       style.text = string.rep('-', replen)
       style.textcolour = "lime"
       table.insert(lstyle, style)
-      table.insert(allstyles, lstyle)      
+      table.insert(allstyles, lstyle)
 
       local lstyle = {}
       local style = {}
@@ -1619,10 +1696,10 @@ function build_kills_window()
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%3s ", "BXP")
+      style.text = string.format("%3s ", "OXP")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "Bonus XP"
+      style.hint = "Other XP (N for Bonus, E for Blessing)"
       table.insert(lstyle, style)
 
       local style = {}
@@ -1631,7 +1708,7 @@ function build_kills_window()
       style.mouseup = nofunc
       style.hint = "Trivia Mob"
       table.insert(lstyle, style)
-      
+
       local style = {}
       style.text = string.format("%s ", "S")
       style.textcolour = "lightseagreen"
@@ -1640,31 +1717,31 @@ function build_kills_window()
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%s ", "Gold")        
+      style.text = string.format("%s ", "Gold")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
       style.hint = "Gold"
       table.insert(lstyle, style)
-      
+
       table.insert(allstyles, lstyle)
 
       table.insert(allstyles, {{text = string.rep('-', linewidth)}})
 
       local lastitems = db:getlast('mobkills', statwin.maxitems)
 --      tprint(lastitems)
-      
+
       for i,v in tableSort(lastitems, nil, nil, true) do
         local lstyle = {}
-        
+
         local level  = convertlevel(v.level)
-        
+
         local style = {}
         style.text = string.format("%3d ", tonumber(level.level))
         style.textcolour = "white"
         style.mouseup = nofunc
         style.hint = "Level"
         table.insert(lstyle, style)
-      
+
         local style = {}
         style.text = string.format("%-18s ", string.sub(strip_colours(v.name), 1, 18))
         style.textcolour = "white"
@@ -1673,17 +1750,34 @@ function build_kills_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%3d ", tonumber(v.xp or 0) or 0)
+        style.text = string.format("%3d ", tonumber(v.totalxp or 0) or 0)
         style.textcolour = "white"
         style.mouseup = nofunc
-        style.hint = "XP"
+        local ttext = tostring(v.xp) .. "(XP)"
+        if v.bonusxp ~= 0 then
+          ttext = ttext .. " + " .. tostring(v.bonusxp) .. "(Bonus)"
+        end
+        if v.blessingxp ~= 0 then
+          ttext = ttext .. " + " .. tostring(v.blessingxp) .. "(Blessing)"
+        end
+        style.hint = ttext
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%3d ", tonumber(v.bonusxp or 0) or 0)
+        local ttext = ""
+        local thint = ""
+        if v.bonusxp ~= 0 then
+          ttext = ttext .. "N"
+          thint = thint .. "Bonus "
+        end
+        if v.blessingxp ~= 0 then
+          ttext = ttext .. "E"
+          thint = thint .. "Blessing "
+        end
+        style.text = string.format("%3s ", ttext)
         style.textcolour = "white"
         style.mouseup = nofunc
-        style.hint = "Bonus XP"
+        style.hint = thint
         table.insert(lstyle, style)
 
         local style = {}
@@ -1713,9 +1807,9 @@ function build_kills_window()
         elseif v.disintegrate == 1 then
           tstr = "I"
           style.hint = "Disintegrate"
-          
+
         else
-        
+
         end
         style.text = string.format("%2s ", tstr)
         style.textcolour = "white"
@@ -1723,14 +1817,14 @@ function build_kills_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%d", tonumber(v.gold or 0) or 0)        
+        style.text = string.format("%d", tonumber(v.gold or 0) or 0)
         style.textcolour = "white"
         style.mouseup = nofunc
         style.hint = "Gold"
         table.insert(lstyle, style)
-        
+
         table.insert(allstyles, lstyle)
-        
+
       end
 
 
@@ -1920,10 +2014,10 @@ function OnPluginBroadcast (msg, id, name, text)
         if db:checkfortable('stats') then
           DoAfterSpecial(.2, 'build_gq_window()', 12)
         end
-      elseif id == "aaa61c4570508448e19c7c14" and msg == 1 then        
+      elseif id == "aaa61c4570508448e19c7c14" and msg == 1 then
         if db:checkfortable('stats') then
           DoAfterSpecial(.2, 'build_kills_window()', 12)
-        end      
+        end
       end
     end
   end
