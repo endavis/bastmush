@@ -288,7 +288,7 @@ function formatquest()
     table.insert(tmsg, colourwrap('+'))
     table.insert(tmsg, colourwrap('D', 'stat'))
   end
-  table.insert(tmsg, colourwrap('='))
+  table.insert(tmsg, colourwrap(' = '))
   table.insert(tmsg, colourwrap(quest_stuff.totqp, 'stat'))
   table.insert(tmsg, colourwrap('qp'))
   if quest_stuff.tp and tonumber(quest_stuff.tp) > 0 then
@@ -445,7 +445,7 @@ function StatReport(minutes)
   local starttime = finishtime - (minutes * 60)
   if db:open() then
     if db:checkfortable('quests') then
-      for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp + mccp + lucky + tier), SUM(gold), SUM(tp) FROM quests where finishtime > %d;", starttime)) do
+      for a in db.db:rows(string.format("SELECT COUNT(*), SUM(totqp), SUM(gold), SUM(tp) FROM quests where finishtime > %d;", starttime)) do
         queststats.total = a[1] or 0
         queststats.qp = a[2] or 0
         queststats.gold = a[3]  or 0
@@ -469,7 +469,7 @@ function StatReport(minutes)
       end
     end
     if db:checkfortable('mobkills') then
-      for a in db.db:rows(string.format("SELECT COUNT(*), SUM(xp + bonusxp), SUM(gold), SUM(tp) FROM mobkills where time > %d;", starttime)) do
+      for a in db.db:rows(string.format("SELECT COUNT(*), SUM(totalxp), SUM(gold), SUM(tp) FROM mobkills where time > %d;", starttime)) do
         mobstats.total = a[1]
         mobstats.xp = a[2]
         mobstats.gold = a[3]
