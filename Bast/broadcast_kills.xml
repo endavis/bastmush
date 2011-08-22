@@ -63,7 +63,7 @@ kill_info = {}
    sequence="100"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    match="^You switch targets and direct your attacks at (.*).\.$"
@@ -73,7 +73,7 @@ kill_info = {}
    sequence="100"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    match="^You flee from combat!$"
@@ -83,7 +83,7 @@ kill_info = {}
    sequence="100"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    match="^You retreat from the combat!$"
@@ -92,7 +92,17 @@ kill_info = {}
    script="mobnone"
    sequence="100"
   >
-  </trigger>  
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="You receive * bonus experience points from your daily blessing*"
+   name="blessingxp"
+   script="mobxp"
+   sequence="99"
+  >
+  </trigger>
+
   <trigger
    enabled="y"
    match="You receive * bonus experience points *."
@@ -101,6 +111,7 @@ kill_info = {}
    sequence="100"
   >
   </trigger>
+
   <trigger
    enabled="y"
    regexp="y"
@@ -140,6 +151,7 @@ kill_info = {}
    sequence="100"
   >
   </trigger>
+
   <trigger
    enabled="y"
    regexp="y"
@@ -149,6 +161,7 @@ kill_info = {}
    sequence="100"
   >
   </trigger>
+
   <trigger
    enabled="y"
    regexp="y"
@@ -158,6 +171,7 @@ kill_info = {}
    sequence="100"
   >
   </trigger>
+
   <trigger
    enabled="n"
    match="^$"
@@ -168,6 +182,7 @@ kill_info = {}
    group="deadtrig"
   >
   </trigger>
+
   <trigger
    custom_colour="17"
    regexp="y"
@@ -180,6 +195,7 @@ kill_info = {}
    script="assassinatemob"
   >
   </trigger>
+
   <trigger
     custom_colour="17"
     enabled="y"
@@ -193,7 +209,8 @@ kill_info = {}
     other_text_colour="black"
     script="deathblowmob"
     >
-  </trigger>  
+  </trigger>
+
   <trigger
     custom_colour="17"
     enabled="y"
@@ -207,7 +224,8 @@ kill_info = {}
     other_text_colour="black"
     script="slitmob"
     >
-  </trigger>  
+  </trigger>
+
   <trigger
     custom_colour="17"
     enabled="y"
@@ -221,7 +239,8 @@ kill_info = {}
     other_text_colour="black"
     script="disintegratemob"
     >
-  </trigger>  
+  </trigger>
+
   <trigger
     custom_colour="17"
     enabled="y"
@@ -235,7 +254,7 @@ kill_info = {}
     other_text_colour="black"
     script="banishmob"
     >
-  </trigger>  
+  </trigger>
 </triggers>
 
 
@@ -264,6 +283,8 @@ function reset_kill()
   kill_info.banishment = 0
   kill_info.xp = 0
   kill_info.bonusxp = 0
+  kill_info.blessingxp = 0
+  kill_info.totalxp = 0
   kill_info.gold = 0
   kill_info.tp = 0
   kill_info.mob = ""
@@ -295,14 +316,16 @@ end
 function mobxp( name, line, wildcards )
   if name == 'mobxp' then
     kill_info.bonusxp = 0
-    kill_info.xp = wildcards[1]
+    kill_info.xp = tonumber(wildcards[1])
     kill_info.time = GetInfo(304)
     kill_info.bcasted = false
     --DoAfterSpecial(.2, 'broadcast_kill()', 12)
     EnableTrigger ("deadtrig", true)
     -- enable deadtrig
   elseif name == 'bonusxp' then
-    kill_info.bonusxp = wildcards[1]
+    kill_info.bonusxp = tonumber(wildcards[1])
+  elseif name == 'blessingxp' then
+    kill_info.blessingxp = tonumber(wildcards[1])
   end
 end
 
@@ -325,7 +348,7 @@ function slitmob( name, line, wildcards)
   kill_info.mob = wildcards[1]
   kill_info.slit = 1
   kill_info.bcasted = false
-  kill_info.time = GetInfo(304)  
+  kill_info.time = GetInfo(304)
   broadcast_kill()
 end
 
@@ -333,7 +356,7 @@ function disintegratemob( name, line, wildcards)
   kill_info.mob = wildcards[1]
   kill_info.disintegrate = 1
   kill_info.bcasted = false
-  kill_info.time = GetInfo(304) 
+  kill_info.time = GetInfo(304)
   broadcast_kill()
 end
 
@@ -341,7 +364,7 @@ function banishmob( name, line, wildcards)
   kill_info.mob = wildcards[1]
   kill_info.banishment = 1
   kill_info.bcasted = false
-  kill_info.time = GetInfo(304)   
+  kill_info.time = GetInfo(304)
   broadcast_kill()
 end
 
@@ -352,7 +375,7 @@ end
 
 function mobgold( name, line, wildcards )
   if name == 'mobgold' then
-    kill_info.gold = wildcards[1] 
+    kill_info.gold = wildcards[1]
     if kill_info.mob == "" then
       kill_info.mob = wildcards[3]
     end
@@ -367,6 +390,7 @@ function broadcast_kill()
     if kill_info.mob == nil then
       kill_info.mob = 'did not get the mob name'
     end
+    kill_info.totalxp = tonumber(kill_info.xp) + tonumber(kill_info.bonusxp) + tonumber(kill_info.blessingxp)
     var.kill_info = serialize.save( "kill_info", kill_info )
     phelper:broadcast(1, var.kill_info)
     --disable deadtrig
@@ -393,7 +417,7 @@ function OnPluginBroadcast (msg, id, name, text)
       tt = assert (loadstring ('return ' .. gmcparg or ""))()
 
       if tt['status'] then
-        kill_info.level = tt.status.level
+        kill_info.level = tonumber(tt.status.level)
         if tt.status.enemy ~= "" and kill_info.mob == "" then
           --print('setting mob to', tt.status.enemy)
           kill_info.mob = tt.status.enemy
@@ -401,16 +425,16 @@ function OnPluginBroadcast (msg, id, name, text)
       end
     elseif text:find('room.info') then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
-      tt = assert (loadstring ('return ' .. gmcparg or ""))()      
-      
-      kill_info.room_id = tonumber(tt.num)      
-      
+      tt = assert (loadstring ('return ' .. gmcparg or ""))()
+
+      kill_info.room_id = tonumber(tt.num)
+
       if tonumber(tt.num) ~= lastroom and kill_info.mob ~= "" then
         lastroom = tonumber(tt.num)
         kill_info.mob = ""
         --print('resetting mob to none')
       end
-      
+
     end
   end
 

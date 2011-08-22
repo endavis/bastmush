@@ -198,7 +198,6 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   phelper:OnPluginBroadcast(msg, id, name, text)
-
   if id == '3e7dedbe37e44942dd46d264' then
     if text:find("comm.quest") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","comm.quest")
@@ -230,10 +229,15 @@ function OnPluginBroadcast (msg, id, name, text)
         quest_info['pracs'] = stuff.pracs
         quest_info['finishtime'] = GetInfo(304)
         quest_info['double'] = 0
+        quest_info['daily'] = 0
+        quest_info['totqp'] = tonumber(stuff.totqp)
         if tonumber(stuff.double) == 1 then
           quest_info['double'] = 1
         end
-        var.quest_info = serialize.save( "quest_info", quest_info )
+        if tonumber(stuff.daily) == 1 then
+          quest_info['daily'] = 1
+        end
+	var.quest_info = serialize.save( "quest_info", quest_info )
         phelper:broadcast(6, var.quest_info)
         when_required = os.time () + (30 * 60)  -- 30 mins to go
         onquest = false
@@ -263,8 +267,8 @@ function OnPluginBroadcast (msg, id, name, text)
           quest_info['mobroom'] = stuff.room
           quest_info['mobarea'] = stuff.area
           var.quest_info = serialize.save( "quest_info", quest_info )
-          phelper:broadcast(2, var.quest_info)          
-          questor_time (tonumber(stuff.timer))          
+          phelper:broadcast(2, var.quest_info)
+          questor_time (tonumber(stuff.timer))
         end
       elseif stuff.action == 'reset' then
         when_required = os.time() + (stuff.timer * 60)
@@ -293,7 +297,7 @@ function OnPluginEnable ()
   if IsConnected() then
     CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request quest")
   end
-  
+
 end -- OnPluginEnable
 
 function OnPluginDisable ()
