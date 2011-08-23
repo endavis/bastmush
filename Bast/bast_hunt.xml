@@ -119,7 +119,7 @@
     send_to="12"
     sequence="100">
   </trigger>
-  
+
   <trigger
     enabled="n"
     script="huntdone"
@@ -139,7 +139,7 @@
     regexp="y"
       >
   </trigger>
-  
+
   <trigger
     enabled="n"
     script="opendoor"
@@ -149,7 +149,7 @@
     regexp="y"
       >
   </trigger>
-  
+
   <trigger
     enabled="n"
     script="opendoor"
@@ -159,7 +159,7 @@
     regexp="y"
       >
   </trigger>
-  
+
   <trigger
     enabled="n"
     script="opendoor"
@@ -168,8 +168,8 @@
     match="^You open .*\.$"
     regexp="y"
       >
-  </trigger>  
-  
+  </trigger>
+
 </triggers>
 
 <aliases>
@@ -179,7 +179,7 @@
    enabled="y"
    regexp="y"
    sequence="100"
-   send_to="12"   
+   send_to="12"
   >
   <send>Execute(phelper.cmd .. " trick " .. "%1")</send>
   </alias>
@@ -189,7 +189,7 @@
    enabled="y"
    regexp="y"
    sequence="100"
-   send_to="12"   
+   send_to="12"
   >
   <send>Execute(phelper.cmd .. " auto " .. "%1")</send>
   </alias>
@@ -227,17 +227,17 @@ function huntreset()
   mob = ""
   mobnum = 1
   phelper:enabletriggroup('hunt', false)
-  phelper:enabletriggroup('huntdoor', false) 
+  phelper:enabletriggroup('huntdoor', false)
 end
 
 function opendoor(name, line, wildcards)
   if name == 'nokey' and opening then
     opening = false
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not open door")
-    huntdone()  
+    huntdone()
   elseif name == 'nopass' or name == 'doorclose' then
     opening = true
-    Send('open ' .. lastdir)  
+    Send('open ' .. lastdir)
   elseif name == 'dooropen' then
     Send(lastdir)
   end
@@ -264,19 +264,19 @@ function huntdone(name, line, wildcards)
     Send(string.format('where %d.%s', mobnum, mob))
     if IsPluginInstalled("b6eae87ccedd84f510b74714") and phelper.automapper then
         hmob = mob
-        phelper:enabletriggroup('where', true)       
+        phelper:enabletriggroup('where', true)
     end
-  elseif htype == 'trick' and name ~= 'nopath' then
+  elseif htype == 'trick' and name ~= 'nopath' and name ~= 'ishere' then
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not find " .. mob)
 --  elseif htype == 'auto' and (name == 'notinarea' or name == 'nopath') then
---    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not find " .. mob)   
-  elseif htype == 'trick' and name == 'nopath' then
+--    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not find " .. mob)
+  elseif htype == 'trick' and (name == 'nopath' or name == 'ishere') then
     mobnum = mobnum + 1
     Send(string.format('hunt %d.%s', mobnum, mob))
     return
   end
   ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Autohunt: off")
- 
+
   huntreset()
 end
 
@@ -284,7 +284,7 @@ function huntnext(name, line, wildcards)
   local mobname = wildcards[1]
   local tmob = string.match (mob, "[%d]*[\.]*(.*)")
   seenhunt = true
-  --print(mobname, tmob, waiting, htype)  
+  --print(mobname, tmob, waiting, htype)
   if string.find(string.lower(mobname), string.lower(tmob)) ~= nil and not waiting and htype == 'auto' then
     lastdir = wildcards[2]
     Send(lastdir)
@@ -345,19 +345,19 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   phelper:OnPluginBroadcast(msg, id, name, text)
-  
+
   if id == '3e7dedbe37e44942dd46d264' then
     if text:find('char.status') then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
-      local tt = assert (loadstring ('return ' .. gmcparg or ""))()    
-      
+      local tt = assert (loadstring ('return ' .. gmcparg or ""))()
+
       if tonumber(tt.status.state) == 8 and htype ~= "" then
         huntinterrupted()
       end
     elseif text:find('room.info') then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
-      tt = assert (loadstring ('return ' .. gmcparg or ""))()      
-      
+      tt = assert (loadstring ('return ' .. gmcparg or ""))()
+
       if tonumber(tt.num) ~= lastroom and seenhunt then
         if htype == 'auto' then
           SendNoEcho('hunt ' .. mob)
@@ -372,9 +372,9 @@ function OnPluginBroadcast (msg, id, name, text)
         ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Autohunt: haven't moved in 2 hunts, so finishing")
         huntdone()
         return
-      end    
+      end
     end
-  end  
+  end
 end
 
 function OnPluginInstall ()
