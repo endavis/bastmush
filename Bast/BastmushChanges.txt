@@ -1,5 +1,23 @@
 Bastmush Changes List
 
+r1451 snapshot
+ - bast_hunt
+    - bug fix: hunt trick works when a mob in the same room has the same
+        keyword as the mob that is being hunted
+ - broadcast_kills
+    - new: double xp for blessings is now included
+ - broadcast_quest
+    - new: double qp for blessings is now included
+ - lua/chardb.lua
+    - new: blessing bonus for both kills and quests is now included
+        in the database
+ - miniwin_stats
+    - new: blessing bonus now included in the kills and quests tabs
+ - StatMonitor
+    - new: the quest report now includes both double and blessing bonus
+ - fix.html
+    - bug fix: now supports colors in the prompt
+
 r1443 snapshot
  - bast_hunt
     - bug fix: moving while hunting will no longer do multiple hunt commands
@@ -50,7 +68,7 @@ r1401 snapshot
     - new: all miniwindows now have a Bring to Front and Send to Back option
     - new: there is now a Lock Miniwindow function which will lock the miniwindow in place
  - broadcast_quest
-    - bug fix: quests will now show on reconnect if you quit/disconnected 
+    - bug fix: quests will now show on reconnect if you quit/disconnected
         during a quest
 
 r1391 snapshot
@@ -114,28 +132,28 @@ r1276 snapshot
     - new: miniwindows have layers, see the Intro page on the wiki
     - bug fix: miniwindows will always be shown the first time the plugin
         is loaded and data is added to the window
-    - bug fix: miniwindows will now stick to the left or top of the 
-        mushclient window when moving them and the mouse goes 
+    - bug fix: miniwindows will now stick to the left or top of the
+        mushclient window when moving them and the mouse goes
         out of the window
  - bast_spellup
-    - bug fix: fixed help (had wrong command) 
+    - bug fix: fixed help (had wrong command)
  - miniwin_stats
     - bug fix: avegold being nil is now accounted for
     - bug fix: levels tab was not showing if no pups were found even though
         levels were found
-    - bug fix: everything defaults to 0 if it wasn't found in the tables 
+    - bug fix: everything defaults to 0 if it wasn't found in the tables
  - broadcast_level
-    - bug fix: "Info" showing levels and not getting levelgains 
+    - bug fix: "Info" showing levels and not getting levelgains
  - broadcast_kills
     - bug fix: one hit kills will now be accounted for, autogold has to be
-        on though 
+        on though
  - broadcast_gq
-    - bug fix: gq tab is now removed if you quit from a gq 
+    - bug fix: gq tab is now removed if you quit from a gq
  - StatDB
     - bug fix: leveling and having no campaign which would set noexp when it
-        wasn't needed 
+        wasn't needed
  - broadcast_area
-    - bug fix: now only broadcasts 1, you have to GetVariable the result 
+    - bug fix: now only broadcasts 1, you have to GetVariable the result
  - Aardwolf_Regen
     - bug fix: now works with gmcp
  - miniwin_tabbar
@@ -156,26 +174,26 @@ r1220 snapshot
  - StatDB
     - new: added dontlevelnocampaign and campaignxp settings
  - miniwin_moons
-    - enhancement: changed to use gmcp for tick 
+    - enhancement: changed to use gmcp for tick
  - miniwin_cp
     - enchancement: will now automatically show when a cp is requested
-        the first time 
+        the first time
  - broadcast_invmon
     - enhancement: added commands showstuff which shows all the tags and
-        hidestuff which hides all the tags 
-    - bug fix: no longer sends an invdetails for every item that is bought 
+        hidestuff which hides all the tags
+    - bug fix: no longer sends an invdetails for every item that is bought
  - broadcast_spellsskills
     - enhancement: now gets all info about spells/skills and saves it into
-        a sqlite db 
+        a sqlite db
  - miniwin_help
-    - enhancement: now uses gmcp instead of broadcast_state 
+    - enhancement: now uses gmcp instead of broadcast_state
  - StatMonitor
-    - bug fix: no longer shows the same info over and over for each pup 
+    - bug fix: no longer shows the same info over and over for each pup
  - broadcast_runto
-    - bug fix: no longer loads with errors 
+    - bug fix: no longer loads with errors
  - PotionQuaffer
-    - bug fix: no longer errors on buying multiple potions 
+    - bug fix: no longer errors on buying multiple potions
  - Aardwolf_disarm
-    - bug fix: now works 
+    - bug fix: now works
  - broadcast_kills
-    - bug fix: now sets vorpal weapons correctly 
+    - bug fix: now sets vorpal weapons correctly
