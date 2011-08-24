@@ -390,7 +390,7 @@ function broadcast_kill()
     if kill_info.mob == nil then
       kill_info.mob = 'did not get the mob name'
     end
-    kill_info.totalxp = tonumber(kill_info.xp) + tonumber(kill_info.bonusxp) + tonumber(kill_info.blessingxp)
+    kill_info.totalxp = tonumber(kill_info.xp or 0) + tonumber(kill_info.bonusxp or 0) + tonumber(kill_info.blessingxp or 0)
     var.kill_info = serialize.save( "kill_info", kill_info )
     phelper:broadcast(1, var.kill_info)
     --disable deadtrig
