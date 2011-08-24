@@ -66,7 +66,7 @@ Broadcasts
 <triggers>
   <trigger
    enabled="y"
-   match="Congratulations hero. You have increased your powers!"
+   match="Congratulations, hero. You have increased your powers!"
    name="pup"
    script="level"
    sequence="100"
@@ -188,7 +188,7 @@ function remort(name, line, wildcards)
   levelinfo.newlevel = 1
   levelinfo.type = 'level'
   levelinfo.time = GetInfo(304)
-  var.levelinfo = serialize.save( "levelinfo", levelinfo )  
+  var.levelinfo = serialize.save( "levelinfo", levelinfo )
   phelper:broadcast(5)
 end
 
@@ -321,7 +321,7 @@ function OnPluginCommand (stext)
   if stext == 'superhero loud' or stext == 'superhero silent' or stext == 'superhero confirm' then
     local wildcards = {}
     wildcards.newlevel = 201
-    level ( 'level', 'You raise a level! You are now level 201.', wildcards )    
+    level ( 'level', 'You raise a level! You are now level 201.', wildcards )
   end
 end
 
