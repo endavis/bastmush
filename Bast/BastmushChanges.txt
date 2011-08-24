@@ -1,5 +1,11 @@
 Bastmush Changes List
 
+r1454 snapshot
+ - broadcast_kills
+    - fix for nil blessing xp
+ - broadcast_level
+    - someone changed the pup message
+
 r1451 snapshot
  - bast_hunt
     - bug fix: hunt trick works when a mob in the same room has the same
