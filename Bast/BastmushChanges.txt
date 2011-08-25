@@ -1,5 +1,14 @@
 Bastmush Changes List
 
+r1457 snapshot
+ - miniwin_stats.xml
+    - change the kills double to be the same as quest
+ - lua/chardb.lua
+    - added some stuff to know when a function open/closes the db
+    - fixed bug when updating quest table for blessings
+ - lua/sqlitedb.lua
+    - added some stuff to know when a function open/closes the db
+
 r1454 snapshot
  - broadcast_kills
     - fix for nil blessing xp
