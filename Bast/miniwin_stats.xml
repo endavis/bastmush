@@ -1619,7 +1619,7 @@ function build_kills_window()
       local linestyles = format_row("XP", stats['xp'] or 0, string.format("%.3f", stats['avexp'] or 0) .. '/Kill')
       table.insert(allstyles, linestyles)
 
-      local linestyles = format_row("Bonus XP", stats['bonusxp'] or 0, string.format("%.3f", stats['avebonusxp'] or 0) .. '/Kill')
+      local linestyles = format_row("Double XP", stats['bonusxp'] or 0, string.format("%.3f", stats['avebonusxp'] or 0) .. '/Kill')
       table.insert(allstyles, linestyles)
 
       local linestyles = format_row("Blessing XP", stats['blessingxp'] or 0, string.format("%.3f", stats['aveblessingxp'] or 0) .. '/Kill')
@@ -1699,7 +1699,7 @@ function build_kills_window()
       style.text = string.format("%3s ", "OXP")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "Other XP (N for Bonus, E for Blessing)"
+      style.hint = "Other XP (D for Double, E for Blessing)"
       table.insert(lstyle, style)
 
       local style = {}
@@ -1755,7 +1755,7 @@ function build_kills_window()
         style.mouseup = nofunc
         local ttext = tostring(v.xp) .. "(XP)"
         if v.bonusxp ~= 0 then
-          ttext = ttext .. " + " .. tostring(v.bonusxp) .. "(Bonus)"
+          ttext = ttext .. " + " .. tostring(v.bonusxp) .. "(Dbl)"
         end
         if v.blessingxp ~= 0 then
           ttext = ttext .. " + " .. tostring(v.blessingxp) .. "(Blessing)"
@@ -1767,8 +1767,8 @@ function build_kills_window()
         local ttext = ""
         local thint = ""
         if v.bonusxp ~= 0 then
-          ttext = ttext .. "N"
-          thint = thint .. "Bonus "
+          ttext = ttext .. "D"
+          thint = thint .. "Dbl "
         end
         if v.blessingxp ~= 0 then
           ttext = ttext .. "E"
