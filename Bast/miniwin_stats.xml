@@ -439,6 +439,8 @@ function build_level_window()
           local style = {}
           style.text = string.format("%3s:%02s:%02s", tostring(days), tostring(hours), tostring(mins))
           style.textcolour = "white"
+          style.hint = string.format('Started: %s\nFinished: %s', os.date("%c", v.starttime), os.date("%c", v.finishtime))
+          style.mouseup = nofunc
           table.insert(lstyle, style)
         end
 
@@ -814,7 +816,7 @@ function build_quest_window()
           style.text = "Failed"
         end
         style.mouseup = nofunc
-        style.hint = hint
+        style.hint = string.format('Started: %s\nFinished: %s', os.date("%c", v.starttime), os.date("%c", v.finishtime))
         style.textcolour = "white"
         table.insert(lstyle, style)
         table.insert(allstyles, lstyle)
@@ -1064,6 +1066,8 @@ function build_cp_window()
         else
           style.text = "Failed"
         end
+        style.hint = string.format('Started: %s\nFinished: %s', os.date("%c", v.starttime), os.date("%c", v.finishtime))
+        style.mouseup = nofunc
         style.textcolour = "white"
         table.insert(lstyle, style)
 
@@ -1462,6 +1466,8 @@ function build_gq_window()
         local style = {}
         style.text = string.format(" %02d:%02d", mins, secs)
         style.textcolour = "white"
+        style.hint = string.format('Started: %s\nFinished: %s', os.date("%c", v.starttime), os.date("%c", v.finishtime))
+        style.mouseup = nofunc
         table.insert(lstyle, style)
 
         table.insert(allstyles, lstyle)
