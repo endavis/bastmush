@@ -81,6 +81,14 @@ Broadcasts
   >
   </trigger>
   <trigger
+   enabled="y"
+   match="You gain a level - you are now level *."
+   name="levelbless"
+   script="level"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
    enabled="n"
    match="You gain * hit points, * mana, * moves, * practices and * trains."
    name="levelgains"
@@ -213,6 +221,9 @@ end
 
 function level ( name, line, wildcards )
   resetinfo()
+  if name == 'levelbless' then
+    name = 'level'
+  end
   levelinfo.type = name
   if levelinfo.type == "level" then
     levelinfo.newlevel = wildcards[1]
