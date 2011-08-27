@@ -1,5 +1,14 @@
 Bastmush Changes List
 
+r1461 snapshot
+  - StatMonitor.xml
+     - fix the way average qp per quest was being calculated
+  - broadcast_level.xml
+     - now recognizes levels taken from a blessing
+  - miniwin_stats.xml
+     - the time can now be moused over to show the day and time an item was
+       started and the day and time an item was finished
+
 r1457 snapshot
  - miniwin_stats.xml
     - change the kills double to be the same as quest
