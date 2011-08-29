@@ -27,7 +27,7 @@ quickest way to create a window
  table.insert(lstyle, {style})
  mwin:addtab('default', lstyle, {{text="Window Header"}} )
  mwin:show(true)
- 
+
 
 The global line can have the following
   lstyle.backcolour
@@ -146,7 +146,7 @@ windowheight = self.windowborderwidth + self.height_padding + self.titlebarheigh
 AddHotspot(borderwinid, self.winid .. ':resize', function, ....) should work fine
 
 event system - so that when a variable is changed, or the window is moved, or resized, functions can be attached to each event
- the events I have so far - 
+ the events I have so far -
    visibility - called whenever this window changes visibility
      args = {flag=showflag}
    shade - called whenever this windows shaded value changes
@@ -176,7 +176,7 @@ layer_table[7] = "i"
 layer_table[8] = "f"
 layer_table[9] = "c"
 layer_table[10] = "a"
-  
+
 
 -- subclass phelpobject
 Miniwin = Phelpobject:subclass()
@@ -248,7 +248,7 @@ function Miniwin:initialize(args)
   self:add_cmd('hide', {func="cmd_hide", help="hide the window"})
   self:add_cmd('front', {func="cmd_front", help="bring the window to the front"})
   self:add_cmd('back', {func="cmd_back", help="put the window in the back"})
-  
+
   self:add_setting( 'disabled', {type="bool", help="is this window disabled", default=verify_bool(false), sortlev=1, readonly=true})
   self:add_setting( 'windowpos', {type="number", help="position for this window: see http://www.gammon.com.au/scripts/function.php?name=WindowCreate", low=-1, high=13, default=6,sortlev=2, longname="Window Position", msg=[[
 see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
@@ -301,7 +301,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'firstshown', {type="bool", help="shown first", default=verify_bool(false), sortlev=57})
   self:add_setting( 'lockwindow', {type="bool", help="make the window non draggable", default=verify_bool(false), sortlev=57, longname="Lock the Window in place"})
   self:add_setting( 'layer', {type="number", help="the layer this miniwin is on, set to -123 to use the Z order for the Aardwolf MUSHclient", default=0, low=-200, high=200, longname="Set the Layer", sortlev=57})
-    
+
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
   --self.window_data = {}
@@ -321,14 +321,14 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:registerevent('option_textfont', self, self.onfontchange)
   self:registerevent('option_use_tabwin', self, self.onuse_tabwinchange)
   self:registerevent('option_windowpos', self, self.onwindowposchange)
-  self:registerevent('option_layer', self, self.onlayerchange)  
+  self:registerevent('option_layer', self, self.onlayerchange)
   self:registerevent('option-any', self, self.onanychange)
 end
 
 function Miniwin:onfontchange(args)
   local font = args.value
   if self.disabled or self.classinit then
-    return    
+    return
   else
     fontid = self:addfont(font.name, font.size, font.bold, font.italic, font.underline, font.strikeout)
     self:setdefaultfont(fontid)
@@ -359,7 +359,7 @@ function Miniwin:onanychange(args)
   for i,v in pairs(self.tablist) do
     self.tabs[v].convtext = nil
     self.tabs[v].convheader = nil
-  end  
+  end
   if not self.classinit then
     self:resettabs()
   end
@@ -381,7 +381,7 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky, position, res
  if self.disabled then
    self.classinit = true
    self:init(true)
-   self:enable()   
+   self:enable()
  end
  if self.tabs[tabname] == nil then
    self.tabs[tabname] = {}
@@ -394,7 +394,7 @@ function Miniwin:addtab(tabname, text, header, makeactive, sticky, position, res
      self.tabs[tabname].sticky = true
    end
    if position and #self.tablist >= position then
-     table.insert(self.tablist, position, tabname)     
+     table.insert(self.tablist, position, tabname)
    else
      table.insert(self.tablist, tabname)
    end
@@ -438,7 +438,7 @@ end
 function Miniwin:changeactivetab(tabname)
   self.activetab = self.tabs[tabname]
   self:processevent('tabchange', {newtab=tabname})
-end  
+end
 
 function Miniwin:settabnametext(tabname, newtext)
   if self.tabs[tabname] then
@@ -454,12 +454,12 @@ function Miniwin:redrawtabline()
     local tabline = self:buildtabline()
     --self.activetab.build_data.tabbarlinenum = linenum
     self.activetab.tabbarlineconv = self:convert_line(tabline, 1, 0, 0, 'tabbarline')[1]
-    --self.activetab.maxwidth = math.max(self.activetab.maxwidth, self.activetab.tabbarlineconv.width)   
-    local top = self.activetab.build_data[self.activetab.build_data.tabbarlinenum - 1].linebottom    
-    self.activetab.build_data[self.activetab.build_data.tabbarlinenum] = self:justify_line(self.activetab.tabbarlineconv, top, self.activetab.build_data.tabbarlinenum, 'titlebarline')    
+    --self.activetab.maxwidth = math.max(self.activetab.maxwidth, self.activetab.tabbarlineconv.width)
+    local top = self.activetab.build_data[self.activetab.build_data.tabbarlinenum - 1].linebottom
+    self.activetab.build_data[self.activetab.build_data.tabbarlinenum] = self:justify_line(self.activetab.tabbarlineconv, top, self.activetab.build_data.tabbarlinenum, 'titlebarline')
     --print('redrawing tabline', self.activetab)
-    --self:displayline(self.activetab.build_data[self.activetab.build_data.tabbarlinenum])  
-    self:displayline(self.activetab.tabbarlineconv)  
+    --self:displayline(self.activetab.build_data[self.activetab.build_data.tabbarlinenum])
+    self:displayline(self.activetab.tabbarlineconv)
   end
 end
 
@@ -575,7 +575,7 @@ function Miniwin:buildtabline()
     local tabline = {}
     for i,v in ipairs(self.tablist) do
       v = self.tabs[v]
-      if v.tabnametext ~= nil then        
+      if v.tabnametext ~= nil then
         local style = self:createtabstyle(v, {text=" " .. v.tabname .. " ", leftborder = true})
         table.insert(tabline, style)
         if type(v.tabnametext) == 'string' then
@@ -584,14 +584,14 @@ function Miniwin:buildtabline()
         elseif type(v.tabnametext) == 'table' then
           for i,x in ipairs(v.tabnametext) do
              local style = self:createtabstyle(v, x)
-             table.insert(tabline, style)          
+             table.insert(tabline, style)
           end
         end
         local style = self:createtabstyle(v, {text=" ", rightborder = true})
-        table.insert(tabline, style)            
+        table.insert(tabline, style)
       else
         local style = self:createtabstyle(v, {text=" " .. v.tabname .. " ", leftborder=true, rightborder=true})
-        table.insert(tabline, style)        
+        table.insert(tabline, style)
       end
     end
     tabline.bottomborder = true
@@ -771,14 +771,14 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
   fontt.strikeout = verify_bool(strikeout)
   fontt.name = string.lower(font or "")
   fontt.size = tonumber(size or "8")
-  local fontid = self:buildfontid(fontt.name, fontt.size, fontt.bold, fontt.italic, fontt.underline, fontt.strikeout)    
+  local fontid = self:buildfontid(fontt.name, fontt.size, fontt.bold, fontt.italic, fontt.underline, fontt.strikeout)
   if self:checkfontid(fontid) then
     return fontid
   end
 
   local tfontt = verify_font(fontt, {})
   if tfontt ~= nil then
-    tfontt.id = fontid    
+    tfontt.id = fontid
   end
   if not WindowInfo (self.winid, 4) then
     check (WindowCreate (self.winid,
@@ -787,10 +787,10 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
                  0,  -- height
                  0,
                  2,  -- flags
-                 self:get_colour("bg_colour")) )    
+                 self:get_colour("bg_colour")) )
   end
-  check (WindowFont (self.winid, tfontt.id, tfontt.name, tfontt.size, 
-                     tfontt.bold, tfontt.italic, tfontt.underline, 
+  check (WindowFont (self.winid, tfontt.id, tfontt.name, tfontt.size,
+                     tfontt.bold, tfontt.italic, tfontt.underline,
                      tfontt.strikeout, 0, 49))
   tfontt.height = WindowFontInfo (self.winid, fontid, 1) -- height
   tfontt.width = WindowFontInfo (self.winid, fontid, 6)  -- avg width_padding
@@ -869,7 +869,7 @@ function Miniwin:buildtitlebar()
     style.bordercolour2 = 'button_border_dark'
     style.borderstyle = 4
     style.font_name = 'Dina'
-    style.font_size = 9    
+    style.font_size = 9
     style.mousedown = button.mousedown
     style.mouseup = button.mouseup
     style.mouseover = function (win, hotspotid, flags)
@@ -914,7 +914,7 @@ function Miniwin:buildtitlebar()
   --tstyle.backcolour = 'black'
   tstyle.gradient = true
   tstyle.colour1 = 'title_gradient1'
-  tstyle.colour2 = 'title_gradient2'  
+  tstyle.colour2 = 'title_gradient2'
   return tstyle
 end
 
@@ -978,7 +978,7 @@ function Miniwin:buildmousemenu()
     end
   end
   menu = menu .. '| < '
-  menu = menu .. '|| Bring to Front | Send to Back '  
+  menu = menu .. '|| Bring to Front | Send to Back '
   menu = menu .. '|| Help'
   return menu
 end
@@ -1043,17 +1043,17 @@ function Miniwin:windowmenu(result)
   elseif result == 'Bring to Front' then
     if IsPluginInstalled("462b665ecb569efbf261422f") then
       CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
-      CallPlugin("462b665ecb569efbf261422f","boostMe", self.winid)      
+      CallPlugin("462b665ecb569efbf261422f","boostMe", self.winid)
     else
       self:set('layer', 200)
-    end    
+    end
   elseif result == 'Send to Back' then
     if IsPluginInstalled("462b665ecb569efbf261422f") then
       CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
-      CallPlugin("462b665ecb569efbf261422f","dropMe", self.winid)      
+      CallPlugin("462b665ecb569efbf261422f","dropMe", self.winid)
     else
       self:set('layer', -200)
-    end    
+    end
   elseif result == "Reset Size" then
     self.width = self.set_options.width.default
     self.height = self.set_options.height.default
@@ -1166,19 +1166,19 @@ end
 function Miniwin:front()
   if IsPluginInstalled("462b665ecb569efbf261422f") then
     CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
-    CallPlugin("462b665ecb569efbf261422f","boostMe", self.winid)      
+    CallPlugin("462b665ecb569efbf261422f","boostMe", self.winid)
   else
     self:set('layer', 200)
-  end    
+  end
 end
 
 function Miniwin:back()
   if IsPluginInstalled("462b665ecb569efbf261422f") then
     CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
-    CallPlugin("462b665ecb569efbf261422f","dropMe", self.winid)      
+    CallPlugin("462b665ecb569efbf261422f","dropMe", self.winid)
   else
     self:set('layer', -200)
-  end  
+  end
 end
 
 -- init the window after the plugin has been initialized
@@ -1220,7 +1220,7 @@ end
 function Miniwin:shade()
   if not self.disabled then
     self:set('shaded', not self.shaded)
-    self:processevent('shade', {flag=self.shaded})  
+    self:processevent('shade', {flag=self.shaded})
   end
   self:savestate()
 end
@@ -1536,7 +1536,7 @@ function Miniwin:justify_line(line, top, linenum, ltype, linestart, lineend)
     v.texttop = ttop + 1
     if v.nocolourconvert then
         v.stylelen = WindowTextWidth (self.winid, v.font_id, v.text,
-                      v.textstart, v.texttop, 0, 0, self:get_colour(v.textcolour or self.text_colour))      
+                      v.textstart, v.texttop, 0, 0, self:get_colour(v.textcolour or self.text_colour))
     elseif v.textcolour ~= nil or v.nocolourconvert then
         v.stylelen = WindowTextWidth (self.winid, v.font_id, strip_colours(v.text),
                       v.textstart, v.texttop, 0, 0, self:get_colour(v.textcolour))
@@ -1628,15 +1628,15 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
   if self.activetab == nil then
     return
   end
-  
+
   if not self.activetab.convtext or (self.activetab.header and not self.activetab.convheader) or not self.activetab.maxwidth then
     self:convert_tab(self.activetab.tabname)
   end
-  
+
   if self.activetab.startline == nil then
     self.activetab.startline = 1
   end
-    
+
   if self.activetab.build_data == nil then
     self.activetab.build_data = {}
   end
@@ -1669,9 +1669,9 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
     local tabline = self:buildtabline()
     self.activetab.build_data.tabbarlinenum = linenum
     self.activetab.tabbarlineconv = self:convert_line(tabline, 1, 0, 0, 'tabbarline')[1]
-    self.activetab.maxwidthwithtabline = math.max(self.activetab.maxwidth, self.activetab.tabbarlineconv.width)    
+    self.activetab.maxwidthwithtabline = math.max(self.activetab.maxwidth, self.activetab.tabbarlineconv.width)
   end
-  
+
   -- at this point everything has been converted
 
   if self.width > 0 then
@@ -1686,7 +1686,7 @@ function Miniwin:pre_create_window_internal(height, width, x, y)
     local maxwidth = self.activetab.maxwidth
     if self.showtabline and self.activetab.maxwidthwithtabline then
       maxwidth = math.max(self.activetab.maxwidth, self.activetab.maxwidthwithtabline)
-    end  
+    end
     self.activetab.build_data.actualwindowwidth =  maxwidth + self.width_padding + self.window_border_width
     self.activetab.build_data.textarea.right = maxwidth + self.width_padding
     self.activetab.build_data.textarea.left = 0 + self.window_border_width
@@ -1794,7 +1794,7 @@ function Miniwin:drawtext(tabname)
                               self.activetab.build_data.textarea.right, self.activetab.build_data.textarea.bottom,
                               empty, empty, empty, empty, empty, "", 0)
     self:addscrollwheelhandler("ztextarea", self.wheelmove)
-  end  
+  end
   self:drawshuttle()
 end
 
@@ -1846,7 +1846,7 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
         text, count = text:gsub ("%a", string.upper, 1)
         need_caps = count == 0 -- if not done, still need to capitalize yet
       end -- if
-      
+
       if #text > 0 then
         x = x + wfunction (self.winid, font_id, text, x, Top, Right, Bottom,
                             colour_conversion [colour] or self.text_colour)
@@ -1884,7 +1884,7 @@ function Miniwin:displayline (styles)
     if styles.colour1 == styles.colour2 then
       WindowRectOp (self.winid, 2, styles.linestart, styles.linetop, styles.lineend, styles.linebottom, self:get_colour(styles.colour1) )
     else
-      WindowGradient (self.winid, styles.linestart, styles.linetop, styles.lineend, styles.linebottom, self:get_colour(styles.colour1), self:get_colour(styles.colour2), 2)    
+      WindowGradient (self.winid, styles.linestart, styles.linetop, styles.lineend, styles.linebottom, self:get_colour(styles.colour1), self:get_colour(styles.colour2), 2)
     end
   end
   for i,v in ipairs (styles.text) do
@@ -1986,7 +1986,7 @@ function Miniwin:create_window(height, width, x, y)
 
   local tx = x or self.x
   local ty = y or self.y
-  
+
   if WindowInfo(self.winid, 1) ~= nil then
     --print('window exists, resizing and repositioning')
     WindowResize(self.winid, width, height, self:get_colour("bg_colour"))
@@ -2020,6 +2020,15 @@ function Miniwin:create_window(height, width, x, y)
 
   self.dragscrolling = false
   WindowDeleteAllHotspots (self.winid)
+
+  self.hyperlink_functions['mousedown'] = {}
+  self.hyperlink_functions['cancelmousedown'] = {}
+  self.hyperlink_functions['mouseup'] = {}
+  self.hyperlink_functions['mouseover'] = {}
+  self.hyperlink_functions['cancelmouseover'] = {}
+  self.hyperlink_functions['releasecallback'] = {}
+  self.hyperlink_functions['movecallback'] = {}
+  self.hyperlink_functions['wheelcallback'] = {}
 
   if not self.shaded or self.shade_with_header then
     local htop = 0
@@ -2486,7 +2495,7 @@ function Miniwin:drawwin()
   self:post_create_window_internal()
   if self.activetab.startline ~= 1 then
     if not self:setstartline(self.activetab.startline) then
-      self:drawtext(self.activetab)    
+      self:drawtext(self.activetab)
     end
   end
 --  timer_end('miniwin:drawwin')
@@ -2691,8 +2700,8 @@ function Miniwin:tabbroadcast(flag, text)
     td.pluginid = GetPluginID()
     td.objectid = self.id
     td.name = self.cname
-    td.winid = self.winid    
-    td.text = ttext    
+    td.winid = self.winid
+    td.text = ttext
     if self.tabcolour then
       td.tabcolour = self.tabcolour
     end
@@ -2720,7 +2729,7 @@ end
 
 function Miniwin:OnPluginBroadcast(msg, id, name, text)
   super(self, msg, id, name, text)
-  
+
   if id == "eee96e233d11e6910f1d9e8e" and msg == -2 then
     if not self.disabled then
       self:tabbroadcast(true)
