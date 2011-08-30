@@ -99,6 +99,16 @@ Broadcasts
   </trigger>
   <trigger
    enabled="n"
+   regexp="y"
+   match="^You gain (.*) extra trains? daily blessing bonus.$"
+   name="blessingtrains"
+   script="levbonus"
+   group="linfo"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
    match="You gain * trains."
    name="pupgains"
    script="levelgains"
@@ -217,6 +227,7 @@ function resetinfo()
   levelinfo.pracs = 0
   levelinfo.trains = 0
   levelinfo.bonustrains = 0
+  levelinfo.blessingtrains = 0
 end
 
 function level ( name, line, wildcards )
@@ -253,6 +264,8 @@ end
 function levbonus (name, line, wildcards)
   if name == "bonustrains" then
     levelinfo.bonustrains = wildcards[1]
+  elseif name == 'blessingtrains' then
+    levelinfo.blessingtrains = tonumber(wildcards[1])
   elseif name == "bonusstat" then
     levelinfo[string.lower(string.sub(wildcards[1], 1, 3))] = 1
   elseif name == "finishlevel" and trim(line) == "" and tonumber(levelinfo.trains) > 0 then
