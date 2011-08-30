@@ -286,13 +286,13 @@ end
 
 function cmdCampaignxp(cmddict)
   tprint(cmddict)
-  phelper:plugin_header("Campaign XP")      
+  phelper:plugin_header("Campaign XP")
   if #cmddict == 0 then
     ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a xp amount")
     return true
   end
   if cmddict[1] == 'off' then
-    phelper:set('dontlevelnocampaign', false)    
+    phelper:set('dontlevelnocampaign', false)
     ColourNote(RGBColourToName(var.plugin_colour), "black", 'noexp will not be used when no campaign for a level')
     return
   end
@@ -307,10 +307,10 @@ function cmdCampaignxp(cmddict)
       return
     end
   end
-end 
+end
 
 function checkcampaign(level)
-  local res, clevel = CallPlugin("aaa66f81c50828bbbfda7100", "isoncp") 
+  local res, clevel = CallPlugin("aaa66f81c50828bbbfda7100", "isoncp")
   clevel = tonumber(clevel)
   if tonumber(char.status.level) == 200 or tonumber(char.status.level) == 201 then
     return
@@ -361,6 +361,7 @@ function OnPluginBroadcast (msg, id, name, text)
     savelevel(1)
     createmilestone()
   elseif id == "aaaf9a8dc92f8fc614663ac0" and msg == 1 then
+    sentwhois = false
     savewhois()
   elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
     savecp()
@@ -369,32 +370,32 @@ function OnPluginBroadcast (msg, id, name, text)
   elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
     savegq()
   elseif id == '3e7dedbe37e44942dd46d264' then
-    if text:find("char") then    
+    if text:find("char") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
       char = assert (loadstring ('return ' .. gmcparg or ""))()
-      
-      if char.status and char.status.state and tonumber(char.status.state) == 3 and db:getstat('totallevels') == nil then
+
+      if char.status and char.status.state and tonumber(char.status.state) == 3 and db:getstat('totallevels') == nil and sentwhois == false then
         sentwhois = true
         Execute('whois')
       end
-  
+
       if char.status and tonumber(char.status.tnl) < phelper.campaignxp then
-        if phelper.dontlevelnocampaign and 
+        if phelper.dontlevelnocampaign and
            not verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp')) and
-           not sentnoexp 
-           and not (tonumber(char.status.state) == 8) then 
+           not sentnoexp
+           and not (tonumber(char.status.state) == 8) then
           checkcampaign(tonumber(char.status.level))
         end
       end
     end
   elseif id == "aaa65ac8122d795ad5348dcd" then
     sentnoexp = false
-  elseif id == "aaa66f81c50828bbbfda7100" and 
-         msg == 1 and 
-         phelper.dontlevelnocampaign and 
+  elseif id == "aaa66f81c50828bbbfda7100" and
+         msg == 1 and
+         phelper.dontlevelnocampaign and
          verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp')) and
          not sentnoexp then
-         
+
     sentnoexp = true
     Send('noexp')
   end
@@ -423,7 +424,7 @@ function OnPluginEnable ()
   ldplugin('broadcast_noexp')
 
   phelper:OnPluginEnable()
-  
+
   if IsConnected() then
     res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
     char = assert (loadstring ('return ' .. gmcparg or ""))()
