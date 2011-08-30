@@ -38,15 +38,16 @@ tableids = {
   skills = 'sn',
 }
 
-
+--addleveltrainblessing
 function Statdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "\\stats.db"
-  self.version = 5
+  self.version = 6
   self.versionfuncs[2] = self.updatedblqp -- update double qp flag
   self.versionfuncs[3] = self.updatemobkills -- slit, assassinate, etc..
   self.versionfuncs[4] = self.addmobsblessing
   self.versionfuncs[5] = self.addquestblessing
+  self.versionfuncs[6] = self.addleveltrainblessing
   self:checkversion()
 end
 
@@ -365,7 +366,8 @@ function Statdb:checklevelstable()
         mv INT default 0,
         pracs INT default 0,
         trains INT default 0,
-        bonustrains INT default 0
+        bonustrains INT default 0,
+        blessingtrains INT default 0
       )]])
     end
     self:close('checkslevelstable')
@@ -401,7 +403,7 @@ function Statdb:savelevel( levelinfo, first )
     local stmt = self.db:prepare[[ INSERT INTO levels VALUES (NULL, :type, :newlevel, :str,
                                                           :int, :wis, :dex, :con,  :luc,
                                                           :time, -1, :hp, :mp, :mv, :pracs, :trains,
-                                                          :bonustrains) ]]
+                                                          :bonustrains, :blessingtrains) ]]
     stmt:bind_names(  levelinfo  )
     stmt:step()
     stmt:finalize()
@@ -1186,3 +1188,16 @@ function Statdb:addquestblessing()
     self:close('addquestblessing2')
   end
 end
+
+function Statdb:addleveltrainblessing()
+  if not self:checkfortable('levels') then
+    return
+  end
+  if self:open('addleveltrainblessing') then
+    self.db:exec([[ALTER TABLE levels ADD COLUMN blessingtrains INT DEFAULT 0;]])
+    self.db:exec([[UPDATE levels SET blessingtrains = 0;]])
+    --assert (self.db:exec("BEGIN TRANSACTION"))
+    self:close('addleveltrainblessing', true)
+  end
+end
+
