@@ -88,7 +88,7 @@ You currently display 30 lines per page.
 <triggers>
   <trigger
    script="whois_line1"
-   match="^\[\s*(\d+)\s+T(\d)\s+([-\w]+)\s+(\w+)\]\s+(\w+)\s*(.*)\s*\((\w+)\s+(\w+)\)$"
+   match="^\[.*\]\s+.*\s*\((\w+)\s+(\w+)\)$"
    enabled="n"
    regexp="y"
    ignore_case="y"
@@ -195,28 +195,30 @@ currentlevel = ""
 remorts = ""
 level = ""
 tier = ""
+char = {}
 whoisinfo = {}
 
 function whois_start(name, line, wildcards)
   whoisinfo = {}
+  whoisinfo["name"] = charname
   phelper:enabletriggroup("whois", true)
-  --SendNoEcho('nopretitle')
   Send(line)
 end
 
 function whois_line1(name, line, wildcards)
-  whoisinfo['level'] = wildcards[1]
-  whoisinfo['tiers'] = wildcards[2]
-  whoisinfo['race'] = string.lower(wildcards[3])
-  whoisinfo['name'] = wildcards[5]
-  whoisinfo['sex'] = string.lower(wildcards[7])
-  whoisinfo['subclass'] = string.lower(wildcards[8])
+  whoisinfo["name"] = char.base.name
+  whoisinfo['level'] = char.status.level
+  whoisinfo['tiers'] = char.base.tier
+  whoisinfo['race'] = string.lower(char.base.race)
+  whoisinfo['sex'] = string.lower(wildcards[1])
+  whoisinfo['subclass'] = string.lower(char.base.subclass)
   whoisinfo['powerupsall'] = 0
   whoisinfo['powerupsmort'] = 0
-  if wildcards[4] ~= "MLT" then
+  whoisinfo['remorts'] = char.base.remorts
+  if char.base.remorts == 1 then
     whoisinfo['remorts'] = 1
     whoisinfo['classes'] = {}
-    table.insert(whoisinfo['classes'], classabb[string.lower(wildcards[4])])
+    table.insert(whoisinfo['classes'], classabb[string.lower(char.base.class)])
   end
   check(EnableTrigger("whois_end", true))
 end
@@ -224,7 +226,6 @@ end
 function whois_line2(name, line, wildcards)
   tlist = utils.split(wildcards[1],"/")
   remorts = #tlist
-  whoisinfo['remorts'] = remorts
   whoisinfo['classes'] = {}
   for _,tclass in ipairs(tlist) do
     tclass = string.gsub (tclass, " ", "")
@@ -250,7 +251,6 @@ end
 function whois_end(name, line, wildcards)
   check(EnableTrigger("whois_end", false))
   phelper:enabletriggroup("whois", false)
-  --SendNoEcho('nopretitle')
   whoisinfo['totallevels'] = getactuallevel(whoisinfo.level, whoisinfo.remorts, whoisinfo.tiers)
   var.whoisinfo = serialize.save( "whoisinfo", whoisinfo )
   phelper:broadcast(1, var.whoisinfo)
@@ -263,6 +263,12 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char.base") then
+      local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+    end
+  end
 
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
@@ -279,8 +285,13 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
 
   phelper:OnPluginEnable()
+
+  if IsConnected() then
+    CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request char")
+  end
 end -- OnPluginEnable
 
 function OnPluginDisable ()
