@@ -1,28 +1,47 @@
 Bastmush Changes List
 
+r1469 snapshot
+ - lua/miniwin.lua
+    - bug fix: reset the hyperlink table when recreating the window
+        (hopefully this will decrease memory usage)
+ - miniwin_events.xml
+    - new: added some logic to switch between tabs after a quest is finished
+ - broadcast_level.xml
+    - new: add blessing trains to the broadcast
+ - lua/chardb.lua
+    - new: add blessing trains to the level table
+ - StatDB.xml
+    - bug fix: actually check the sentwhois flag so that multiple whoises
+        are not sent
+ - broadcast_whois.xml
+    - new: change the way the whois info is gotten, use gmcp whenever possible
+        and then parse the rest of it
+ - miniwin_spellup.xml
+    - bug fix: reset spellscombined before assigning it
+
 r1461 snapshot
   - StatMonitor.xml
-     - fix the way average qp per quest was being calculated
+     - bug fix: fix the way average qp per quest was being calculated
   - broadcast_level.xml
-     - now recognizes levels taken from a blessing
+     - new: now recognizes levels taken from a blessing
   - miniwin_stats.xml
-     - the time can now be moused over to show the day and time an item was
-       started and the day and time an item was finished
+     - new: the time can now be moused over to show the day and time an item was
+         started and the day and time an item was finished
 
 r1457 snapshot
  - miniwin_stats.xml
-    - change the kills double to be the same as quest
+    - new: change the kills double to be the same as quest
  - lua/chardb.lua
-    - added some stuff to know when a function open/closes the db
-    - fixed bug when updating quest table for blessings
+    - new: added some stuff to know when a function open/closes the db
+    - bug fix: fixed bug when updating quest table for blessings
  - lua/sqlitedb.lua
-    - added some stuff to know when a function open/closes the db
+    - new: added some stuff to know when a function open/closes the db
 
 r1454 snapshot
  - broadcast_kills
-    - fix for nil blessing xp
+    - bug fix: for when blessing xp is nil
  - broadcast_level
-    - someone changed the pup message
+    - bug fix: someone changed the pup message
 
 r1451 snapshot
  - bast_hunt
@@ -106,7 +125,7 @@ r1391 snapshot
     - new: plugin that checks for new releases
  - bast_hunt.xml
     - new: hunting plugin with both an autohunt and hunttrick option
-       ht <mob> or ha <mob>
+        ht <mob> or ha <mob>
  - bast_spellup.xml
     - bug fix: fixed error when adding blockers but the spell doesn't exist
     - bug fix: reset waiting when go from any other state to active
