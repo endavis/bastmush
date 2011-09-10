@@ -207,18 +207,18 @@ end
 
 function whois_line1(name, line, wildcards)
   whoisinfo["name"] = char.base.name
-  whoisinfo['level'] = char.status.level
-  whoisinfo['tiers'] = char.base.tier
+  whoisinfo['level'] = tonumber(char.status.level)
+  whoisinfo['tiers'] = tonumber(char.base.tier)
   whoisinfo['race'] = string.lower(char.base.race)
   whoisinfo['sex'] = string.lower(wildcards[1])
   whoisinfo['subclass'] = string.lower(char.base.subclass)
   whoisinfo['powerupsall'] = 0
   whoisinfo['powerupsmort'] = 0
-  whoisinfo['remorts'] = char.base.remorts
-  if char.base.remorts == 1 then
+  whoisinfo['remorts'] = tonumber(char.base.remorts)
+  if tonumber(char.base.remorts) == 1 then
     whoisinfo['remorts'] = 1
     whoisinfo['classes'] = {}
-    table.insert(whoisinfo['classes'], classabb[string.lower(char.base.class)])
+    table.insert(whoisinfo['classes'], string.lower(char.base.class))
   end
   check(EnableTrigger("whois_end", true))
 end
