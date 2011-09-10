@@ -16,9 +16,9 @@
 <description trim="y">
 <![CDATA[
 broadcast spell tags
-  
+
 change only to broadcast affected when get a stag
-  
+
 ]]>
 </description>
 </plugin>
@@ -49,11 +49,11 @@ change only to broadcast affected when get a stag
    sequence="10"
   >
   </trigger>
-  
+
 <!-- recoveries -->
   <trigger
    enabled="y"
-   regexp="y"   
+   regexp="y"
    match="^{recoveries\s*(.*)\s*noprompt}$"
    script="recoveries_redirect"
    omit_from_output="y"
@@ -71,7 +71,7 @@ change only to broadcast affected when get a stag
    sequence="10"
   >
   </trigger>
-  
+
 <!--  {affon}  -->
   <trigger
    name="affon"
@@ -126,8 +126,8 @@ change only to broadcast affected when get a stag
    regexp="y"
    sequence="100"
   >
-  </trigger>  
-  
+  </trigger>
+
  <trigger
    enabled="y"
    omit_from_output="y"
@@ -137,7 +137,7 @@ change only to broadcast affected when get a stag
    sequence="100"
   >
   </trigger>
- 
+
 </triggers>
 
 <script>
@@ -177,7 +177,7 @@ spells_count = 0
 state = -1
 
 function setclientspellup(spells)
-  local tspells = assert (loadstring ('return ' .. spells or ""))()  
+  local tspells = assert (loadstring ('return ' .. spells or ""))()
   for i,v in pairs(tspells) do
     tspells[i].clientspellup = 1
   end
@@ -187,7 +187,7 @@ function setclientspellup(spells)
 end
 
 function unsetclientspellup(spells)
-  local tspells = assert (loadstring ('return ' .. spells or ""))()  
+  local tspells = assert (loadstring ('return ' .. spells or ""))()
   for i,v in pairs(tspells) do
     tspells[i].clientspellup = 0
   end
@@ -210,19 +210,19 @@ function spelltag_on (name, line, wildcards)
     spells['affected'][tonumber(spelltag.sn)].finish = GetInfo(304) + tonumber(spelltag.duration)
     bcastnum = sbroadcast_table['affected']
     local sliststr = serialize.save_simple( spells['affected'] )
-    phelper:broadcast(bcastnum, sliststr, sliststr)     
+    phelper:broadcast(bcastnum, sliststr, sliststr)
     bcastnum = 1
   elseif name == 'recon' then
     recoveries['affected'][tonumber(spelltag.sn)] = copytable.shallow(recoveries['all'][tonumber(spelltag.sn)])
-    recoveries['affected'][tonumber(spelltag.sn)].duration = tonumber(spelltag.duration)    
+    recoveries['affected'][tonumber(spelltag.sn)].duration = tonumber(spelltag.duration)
     recoveries['affected'][tonumber(spelltag.sn)].finish = GetInfo(304) + tonumber(spelltag.duration)
     bcastnum = rbroadcast_table['affected']
     local sliststr = serialize.save_simple( recoveries['affected'] )
-    phelper:broadcast(bcastnum, sliststr, sliststr)     
+    phelper:broadcast(bcastnum, sliststr, sliststr)
     bcastnum = 3
   end
- 
-  
+
+
   phelper:broadcast(bcastnum, spelltags, spelltags)
 
 end -- spelltag_on
@@ -237,20 +237,20 @@ function spelltag_off (name, line, wildcards)
     spells['affected'][tonumber(spelltag.sn)] = nil
     bcastnum = sbroadcast_table['affected']
     local sliststr = serialize.save_simple( spells['affected'] )
-    phelper:broadcast(bcastnum, sliststr, sliststr)  
+    phelper:broadcast(bcastnum, sliststr, sliststr)
     bcastnum = 2
-    
+
   elseif name == 'recoff' then
     recoveries['affected'][tonumber(spelltag.sn)] = nil
     bcastnum = rbroadcast_table['affected']
     local sliststr = serialize.save_simple( recoveries['affected'] )
-    phelper:broadcast(bcastnum, sliststr, sliststr)     
+    phelper:broadcast(bcastnum, sliststr, sliststr)
     bcastnum = 4
   end
   phelper:broadcast(bcastnum, spelltags, spelltags)
-  
 
-  
+
+
 end -- spelltag_off
 
 function spell_failure (name, line, wildcards)
@@ -295,7 +295,7 @@ function broadcast_slist(slisttype)
       phelper:broadcast(bcastnum, sliststr, sliststr)
     else
       phelper:broadcast(bcastnum)
-    end      
+    end
 end
 
 function broadcast_recovery(slisttype)
@@ -305,7 +305,7 @@ function broadcast_recovery(slisttype)
       phelper:broadcast(bcastnum, sliststr, sliststr)
     else
       phelper:broadcast(bcastnum)
-    end      
+    end
 end
 
 function skillgain (name, line, wildcards)
@@ -321,7 +321,7 @@ function skillgain (name, line, wildcards)
     db:updateskills(tspell)
     broadcast_slist('learned')
   end
-    
+
 end -- skillgain
 
 -- parse spellheaders line, break into pieces
@@ -355,7 +355,7 @@ function spellheaders_redirect (name, line, wildcards, styles)
     else
       slisttype = trim(wildcards[1])
     end
-    spells[slisttype] = {}    
+    spells[slisttype] = {}
     spells_count = 0
     start = GetInfo(304)
     EnableTrigger ("multi_line_spellheaders", true)  -- capture subsequent lines
@@ -365,18 +365,18 @@ function spellheaders_redirect (name, line, wildcards, styles)
   if line == "{/spellheaders}" then
     EnableTrigger ("multi_line_spellheaders", false)  -- no more lines to go
     --ColourNote ("green", "", "Loaded information about " .. spells_count .. " " .. slisttype .. " spells.")
-    
+
     if slisttype == 'spellup' then
       db:updatespellup(spells['spellup'])
     end
-    
+
     if slisttype == 'all' then
       db:updateskills(spells['all'])
       broadcast_slist('all')
       broadcast_slist('affected')
-      broadcast_slist('learned')      
+      broadcast_slist('learned')
     else
-      broadcast_slist(slisttype)   
+      broadcast_slist(slisttype)
     end
 
     SaveState ()
@@ -386,7 +386,12 @@ function spellheaders_redirect (name, line, wildcards, styles)
   local sn, name, target, duration, percent, recovery, skilltype = parse_spell_line (line)
 
   if not sn then return end
-  
+
+  if not spells['all'] then
+    ColourNote ("white", "red", "The spells list was not read correctly from the mud, please reload this plugin with the command 'plugins reload bsst'")
+    return
+  end
+
   if spells['all'][sn] then
     spells[slisttype][sn] = spells['all'][sn]
     spells[slisttype][sn].duration = tonumber(duration)
@@ -403,7 +408,7 @@ function spellheaders_redirect (name, line, wildcards, styles)
         spellup = 0,
         } -- end spells table item
   end
-      
+
   if (slisttype == 'affected' or slisttype == 'all') and duration > 0 then
     spells['affected'][sn] = spells['all'][sn]
     spells['affected'][sn].finish = GetInfo(304) + tonumber(duration)
@@ -412,7 +417,7 @@ function spellheaders_redirect (name, line, wildcards, styles)
   if slisttype == 'spellup' then
     spells['all'][sn].spellup = 1
   end
-  
+
   spells_count = spells_count + 1
 
 end -- function spellheaders_redirect
@@ -434,14 +439,14 @@ function recoveries_redirect (name, line, wildcards, styles)
   -- start of recoveries list? remove old ones
   if name == "start_recoveries" then
     if trim(wildcards[1]) == "" then
-      slisttype = "all" 
+      slisttype = "all"
       recoveries['affected'] = {}
     else
       slisttype = trim(wildcards[1])
-    end  
+    end
     recoveries[slisttype] = {}
     recoveries_count = 0
-    start = GetInfo(304)    
+    start = GetInfo(304)
     EnableTrigger ("multi_line_recoveries", true)  -- capture subsequent lines
     return
   end -- if
@@ -451,11 +456,11 @@ function recoveries_redirect (name, line, wildcards, styles)
     --ColourNote ("green", "", "Loaded information about " .. recoveries_count .. " recoveries.")
     if slisttype == 'all' then
       db:updaterecoveries(recoveries['all'])
-      broadcast_recovery('affected')      
+      broadcast_recovery('affected')
     end
 
     SaveState ()
-    broadcast_recovery(slisttype)   
+    broadcast_recovery(slisttype)
     return
   end -- if
 
@@ -464,7 +469,7 @@ function recoveries_redirect (name, line, wildcards, styles)
   if not sn then
     return
   end -- not a valid spell name
-  
+
   recoveries[slisttype][sn] = { name = name, sn = tonumber(sn)  }
   if (slisttype == 'affected' or slisttype == 'all') and duration > 0 then
     recoveries['affected'][sn] = recoveries['all'][sn]
@@ -478,7 +483,7 @@ function get_spells(stype)
   local sliststr = serialize.save_simple( spells[stype] or {} )
   return sliststr
 end
- 
+
 function get_recoveries(stype)
   local sliststr = serialize.save_simple( recoveries[stype] or {} )
   return sliststr
@@ -491,7 +496,7 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   phelper:OnPluginBroadcast(msg, id, name, text)
-  
+
   if id == '3e7dedbe37e44942dd46d264' then
     if text:find("char") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
@@ -507,11 +512,11 @@ function OnPluginBroadcast (msg, id, name, text)
         if wasdisconnected then
           wasdisconnected = false
           request_slist()
-        end        
+        end
       end
     end
   elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 5 then
-    request_slist()    
+    request_slist()
   end
 end
 
@@ -529,12 +534,12 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
-  
+
   phelper:OnPluginEnable()
   if IsConnected() then
     request_slist()
   end
-  
+
 end -- OnPluginEnable
 
 function OnPluginDisable ()
@@ -542,7 +547,7 @@ function OnPluginDisable ()
     TelnetOptionOff (TELOPT_SPELLUP)
     TelnetOptionOff (TELOPT_SKILLGAINS)
   end -- if enabled
-  
+
   phelper:OnPluginDisable()
 end -- OnPluginDisable
 
@@ -550,7 +555,7 @@ function OnPluginConnect ()
   TelnetOptionOn (TELOPT_SPELLUP)
   TelnetOptionOn (TELOPT_SKILLGAINS)
 
-  
+
   phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
