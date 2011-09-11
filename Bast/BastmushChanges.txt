@@ -1,5 +1,18 @@
 Bastmush Changes List
 
+r1474 snapshot
+ - broadcast_spellsskills.xml
+    - new: notify user when the spells were not read correctly
+    - bug fix: should no longer crash if spells were not read correctly
+ - broadcast_whois.xml
+    - bug fix: single class chars correctly create the classes tables
+ - lua/miniwin.lua
+    - bug fix: don't send nil to strip_colour
+    - bug fix: Delete the window on disable
+ - broadcast_quest.xml
+    - bug fix: save the quest so that in case the client crashes the
+        starttime is still good
+
 r1469 snapshot
  - lua/miniwin.lua
     - bug fix: reset the hyperlink table when recreating the window
