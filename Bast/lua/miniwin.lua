@@ -1438,7 +1438,10 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
       elseif style.circleOp and style.circleOp.width then
          self:mdebug('Convert_Line: Got CircleOp')
       else
-        local tlength = WindowTextWidth (self.winid, font_id, strip_colours(style.text))
+        local tlength = 0
+        if style.text then
+          tlength = WindowTextWidth (self.winid, font_id, strip_colours(style.text))
+        end
         if style.start and style.start > start then
           linet.text[i].start = style.start
           start = style.start + tlength
@@ -1538,8 +1541,11 @@ function Miniwin:justify_line(line, top, linenum, ltype, linestart, lineend)
         v.stylelen = WindowTextWidth (self.winid, v.font_id, v.text,
                       v.textstart, v.texttop, 0, 0, self:get_colour(v.textcolour or self.text_colour))
     elseif v.textcolour ~= nil or v.nocolourconvert then
-        v.stylelen = WindowTextWidth (self.winid, v.font_id, strip_colours(v.text),
+        v.stylelen = 0
+        if v.text then
+          v.stylelen = WindowTextWidth (self.winid, v.font_id, strip_colours(v.text),
                       v.textstart, v.texttop, 0, 0, self:get_colour(v.textcolour))
+        end
     else
         v.stylelen = self:colourtext(v.font_id, v.text, v.textstart, v.texttop, 0, 0, nil, true)
     end
@@ -1909,8 +1915,11 @@ function Miniwin:displayline (styles)
                     v.textstart, v.texttop, 0, 0, tcolour)
       elseif v.textcolour ~= nil then
         local tcolour = self:get_colour(v.textcolour)
-        stylelen = WindowText (self.winid, v.font_id, strip_colours(v.text),
+        stylelen = 0
+        if v.text then
+          stylelen = WindowText (self.winid, v.font_id, strip_colours(v.text),
                     v.textstart, v.texttop, 0, 0, tcolour)
+        end
       else
         stylelen = self:colourtext(v.font_id, v.text, v.textstart, v.texttop, 0, 0)
       end
@@ -1982,7 +1991,6 @@ end -- displayline
 function Miniwin:create_window(height, width, x, y)
   local height = height or self.activetab.build_data.actualwindowheight
   local width = width or self.activetab.build_data.actualwindowwidth
-
 
   local tx = x or self.x
   local ty = y or self.y
@@ -2740,6 +2748,11 @@ function Miniwin:OnPluginBroadcast(msg, id, name, text)
       self:onSettingChange(newset)
     end
   end
+end
+
+function Miniwin:OnPluginDisable()
+  super(self)
+  WindowDelete(self.winid)
 end
 
 -- empty function for hyperlinks
