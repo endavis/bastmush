@@ -129,16 +129,18 @@ require "verify"
 require "ldplugin"
 
 onquest = false
-quest_info = {}
 timer  ={}
 
 function blankquest ()
-  quest_info = {}
+  local quest_info = {}
   quest_info.finishtime = -1
   quest_info.starttime = -1
   quest_info.mobname = ''
   quest_info.mobarea = ''
   quest_info.mobroom = ''
+  quest_info.totqp = 0
+  quest_info.daily = 0
+  quest_info.double = 0
   quest_info.qp = 0
   quest_info.gold = 0
   quest_info.tier = 0
@@ -148,6 +150,7 @@ function blankquest ()
   quest_info.trains = 0
   quest_info.pracs = 0
   quest_info.failed = 0
+  return quest_info
 end
 
 function quest_available (name, line, wildcards)
@@ -189,6 +192,18 @@ function update_timer()
   end
 end
 
+function formatquest()
+  if not next(phelper.tquest) then
+    return "None"
+  else
+    local ttable = {}
+    for i,v in pairs(phelper.tquest) do
+      tstring = tostring(i) .. " : " .. tostring(v)
+      table.insert(ttable, tstring)
+    end
+    return table.concat (ttable, "\n")
+  end
+end
 
 ]]>
 </script>
@@ -207,49 +222,52 @@ function OnPluginBroadcast (msg, id, name, text)
         phelper:broadcast(1)
         check(EnableTimer("questtimer", false))
       elseif stuff.action == 'start' then
-        blankquest()
-        quest_info['starttime'] = GetInfo(304)
-        quest_info['mobname'] = stuff.targ
-        quest_info['mobroom'] = stuff.room
-        quest_info['mobarea'] = stuff.area
-        var.quest_info = serialize.save( "quest_info", quest_info )
+        phelper.tquest = blankquest()
+        phelper.tquest['starttime'] = GetInfo(304)
+        phelper.tquest['mobname'] = stuff.targ
+        phelper.tquest['mobroom'] = stuff.room
+        phelper.tquest['mobarea'] = stuff.area
+        var.quest_info = serialize.save( "quest_info", phelper.tquest )
         phelper:broadcast(2, var.quest_info)
         questor_time (tonumber(stuff.timer))
+        SaveState()
       elseif stuff.action == 'killed' then
         check(EnableTimer("questtimer", false))
         phelper:broadcast(4)
       elseif stuff.action == 'comp' then
-        quest_info['qp'] = stuff.qp
-        quest_info['gold'] = stuff.gold
-        quest_info['tier'] = stuff.tierqp
-        quest_info['lucky'] = stuff.lucky
-        quest_info['mccp'] = stuff.mccp
-        quest_info['tp'] = stuff.tp
-        quest_info['trains'] = stuff.trains
-        quest_info['pracs'] = stuff.pracs
-        quest_info['finishtime'] = GetInfo(304)
-        quest_info['double'] = 0
-        quest_info['daily'] = 0
-        quest_info['totqp'] = tonumber(stuff.totqp)
+        phelper.tquest['qp'] = stuff.qp
+        phelper.tquest['gold'] = stuff.gold
+        phelper.tquest['tier'] = stuff.tierqp
+        phelper.tquest['lucky'] = stuff.lucky
+        phelper.tquest['mccp'] = stuff.mccp
+        phelper.tquest['tp'] = stuff.tp
+        phelper.tquest['trains'] = stuff.trains
+        phelper.tquest['pracs'] = stuff.pracs
+        phelper.tquest['finishtime'] = GetInfo(304)
+        phelper.tquest['double'] = 0
+        phelper.tquest['daily'] = 0
+        phelper.tquest['totqp'] = tonumber(stuff.totqp)
         if tonumber(stuff.double) == 1 then
-          quest_info['double'] = 1
+          phelper.tquest['double'] = 1
         end
         if tonumber(stuff.daily) == 1 then
-          quest_info['daily'] = 1
+          phelper.tquest['daily'] = 1
         end
-	var.quest_info = serialize.save( "quest_info", quest_info )
+	var.quest_info = serialize.save( "quest_info", phelper.tquest )
         phelper:broadcast(6, var.quest_info)
         when_required = os.time () + (30 * 60)  -- 30 mins to go
         onquest = false
         update_timer()
+        SaveState()
       elseif stuff.action == 'fail' then
         when_required = os.time () + (stuff.wait * 60)  -- 15 mins to go
         onquest = false
         update_timer()
-        quest_info.failed = 1
-        quest_info['finishtime'] = GetInfo(304)
-        var.quest_info = serialize.save( "quest_info", quest_info )
+        phelper.tquest.failed = 1
+        phelper.tquest['finishtime'] = GetInfo(304)
+        var.quest_info = serialize.save( "quest_info", phelper.tquest )
         phelper:broadcast(8, var.quest_info)
+        SaveState()
       elseif stuff.action == 'status' then
         if stuff.status == 'ready' then
           quest_available()
@@ -262,13 +280,14 @@ function OnPluginBroadcast (msg, id, name, text)
 
         else
           onquest = true
-          quest_info['starttime'] = GetInfo(304)
-          quest_info['mobname'] = stuff.targ
-          quest_info['mobroom'] = stuff.room
-          quest_info['mobarea'] = stuff.area
-          var.quest_info = serialize.save( "quest_info", quest_info )
+          phelper.tquest['starttime'] = GetInfo(304)
+          phelper.tquest['mobname'] = stuff.targ
+          phelper.tquest['mobroom'] = stuff.room
+          phelper.tquest['mobarea'] = stuff.area
+          var.quest_info = serialize.save( "quest_info", phelper.tquest )
           phelper:broadcast(2, var.quest_info)
           questor_time (tonumber(stuff.timer))
+          SaveState()
         end
       elseif stuff.action == 'reset' then
         when_required = os.time() + (stuff.timer * 60)
@@ -328,6 +347,8 @@ end -- function OnPluginSaveState
 
 phelper:set_default('cmd', 'bqu')
 phelper:set_default('plugin_colour', 'orange')
+
+phelper:add_setting('tquest', {type="table", help="the current/last quest", default=serialize.save_simple(blankquest()), sortlev=35, istable=true, formatfunc=formatquest, readonly=true})
 
 phelper:enable()
 
