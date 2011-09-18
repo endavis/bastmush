@@ -304,8 +304,6 @@ rewardtable = {
 mobsleft = {}
 gq_info = {}
 enemy = ""
-joined = false
-started = false
 
 function cleanname(name)
   return string.lower(string.gsub(name, ",", ""))
@@ -319,20 +317,20 @@ function gq_declared (name, line, wildcards)
 end
 
 function gq_join (name, line, wildcards)
-  joined = true
+  phelper:set('joined', true)
   mobsleft = {}
   gq_new()
   phelper:broadcast(2)
-  if started then
+  if phelper.started then
     gq_start()
   end
 end
 
 function gq_start (name, line, wildcards)
   check( EnableTrigger ("gq_start", false) )
-  started = true
-  if joined then
-    gq_info['starttime'] = GetInfo(304)  
+  phelper:set('started', true)
+  if phelper.joined then
+    gq_info['starttime'] = GetInfo(304)
     phelper:enabletriggroup("gqin", true)
 
     Execute("gq check")
@@ -411,7 +409,7 @@ function gq_none( name, line, wildcards)
   gq_info['finishtime'] = GetInfo(304)
   var.gq_info = serialize.save( "gq_info", gq_info )
   SaveState()
-  if joined then
+  if phelper.joined then
     phelper:broadcast(4, var.gq_info)
   end
   phelper:broadcast(5)
@@ -420,13 +418,13 @@ function gq_none( name, line, wildcards)
   phelper:enabletriggroup("gqin", false)
   phelper:enabletriggroup("gqrew", false)
   phelper:enabletriggroup("gqdone", false)
-  joined = false
-  started = false
+  phelper.joined = false
+  phelper.started = false
 end
 
 function gq_quit()
-  joined = false
-  started = false
+  phelper:set('joined', false)
+  phelper:set('started', false)
   phelper:broadcast(6)
 end
 
@@ -473,6 +471,8 @@ end
 
 function OnPluginInstall ()
 
+  assert (loadstring (GetVariable ("gq_info") or "")) ()
+
   phelper:OnPluginInstall()
 end -- OnPluginInstall
 
@@ -503,6 +503,7 @@ function OnPluginDisconnect ()
 end -- function OnPluginConnect
 
 function OnPluginSaveState ()
+  var.gq_info = serialize.save( "gq_info", gq_info )
 
   phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
@@ -515,6 +516,9 @@ end -- function OnPluginSaveState
 
 phelper:set_default('cmd', 'bgq')
 phelper:set_default('plugin_colour', 'orange')
+
+phelper:add_setting('started', {help="true if a gquest has started, false otherwise", type="bool", default=false, readonly=false})
+phelper:add_setting('joined', {help="true if joined a gquest, false otherwise", type="bool", default=false, readonly=true})
 
 phelper:enable()
 
