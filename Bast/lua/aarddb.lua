@@ -11,24 +11,24 @@ function Aarddb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "/aardinfo.db"
   self.version = 2
-  self.versionfuncs[2] = self.resetplanestable  
+  self.versionfuncs[2] = self.resetplanestable
   if not self:checkplanespoolstable() then
     self:createplanespoolstable(planespools)
   end
   if not self:checkplanesmobstable() then
     self:createplanesmobstable(planesmobs)
-  end  
-  self:checkversion()  
+  end
+  self:checkversion()
 end
 
 function Aarddb:resetplanestable()
   if self:open() then
-    self.db:exec([[DROP TABLE IF EXISTS planespools;]]) 
-    self.db:exec([[DROP TABLE IF EXISTS planesmobs;]])     
+    self.db:exec([[DROP TABLE IF EXISTS planespools;]])
+    self.db:exec([[DROP TABLE IF EXISTS planesmobs;]])
     self:createplanespoolstable(planespools)
-    self:createplanesmobstable(planesmobs)    
+    self:createplanesmobstable(planesmobs)
     self:close()
-  end 
+  end
 end
 
 function Aarddb:checkplanespoolstable()
@@ -62,7 +62,7 @@ end
 function Aarddb:createplanespoolstable(pools)
   self:checkplanespoolstable()
   self:open()
-  self.db:exec([[BEGIN TRANSACTION;]])  
+  self.db:exec([[BEGIN TRANSACTION;]])
   local stmt = self.db:prepare[[ INSERT INTO planespools VALUES (NULL, :poolname,
                                                           :poolnum) ]]
   for _,item in pairs(pools) do
@@ -71,7 +71,7 @@ function Aarddb:createplanespoolstable(pools)
     stmt:reset()
   end
   stmt:finalize()
-  self.db:exec([[COMMIT;]])  
+  self.db:exec([[COMMIT;]])
   self:close()
 
 end
@@ -79,7 +79,7 @@ end
 function Aarddb:createplanesmobstable(mobs)
   self:checkplanesmobstable()
   self:open()
-  self.db:exec([[BEGIN TRANSACTION;]])  
+  self.db:exec([[BEGIN TRANSACTION;]])
   local stmt = self.db:prepare[[ INSERT INTO planesmobs VALUES (NULL, :name,
                                                           :pool) ]]
   for _,item in pairs(mobs) do
@@ -88,7 +88,7 @@ function Aarddb:createplanesmobstable(mobs)
     stmt:reset()
   end
   stmt:finalize()
-  self.db:exec([[COMMIT;]])  
+  self.db:exec([[COMMIT;]])
   self:close()
 
 end
@@ -104,32 +104,140 @@ function Aarddb:planeslookup(mob)
   return tmobs
 end
 
-
 function Aarddb:checkareastable()
   self:open()
   if not self:checkfortable('areas') then
     self.db:exec([[CREATE TABLE areas(
       area_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      keyword TEXT UNIQUE NOT NULL,
       name TEXT UNIQUE NOT NULL,
-      from INT default 1,
-      to INT default 1,
-      lock INT default 0,
-      author TEXT,
-      speedwalk TEXT,
-      keyword TEXT
+      afrom INT default 1,
+      ato INT default 1,
+      alock INT default 0,
+      builder TEXT,
+      speedwalk TEXT
      )]])
   end
   self:close()
 end
 
+function Aarddb:getallareas()
+  local areasbykeyword = {}
+  self:checkareastable()
+  if self:open() then
+    for a in self.db:nrows( "SELECT * FROM areas" ) do
+      areasbykeyword[a.keyword] = a
+    end
+    self:close()
+  end
+  return areasbykeyword
+end
+
+function Aarddb:getallareasbyname()
+  local areas = {}
+  self:checkareastable()
+  if self:open() then
+    for a in self.db:nrows( "SELECT * FROM areas" ) do
+      areas[a.name] = a
+    end
+    self:close()
+  end
+  return areas
+end
+
+function Aarddb:lookupareasbyname(area)
+  local areas = {}
+  if self:open() and self:checkfortable('areas')  then
+    for a in self.db:nrows( "SELECT * FROM areas WHERE name LIKE '%" .. area .. "%'" ) do
+      table.insert(areas, a)
+    end
+    self:close()
+  end
+  return areas
+end
+
+function Aarddb:lookupareasbykeyword(keyword)
+  local areas = {}
+  if self:open() and self:checkfortable('areas')  then
+    for a in self.db:nrows( "SELECT * FROM areas WHERE keyword LIKE '%" .. keyword .. "%'" ) do
+      table.insert(areas, a)
+    end
+    self:close()
+  end
+  return areas
+end
+
+function Aarddb:lookupareasbylevel(level)
+  local areas = {}
+  if self:open() and self:checkfortable('areas') then
+    for a in self.db:nrows( "SELECT * FROM areas WHERE afrom < " .. level .. " and ato > " .. level .. ";" ) do
+      table.insert(areas, a)
+    end
+    self:close()
+  end
+  return areas
+end
+
 function Aarddb:addareas(area_list)
   self:checkareastable()
-  self:open()
-  local stmt = self.db:prepare[[ INSERT INTO areas VALUES (NULL, :name, :from,
-                                                        :to, :lock, :author, :speedwalk, :keyword) ]]
+  if self:open() then
+    local allareas = self:getallareas()
 
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare[[ INSERT INTO areas VALUES (NULL, :keyword, :name, :afrom,
+                                                          :ato, :alock, :builder, :speedwalk) ]]
+    local stmtupd = self.db:prepare[[ UPDATE areas set name = :name, afrom = :afrom,
+                                                          ato = :ato, alock = :alock, builder = :builder,
+                                                          speedwalk = :speedwalk where keyword = :keyword]]
 
-  self:close()
+    for i,v in pairs(area_list) do
+      if v.keyword ~= nil and allareas[v.keyword] == nil then
+        stmt:bind_names (v)
+        stmt:step()
+        stmt:reset()
+      elseif v.keyword ~= nil then
+        stmtupd:bind_names(v)
+        stmtupd:step()
+        stmtupd:reset()
+      end
+    end
+    stmt:finalize()
+    stmtupd:finalize()
+    assert (self.db:exec("COMMIT"))
+    self:close()
+  end
+end
+
+function Aarddb:updatebuilders(area_list)
+  self:checkareastable()
+  if self:open() then
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare[['update areas set author=:author where keyword=:keyword;']]
+    for i,v in ipairs(area_list) do
+      stmt:bind_names (v)
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    assert (self.db:exec("COMMIT"))
+    self:close()
+  end
+end
+
+function Aarddb:updatespeedwalks(area_list)
+  self:checkareastable()
+  if self:open() then
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare[['update areas set speedwalk=:speedwalk where keyword=:keyword;']]
+    for i,v in ipairs(area_list) do
+      stmt:bind_names (v)
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    assert (self.db:exec("COMMIT"))
+    self:close()
+  end
 end
 
 function Aarddb:checkhelpstable()
@@ -217,7 +325,7 @@ function Aarddb:hashelp(keyword)
 end
 
 function Aarddb:gethelp(thelp)
-  if not self:checkfortable('helplookup') then  
+  if not self:checkfortable('helplookup') then
      return false
   end
   local help = {}
