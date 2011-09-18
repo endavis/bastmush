@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- Saved on Friday, May 08, 2009, 10:32 AM -->
+<!-- MuClient version 4.40 -->
+<!-- $Id$ -->
+
+<muclient>
+<plugin
+   name="xareaDB"
+   author="Bast"
+   id="aaa3cbbda10fa11787c6b438"
+   language="Lua"
+   purpose="add areas to a sqlite db"
+   save_state="y"
+   date_written="2009-05-08 10:31:50"
+   requires="4.73"
+   version="6.1"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+]]>
+</description>
+
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Triggers  -->
+
+<triggers>
+  <trigger
+   enabled="n"
+   match="^.*$"
+   sequence="103"
+   regexp="y"
+   omit_from_output="y"
+   group="areareg"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^From To   Lock  (?&lt;fourth&gt;.*)[ ]+Area Name[ ]*$"
+   sequence="99"
+   script="parseheaders"
+   regexp="y"
+   omit_from_output="y"
+   group="areareg"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^\s*(?&lt;from&gt;\d+)\s+(?&lt;to&gt;\d+)\s+(?&lt;lock&gt;\d+)\s+(?&lt;fourth&gt;.+?)(  )+?(?&lt;name&gt;.+?)\s*$"
+   sequence="100"
+   script="parsearea"
+   regexp="y"
+   omit_from_output="y"
+   group="areareg"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^\s*(?&lt;from&gt;\d+)\s+(?&lt;to&gt;\d+)\s+(?&lt;fourth&gt;.+?)(  )+?(?&lt;name&gt;.+?)\s*$"
+   sequence="101"
+   script="parsearea"
+   regexp="y"
+   name="nolock"
+   omit_from_output="y"
+   group="areareg"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="^---------------------------------------------------------------$"
+   sequence="101"
+   script="areas_done"
+   regexp="y"
+   omit_from_output="y"
+   group="area"
+  >
+  </trigger>
+</triggers>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "var"
+require "pluginhelper"
+require "serialize"
+require "commas"
+require "verify"
+require "tprint"
+require "copytable"
+require "aarddb"
+
+aarddb = Aarddb:new{}
+
+areasbykeyword = aarddb:getallareas()
+areas = {}
+
+fourthheader = ''
+
+function get_areas()
+  areas = {}
+  phelper:enabletriggroup("areareg", true)
+  phelper:enabletriggroup("area", true)
+  SendNoEcho('areas keywords')
+end
+
+function areas_done(name, line, wildcards)
+  phelper:enabletriggroup("areareg", false)
+  phelper:enabletriggroup("area", false)
+  if next(areas) then
+    aarddb:addareas(areas)
+  end
+end
+
+function new_area()
+  local tarea = {}
+  tarea['name'] = ""
+  tarea['keyword'] = ""
+  tarea['ato'] = -1
+  tarea['afrom'] = -1
+  tarea['alock'] = -1
+  tarea['speedwalk'] = ""
+  tarea['builder'] = ""
+  return tarea
+end
+
+function parseheaders(name, line, wildcards)
+  fourthheader = string.lower(trim(wildcards['fourth']))
+end
+
+function parsearea (name, line, wildcards)
+  local name = trim(wildcards.name)
+  area = new_area()
+  area.name = name
+  area.ato = wildcards.to
+  area.afrom = wildcards.from
+  area[fourthheader] = wildcards['fourth']
+  if area.speedwalk == nil then
+    area.speedwalk = ''
+  end
+  if area.keyword == nil then
+    area.keyword = ''
+  end
+  if area.builder == nil then
+    area.builder = ''
+  end
+  if name == "nolock" then
+    area.alock = 0
+  else
+    area.alock = wildcards.lock
+  end
+  if area.keyword ~= '' then
+    areas[area.keyword] = area
+  end
+end
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  if not next(areasbykeyword) then
+    get_areas()
+  end
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'bkarea')
+phelper:set_default('plugin_colour', 'cyan')
+
+phelper:add_cmd('refresh', {func=get_areas, help="refresh areas"})
+
+phelper:enable()
+
+]]>
+
+</script>
+</muclient>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- Saved on Friday, May 08, 2009, 10:32 AM -->
+<!-- MuClient version 4.40 -->
+<!-- $Id$ -->
+
+<muclient>
+<plugin
+   name="Area_Lookup"
+   author="Bast"
+   id="aaa3cbbce15fa11787c6b438"
+   language="Lua"
+   purpose="lookup areas from the db"
+   save_state="y"
+   date_written="2009-05-08 10:31:50"
+   requires="4.73"
+   version="6.1"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+]]>
+</description>
+
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Triggers  -->
+
+<triggers>
+
+</triggers>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "var"
+require "pluginhelper"
+require "serialize"
+require "commas"
+require "verify"
+require "tprint"
+require "copytable"
+require "aarddb"
+
+aarddb = Aarddb:new{}
+
+function print_area(area)
+  ColourNote("orange", "black", string.format("%-5d %-5d %-15s %-30s", area.afrom, area.ato, area.keyword, area.name))
+end
+
+function print_area_header()
+  ColourNote("orange", "black", string.format("%-5s %-5s %-15s %-30s", "From", "To", "Keyword", "Name"))
+  ColourNote("orange", "black", string.rep('-', 50))
+
+end
+
+function get_areabykeyword(cmddict)
+  if #cmddict == 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a keyword to lookup")
+    return true
+  end
+  local keyword = cmddict[1]
+  local tareas = aarddb:lookupareasbykeyword(keyword)
+
+  print_area_header()
+  for i,v in tableSort(tareas, "afrom") do
+    print_area(v)
+  end
+
+  ColourNote("", "", "")
+end
+
+function get_areabyname(cmddict)
+  if #cmddict == 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a name to lookup")
+    return true
+  end
+  local name = strjoin(' ', cmddict)
+  local tareas = aarddb:lookupareasbyname(name)
+
+  print_area_header()
+  for i,v in tableSort(tareas, "afrom") do
+    print_area(v)
+  end
+
+  ColourNote("", "", "")
+end
+
+function get_areabylevel(cmddict)
+  if #cmddict == 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a name to lookup")
+    return true
+  end
+  local level = cmddict[1]
+  local tareas = aarddb:lookupareasbylevel(level)
+
+  print_area_header()
+  for i,v in tableSort(tareas, "afrom") do
+    print_area(v)
+  end
+
+  ColourNote("", "", "")
+end
+
+function get_allareas(cmddict)
+  local tareas = aarddb:getallareas()
+
+  print_area_header()
+  for i,v in tableSort(tareas, "afrom") do
+    print_area(v)
+  end
+
+  ColourNote("", "", "")
+end
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin('areaDB')
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'larea')
+phelper:set_default('plugin_colour', 'cyan')
+
+phelper:add_cmd('keyword', {func=get_areabykeyword, help="get areas by keyword"})
+phelper:add_cmd('name', {func=get_areabyname, help="get areas by name"})
+phelper:add_cmd('level', {func=get_areabylevel, help="get areas by level"})
+phelper:add_cmd('all', {func=get_allareas, help="get all areas"})
+
+phelper:enable()
+
+]]>
+
+</script>
+</muclient>
