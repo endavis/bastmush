@@ -103,9 +103,20 @@ function formatpup()
 
   local tmsg = { colourwrap("Gained a ") .. colourwrap(levelgains.type, 'stat') ..colourwrap(": ") }
   table.insert(tmsg, colourwrap(levelgains.trains, 'stat'))
+  local totaltrains = tonumber(levelgains.trains)
   if levelgains.bonustrains and tonumber(levelgains.bonustrains) > 0 then
     table.insert(tmsg, colourwrap('+'))
     table.insert(tmsg, colourwrap(levelgains.bonustrains, 'stat'))
+    totaltrains = totaltrains + tonumber(levelgains.bonustrains)
+  end
+  if levelgains.blessingtrains and tonumber(levelgains.blessingtrains) > 0 then
+    table.insert(tmsg, colourwrap('+'))
+    table.insert(tmsg, colourwrap(levelgains.blessingtrains, 'stat'))
+    totaltrains = totaltrains + tonumber(levelgains.blessingtrains)
+  end
+  if totaltrains ~= tonumber(levelgains.trains) then
+    table.insert(tmsg, colourwrap(' = '))
+    table.insert(tmsg, colourwrap(totaltrains, 'stat'))
   end
   table.insert( tmsg, colourwrap(' trains '))
   local statcount = 0
@@ -187,9 +198,20 @@ function formatlevel()
   table.insert( tmsg, colourwrap(levelgains.mv, 'stat') )
   table.insert( tmsg, colourwrap("mvs ") )
   table.insert(tmsg, colourwrap(levelgains.trains, 'stat'))
+  local totaltrains = tonumber(levelgains.trains)
   if levelgains.bonustrains and tonumber(levelgains.bonustrains) > 0 then
     table.insert(tmsg, colourwrap('+'))
     table.insert(tmsg, colourwrap(levelgains.bonustrains, 'stat'))
+    totaltrains = totaltrains + tonumber(levelgains.bonustrains)
+  end
+  if levelgains.blessingtrains and tonumber(levelgains.blessingtrains) > 0 then
+    table.insert(tmsg, colourwrap('+'))
+    table.insert(tmsg, colourwrap(levelgains.blessingtrains, 'stat'))
+    totaltrains = totaltrains + tonumber(levelgains.blessingtrains)
+  end
+  if totaltrains ~= tonumber(levelgains.trains) then
+    table.insert(tmsg, colourwrap(' = '))
+    table.insert(tmsg, colourwrap(totaltrains, 'stat'))
   end
   table.insert( tmsg, colourwrap(' trains '))
   table.insert( tmsg, colourwrap(levelgains.pracs, 'stat') )
