@@ -170,23 +170,38 @@ function build_level_window()
     else
       stats.levels['qpave'] = 0
     end
-    for a in db.db:rows("SELECT AVG(trains), AVG(bonustrains), SUM(trains + bonustrains), SUM(pracs), COUNT(*) FROM levels where type = 'level'") do
-      stats.levels['avetrains'] = a[1] or 0
-      stats.levels['avebonustrains'] = a[2] or 0
-      stats.levels['totaltrains'] = a[3] or 0
-      stats.levels['totalpracs'] = a[4] or 0
-      stats.levels['indb'] = a[5] or 0
+    for a in db.db:nrows([[SELECT AVG(trains) as avetrains,
+                                 AVG(bonustrains) as avebonustrains,
+                                 AVG(blessingtrains) as aveblessingtrains,
+                                 SUM(trains + bonustrains + blessingtrains) as totaltrains,
+                                 SUM(pracs) as totalpracs,
+                                 COUNT(*) as indb
+                                 FROM levels where type = 'level']]) do
+      stats.levels['avetrains'] = a['avetrains'] or 0
+      stats.levels['avebonustrains'] = a['avebonustrains'] or 0
+      stats.levels['aveblessingtrains'] = a['aveblessingtrains'] or 0
+      stats.levels['totaltrains'] = a['totaltrains'] or 0
+      stats.levels['totalpracs'] = a['totalpracs'] or 0
+      stats.levels['avetotaltrains'] = tonumber(stats.levels['avetrains']) + tonumber(stats.levels['avebonustrains']) + tonumber(stats.levels['aveblessingtrains'])
+      stats.levels['indb'] = a['indb'] or 0
     end
 
     for a in db.db:rows("SELECT AVG(finishtime - starttime) FROM levels where type = 'level' and finishtime <> -1" ) do
       stats.levels['avetime'] = a[1] or 0
     end
 
-    for a in db.db:rows("SELECT AVG(trains), AVG(bonustrains), SUM(trains + bonustrains), COUNT(*) FROM levels where type = 'pup'") do
-      stats.pups['avetrains'] = a[1] or 0
-      stats.pups['avebonustrains'] = a[2] or 0
-      stats.pups['totaltrains'] = a[3] or 0
-      stats.pups['indb'] = a[4] or 0
+    for a in db.db:nrows([[SELECT AVG(trains) as avetrains,
+                                 AVG(bonustrains) as avebonustrains,
+                                 AVG(blessingtrains) as aveblessingtrains,
+                                 SUM(trains + bonustrains + blessingtrains) as totaltrains,
+                                 COUNT(*) as indb
+                                 FROM levels where type = 'pup']]) do
+      stats.pups['avetrains'] = a['avetrains'] or 0
+      stats.pups['avebonustrains'] = a['avebonustrains'] or 0
+      stats.pups['aveblessingtrains'] = a['aveblessingtrains'] or 0
+      stats.pups['totaltrains'] = a['totaltrains'] or 0
+      stats.pups['avetotaltrains'] = tonumber(stats.pups['avetrains']) + tonumber(stats.pups['avebonustrains']) + tonumber(stats.pups['aveblessingtrains'])
+      stats.pups['indb'] = a['indb'] or 0
     end
 
     for a in db.db:rows("SELECT AVG(finishtime - starttime) FROM levels where type = 'pup' and finishtime <> -1" ) do
@@ -220,9 +235,14 @@ function build_level_window()
           tonumber(string.format("%.3f", stats.pups['avebonustrains'] or 0)))
       table.insert(allstyles, linestyles)
 
+      local linestyles = format_row("Ave Bls Trains",
+          tonumber(string.format("%.3f", stats.levels['aveblessingtrains'] or 0)),
+          tonumber(string.format("%.3f", stats.pups['aveblessingtrains'] or 0)))
+      table.insert(allstyles, linestyles)
+
       local linestyles = format_row("Ave Overall",
-          tonumber(string.format("%.3f", tonumber(stats.levels['avetrains'] or 0) + tonumber(stats.levels['avebonustrains'] or 0))),
-          tonumber(string.format("%.3f", tonumber(stats.pups['avetrains'] or 0) + tonumber(stats.pups['avebonustrains'] or 0))))
+          tonumber(string.format("%.3f", stats.levels['avetotaltrains'])),
+          tonumber(string.format("%.3f", stats.pups['avetotaltrains'])))
       table.insert(allstyles, linestyles)
 
       local linestyles = format_row("Total Pracs", stats.levels['totalpracs'], "")
@@ -273,7 +293,7 @@ function build_level_window()
       style.text = string.format("%2s ", "BT")
       style.textcolour = "lightseagreen"
       style.mouseup = nofunc
-      style.hint = "Bonus Trains"
+      style.hint = "Bonus + Blessing Trains"
       table.insert(lstyle, style)
 
       local style = {}
@@ -381,8 +401,19 @@ function build_level_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2s ", tostring(v.bonustrains))
+        style.text = string.format("%2s ", tostring(v.bonustrains + v.blessingtrains))
         style.textcolour = "white"
+        style.mouseup = nofunc
+        style.hint = ""
+        if v.bonustrains > 0 then
+          style.hint = style.hint .. " " .. tostring(v.bonustrains) .. " Bonus"
+        end
+        if v.blessingtrains > 0 then
+          if style.hint ~= "" then
+            style.hint = style.hint .. ' + '
+          end
+          style.hint = style.hint .. " " .. tostring(v.blessingtrains) .. " Blessing"
+        end
         table.insert(lstyle, style)
 
         local style = {}
