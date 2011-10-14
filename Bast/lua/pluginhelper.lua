@@ -310,11 +310,11 @@ end -- wheelmove
 
 function Pluginhelper:OnPluginBroadcast(msg, id, name, text)
 --  mdebug('OnPluginBroadcast')
-  
+
   for i,v in pairs(self.pobjects) do
     v:OnPluginBroadcast(msg, id, name, text)
   end
-  
+
 end
 
 --function Pluginhelper:__newindex(name, val)
@@ -331,10 +331,10 @@ function Pluginhelper:OnPluginInstall()
 
   for i,v in pairs(self.pobjects) do
     v:OnPluginInstall()
-  end    
-  
+  end
+
   OnPluginEnable ()  -- do initialization stuff
-  
+
 end
 
 function Pluginhelper:OnPluginClose()
@@ -342,7 +342,7 @@ function Pluginhelper:OnPluginClose()
 
   for i,v in pairs(self.pobjects) do
     v:OnPluginClose()
-  end  
+  end
 
   OnPluginDisable()
 end
@@ -351,12 +351,12 @@ function Pluginhelper:OnPluginEnable()
   self:mdebug('OnPluginEnable')
 
   ldplugin ("pluginlist", "e8520531407cb4281bea544e")
-  
+
   -- if we are connected when the plugin loads, it must have been reloaded whilst playing
   for i,v in pairs(self.pobjects) do
     v:OnPluginEnable()
   end
-  
+
   if IsConnected () then
     OnPluginConnect ()
   end -- if already connected
@@ -373,12 +373,12 @@ function Pluginhelper:OnPluginDisable()
 
   for i,v in pairs(self.pobjects) do
     v:OnPluginDisable()
-  end  
-  
+  end
+
   if IsConnected() then
     OnPluginDisconnect()
   end
-  
+
   self:broadcast(-1)
 end
 
@@ -387,7 +387,7 @@ function Pluginhelper:OnPluginConnect()
 
   for i,v in pairs(self.pobjects) do
     v:OnPluginConnect()
-  end  
+  end
 end
 
 function Pluginhelper:OnPluginDisconnect()
@@ -395,7 +395,7 @@ function Pluginhelper:OnPluginDisconnect()
 
   for i,v in pairs(self.pobjects) do
     v:OnPluginDisconnect()
-  end    
+  end
 end
 
 function Pluginhelper:OnPluginSaveState()
@@ -405,10 +405,10 @@ function Pluginhelper:OnPluginSaveState()
   --]]
   self:savestate(true)
   SetVariable ("enabled", tostring (GetPluginInfo (GetPluginID (), 17)))
-  
+
   for i,v in pairs(self.pobjects) do
     v:OnPluginSaveState()
-  end  
+  end
 
 end
 
@@ -425,10 +425,10 @@ end
 
 function Pluginhelper:showhelptext()
 
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Name'), 
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Name'),
              RGBColourToName(var.plugin_colour), "black", GetPluginName())
 
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Author'), 
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Author'),
              RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID(), 2))
 
   local version = 'Unknown'
@@ -436,44 +436,44 @@ function Pluginhelper:showhelptext()
   if GetPluginID() == "e8520531407cb4281bea544e" then
     version = getversion()
   else
-    throwaway, version = CallPlugin("e8520531407cb4281bea544e", "getversion")  
+    throwaway, version = CallPlugin("e8520531407cb4281bea544e", "getversion")
   end
-  
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Bastmush Version'), 
+
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Bastmush Version'),
              RGBColourToName(var.plugin_colour), "black", version)
 
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Internal Revision'), 
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Internal Revision'),
              RGBColourToName(var.plugin_colour), "black", tostring(internalrevision))
-   
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Purpose'), 
+
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Purpose'),
              RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID(), 8))
 
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Alias'), 
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Alias'),
              RGBColourToName(var.plugin_colour), "black", self.cmd)
 
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'MUSHclient version'), 
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'MUSHclient version'),
              RGBColourToName(var.plugin_colour), "black", GetInfo(72))
 
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Mem Usage (KB)'), 
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Mem Usage (KB)'),
              RGBColourToName(var.plugin_colour), "black", string.format('%0d KB', collectgarbage('count')))
-  
+
   ColourNote(RGBColourToName(var.plugin_colour), "black", "")
   ColourNote(RGBColourToName(var.plugin_colour), "black", "Commands")
-  
+
   for i,v in tableSort(self.cmds_table) do
     if v.help ~= '' then
       ColourNote("white", "black", string.format("%-15s : ", i),
                  RGBColourToName(var.plugin_colour), "black", v.help)
     end
-  end  
+  end
 
   ColourNote("white", "black", "")
   ColourTell(RGBColourToName(var.plugin_colour), "black", 'Objects: ')
   for i,v in pairs(self.pobjects) do
     ColourTell("white", "black", ' ' .. i .. ' ')
   end
-  ColourNote("white", "black", "")  
-  
+  ColourNote("white", "black", "")
+
   if next(self.aardhelps) then
     format_aard_helps_text(self.aardhelps)
   end
@@ -481,11 +481,11 @@ function Pluginhelper:showhelptext()
   if next(self.aardcmds) then
     format_aard_cmds_text(self.aardcmds)
   end
-  
+
   if next(self.links) then
     format_hyperlinks_text(self.links)
   end
-  ColourNote("white", "black", "")  
+  ColourNote("white", "black", "")
 
 end
 
@@ -504,14 +504,14 @@ function format_hyperlinks_text(t)
     ColourTell(RGBColourToName(var.plugin_colour), "black", '[')
     Hyperlink(v.url, "Link", v.tip, 0xE16941, GetInfo(271), true)
     ColourTell(RGBColourToName(var.plugin_colour), "black", ']  ')
-    ColourTell("white", "black", v.text)    
-    Tell("\n")    
+    ColourTell("white", "black", v.text)
+    Tell("\n")
   end
 
 end
 
 function format_aard_helps_text(t)
-  
+
   ColourNote("white", "black", "")
   ColourNote("magenta", "black", "Aardwolf help files related to the plugin:")
   local count = 0
@@ -522,12 +522,12 @@ function format_aard_helps_text(t)
     end
     ColourTell('white', 'black', ' ' .. v)
   end
-  Tell("\n")    
+  Tell("\n")
 
 end
 
 function format_aard_cmds_text(t)
-  
+
   ColourNote("white", "black", "")
   ColourNote("magenta", "black", "Aardwolf commands related to the plugin:")
   local count = 0
@@ -538,7 +538,7 @@ function format_aard_cmds_text(t)
     end
     ColourTell('white', 'black', ' ' .. v)
   end
-  Tell("\n")    
+  Tell("\n")
 
 end
 
@@ -563,9 +563,9 @@ function Pluginhelper:createhelp()
   if GetPluginID() == "e8520531407cb4281bea544e" then
     version = getversion()
   else
-    throwaway, version = CallPlugin("e8520531407cb4281bea544e", "getversion")  
+    throwaway, version = CallPlugin("e8520531407cb4281bea544e", "getversion")
   end
-    
+
   local style = {}
   style.text = string.format('%-20s : ', 'Bastmush Version')
   table.insert(header, {style, {text=tostring(version), textcolour=var.plugin_colour}, backcolour="bg_colour"})
@@ -590,8 +590,8 @@ function Pluginhelper:createhelp()
 
   local style = {}
   style.text = string.format('%-20s : ', 'Mem Usage (KB)')
-  table.insert(header, {style, {text=string.format("%0d", getmemoryusage())}, backcolour="bg_colour"})  
-  
+  table.insert(header, {style, {text=string.format("%0d", getmemoryusage())}, backcolour="bg_colour"})
+
   local style = {}
   style.text = ' '
   table.insert(header, {style, backcolour=var.plugin_colour})
@@ -893,7 +893,7 @@ function format_time(length)
     table.insert( tmsg, "m:" )
   end
   table.insert( tmsg, string.format( "%02d", secs ) )
-  table.insert( tmsg, "s " )           
+  table.insert( tmsg, "s " )
   return strjoin("", tmsg)
 end
 
@@ -992,7 +992,7 @@ function unregisterevent(pluginid, event, func)
     return
   end
   phelper:mdebug(GetPluginInfo(GetPluginID(), 1), "unregistered", pluginid, event, func)
-  phelper:unregisterevent(event, {}, func, pluginid)  
+  phelper:unregisterevent(event, {}, func, pluginid)
 end
 
 starttime = {}
@@ -1001,16 +1001,16 @@ function timer_start(name)
   if phelper.time and starttime[name] then
     print(name, 'already had a starttime')
   end
-  starttime[name] = socket.gettime()*1000
+  starttime[name] = socket.gettime()
 end
 
 function timer_end(name)
-  local endtime = socket.gettime()*1000
+  local endtime = socket.gettime()
   if phelper.time then
     if not starttime[name] then
       print('could not find starttime for', name)
     else
-      print(name, 'took', endtime - starttime[name], 'milleseconds')
+      print(name, 'took', endtime - starttime[name], 'seconds')
     end
   end
   starttime[name] = nil
