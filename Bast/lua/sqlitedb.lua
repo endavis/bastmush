@@ -80,17 +80,23 @@ function Sqlitedb:open(from)
     self.db = assert(sqlite3.open(self.dbloc .. self.dbname))
   end
   self.conns = self.conns + 1
-  return true
+  if self.db then
+    return true
+  else
+    return false
+  end
 end
 
 function Sqlitedb:close(from, force)
   self.conns = self.conns - 1
-  if self.conns < 0 then
-    print("BUG: conns < 0 for db", self.dbname)
+  if self.conns < 0 and not force then
+    phelper:mdebug("BUG: conns < 0 for db", self.dbname)
   end
   phelper:mdebug('close - conns:', self.conns, from)
   if self.db ~= nil and (self.conns == 0 or force) then
+--  if self.db ~= nil and force then
     --phelper:mdebug("closing db")
+    self.conns = 0
     self.db:close()
     self.db = nil
   end
