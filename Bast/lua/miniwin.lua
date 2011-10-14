@@ -1782,7 +1782,7 @@ function Miniwin:drawtext(tabname)
 
   -- find top
   local linenum = self.activetab.build_data.textstartline - 1
-  local top = self.activetab.build_data.textarea.top - 1
+  local top = self.activetab.build_data.textarea.top + 1
   for i=self.activetab.startline,#self.activetab.convtext do
     -- adjust the line then display it
     -- eventually check against bottom of textarea and stop then, don't count lines
