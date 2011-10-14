@@ -237,6 +237,10 @@ function moonrising( tname, tstr, wildcards)
   end
 end
 
+function printmessage(msg)
+  ColourNote("lime", "black", msg )
+end
+
 function ontick( tname, tstr, wildcards)
   for i,v in pairs(moons) do
     if moons[i].now ~= nil then
@@ -246,7 +250,10 @@ function ontick( tname, tstr, wildcards)
   if countdown == nil then
     countdown, countdowndur = nextunion()
     if countdown == 0 and countdowndur > 0 then
-      ColourNote("lime", "black", "Three moons are up for "..countdowndur.." ticks!" )
+      local msg = "Three moons are up for "..countdowndur.." ticks!"
+      --DoAfterSpecial(.1, "printmessage(" .. msg ..")", 12)
+      printmessage(msg)
+      --ColourNote("lime", "black", "Three moons are up for "..countdowndur.." ticks!" )
     end
   else
     if countdown == 0 then
@@ -255,7 +262,10 @@ function ontick( tname, tstr, wildcards)
       countdown = countdown - 1
     end
     if countdown == 0 and countdowndur > 0 then
-      ColourNote("lime", "black", "Three moons are up for "..countdowndur.." ticks!" )
+      local msg = "Three moons are up for "..countdowndur.." ticks!"
+      --DoAfterSpecial(.1, "printmessage(" .. msg ..")", 12)
+      printmessage(msg)
+      --ColourNote("lime", "black", "Three moons are up for "..countdowndur.." ticks!" )
     elseif countdowndur == 0 then
       countdown, countdowndur = nextunion()
     end
@@ -339,7 +349,7 @@ function OnPluginBroadcast (msg, id, name, text)
 
   if id == '3e7dedbe37e44942dd46d264' then
     if text:find("comm.tick") then
-      ontick()      
+      ontick()
     end
   end
   phelper:OnPluginBroadcast(msg, id, name, text)
