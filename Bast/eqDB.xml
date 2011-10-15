@@ -402,7 +402,6 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  --ldplugin("broadcast_invmon")
 
   if IsConnected() then
     local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
@@ -433,9 +432,10 @@ function OnPluginSaveState ()
 end -- function OnPluginSaveState
 
 function OnPluginSend (sText)
- if string.lower(sText) == 'wear all' then
+ if string.lower(sText) == 'wea all' or string.lower(sText) == 'wear all' then
    wearingall = true
- elseif string.lower(sText) == 'remove all' then
+ elseif string.lower(sText) == 're all' or string.lower(sText) == 'rem all' or string.lower(sText) == 'remo all'
+        or string.lower(sText) == 'remov all' or string.lower(sText) == 'remove all' then
    removingall = true
    db:clearcontainer('Worn')
    event_container_change('Worn')
@@ -453,7 +453,7 @@ phelper:set_default('plugin_colour', 'orange')
 phelper:set_default('cmd', 'eqdb')
 
 phelper:add_cmd('refresh', {func=cmd_refresh, help="refresh the db"})
-phelper:add_cmd('cloase', {func=cmd_close, help="close the db"})
+phelper:add_cmd('close', {func=cmd_close, help="close the db"})
 
 phelper:enable()
 ]]>
