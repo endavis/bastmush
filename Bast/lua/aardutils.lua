@@ -154,7 +154,13 @@ objecttypes = {
   'Giftcard',
   'Gold',
   'Raw material',
+  'Campfire'
 }
+
+objecttypesrev = {}
+for i,v in ipairs(objecttypes) do
+  objecttypesrev[v] = i
+end
 
 wearlocs = {
  'light',
@@ -227,8 +233,21 @@ wearlocreverse = {
  portal = 31,
  sleeping = 32,
 }
- 
- statestrings = {
+
+optionallocs = {
+  [8]=true,
+  [9]=true,
+  [10]=true,
+  [11]=true,
+  [25]=true,
+  [28]=true,
+  [29]=true,
+  [30]=true,
+  [31]=true,
+  [32]=true,
+}
+
+statestrings = {
   [1] = 'login',
   [2] = 'motd',
   [3] = 'active',
