@@ -21,6 +21,15 @@
 <![CDATA[
 [FOR PLUGIN AUTHORS ONLY]
 
+require "aarddb"
+
+aarddb = Aarddb:new{}
+
+local tareas = aarddb:lookupareasbykeyword('w')
+
+for i,area in pairs(tareas) do
+  ColourNote("orange", "black", string.format("%-5d %-5d %-15s %-30s", area.afrom, area.ato, area.keyword, area.name))
+end
 ]]>
 </description>
 
