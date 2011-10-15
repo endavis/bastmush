@@ -316,7 +316,16 @@ end
 function mobxp( name, line, wildcards )
   if name == 'mobxp' then
     kill_info.bonusxp = 0
-    kill_info.xp = tonumber(wildcards[1])
+    if string.find(wildcards[1], '+') then
+      tlist = utils.split(wildcards[1], '+')
+      local newxp = 0
+      for i,v in ipairs(tlist) do
+        newxp = newxp + tonumber(v)
+      end
+      kill_info.xp = newxp
+    else
+      kill_info.xp = tonumber(wildcards[1])
+    end
     kill_info.time = GetInfo(304)
     kill_info.bcasted = false
     --DoAfterSpecial(.2, 'broadcast_kill()', 12)
