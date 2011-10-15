@@ -63,11 +63,14 @@ function Sqlitedb:updateversion(oldversion, newversion)
   if self:open('updateversion') then
     for i=oldversion+1,newversion do
       self.versionfuncs[i](self)
+      print('finished updating to version', i)
     end
-    if self:checkfortable('version') then
-      self.db:exec(string.format('update version set version=%s where version_id = 1', newversion))
+    if self:open('updateversion2') then
+      if self:checkfortable('version') then
+        self.db:exec(string.format('update version set version=%s where version_id = 1', newversion))
+      end
+      self:close('updateversion2')
     end
-    self:close('updateversion')
   end
   print('Done upgrading!')
 end
