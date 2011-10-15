@@ -1050,8 +1050,30 @@ function Statdb:updatedblqp()
     for a in self.db:nrows("SELECT * FROM quests") do
       oldquests[a.quest_id] = a
     end
+    self:close('updatedblqp', true)
+    self:open('updatedblqp2')
     self.db:exec([[DROP TABLE IF EXISTS quests;]])
-    self:checkquesttable()
+    self:close('updatedblqp2', true)
+    self:open('updatedblqp3')
+    self.db:exec([[CREATE TABLE quests(
+      quest_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      starttime INT default 0,
+      finishtime INT default 0,
+      mobname TEXT,
+      mobarea TEXT,
+      mobroom TEXT,
+      qp INT default 0,
+      double INT default 0,
+      gold INT default 0,
+      tier INT default 0,
+      mccp INT default 0,
+      lucky INT default 0,
+      tp INT default 0,
+      trains INT default 0,
+      pracs INT default 0,
+      level INT default -1,
+      failed INT default 0
+    )]])
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[[ INSERT INTO quests VALUES (:quest_id, :starttime, :finishtime,
                                                           :mobname, :mobarea, :mobroom, :qp, :double,
@@ -1066,7 +1088,7 @@ function Statdb:updatedblqp()
     end
     stmt:finalize()
     assert (self.db:exec("COMMIT"))
-    self:close('updatedblqp')
+    self:close('updatedblqp3')
   end
 end
 
@@ -1079,8 +1101,31 @@ function Statdb:updatemobkills()
     for a in self.db:nrows("SELECT * FROM mobkills") do
       oldkills[a.mk_id] = a
     end
+    self:close('updatemobkills', true)
+    self:open('updatemobkills2')
     self.db:exec([[DROP TABLE IF EXISTS mobkills;]])
-    self:checkmobkillstable()
+    self:close('updatemobkills2', true)
+    self:open('updatemobkills3')
+    self.db:exec([[CREATE TABLE mobkills(
+        mk_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+        name TEXT,
+        xp INT default 0,
+        bonusxp INT default 0,
+        gold INT default 0,
+        tp INT default 0,
+        time INT default -1,
+        vorpal INT default 0,
+        banishment INT default 0,
+        assassinate INT default 0,
+        slit INT default 0,
+        disintegrate INT default 0,
+        deathblow INT default 0,
+        wielded_weapon TEXT default '',
+        second_weapon TEXT default '',
+        room_id INT default 0,
+        level INT default -1
+      )]])
+
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (:mk_id, :name, :xp, :bonusxp,
                                                           :gold, :tp, :time, :vorpal, :banishment,
@@ -1109,7 +1154,7 @@ function Statdb:updatemobkills()
     end
     stmt:finalize()
     assert (self.db:exec("COMMIT"))
-    self:close('updatemobkills')
+    self:close('updatemobkills3')
   end
 end
 
@@ -1126,7 +1171,29 @@ function Statdb:addmobsblessing()
     self:close('addmobsblessing1', true)
     self:open('addmobsblessing2')
     self.db:exec([[DROP TABLE IF EXISTS mobkills;]])
-    self:checkmobkillstable()
+    self:close('addmobsblessing2', true)
+    self:open('addmobsblessing3')
+    self.db:exec([[CREATE TABLE mobkills(
+      mk_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      name TEXT,
+      xp INT default 0,
+      bonusxp INT default 0,
+      blessingxp INT default 0,
+      totalxp INT default 0,
+      gold INT default 0,
+      tp INT default 0,
+      time INT default -1,
+      vorpal INT default 0,
+      banishment INT default 0,
+      assassinate INT default 0,
+      slit INT default 0,
+      disintegrate INT default 0,
+      deathblow INT default 0,
+      wielded_weapon TEXT default '',
+      second_weapon TEXT default '',
+      room_id INT default 0,
+      level INT default -1
+    )]])
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[[ INSERT INTO mobkills VALUES (:mk_id, :name, :xp, :bonusxp, :blessingxp,
                                                           :totalxp, :gold, :tp, :time, :vorpal, :banishment,
@@ -1135,6 +1202,14 @@ function Statdb:addmobsblessing()
     for i,v in tableSort(oldkills, 'mk_id') do
       if v.gold == nil or v.gold == "" or type(v.gold) == 'string' then
         v.gold = 0
+      end
+      if type(v.xp) == 'string' and string.find(v.xp, '+') then
+        local tlist = utils.split(v.xp, '+')
+        local newxp = 0
+        for i,v in ipairs(tlist) do
+          newxp = newxp + tonumber(v)
+        end
+        v.xp = newxp
       end
       if v.xp == nil or v.xp == "" or type(v.xp) == 'string' then
         v.xp = 0
@@ -1149,7 +1224,7 @@ function Statdb:addmobsblessing()
     end
     stmt:finalize()
     assert (self.db:exec("COMMIT"))
-    self:close('addmobsblessing2')
+    self:close('addmobsblessing3')
   end
 end
 
@@ -1165,7 +1240,29 @@ function Statdb:addquestblessing()
     self:close('addquestblessing1', true)
     self:open('addquestblessing2')
     self.db:exec([[DROP TABLE IF EXISTS quests;]])
-    self:checkquesttable()
+    self:close('addquestblessing2', true)
+    self:open('addquestblessing3')
+    self.db:exec([[CREATE TABLE quests(
+      quest_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      starttime INT default 0,
+      finishtime INT default 0,
+      mobname TEXT,
+      mobarea TEXT,
+      mobroom TEXT,
+      qp INT default 0,
+      double INT default 0,
+      daily INT default 0,
+      totqp INT default 0,
+      gold INT default 0,
+      tier INT default 0,
+      mccp INT default 0,
+      lucky INT default 0,
+      tp INT default 0,
+      trains INT default 0,
+      pracs INT default 0,
+      level INT default -1,
+      failed INT default 0
+    )]])
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[[ INSERT INTO quests VALUES (:quest_id, :starttime, :finishtime,
                                                           :mobname, :mobarea, :mobroom, :qp, :double, :daily,
@@ -1185,7 +1282,7 @@ function Statdb:addquestblessing()
     end
     stmt:finalize()
     assert (self.db:exec("COMMIT"))
-    self:close('addquestblessing2')
+    self:close('addquestblessing3')
   end
 end
 
@@ -1200,4 +1297,3 @@ function Statdb:addleveltrainblessing()
     self:close('addleveltrainblessing', true)
   end
 end
-
