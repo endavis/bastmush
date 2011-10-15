@@ -417,7 +417,7 @@ function OnPluginDisable ()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
-
+  wearingall = true
   phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
