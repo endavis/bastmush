@@ -1,5 +1,31 @@
 Bastmush Changes List
 
+r1494 snapshot
+ - areaDB.xml
+    - new: plugin to add area information to a sqlite3 db (experimental)
+ - areaDB_lookup.xml
+    - new: plugin to lookup area information from a sqlite3 db
+ - eqDB.xml
+    - new: beginnings of a plugin to save eq info to a sqlite3 db
+ - miniwin_eq.xml
+    - new: beginnings of a miniwindow plugin to display eq
+ - broadcast_gq.xml
+    - bug fix: save gq info over disconnect
+ - miniwin_stats.xml
+    - new: add blessing trains to the levels tab
+ - broadcast_kills.xml
+    - bug fix: exprate is now taken into account when getting xp for a kill
+ - StatMonitor.xml
+    - new: add blessing trains to the level and pups report
+ - miniwin_moons.xml
+    - bug fix: output is no longer printed directly from the gmcp broadcast
+ - lua/miniwin.lua
+    - bug fix: scrolling back to the first line will now space correctly
+ - lua/aardutils.lua
+    - new: added an optionalwearlocs and reversewearloc table
+ - lua/chardb.lua
+    - bug fix: upgrading from 1 to 6 will now work (it takes a while)
+
 r1474 snapshot
  - broadcast_spellsskills.xml
     - new: notify user when the spells were not read correctly
