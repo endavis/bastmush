@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="xeqDB"
+   author="Bast"
+   id="aaa56Faed92ffc6146964abc"
+   language="Lua"
+   purpose="add eq to a database"
+   save_state="y"
+   date_written="2009-02-22 14:20:07"
+   requires="4.73"
+   version="6.1"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+]]>
+</description>
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<triggers>
+  <trigger
+   enabled="y"
+   match="^{invmon}(?&lt;action&gt;.*),(?&lt;objectid&gt;.*),(?&lt;container&gt;.*),(?&lt;location&gt;.*)$"
+   name="invmon"
+   script="invmon"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>
+
+ <trigger
+   enabled="y"
+   match="^{eqdata}$"
+   script="eqdata_redirect"
+   omit_from_output="y"
+   name="start_eqdata"
+   sequence="100"
+   regexp="y"
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="*"
+   script="eqdata_redirect"
+   name="multi_line_eqdata"
+   omit_from_output="y"
+   group="eqdata"
+   sequence="10"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="^\{invitem\}(.*)$"
+   name="invitem"
+   script="invitem"
+   sequence="100"
+   regexp="y"
+   omit_from_output="y"
+  >
+  </trigger>
+
+ <trigger
+   enabled="y"
+   match="^{invdata\s*(?&lt;container&gt;.*)}$"
+   script="invdata_redirect"
+   omit_from_output="y"
+   name="start_invdata"
+   sequence="100"
+   regexp="y"
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="*"
+   script="invdata_redirect"
+   name="multi_line_invdata"
+   omit_from_output="y"
+   group="invdata"
+   sequence="10"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   regexp="y"
+   match="^$"
+   script="emptyline"
+   name="emptyline"
+   omit_from_output="n"
+   group="emptyline"
+   sequence="10"
+  >
+  </trigger>
+</triggers>
+
+
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "verify"
+require "aardutils"
+require "chardb"
+require 'colours'
+require "eqdb"
+
+db = EQdb:new{}
+
+eqdata = {}
+invdata = {}
+container = ""
+place = 0
+initdb = false
+
+layout ={
+  eqdata = {"serial", "shortflags", "name", "level", "type", "unique", "wearslot", "timer"}
+}
+
+wearingall = false
+removingall = false
+
+function event_container_change(containerid)
+  phelper:processevent('container_change', containerid)
+end
+
+function dataparse(line, layoutname)
+  local tlist = utils.split(line, ',')
+  local wearloc = tlist[7]
+  local titem = {}
+  for i,v in ipairs(layout[layoutname]) do
+    local value = tlist[i]
+    if v == 'wearloc' or v == 'itemtype' or v == 'level' then
+      value = tonumber(value)
+    end
+    titem[v] = value
+  end
+  return titem
+end
+
+function eqdata_redirect (name, line, wildcards, styles)
+  -- start of spells list? remove old ones
+  if name == "start_eqdata" then
+    eqdata = {}
+    container = 'Worn'
+    phelper:enabletriggroup("eqdata", true)
+    return
+  elseif line == "{/eqdata}" then
+    phelper:enabletriggroup("eqdata", false)
+    db:clearcontainer(container)
+    db:additems(eqdata)
+    --db:addcontainer('worn', eqdata)
+    event_container_change('Worn')
+    return
+  end -- if
+
+  if line ~= "" then
+    titem = dataparse(line, 'eqdata')
+    titem.containerid = container
+    titem.place = -2
+    titem.plainname = strip_colours(titem.name)
+    eqdata[titem.serial] = titem
+  end
+
+end
+
+function invdata_redirect (name, line, wildcards, styles)
+  -- start of spells list? remove old ones
+  if name == "start_invdata" then
+    place = 0
+    invdata = {}
+    if wildcards.container ~= "" then
+      container = trim(wildcards.container)
+    else
+      container = 'Inventory'
+    end
+    phelper:enabletriggroup("invdata", true)
+    return
+  elseif line == "{/invdata}" then
+    phelper:enabletriggroup("invdata", false)
+    db:clearcontainer(container)
+    db:additems(invdata)
+    --db:addcontainer(container, invdata)
+    event_container_change(container)
+    if initdb then
+      initdb = false
+      getcontainers()
+    end
+    return
+  end -- if
+
+  place = place + 1
+  titem = dataparse(line, 'eqdata')
+  titem.containerid = container
+  titem.plainname = strip_colours(titem.name)
+  titem.place = place
+  invdata[titem.serial] = titem
+end
+
+function builditem(wildcards)
+  local item = {}
+  item.placestr = wearlocs[tonumber(wildcards.location) + 1] or -1
+  item.wearslot = wildcards.location
+  item.serial = wildcards.objectid
+  item.containerid = wildcards.container
+  return item
+end
+
+function invmon ( name, line, wildcards )
+  phelper:mdebug(line)
+  item = builditem(wildcards)
+  checkaction(tonumber(wildcards.action), item)
+
+end
+
+function invitem( name, line, wildcards)
+  local rline = wildcards[1]
+  local tstuff = dataparse(rline, 'eqdata')
+  olditem = db:getitem(tstuff.serial)
+  if olditem then
+    for i,v in pairs(layout['eqdata']) do
+      if v ~= 'name' then
+        olditem[v] = tstuff[v]
+      end
+    end
+    db:updateitem(olditem)
+  end
+  event_container_change('Inventory')
+end
+
+function emptyline()
+  phelper:enabletriggroup("emptyline", false)
+  --print('removingall =', removingall)
+  --print('wearingall =', wearingall)
+  SendNoEcho('invdata')
+  if removingall or wearingall then
+    SendNoEcho('eqdata')
+    removingall = false
+    wearingall = false
+  end
+end
+
+function initinv(char)
+  if char.status and char.status.state and tonumber(char.status.state) == 3 and db:checkfortable('items') == false then
+    SendNoEcho('eqdata')
+    SendNoEcho('invdata')
+    initdb = true
+  end
+end
+
+function getcontainers()
+ for i,v in pairs(invdata) do
+   if tonumber(v.type) == 11 then
+     SendNoEcho('invdata ' .. tostring(v.serial))
+   end
+ end
+end
+
+function cmd_refresh(cmddict)
+  if db:open('cmd_refresh') then
+    db:close('cmd_refresh', true)
+    db:open('cmd_refresh')
+    local returnval = db.db:exec([[DROP TABLE IF EXISTS items;]])
+    print('exec returned: ', returnval)
+    db:close('cmd_refresh', true)
+    local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+    local char = assert (loadstring ('return ' .. gmcparg or ""))()
+    initinv(char)
+  end
+end
+
+function cmd_close(cmddict)
+  db:close('cmd_close', true)
+end
+
+function checkaction(action, item, afterwait)
+  if action == 1 and removingall == false then
+    timer_start('EQdb:action1')
+    -- item removed
+    --print('action 1')
+    item.containerid = 'Inventory'
+    item.wearslot = -1
+    item.place = 1
+    local reorder = {}
+    reorder['Inventory'] = {place=1, containerid='Inventory', removed=false}
+    db:reorderitemsmultiple(reorder)
+    db:updateitemlocation(item)
+    event_container_change('Inventory')
+    event_container_change('Worn')
+    timer_end('EQdb:action1')
+  elseif action == 1 and removingall then
+     phelper:enabletriggroup("emptyline", true)
+  elseif action == 2 and wearingall == false then
+    timer_start('EQdb:action2')
+    -- item worn
+    --print('action 2')
+    item.containerid = 'Worn'
+    olditem = db:getitem(item.serial)
+    item.place = -2
+    local reorder = {}
+    if olditem then
+      reorder['Inventory'] = {place=olditem.place, containerid='Inventory', removed=true}
+      db:reorderitemsmultiple(reorder)
+      db:updateitemlocation(item)
+      event_container_change('Inventory')
+      event_container_change('Worn')
+    else
+      --print('action 2 setting removeall true')
+      removingall = true
+      phelper:enabletriggroup("emptyline", true)
+    end
+    timer_end('EQdb:action2')
+  elseif action == 2 and wearingall then
+   phelper:enabletriggroup("emptyline", true)
+  elseif action == 3 then
+    -- dropped, sold
+    --print('action 3')
+    phelper:enabletriggroup("emptyline", true)
+  elseif action == 4 then
+    -- added (received, picked up)
+    --print('action 4')
+    phelper:enabletriggroup("emptyline", true)
+    --db:additems({item})
+  elseif action == 5 then
+    timer_start('EQdb:action5')
+    -- removed from container
+    --print('action 5')
+    olditem = db:getitem(item.serial)
+    item.containerid = 'Inventory'
+    item.place = 1
+    local reorder = {}
+    if olditem then
+      reorder[olditem.containerid] = {place=olditem.place, containerid=olditem.containerid, removed=true}
+    end
+    reorder['Inventory'] = {place=1, containerid='Inventory', removed=false}
+    db:reorderitemsmultiple(reorder)
+    db:updateitemlocation(item)
+    event_container_change('Inventory')
+    event_container_change(olditem.containerid)
+    timer_end('EQdb:action5')
+  elseif action == 6 then
+    timer_start('EQdb:action6')
+    -- put into container
+    --print('action 6')
+    olditem = db:getitem(item.serial)
+    item.place = 1
+    local reorder = {}
+    if olditem then
+      reorder['Inventory'] = {place=olditem.place, containerid='Inventory', removed=true}
+    end
+    reorder[item.containerid] = {place=1, containerid=item.containerid, removed=false}
+    db:reorderitemsmultiple(reorder)
+    db:updateitemlocation(item)
+    event_container_change('Inventory')
+    event_container_change(item.containerid)
+    timer_end('EQdb:action6')
+  elseif action == 7 then
+    -- consumed
+    --print('action 7')
+    db:removeitems({item})
+    event_container_change('Inventory')
+  end
+end
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  --ldplugin("broadcast_invmon")
+
+  if IsConnected() then
+    local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+    local char = assert (loadstring ('return ' .. gmcparg or ""))()
+    initinv(char)
+  end
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+function OnPluginSend (sText)
+ if string.lower(sText) == 'wear all' then
+   wearingall = true
+ elseif string.lower(sText) == 'remove all' then
+   removingall = true
+   db:clearcontainer('Worn')
+   event_container_change('Worn')
+ end
+ return true
+end
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+
+phelper:set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'eqdb')
+
+phelper:add_cmd('refresh', {func=cmd_refresh, help="refresh the db"})
+phelper:add_cmd('cloase', {func=cmd_close, help="close the db"})
+
+phelper:enable()
+]]>
+</script>
+</muclient>
