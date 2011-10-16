@@ -1,5 +1,9 @@
 Bastmush Changes List
 
+r1495 snapshot
+ - lua/eqdb.lua
+    - new: helper file for the eqDB and miniwin_eq plugins
+
 r1494 snapshot
  - areaDB.xml
     - new: plugin to add area information to a sqlite3 db (experimental)
