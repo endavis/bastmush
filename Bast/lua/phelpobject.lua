@@ -7,9 +7,9 @@
 --[[
 
 Events for phelpobject:
-    self:processevent('option_' .. option, {option=option, value=value}) 
+    self:processevent('option_' .. option, {option=option, value=value})
       - an event for a specific option
-    self:processevent('option-any', {option=option, value=value}) 
+    self:processevent('option-any', {option=option, value=value})
       - an event to notify on any option change
 
 to use events register with   self:registerevent('option_textfont', object, object.onfontchange) if the target is a phelper object
@@ -47,6 +47,14 @@ function Phelpobject:initialize(args)
   self.disabled = false
   self.set_options = {}
   self.cname = args.name or "Default"
+
+  self.bastmushversion = 'Unkn'
+  if GetPluginID() == "e8520531407cb4281bea544e" then
+    self.version = getversion()
+  else
+    throwaway, self.bastmushversion = CallPlugin("e8520531407cb4281bea544e", "getversion")
+  end
+
   self.id = GetPluginID() .. '-' .. self.cname
   self:mdebug('phelpobject __init self.cname', self.cname)
   self.cmds_table = {}
@@ -62,7 +70,7 @@ function Phelpobject:initialize(args)
   self:add_cmd('save', {func=SaveState, help="save plugin variables", prio=99})
   self:add_cmd('showvars', {func="cmd_showvars", help="show plugin variables", prio=99})
   self:add_cmd('showevents', {func="cmd_showevents", help="show functions registered for all events", prio=99})
-  
+
 end
 
 
@@ -180,7 +188,7 @@ function Phelpobject:plugin_header(header)
   local header = header or ""
   ColourNote("", "", "")
   ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
-             RGBColourToName(var.plugin_colour), "black", "v" .. GetPluginInfo(GetPluginID (),19) .. " " .. self.cname .. " ",
+             RGBColourToName(var.plugin_colour), "black", "v" .. tostring(self.bastmushversion).. " " .. self.cname .. " ",
              "white", "black", header)
   ColourNote("white", "black", "-----------------------------------------------")
 end
@@ -231,7 +239,7 @@ function Phelpobject:init_vars(reset)
       gvalue = setting.default
     end
     if setting.istable then
-      if not (type(gvalue) == 'table') then        
+      if not (type(gvalue) == 'table') then
         local tvalue = loadstring('return ' .. gvalue or "")()
         gvalue = tvalue
       end
@@ -249,13 +257,13 @@ function Phelpobject:enable()
   if self.disabled then
     self.disabled = false
   end
-  self:processevent('enabled', {})    
+  self:processevent('enabled', {})
 end
 
 function Phelpobject:disable()
   self:savestate()
   self.disabled = true
-  self:processevent('disabled', {})    
+  self:processevent('disabled', {})
 end
 
 function Phelpobject:checkvalue(option, value, args)
@@ -309,8 +317,8 @@ function Phelpobject:set(option, value, args)
       self:run_func(afterf)
     end
     if not args.noevent then
-      self:processevent('option_' .. option, {option=option, value=value})    
-      self:processevent('option-any', {option=option, value=value})  
+      self:processevent('option_' .. option, {option=option, value=value})
+      self:processevent('option-any', {option=option, value=value})
     end
     SaveState()
     return true
@@ -508,7 +516,7 @@ function Phelpobject:run_cmd(cmddict, silent)
 --  if fullcmd ~= 'help' and fullcmd ~= 'set' then
 --    if self.disabled then
 --      self:init(true)
---      self:enable()   
+--      self:enable()
 --    end
 --  end
   if fullcmd ~= nil then
@@ -587,7 +595,7 @@ function Phelpobject:onSettingChange(settable)
 end
 
 function Phelpobject:OnPluginBroadcast (msg, id, name, text)
-  
+
 end
 
 function Phelpobject:OnPluginInstall ()
@@ -625,4 +633,4 @@ function Phelpobject:OnPluginSaveState ()
       self:savestate(true)
     end
 end -- function OnPluginSaveState
-  
+
