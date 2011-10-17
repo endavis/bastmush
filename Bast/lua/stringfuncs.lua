@@ -2,7 +2,7 @@
 --[[
 http://code.google.com/p/bastmush
  - Documentation and examples
- 
+
 functions in this module
 
 quote - usage: quote(str)
@@ -50,12 +50,12 @@ end
 
 function strjoin(delimiter, list)
   local len = #list
-  if len == 0 then 
-    return "" 
+  if len == 0 then
+    return ""
   end
   local string = list[1]
-  for i = 2, len do 
-    string = string .. delimiter .. list[i] 
+  for i = 2, len do
+    string = string .. delimiter .. list[i]
   end
   return string
 end
@@ -84,5 +84,5 @@ function ReadableNumber(num, places)
 end
 
 function trimr(s)
-  return s:find'^%s*$' and '' or s:match'^(.*%S)'
+  return s:find('^%s*$') and '' or s:match('^(.*%S)')
 end
