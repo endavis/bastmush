@@ -166,15 +166,6 @@ function Pluginhelper:run_cmd(cmddict)
   return false
 end
 
-function Pluginhelper:plugin_header(header)
-  header = header or ""
-  ColourNote("", "", "")
-  ColourNote(RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID (),1) .. " ",
-             RGBColourToName(var.plugin_colour), "black", "v" .. GetPluginInfo(GetPluginID (),19) .. " ",
-             "white", "black", header)
-  ColourNote("white", "black", "-----------------------------------------------")
-end
-
 function Pluginhelper:enable()
   super(self)
   addxml.alias {    match = "nothing",
@@ -431,16 +422,8 @@ function Pluginhelper:showhelptext()
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Author'),
              RGBColourToName(var.plugin_colour), "black", GetPluginInfo(GetPluginID(), 2))
 
-  local version = 'Unknown'
-  local throwaway = ""
-  if GetPluginID() == "e8520531407cb4281bea544e" then
-    version = getversion()
-  else
-    throwaway, version = CallPlugin("e8520531407cb4281bea544e", "getversion")
-  end
-
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Bastmush Version'),
-             RGBColourToName(var.plugin_colour), "black", version)
+             RGBColourToName(var.plugin_colour), "black", self.bastmushversion)
 
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Internal Revision'),
              RGBColourToName(var.plugin_colour), "black", tostring(internalrevision))
@@ -558,17 +541,9 @@ function Pluginhelper:createhelp()
   style.text = string.format('%-20s : ', 'Author')
   table.insert(header, {style, {text=tostring(GetPluginInfo(GetPluginID(), 2)), textcolour=var.plugin_colour}, backcolour="bg_colour"})
 
-  local version = 'Unknown'
-  local throwaway = ""
-  if GetPluginID() == "e8520531407cb4281bea544e" then
-    version = getversion()
-  else
-    throwaway, version = CallPlugin("e8520531407cb4281bea544e", "getversion")
-  end
-
   local style = {}
   style.text = string.format('%-20s : ', 'Bastmush Version')
-  table.insert(header, {style, {text=tostring(version), textcolour=var.plugin_colour}, backcolour="bg_colour"})
+  table.insert(header, {style, {text=tostring(self.bastmushversion), textcolour=var.plugin_colour}, backcolour="bg_colour"})
 
   if internalrevision then
     local style = {}
