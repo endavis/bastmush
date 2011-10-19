@@ -5,7 +5,7 @@
 <plugin
    name="xeqDB"
    author="Bast"
-   id="aaa56Faed92ffc6146964abc"
+   id="aaa56faed92ffc6146964abc"
    language="Lua"
    purpose="add eq to a database"
    save_state="y"
@@ -26,10 +26,44 @@
 
 <include name="constants.lua"/>
 
+
+
+
 <triggers>
+
+ <trigger
+   enabled="y"
+   match="^Syntax: invdata                - view all inv data.$"
+   omit_from_output="n"
+   name="badinvdata1"
+   sequence="100"
+   regexp="y"
+  >
+  </trigger>
+
+   <trigger
+   enabled="y"
+   match="^      : invdata <container id> - view all inv data in a container.$"
+   omit_from_output="n"
+   name="badinvdata2"
+   sequence="100"
+   regexp="y"
+  >
+  </trigger>
+
+   <trigger
+   enabled="y"
+   match="^      : invdata ansi           - remove color codes from output.$"
+   omit_from_output="n"
+   name="badinvdata3"
+   sequence="100"
+   regexp="y"
+  >
+  </trigger>
+
   <trigger
    enabled="y"
-   match="^{invmon}(?&lt;action&gt;.*),(?&lt;objectid&gt;.*),(?&lt;container&gt;.*),(?&lt;location&gt;.*)$"
+   match="^{invmon}(?&lt;action&gt;.*),(?&lt;serial&gt;.*),(?&lt;container&gt;.*),(?&lt;location&gt;.*)$"
    name="invmon"
    script="invmon"
    sequence="100"
@@ -42,7 +76,7 @@
    enabled="y"
    match="^{eqdata}$"
    script="eqdata_redirect"
-   omit_from_output="y"
+   omit_from_output="n"
    name="start_eqdata"
    sequence="100"
    regexp="y"
@@ -54,7 +88,7 @@
    match="*"
    script="eqdata_redirect"
    name="multi_line_eqdata"
-   omit_from_output="y"
+   omit_from_output="n"
    group="eqdata"
    sequence="10"
   >
@@ -67,7 +101,7 @@
    script="invitem"
    sequence="100"
    regexp="y"
-   omit_from_output="y"
+   omit_from_output="n"
   >
   </trigger>
 
@@ -75,7 +109,7 @@
    enabled="y"
    match="^{invdata\s*(?&lt;container&gt;.*)}$"
    script="invdata_redirect"
-   omit_from_output="y"
+   omit_from_output="n"
    name="start_invdata"
    sequence="100"
    regexp="y"
@@ -87,7 +121,7 @@
    match="*"
    script="invdata_redirect"
    name="multi_line_invdata"
-   omit_from_output="y"
+   omit_from_output="n"
    group="invdata"
    sequence="10"
   >
@@ -100,6 +134,27 @@
    name="emptyline"
    omit_from_output="n"
    group="emptyline"
+   sequence="10"
+  >
+  </trigger>
+ <trigger
+   enabled="y"
+   match="^{invdetails}$"
+   script="invdetails_redirect"
+   omit_from_output="n"
+   name="start_invdetails"
+   sequence="100"
+   regexp="y"
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="*"
+   script="invdetails_redirect"
+   name="multi_line_invdetails"
+   omit_from_output="n"
+   group="invdetails"
    sequence="10"
   >
   </trigger>
@@ -130,13 +185,42 @@ invdata = {}
 container = ""
 place = 0
 initdb = false
-
-layout ={
-  eqdata = {"serial", "shortflags", "name", "level", "type", "unique", "wearslot", "timer"}
-}
-
+invdetails_cache = {}
+invdetails = {}
 wearingall = false
 removingall = false
+silent = true
+
+allcontainer = -1
+
+layout ={
+invheader = {"serial", "level", "type", "worth", "weight", "wearable", "flags", "owner", "fromclan", "timer", "u1", "u2", "u3", "score"},
+container = {"capacity", "heaviestitem", "holding", "itemsinside", "totalweight", "itemsburden", "itemweightpercent"},
+statmod = {"stat", "value"},
+resistmod = {"resist", "value"},
+weapon = {"type", "avedam", "inflicts", "damtype", "special"},
+skillmod = {"skillnum", "value"},
+spells = {"uses", "level", "sn1", "sn2", "sn3", "sn4", "u1"},
+food = {"percent"},
+drink = {"servings", "liquid", "liquidmax", "liquidleft", "thirstpercent", "hungerpercent", "u1"},
+furniture = {"hpregen","manaregen","u1"},
+eqdata = {"serial", "shortflags", "name", "level", "type", "unique", "wearslot", "timer"}
+}
+
+function sendcmd(cmd)
+  if silent then
+    SendNoEcho(cmd)
+  else
+    Send(cmd)
+  end
+end
+
+function addmod(ltype, mod)
+  if invdetails[ltype] == nil then
+    invdetails[ltype] = {}
+  end
+  invdetails[ltype][mod[1]] = tonumber(mod[2])
+end
 
 function event_container_change(containerid)
   phelper:processevent('container_change', containerid)
@@ -215,11 +299,66 @@ function invdata_redirect (name, line, wildcards, styles)
   invdata[titem.serial] = titem
 end
 
+function invdetails_redirect (name, line, wildcards, styles)
+  -- start of spells list? remove old ones
+  ltype = 'unknown'
+  if name == "start_invdetails" then
+    invdetails = {}
+    phelper:enabletriggroup("invdetails", true)
+    return
+  elseif line == "{/invdetails}" then
+    phelper:enabletriggroup("invdetails", false)
+    local titem = db:getitem(invdetails.serial)
+    invdetails.name = titem.name
+    invdetails.plainname = titem.plainname
+    invdetails.containerid = titem.containerid
+    invdetails.type = titem.type
+    invdetails_cache[tonumber(invdetails.serial)] = invdetails
+    db:additemdetail(invdetails)
+    phelper:processevent('invdetails', invdetails)
+    return
+  end -- if
+
+  ttype = string.match(line,"{(.*)}")
+  if layout[ttype] then
+    ltype = ttype
+  else
+    print('no layout for', ttype)
+  end
+
+  local tlist = utils.split(line, '}')
+  local llist = utils.split(tlist[2], '|')
+  if layout[ltype] then
+    if ltype == "statmod" or ltype == "resistmod" or ltype == "skillmod" then
+      addmod(ltype, llist)
+    else
+      for i,v in ipairs(layout[ltype]) do
+        if ltype == 'invheader' then
+          local value = llist[i]
+          if v == 'itemtype' or v == 'level' then
+            value = tonumber(value)
+          end
+          invdetails[v] = value
+        else
+          if invdetails[ltype] == nil then
+            invdetails[ltype] = {}
+          end
+          local value = llist[i]
+          if v == 'wearloc' or v == 'itemtype' or v == 'level' then
+            value = tonumber(value)
+          end
+          invdetails[ltype][v] = value
+        end
+      end
+    end
+  end
+end
+
 function builditem(wildcards)
   local item = {}
   item.placestr = wearlocs[tonumber(wildcards.location) + 1] or -1
   item.wearslot = wildcards.location
-  item.serial = wildcards.objectid
+  item.serial = wildcards.serial
   item.containerid = wildcards.container
   return item
 end
@@ -228,7 +367,6 @@ function invmon ( name, line, wildcards )
   phelper:mdebug(line)
   item = builditem(wildcards)
   checkaction(tonumber(wildcards.action), item)
-
 end
 
 function invitem( name, line, wildcards)
@@ -250,18 +388,27 @@ function emptyline()
   phelper:enabletriggroup("emptyline", false)
   --print('removingall =', removingall)
   --print('wearingall =', wearingall)
-  SendNoEcho('invdata')
+  sendcmd('invdata')
   if removingall or wearingall then
-    SendNoEcho('eqdata')
+    sendcmd('eqdata')
     removingall = false
     wearingall = false
+  end
+  if gettingall or puttingall then
+    if allcontainer ~= -1 then
+      db:clearcontainer(allcontainer)
+      sendcmd('invdata ' .. tostring(allcontainer))
+      gettingall = false
+      puttingall = false
+      allcontainer = -1
+    end
   end
 end
 
 function initinv(char)
   if char.status and char.status.state and tonumber(char.status.state) == 3 and db:checkfortable('items') == false then
-    SendNoEcho('eqdata')
-    SendNoEcho('invdata')
+    sendcmd('eqdata')
+    sendcmd('invdata')
     initdb = true
   end
 end
@@ -269,9 +416,32 @@ end
 function getcontainers()
  for i,v in pairs(invdata) do
    if tonumber(v.type) == 11 then
-     SendNoEcho('invdata ' .. tostring(v.serial))
+     sendcmd('invdata ' .. tostring(v.serial))
    end
  end
+end
+
+function getinvdetails(id)
+  --print('getinvdetails', type(id), id)
+  if invdetails_cache[tonumber(id)] then
+    phelper:processevent('invdetails', invdetails_cache[tonumber(id)])
+  else
+    local titem = db:getitemdetails(id)
+    if titem then
+      phelper:processevent('invdetails', titem)
+    else
+      local titem2 = db:getitem(id)
+      if titem2 then
+        if titem2.containerid == 'Inventory' then
+          sendcmd('invdetails ' .. tostring(id))
+        else
+          putobjectininv(titem2)
+          sendcmd('invdetails ' .. tostring(id))
+          putobjectbackinplace(titem2, titem2.containerid)
+        end
+      end
+    end
+  end
 end
 
 function cmd_refresh(cmddict)
@@ -279,7 +449,7 @@ function cmd_refresh(cmddict)
     db:close('cmd_refresh', true)
     db:open('cmd_refresh')
     local returnval = db.db:exec([[DROP TABLE IF EXISTS items;]])
-    print('exec returned: ', returnval)
+    --print('exec returned: ', returnval)
     db:close('cmd_refresh', true)
     local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
     local char = assert (loadstring ('return ' .. gmcparg or ""))()
@@ -339,7 +509,7 @@ function checkaction(action, item, afterwait)
     --print('action 4')
     phelper:enabletriggroup("emptyline", true)
     --db:additems({item})
-  elseif action == 5 then
+  elseif action == 5 and gettingall == false then
     timer_start('EQdb:action5')
     -- removed from container
     --print('action 5')
@@ -354,9 +524,15 @@ function checkaction(action, item, afterwait)
     db:reorderitemsmultiple(reorder)
     db:updateitemlocation(item)
     event_container_change('Inventory')
-    event_container_change(olditem.containerid)
+    if olditem then
+      event_container_change(olditem.containerid)
+    end
     timer_end('EQdb:action5')
-  elseif action == 6 then
+  elseif action == 5 and gettingall == true then
+     print('action', 5, 'gettingall', gettingall)
+     allcontainer = item.containerid
+     phelper:enabletriggroup("emptyline", true)
+  elseif action == 6 and puttingall == false then
     timer_start('EQdb:action6')
     -- put into container
     --print('action 6')
@@ -372,12 +548,39 @@ function checkaction(action, item, afterwait)
     event_container_change('Inventory')
     event_container_change(item.containerid)
     timer_end('EQdb:action6')
+  elseif action == 6 and puttingall == true then
+     print('action', 6, 'puttingall', puttingall)
+     allcontainer = item.containerid
+     phelper:enabletriggroup("emptyline", true)
   elseif action == 7 then
     -- consumed
     --print('action 7')
     db:removeitems({item})
     event_container_change('Inventory')
   end
+end
+
+function toggleoutput(tflag)
+  local trigstoupdate = {"invmon", "start_invdetails", "multi_line_invdetails", "start_eqdata",
+                    "multi_line_eqdata" , "start_invdata", "multi_line_invdata", "badinvdata1",
+                    "badinvdata2", "badinvdata3"}
+  for i,v in ipairs(trigstoupdate) do
+    if tflag then
+      SetTriggerOption(v, "omit_from_output", "n");
+      silent = false
+    else
+      SetTriggerOption(v, "omit_from_output", "y");
+      silent = true
+    end
+  end
+end
+
+function afterdebug()
+  toggleoutput(phelper.tdebug)
+end
+
+function aftershowset()
+  toggleoutput(phelper.showoutput)
 end
 ]]>
 </script>
@@ -387,7 +590,15 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   phelper:OnPluginBroadcast(msg, id, name, text)
-
+  if id == "aaafc15678afa22343c5a327" then
+    if msg == 1 then
+      -- idle for more than 15 minutes
+      -- start going through the cache and updating them (need a coroutine)
+    elseif msg == 2 then
+      -- no longer idle
+      -- stop the coroutine
+    end
+  end
 end
 
 function OnPluginInstall ()
@@ -402,12 +613,15 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
+  ldplugin ("broadcast_idle", "aaabe45678afa22343c5a327")
 
   if IsConnected() then
     local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
     local char = assert (loadstring ('return ' .. gmcparg or ""))()
     initinv(char)
   end
+
   phelper:OnPluginEnable()
 end -- OnPluginEnable
 
@@ -432,15 +646,22 @@ function OnPluginSaveState ()
 end -- function OnPluginSaveState
 
 function OnPluginSend (sText)
- if string.lower(sText) == 'wea all' or string.lower(sText) == 'wear all' then
-   wearingall = true
- elseif string.lower(sText) == 're all' or string.lower(sText) == 'rem all' or string.lower(sText) == 'remo all'
-        or string.lower(sText) == 'remov all' or string.lower(sText) == 'remove all' then
-   removingall = true
-   db:clearcontainer('Worn')
-   event_container_change('Worn')
- end
- return true
+  if string.lower(sText) == 'wea all' or string.lower(sText) == 'wear all' then
+    wearingall = true
+  elseif string.lower(sText) == 're all' or string.lower(sText) == 'rem all' or string.lower(sText) == 'remo all'
+          or string.lower(sText) == 'remov all' or string.lower(sText) == 'remove all' then
+    removingall = true
+    db:clearcontainer('Worn')
+    event_container_change('Worn')
+  elseif string.find(string.lower(sText), 'ge all\.') or string.find(string.lower(sText), 'get all\.') or string.find(string.lower(sText), 'g all\.') then
+    db:clearcontainer('Inventory')
+    gettingall = true
+  elseif string.find(string.lower(sText), 'pu all\.') or string.find(string.lower(sText), 'put all\.') then
+    db:clearcontainer('Inventory')
+    puttingall = true
+  end
+
+  return true
 end
 ]]>
 </script>
@@ -454,6 +675,8 @@ phelper:set_default('cmd', 'eqdb')
 
 phelper:add_cmd('refresh', {func=cmd_refresh, help="refresh the db"})
 phelper:add_cmd('close', {func=cmd_close, help="close the db"})
+
+phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 
 phelper:enable()
 ]]>
