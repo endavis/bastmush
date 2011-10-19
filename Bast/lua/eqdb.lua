@@ -159,9 +159,9 @@ function EQdb:getitemdetails(serial)
     self:close('getitemdetails')
   end
   timer_end('EQdb:getitemdetails')
-  if titem then
-    tprint(titem)
-  end
+  --if titem then
+  --  tprint(titem)
+  --end
   return titem
 end
 
@@ -215,7 +215,7 @@ end
 
 function EQdb:additemdetail(item)
   timer_start('EQdb:additemdetail')
-  tprint(item)
+  --tprint(item)
   self:checkitemdetailstable()
   if self:open('additemdetail') then
     local titem = self:getitemdetails(tonumber(item.serial))
@@ -271,7 +271,7 @@ function EQdb:additemdetail(item)
     self:addresists(item)
     self:addstats(item)
     assert (self.db:exec("COMMIT"))
-    print('changes:', self.db:total_changes() - tchanges)
+    phelper:mdebug('changes:', self.db:total_changes() - tchanges)
     self:close('additemdetail')
   end
   timer_end('EQdb:additemdetail')
