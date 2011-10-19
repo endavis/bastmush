@@ -162,7 +162,7 @@ function show_cp_text ()
   if level and level.level > 0 then
     style = {}
     style.text = "- Level: " .. tostring(level.level)
-    if tonumber(level.level) == tonumber(curlevel) then
+    if not cptimer.cantake then
       style.textcolour = eventwin.text_colour
     else
       style.textcolour = "cp_notlevel_colour"
