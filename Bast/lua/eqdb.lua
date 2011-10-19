@@ -45,14 +45,16 @@ function EQdb:initialize(args)
   self.dbname = "\\eq.db"
   self.version = 1
   self:checkversion()
-  self:turnonwal()
+  self:turnonpragmas()
 end
 
-function EQdb:turnonwal()
-  if self:open('turnonwal') then
-   --PRAGMA journal_mode=WAL
+function EQdb:turnonpragmas()
+  if self:open('turnonpragmas') then
+    -- PRAGMA foreign_keys = ON;
+    self.db:exec("PRAGMA foreign_keys=1;")
+    -- PRAGMA journal_mode=WAL
     self.db:exec("PRAGMA journal_mode=WAL;")
-    self:close('turnonwal')
+    self:close('turnonpragmas')
   end
 end
 
@@ -81,6 +83,197 @@ function EQdb:checkitemstable()
   end
 end
 
+function EQdb:checkitemdetailstable()
+  if self:open('checkitemdetailstable') then
+    if not self:checkfortable('itemdetails') then
+      self.db:exec([[
+        CREATE TABLE itemdetails(
+          serial INTEGER NOT NULL,
+          keywords TEXT,
+          name TEXT,
+          plainname TEXT,
+          type NUMBER default 0,
+          worth NUMBER default 0,
+          weight NUMBER default 0,
+          wearable TEXT,
+          material NUMBER default 0,
+          score NUMBER default 0,
+          flags TEXT,
+          foundat TEXT,
+          fromclan TEXT,
+          owner TEXT,
+          UNIQUE(serial),
+          PRIMARY KEY(serial));)]])
+    end
+
+    if not self:checkfortable('resistmod') then
+      self.db:exec([[
+        CREATE TABLE resistmod(
+        rid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        type TEXT,
+        amount NUMBER default 0,
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
+
+    if not self:checkfortable('statmod') then
+      self.db:exec([[
+        CREATE TABLE statmod(
+        sid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        type TEXT,
+        amount NUMBER default 0,
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
+    self:close('checkitemdetailstable')
+  end
+end
+
+function EQdb:getitemdetails(serial)
+  timer_start('EQdb:getitemdetails')
+  local titem = nil
+  self:checkitemdetailstable()
+  if self:open('getitemdetails') then
+    for a in self.db:nrows("SELECT * FROM itemdetails WHERE serial = " .. tostring(serial)) do
+      titem = a
+    end
+    if titem then
+      for a in self.db:nrows("SELECT * FROM resistmod WHERE serial = " .. tostring(serial)) do
+        if not titem['resistmod'] then
+          titem['resistmod'] = {}
+        end
+        titem['resistmod'][a.type] = a.amount
+      end
+    end
+    if titem then
+      for a in self.db:nrows("SELECT * FROM statmod WHERE serial = " .. tostring(serial)) do
+        if not titem['statmod'] then
+          titem['statmod'] = {}
+        end
+        titem['statmod'][a.type] = a.amount
+      end
+    end
+    self:close('getitemdetails')
+  end
+  timer_end('EQdb:getitemdetails')
+  if titem then
+    tprint(titem)
+  end
+  return titem
+end
+
+function EQdb:addresists(item)
+  timer_start('EQdb:addresists')
+  if item.resistmod and next(item.resistmod) then
+    self.db:exec("DELETE * from resistmod where serial = " .. tostring(item.serial))
+    local stmt = self.db:prepare[[
+      INSERT into resistmod VALUES (
+        NULL,
+        :serial,
+        :type,
+        :amount);]]
+    for i,v in pairs(item.resistmod) do
+      local resistm = {}
+      resistm['serial'] = item.serial
+      resistm['type'] = i
+      resistm['amount'] = v
+      stmt:bind_names( resistm )
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+  end
+  timer_end('EQdb:addresists')
+end
+
+function EQdb:addstats(item)
+  timer_start('EQdb:addstats')
+  if item.statmod and next(item.statmod) then
+    self.db:exec("DELETE * from statmod where serial = " .. tostring(item.serial))
+    local stmt = self.db:prepare[[
+      INSERT into statmod VALUES (
+        NULL,
+        :serial,
+        :type,
+        :amount);]]
+    for i,v in pairs(item.statmod) do
+      local statm = {}
+      statm['serial'] = item.serial
+      statm['type'] = i
+      statm['amount'] = v
+      stmt:bind_names( statm )
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+  end
+  timer_end('EQdb:addstats')
+end
+
+function EQdb:additemdetail(item)
+  timer_start('EQdb:additemdetail')
+  tprint(item)
+  self:checkitemdetailstable()
+  if self:open('additemdetail') then
+    local titem = self:getitemdetails(tonumber(item.serial))
+    local tchanges = self.db:total_changes()
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    if titem then
+      local stmtupd = self.db:prepare[[ UPDATE itemdetails SET
+                                                  keywords = :keywords,
+                                                  name = :name,
+                                                  plainname = :plainname,
+                                                  type = :type,
+                                                  worth = :worth,
+                                                  weight = :weight,
+                                                  wearable = :wearable,
+                                                  material = :material,
+                                                  score = :score,
+                                                  flags = :flags,
+                                                  foundat = :foundat,
+                                                  fromclan = :fromclan,
+                                                  owner = :owner
+                                                  WHERE serial = :serial;
+                                                            ]]
+
+      stmtupd:bind_names( item )
+      stmtupd:step()
+      stmtupd:reset()
+      stmtupd:finalize()
+      --local retval self.db:exec(tsql)
+    else
+      local stmt = self.db:prepare[[ INSERT INTO itemdetails VALUES (
+                                           :serial,
+                                           :keywords,
+                                           :name,
+                                           :plainname,
+                                           :type,
+                                           :worth,
+                                           :weight,
+                                           :wearable,
+                                           :material,
+                                           :score,
+                                           :flags,
+                                           :foundat,
+                                           :fromclan,
+                                           :owner); ]]
+
+      stmt:bind_names(item)
+      local stepret = stmt:step()
+      local resetret = stmt:reset()
+      local finalret = stmt:finalize()
+    end
+    self:addresists(item)
+    self:addstats(item)
+    assert (self.db:exec("COMMIT"))
+    print('changes:', self.db:total_changes() - tchanges)
+    self:close('additemdetail')
+  end
+  timer_end('EQdb:additemdetail')
+end
+
 function EQdb:additems(items)
   timer_start('EQdb:additems')
   self:checkitemstable()
@@ -88,7 +281,7 @@ function EQdb:additems(items)
     --print(v.containerid)
     break
   end
-  print('additems')
+  --print('additems')
   if self:open('additems') then
     local tchanges = self.db:total_changes()
     assert (self.db:exec("BEGIN TRANSACTION"))
@@ -111,6 +304,8 @@ function EQdb:additems(items)
       stmt:bind_names(v)
       local stepret = stmt:step()
       local resetret = stmt:reset()
+      --print('additems: stepret', stepret)
+      --print('additems: resetret', resetret)
     end
     stmt:finalize()
     self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_container_place ON items(containerid, place);]])
@@ -130,7 +325,7 @@ end
 function EQdb:clearcontainer(containerid)
   timer_start('EQdb:clearcontainer')
   self:checkitemstable()
-  print('clearing container', containerid)
+  --print('clearing container', containerid)
   if self:open('additems') then
     --assert (self.db:exec("BEGIN TRANSACTION"))
     self.db:exec("DELETE from items where containerid = '" .. tostring(containerid) .. "';")
@@ -229,7 +424,7 @@ function EQdb:updateitem(item)
                                                   containerid = '%s',
                                                   wearslot = %d,
                                                   place = %d
-                                                  where serial = %d;]],
+                                                  WHERE serial = %d;]],
                                      tostring(item.shortflags), tonumber(item.level),
                                      tostring(item.name), tostring(item.plainname), tonumber(item.type),
                                      tostring(item.containerid), tonumber(item.wearslot),
@@ -329,3 +524,22 @@ function EQdb:getcontainers()
   timer_end('EQdb:getcontainers')
   return containers
 end
+
+function putobjectininv(item)
+  local teqdb = EQdb:new{}
+  local item = teqdb:getitem(item.serial)
+  if item.containerid == 'Worn' then
+    SendNoEcho('remove ' .. item.serial)
+  elseif item.containerid ~= 'Inventory' then
+    SendNoEcho('get ' .. item.serial .. ' ' .. item.containerid)
+  end
+end
+
+function putobjectbackinplace(item, container)
+  if container == 'Worn' then
+    SendNoEcho('wear ' .. item.serial)
+  elseif container ~= 'Inventory' then
+    SendNoEcho('put ' .. item.serial .. ' ' .. trim(container))
+  end
+end
+
