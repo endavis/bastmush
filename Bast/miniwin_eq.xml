@@ -39,11 +39,11 @@ require "chardb"
 require "eqdb"
 require "copytable"
 require "colours"
+require "stringfuncs"
 
 -- figure out how to get uncurse into the menu
 -- there is a nodrop, nocurse flag in invdetails for an item
 
-eqdata = {}
 db = EQdb:new{}
 
 eqwin = Miniwin:new{name="EQ"}
@@ -61,6 +61,7 @@ idwin:set_default('bg_colour', 'black')
 idwin:set_default('header_bg_colour', 'black')
 idwin:set_default('maxlines', 30)
 idwin:set_default("maxtabs", 5)
+idwin:set_default("windowpos", 12)
 
 flags = {'K', 'G', 'H', 'I'}
 
@@ -79,6 +80,8 @@ flagname = {
  H = 'hum',
  I = 'invis',
 }
+
+detailswaiting = {}
 
 filter = {}
 filter['Worn'] = {filtercol='wearslot', reverse=false}
@@ -159,22 +162,22 @@ function sortmenumouse(item, result)
   end
 end
 
-function putobjectininv(item)
-  local item = db:getitem(item.serial)
-  if item.containerid == 'Worn' then
-    SendNoEcho('remove ' .. item.serial)
-  elseif item.containerid ~= 'Inventory' then
-    SendNoEcho('get ' .. item.serial .. ' ' .. item.containerid)
-  end
-end
+--function putobjectininv(item)
+--  local item = db:getitem(item.serial)
+--  if item.containerid == 'Worn' then
+--    SendNoEcho('remove ' .. item.serial)
+--  elseif item.containerid ~= 'Inventory' then
+--    SendNoEcho('get ' .. item.serial .. ' ' .. item.containerid)
+--  end
+--end
 
-function putobjectbackinplace(item, container)
-  if container == 'Worn' then
-    SendNoEcho('wear ' .. item.serial)
-  elseif container ~= 'Inventory' then
-    SendNoEcho('put ' .. item.serial .. ' ' .. trim(container))
-  end
-end
+--function putobjectbackinplace(item, container)
+--  if container == 'Worn' then
+--    SendNoEcho('wear ' .. item.serial)
+--  elseif container ~= 'Inventory' then
+--    SendNoEcho('put ' .. item.serial .. ' ' .. trim(container))
+--  end
+--end
 
 function mouseleft(item, result)
   if result:match("in") then
@@ -293,6 +296,316 @@ function winchangefilter(container, column, curfilt, reverse, itype)
   else
     change_filter(container, column, false, itype)
   end
+end
+
+function formatsingleline(linename, linecolour, data)
+  --print('formatsingleline', linename)
+  local lstyle = {}
+  local style = {}
+  style.text = '|'
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = string.format(' %-11s', linename)
+  style.textcolour = linecolour
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = ': '
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = string.format('%-52s', data)
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = '|'
+  style.start = 475
+  table.insert(lstyle, style)
+
+  return lstyle
+end
+
+--| Type       : Armor                     Level  :   100           |
+--| Worth      : 100,000                   Weight :     5           |
+
+function formatdoubleline(linename, linecolour, data, linename2, data2)
+  --print('formatsingleline', linename)
+  local lstyle = {}
+  local style = {}
+  style.text = '|'
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = string.format(' %-11s', linename)
+  style.textcolour = linecolour
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = ': '
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = string.format('%-26s', data)
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = string.format(' %-7s', linename2)
+  style.textcolour = linecolour
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = ': '
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = string.format('%-17s', data2)
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = '|'
+  style.start = 475
+  table.insert(lstyle, style)
+
+  return lstyle
+end
+
+function formatmod(linename, linecolour, mods)
+  --print('formatmod', linename)
+  local lstyle = {}
+  local style = {}
+  style.text = '|'
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = string.format(' %-11s', linename)
+  style.textcolour = linecolour
+  table.insert(lstyle, style)
+
+  local style = {}
+  style.text = ': '
+  table.insert(lstyle, style)
+
+  for i,v in pairs(mods) do
+    local style = {}
+    style.text = string.format('%-13s: ', i)
+    table.insert(lstyle, style)
+
+    local style = {}
+    style.text = string.format('%+-9d', tonumber(v))
+    if tonumber(v) > 0 then
+      style.textcolour = 'green'
+    else
+      style.textcolour = 'red'
+    end
+    table.insert(lstyle, style)
+  end
+
+  local style = {}
+  style.text = '|'
+  style.start = 475
+  table.insert(lstyle, style)
+
+  return lstyle
+end
+
+function builditem(item)
+  -- item should be from invdetails
+  --tprint(item)
+  local lstyles = {}
+
+  --[[
+"weight"="5"
+"plainname"="Aardwolf Breastplate of magic resistance"
+"wearable"="torso"
+"u1"=""
+"u2"=""
+"score"="392"
+"level"=100
+"fromclan"=""
+"u3"=""
+"timer"=""
+"containerid"="Worn"
+"owner"="Bast"
+"resistmod":
+  "Energy"=100
+  "All physical"=25
+  "Negative"=100
+  "Sonic"=100
+  "Magic"=100
+  "Light"=100
+  "Fire"=100
+  "Water"=100
+  "Earth"=100
+  "Acid"=100
+  "Air"=100
+  "Mental"=100
+  "Electric"=100
+  "Holy"=100
+  "Cold"=100
+  "Shadow"=100
+"worth"="100000"
+"statmod":
+  "Strength"=2
+  "Moves"=125
+  "Hit points"=125
+  "Constitution"=2
+  "Mana"=125
+  "Hit roll"=20
+  "Dexterity"=2
+  "Damage roll"=25
+  "Luck"=2
+  "Intelligence"=2
+  "Wisdom"=4
+"type"=7
+"serial"="10337366"
+"name"="@RAardwolf @YBreastplate of magic resistance@w"
+"flags"="unique, glow, hum, magic, dohskill, held, burn-proof, solidified, illuminated, v3, precious"
+
+
++-----------------------------------------------------------------+
+| Keywords   : armor aardwolf breastplate aardwolfarmor (287475)  |
+| Name       : Aardwolf Breastplate of magic resistance           |
+| Id         : 10337366                                           |
+| Worn       : Torso                                              |
+| Type       : Armor                     Level  :   100           |
+| Worth      : 100,000                   Weight :     5           |
+| Wearable   : torso                                              |
+| Score      : 392                                                |
+| Flags      : unique, glow, hum, magic, balanced, held,          |
+|            : burn-proof, solidified, illuminated, V3, precious  |
+| Owned By   : Bast                                               |
+| Found at   : Immortal Homes                                     |
++-----------------------------------------------------------------+
+| Stat Mods  : Luck         : +2       Constitution : +2          |
+|              Wisdom       : +4       Dexterity    : +2          |
+|              Strength     : +2       Intelligence : +2          |
+|              Hit points   : +125     Mana         : +125        |
+|              Moves        : +125     Damage roll  : +25         |
+|              Hit roll     : +20                                 |
++-----------------------------------------------------------------+
+| Resist Mods: Acid         : +100     Air          : +100        |
+|              Cold         : +100     Earth        : +100        |
+|              Energy       : +100     Fire         : +100        |
+|              Holy         : +100     Light        : +100        |
+|              Electric     : +100     Mental       : +100        |
+|              Negative     : +100     Sonic        : +100        |
+|              Shadow       : +100     Water        : +100        |
+|              Magic        : +100     All physical : +25         |
++-----------------------------------------------------------------+
+| Capacity   : 1500                 Heaviest Item:   50           |
+| Holding    :  156                 Items Inside :   22           |
+| Tot Weight :   78                 Item Burden  :   23           |
+|            : Items inside weigh 50% of their usual weight       |
++-----------------------------------------------------------------+
+--]]
+
+  local style = {}
+  style.text = '+------------------------------------------------------------------+'
+  table.insert(lstyles, {style})
+
+--  table.insert(lstyles, formatsingleline('Keywords', item.keywords))
+  table.insert(lstyles, formatsingleline('Name', 'red', item.name))
+  table.insert(lstyles, formatsingleline('Id', 'red', item.serial))
+
+  -- Worn here
+  -- Type, Level here
+  table.insert(lstyles, formatdoubleline('Type', 'darkcyan', item.type, 'Level', item.level))
+
+  -- Worth, Weight here
+  table.insert(lstyles, formatdoubleline('Worth', 'darkcyan', item.worth, 'Weight', item.weight))
+
+  if item.wearable ~= "" then
+    table.insert(lstyles, formatsingleline('Wearable', 'darkcyan', item.wearable))
+  end
+
+  table.insert(lstyles, formatsingleline('Score', 'darkcyan', item.score))
+  -- Material here
+  --table.insert(lstyles, formatsingleline('Score', 'darkcyan', item.score))
+
+  if item.flags ~= "" then
+    local flags = wrap(item.flags, 52)
+    local t = 0
+    for i,v in ipairs(flags) do
+      local header = 'Flags'
+      if t ~= 0 then
+        header = ''
+      end
+      table.insert(lstyles, formatsingleline(header, 'darkcyan', v))
+      t = t + 1
+    end
+  end
+
+  if item.owner ~= "" and item.owner ~= nil then
+    table.insert(lstyles, formatsingleline('Owned by', 'darkcyan', item.owner))
+  end
+
+  if item.fromclan ~= '' and item.fromclan ~= nil then
+    table.insert(lstyles, formatsingleline('Clan Item', 'lime', "@M" .. item.fromclan .. "@w"))
+  end
+
+  if item.statmod then
+    local style = {}
+    style.text = '+------------------------------------------------------------------+'
+    table.insert(lstyles, {style})
+
+    local count = 0
+    local firsttime = true
+    local tt = {}
+    local header = 'Stat Mods'
+    for i,v in pairs(item.statmod) do
+      count = count + 1
+      tt[i] = v
+      if math.fmod(count, 2) == 0 then
+        if firsttime then
+          firsttime = false
+        else
+          header = ''
+        end
+        table.insert(lstyles, formatmod(header, 'darkcyan', tt))
+        tt = {}
+      end
+    end
+    if next(tt) then
+      table.insert(lstyles, formatmod(header, 'darkcyan', tt))
+    end
+  end
+
+  if item.resistmod then
+    local style = {}
+    style.text = '+------------------------------------------------------------------+'
+    table.insert(lstyles, {style})
+
+    local count = 0
+    local firsttime = true
+    local tt = {}
+    local header = 'Resist Mods'
+    for i,v in pairs(item.resistmod) do
+      count = count + 1
+      tt[i] = v
+      if math.fmod(count, 2) == 0 then
+        if firsttime then
+          firsttime = false
+        else
+          header = ''
+        end
+        table.insert(lstyles, formatmod(header, 'darkcyan', tt))
+        tt = {}
+      end
+    end
+    if next(tt) then
+      table.insert(lstyles, formatmod(header, 'darkcyan', tt))
+    end
+  end
+
+  local style = {}
+  style.text = '+------------------------------------------------------------------+'
+  table.insert(lstyles, {style})
+
+  --tprint(lstyles)
+  idwin:addtab(item.serial, lstyles)
+  idwin:changetotab(item.serial)
+  idwin:show(true)
 end
 
 function buildwornitem(item)
@@ -729,7 +1042,10 @@ function builddata(container)
         local itemlength = 47
         --print(item.plainname)
         for i=1,#newstyles do
-          local style = newstyles[i]
+          local tstyle = newstyles[i]
+          local style = popup_style(idwin, tstyle.text, tstyle.textcolour)
+          style.backcolour = tstyle.backcolour
+
           --print(length, #style.text, style.text)
           if length + #style.text >= itemlength and i ~= 1 then
             local tl = itemlength - length
@@ -746,6 +1062,20 @@ function builddata(container)
           style.mouseup = menuclick(item)
           --tprint(style)
           table.insert(lstyles, style)
+          style.mouseover = function ()
+            --print('got mouseover')
+            if not idwin:hastab(item.serial) then
+              if container == 'Inventory' then
+                detailswaiting[tonumber(item.serial)] = true
+                --print('calling plugin in mouseover', item.serial)
+                local rc = CallPlugin("aaa56faed92ffc6146964abc", 'getinvdetails', item.serial)
+                --print(rc)
+              end
+            else
+              idwin:changetotab(item.serial)
+              idwin:show(true)
+            end
+          end
         end
         --tprint(newstyles)
         --style.text = item.name
@@ -776,9 +1106,21 @@ function adddata(tabname, data)
 end
 
 function oncontainerchange(container)
-  container = assert (loadstring ('return ' .. container or ""))()
+  local container = assert (loadstring ('return ' .. container or ""))()
   db:close('oncontainerchange', true)
   adddata(container)
+end
+
+function oninvdetails(item)
+  local titem = assert (loadstring ('return ' .. item or ""))()
+  titem.serial = tonumber(titem.serial)
+  --print('got item', titem.serial)
+  --tprint(detailswaiting)
+  --tprint(titem)
+  if detailswaiting[titem.serial] then
+    detailswaiting[titem.serial] = nil
+    builditem(titem)
+  end
 end
 ]]>
 </script>
@@ -791,6 +1133,7 @@ function OnPluginBroadcast (msg, id, name, text)
 
   if id == "aaa56faed92ffc6146964abc" and tonumber(msg) == -2 then
     CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "container_change", "oncontainerchange")
+    CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "invdetails", "oninvdetails")
   end
 end
 
@@ -808,9 +1151,10 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
-  ldplugin ("eqDB", "aaa56Faed92ffc6146964abc")
+  ldplugin ("eqDB", "aaa56faed92ffc6146964abc")
 
   CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "container_change", "oncontainerchange")
+  CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "invdetails", "oninvdetails")
 
   phelper:OnPluginEnable()
   -- always create windows after OnPluginEnable due to default variable handling
@@ -821,6 +1165,7 @@ end -- OnPluginEnable
 
 function OnPluginDisable ()
   CallPlugin("aaa56faed92ffc6146964abc", 'unregisterevent', GetPluginID(), "container_change", "oncontainerchange")
+  CallPlugin("aaa56faed92ffc6146964abc", 'unregisterevent', GetPluginID(), "invdetails", "oninvdetails")
 
   phelper:OnPluginDisable()
 end -- OnPluginDisable
@@ -850,6 +1195,7 @@ phelper:set_default('cmd', 'mneq')
 phelper:set_default('plugin_colour', 'steelblue')
 
 phelper:add_pobject('win', eqwin)
+phelper:add_pobject('win', idwin)
 
 phelper:enable()
 
