@@ -359,7 +359,7 @@ function formatdoubleline(linename, linecolour, data, linename2, data2)
   table.insert(lstyle, style)
 
   local style = {}
-  style.text = string.format('%-17s', data2)
+  style.text = string.format('%-16s', data2)
   table.insert(lstyle, style)
 
   local style = {}
