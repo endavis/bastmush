@@ -36,6 +36,42 @@ local Object = require 'objectlua.Object'
 
 Phelpobject = Object:subclass()
 
+function getversion()
+  if not local_version then
+    checkLocalFile()
+  end
+  if not local_version then
+    local_version = 'Unkn'
+  end
+  return local_version
+end
+
+function checkLocalFile()
+    -- open the local version file
+    local changesfile = scan_dir_for_file (GetInfo(60), "BastmushChanges.txt")
+
+    version_file,err = io.open (changesfile, "r")
+    if not version_file then -- the file is missing or unreadable
+       ErrorMessage = "The file \'BastmushChanges.txt\' appears to be missing or unreadable (this is bad), so the version check cannot proceed.\n\nThe system returned the error:\n"..err.."\n\nYou should download the latest development snapshot from:"
+       return false
+    end
+    --- read the snapshot revision from the third line
+    line = version_file:read ("*l") -- read one line
+    line = version_file:read ("*l") -- read one line
+    line = version_file:read ("*l") -- read one line
+    local_version = nil
+    if line then -- if we got something
+       local_version = tonumber(string.match(line, "r(%d+) snapshot"))
+    end
+    if not local_version then -- the file is messed up such that the third line doesn't contain "r<###> snapshot"
+       ErrorMessage = "The file \'BastmushChanges.txt\' appears to have been modified (this is bad), so the version check cannot proceed. You should download the latest development snapshot from:"
+       return false
+    end
+    version_file:close ()
+    return true
+end
+
+
 function Phelpobject:initialize(args)
   --[[
 
@@ -49,11 +85,7 @@ function Phelpobject:initialize(args)
   self.cname = args.name or "Default"
 
   self.bastmushversion = 'Unkn'
-  if GetPluginID() == "e8520531407cb4281bea544e" then
-    self.version = getversion()
-  else
-    throwaway, self.bastmushversion = CallPlugin("e8520531407cb4281bea544e", "getversion")
-  end
+  self.bastmushversion = getversion()
 
   self.id = GetPluginID() .. '-' .. self.cname
   self:mdebug('phelpobject __init self.cname', self.cname)
