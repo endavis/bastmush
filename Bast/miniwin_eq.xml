@@ -298,7 +298,7 @@ function winchangefilter(container, column, curfilt, reverse, itype)
   end
 end
 
-function formatsingleline(linename, linecolour, data)
+function formatsingleline(linename, linecolour, data, datacolour)
   --print('formatsingleline', linename)
   local lstyle = {}
   local style = {}
@@ -316,6 +316,7 @@ function formatsingleline(linename, linecolour, data)
 
   local style = {}
   style.text = string.format('%-52s', data)
+  style.textcolour = datacolour
   table.insert(lstyle, style)
 
   local style = {}
@@ -519,7 +520,7 @@ function builditem(item)
     table.insert(lstyles, formatsingleline('Wearable', 'darkcyan', item.wearable))
   end
 
-  table.insert(lstyles, formatsingleline('Score', 'darkcyan', item.score))
+  table.insert(lstyles, formatsingleline('Score', 'darkcyan', item.score, 'yellow'))
   -- Material here
   --table.insert(lstyles, formatsingleline('Score', 'darkcyan', item.score))
 
@@ -550,19 +551,14 @@ function builditem(item)
     table.insert(lstyles, {style})
 
     local count = 0
-    local firsttime = true
     local tt = {}
     local header = 'Stat Mods'
     for i,v in pairs(item.statmod) do
       count = count + 1
       tt[i] = v
       if math.fmod(count, 2) == 0 then
-        if firsttime then
-          firsttime = false
-        else
-          header = ''
-        end
         table.insert(lstyles, formatmod(header, 'darkcyan', tt))
+        header = ''
         tt = {}
       end
     end
@@ -577,19 +573,14 @@ function builditem(item)
     table.insert(lstyles, {style})
 
     local count = 0
-    local firsttime = true
     local tt = {}
     local header = 'Resist Mods'
     for i,v in pairs(item.resistmod) do
       count = count + 1
       tt[i] = v
       if math.fmod(count, 2) == 0 then
-        if firsttime then
-          firsttime = false
-        else
-          header = ''
-        end
         table.insert(lstyles, formatmod(header, 'darkcyan', tt))
+        header = ''
         tt = {}
       end
     end
