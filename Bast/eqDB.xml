@@ -189,6 +189,8 @@ invdetails_cache = {}
 invdetails = {}
 wearingall = false
 removingall = false
+puttingall = false
+gettingall = false
 silent = true
 
 allcontainer = -1
@@ -391,6 +393,9 @@ function emptyline()
   sendcmd('invdata')
   if removingall or wearingall then
     sendcmd('eqdata')
+    if phelper.showoutput then
+      print('setting removingall and wearingall to false')
+    end
     removingall = false
     wearingall = false
   end
@@ -398,6 +403,9 @@ function emptyline()
     if allcontainer ~= -1 then
       db:clearcontainer(allcontainer)
       sendcmd('invdata ' .. tostring(allcontainer))
+      if phelper.showoutput then
+        print('setting gettingall and puttingall = false')
+      end
       gettingall = false
       puttingall = false
       allcontainer = -1
@@ -432,7 +440,7 @@ function getinvdetails(id)
     else
       local titem2 = db:getitem(id)
       if titem2 then
-        if titem2.containerid == 'Inventory' then
+        if titem2.containerid == 'Inventory' or titem2.containerid == 'Worn' then
           sendcmd('invdetails ' .. tostring(id))
         else
           putobjectininv(titem2)
@@ -493,7 +501,9 @@ function checkaction(action, item, afterwait)
       event_container_change('Inventory')
       event_container_change('Worn')
     else
-      --print('action 2 setting removeall true')
+      if phelper.showoutput then
+        print('action 2 setting removeall true')
+      end
       removingall = true
       phelper:enabletriggroup("emptyline", true)
     end
@@ -529,9 +539,11 @@ function checkaction(action, item, afterwait)
     end
     timer_end('EQdb:action5')
   elseif action == 5 and gettingall == true then
-     print('action', 5, 'gettingall', gettingall)
-     allcontainer = item.containerid
-     phelper:enabletriggroup("emptyline", true)
+    if phelper.showoutput then
+      print('action', 5, 'gettingall', gettingall)
+    end
+    allcontainer = item.containerid
+    phelper:enabletriggroup("emptyline", true)
   elseif action == 6 and puttingall == false then
     timer_start('EQdb:action6')
     -- put into container
@@ -549,9 +561,11 @@ function checkaction(action, item, afterwait)
     event_container_change(item.containerid)
     timer_end('EQdb:action6')
   elseif action == 6 and puttingall == true then
-     print('action', 6, 'puttingall', puttingall)
-     allcontainer = item.containerid
-     phelper:enabletriggroup("emptyline", true)
+    if phelper.showoutput then
+      print('action', 6, 'puttingall', puttingall)
+    end
+    allcontainer = item.containerid
+    phelper:enabletriggroup("emptyline", true)
   elseif action == 7 then
     -- consumed
     --print('action 7')
@@ -561,7 +575,7 @@ function checkaction(action, item, afterwait)
 end
 
 function toggleoutput(tflag)
-  local trigstoupdate = {"invmon", "start_invdetails", "multi_line_invdetails", "start_eqdata",
+  local trigstoupdate = {"invmon", "invitem", "start_invdetails", "multi_line_invdetails", "start_eqdata",
                     "multi_line_eqdata" , "start_invdata", "multi_line_invdata", "badinvdata1",
                     "badinvdata2", "badinvdata3"}
   for i,v in ipairs(trigstoupdate) do
@@ -647,20 +661,31 @@ end -- function OnPluginSaveState
 
 function OnPluginSend (sText)
   if string.lower(sText) == 'wea all' or string.lower(sText) == 'wear all' then
+    if phelper.showoutput then
+      print('wearingall = true')
+    end
     wearingall = true
   elseif string.lower(sText) == 're all' or string.lower(sText) == 'rem all' or string.lower(sText) == 'remo all'
           or string.lower(sText) == 'remov all' or string.lower(sText) == 'remove all' then
+    if phelper.showoutput then
+      print('removingall = true')
+    end
     removingall = true
     db:clearcontainer('Worn')
     event_container_change('Worn')
   elseif string.find(string.lower(sText), 'ge all\.') or string.find(string.lower(sText), 'get all\.') or string.find(string.lower(sText), 'g all\.') then
     db:clearcontainer('Inventory')
+    if phelper.showoutput then
+      print('gettingall = true')
+    end
     gettingall = true
   elseif string.find(string.lower(sText), 'pu all\.') or string.find(string.lower(sText), 'put all\.') then
     db:clearcontainer('Inventory')
+    if phelper.showoutput then
+      print('puttingall = true')
+    end
     puttingall = true
   end
-
   return true
 end
 ]]>
