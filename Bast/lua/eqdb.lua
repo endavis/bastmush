@@ -26,6 +26,7 @@ require 'pluginhelper'
 require 'sqlitedb'
 require 'aardutils'
 require 'tablefuncs'
+require 'copytable'
 
 EQdb = Sqlitedb:subclass()
 
@@ -128,6 +129,34 @@ function EQdb:checkitemdetailstable()
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
+    if not self:checkfortable('weapon') then
+      self.db:exec([[
+        CREATE TABLE weapon(
+        wid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        wtype TEXT,
+        damtype TEXT,
+        special TEXT,
+        inflicts TEXT,
+        avedam NUMBER,
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
+    if not self:checkfortable('container') then
+      self.db:exec([[
+        CREATE TABLE container(
+        cid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        itemweightpercent NUMBER,
+        heaviestitem NUMBER,
+        capacity NUMBER,
+        holding NUMBER,
+        itemsinside NUMBER,
+        totalweight NUMBER,
+        itemburden NUMBER,
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
     self:close('checkitemdetailstable')
   end
 end
@@ -156,6 +185,16 @@ function EQdb:getitemdetails(serial)
         titem['statmod'][a.type] = a.amount
       end
     end
+    if titem and tonumber(titem.type) == 5  then
+      for a in self.db:nrows("SELECT * FROM weapon WHERE serial = " .. tostring(serial)) do
+        titem['weapon'] = a
+      end
+    end
+    if titem and tonumber(titem.type) == 11  then
+      for a in self.db:nrows("SELECT * FROM container WHERE serial = " .. tostring(serial)) do
+        titem['container'] = a
+      end
+    end
     self:close('getitemdetails')
   end
   timer_end('EQdb:getitemdetails')
@@ -163,6 +202,53 @@ function EQdb:getitemdetails(serial)
   --  tprint(titem)
   --end
   return titem
+end
+
+function EQdb:addcontainer(item)
+  timer_start('EQdb:addcontainer')
+  if item.container and next(item.container) then
+    self.db:exec("DELETE * from container where serial = " .. tostring(item.serial))
+    local stmt = self.db:prepare[[
+      INSERT into container VALUES (
+        NULL,
+        :serial,
+        :itemweightpercent,
+        :heaviestitem,
+        :capacity,
+        :holding,
+        :itemsinside,
+        :totalweight,
+        :itemburden);]]
+    local containerm = copytable.deep(item.container)
+    containerm['serial'] = item.serial
+    stmt:bind_names( containerm )
+    stmt:step()
+    stmt:finalize()
+  end
+  timer_end('EQdb:addcontainer')
+end
+
+
+function EQdb:addweapon(item)
+  timer_start('EQdb:addweapon')
+  if item.weapon and next(item.weapon) then
+    self.db:exec("DELETE * from weapon where serial = " .. tostring(item.serial))
+    local stmt = self.db:prepare[[
+      INSERT into weapon VALUES (
+        NULL,
+        :serial,
+        :wtype,
+        :damtype,
+        :special,
+        :inflicts,
+        :avedam);]]
+    local weaponm = copytable.deep(item.weapon)
+    weaponm['serial'] = item.serial
+    stmt:bind_names( weaponm )
+    stmt:step()
+    stmt:finalize()
+  end
+  timer_end('EQdb:addweapon')
 end
 
 function EQdb:addresists(item)
@@ -270,6 +356,12 @@ function EQdb:additemdetail(item)
     end
     self:addresists(item)
     self:addstats(item)
+    if tonumber(item.type) == 5 then
+      self:addweapon(item)
+    end
+    if tonumber(item.type) == 11 then
+      self:addcontainer(item)
+    end
     assert (self.db:exec("COMMIT"))
     phelper:mdebug('changes:', self.db:total_changes() - tchanges)
     self:close('additemdetail')
