@@ -46,17 +46,13 @@ function EQdb:initialize(args)
   self.dbname = "\\eq.db"
   self.version = 1
   self:checkversion()
-  self:turnonpragmas()
 end
 
 function EQdb:turnonpragmas()
-  if self:open('turnonpragmas') then
-    -- PRAGMA foreign_keys = ON;
-    self.db:exec("PRAGMA foreign_keys=1;")
-    -- PRAGMA journal_mode=WAL
-    self.db:exec("PRAGMA journal_mode=WAL;")
-    self:close('turnonpragmas')
-  end
+  -- PRAGMA foreign_keys = ON;
+  self.db:exec("PRAGMA foreign_keys=1;")
+  -- PRAGMA journal_mode=WAL
+  self.db:exec("PRAGMA journal_mode=WAL;")
 end
 
 function EQdb:checkitemstable()
@@ -209,6 +205,18 @@ function EQdb:checkitemdetailstable()
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
+    if not self:checkfortable('furniture') then
+      self.db:exec([[
+        CREATE TABLE furniture(
+        fuid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        hpregen NUMBER,
+        manaregen NUMBER,
+        u1 NUMBER,
+        UNIQUE(serial),
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
     self:close('checkitemdetailstable')
   end
 end
@@ -246,6 +254,11 @@ function EQdb:getitemdetails(serial)
       if tonumber(titem.type) == 5  then
         for a in self.db:nrows("SELECT * FROM weapon WHERE serial = " .. tostring(serial)) do
           titem['weapon'] = a
+        end
+      end
+      if tonumber(titem.type) == 9  then
+        for a in self.db:nrows("SELECT * FROM furniture WHERE serial = " .. tostring(serial)) do
+          titem['furniture'] = a
         end
       end
       if tonumber(titem.type) == 11  then
@@ -294,6 +307,25 @@ function EQdb:adddrink(item)
     stmt:finalize()
   end
   timer_end('EQdb:adddrink')
+end
+
+function EQdb:addfurniture(item)
+  timer_start('EQdb:addfurniture')
+  if item.furniture and next(item.furniture) then
+    local stmt = self.db:prepare[[
+      INSERT or REPLACE into furniture VALUES (
+        NULL,
+        :serial,
+        :hpregen,
+        :manaregen,
+        :u1);]]
+    local furniturem = copytable.deep(item.furniture)
+    furniturem['serial'] = item.serial
+    stmt:bind_names( furniturem )
+    stmt:step()
+    stmt:finalize()
+  end
+  timer_end('EQdb:addfurniture')
 end
 
 function EQdb:addfood(item)
@@ -459,6 +491,9 @@ function EQdb:additemdetail(item)
   self:checkitemdetailstable()
   if self:open('additemdetail') then
     local titem = self:getitemdetails(tonumber(item.serial))
+    self.db:exec("DELETE * from statmod where serial = " .. tostring(item.serial))
+    self.db:exec("DELETE * from resistmod where serial = " .. tostring(item.serial))
+    self.db:exec("DELETE * from skillmod where serial = " .. tostring(item.serial))
     local tchanges = self.db:total_changes()
     assert (self.db:exec("BEGIN TRANSACTION"))
     if titem then
@@ -516,6 +551,9 @@ function EQdb:additemdetail(item)
     end
     if tonumber(item.type) == 5 then
       self:addweapon(item)
+    end
+    if tonumber(item.type) == 9 then
+      self:addfurniture(item)
     end
     if tonumber(item.type) == 11 then
       self:addcontainer(item)
