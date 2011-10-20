@@ -186,9 +186,7 @@ function ifiltermouse(item, result)
 end
 
 menus = {
- Wornmenuright = buildmenu,
  Wornmenuleft = buildmenu,
- Wornmouseright = mouseleft,
  Wornmouseleft = mouseleft,
  Inventorymenuleft = buildmenu,
  Inventorymouseleft = mouseleft,
@@ -582,6 +580,16 @@ function builditem(item)
                                 string.format("Each serving replenishes hunger by %d%%.", tonumber(item.drink.hungerpercent))))
   end
 
+  if item.furniture then
+    local style = {}
+    style.text = '+------------------------------------------------------------------+'
+    table.insert(lstyles, {style})
+
+    local header = 'Heal Rate'
+    table.insert(lstyles, formatspecialline(header, 'darkcyan',
+                                string.format("Health [@Y%d@w]    Magic [@Y%d@w]", tonumber(item.furniture.hpregen), tonumber(item.furniture.manaregen))))
+  end
+
   local style = {}
   style.text = '+------------------------------------------------------------------+'
   table.insert(lstyles, {style})
@@ -685,7 +693,9 @@ function buildwornitem(item)
   local itemlength = 47
   --print(item.plainname)
   for i=1,#newstyles do
-    local style = newstyles[i]
+    local tstyle = newstyles[i]
+    local style = popup_style(idwin, tstyle.text, tstyle.textcolour, 0x20)
+    style.backcolour = tstyle.backcolour
     --print(length, #style.text, style.text)
     if length + #style.text >= itemlength and i ~= 1 then
       local tl = itemlength - length
@@ -701,7 +711,20 @@ function buildwornitem(item)
     if item.serial then
       style.hint = "ID: " .. tostring(item.serial)
       style.mouseup = menuclick(item)
+      style.mouseover = function ()
+        --print('got mouseover')
+        if not idwin:hastab(item.serial) then
+          detailswaiting[tonumber(item.serial)] = true
+          --print('calling plugin in mouseover', item.serial)
+          local rc = CallPlugin("aaa56faed92ffc6146964abc", 'getinvdetails', item.serial)
+          --print(rc)
+        else
+          idwin:changetotab(item.serial)
+          idwin:show(true)
+        end
+      end
     end
+
     --tprint(style)
     table.insert(lstyles, style)
   end
