@@ -617,6 +617,22 @@ function builditem(item)
                                 string.format("Will replenish hunger by %d%%", tonumber(item.food.percent))))
   end
 
+  if item.drink then
+    local style = {}
+    style.text = '+------------------------------------------------------------------+'
+    table.insert(lstyles, {style})
+
+    table.insert(lstyles, formatspecialline('Drink', 'darkcyan',
+                                string.format("%d servings of %s. Max: %d", tonumber(item.drink.servings), item.drink.liquid,
+                                           tonumber(item.drink.liquidmax)/20)))
+
+    table.insert(lstyles, formatspecialline('', 'darkcyan',
+                                string.format("Each serving replenishes thirst by %d%%.", tonumber(item.drink.thirstpercent))))
+
+    table.insert(lstyles, formatspecialline('', 'darkcyan',
+                                string.format("Each serving replenishes hunger by %d%%.", tonumber(item.drink.hungerpercent))))
+  end
+
   local style = {}
   style.text = '+------------------------------------------------------------------+'
   table.insert(lstyles, {style})
