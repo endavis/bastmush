@@ -131,55 +131,6 @@ function buildmenu(item)
   return menu
 end
 
-function buildsortmenu(item)
-  local menu = ''
-  local container = item.containerid
-  if container ~= 'Worn' then
-    menu = menu .. '> Sort by '
-    menu = menu .. '| >Place | +Place | -Place | <'
-    menu = menu .. '| >Type | +Type | -Type | <'
-    menu = menu .. '| >Level| +Level | -Level | <'
-  end
-  return menu
-end
-
-function sortmenumouse(item, result)
-  local container = item.containerid
-  local tsortkey = ''
-  if result:match('-') then
-    reverse = true
-  else
-    reverse = false
-  end
-  if result:match("Place") then
-    tsortkey = 'place'
-  elseif result:match("Type") then
-    tsortkey = 'type'
-  elseif result:match("Level") then
-    tsortkey = 'level'
-  end
-  if tsortkey ~= '' then
-    change_filter(container, tsortkey, reverse)
-  end
-end
-
---function putobjectininv(item)
---  local item = db:getitem(item.serial)
---  if item.containerid == 'Worn' then
---    SendNoEcho('remove ' .. item.serial)
---  elseif item.containerid ~= 'Inventory' then
---    SendNoEcho('get ' .. item.serial .. ' ' .. item.containerid)
---  end
---end
-
---function putobjectbackinplace(item, container)
---  if container == 'Worn' then
---    SendNoEcho('wear ' .. item.serial)
---  elseif container ~= 'Inventory' then
---    SendNoEcho('put ' .. item.serial .. ' ' .. trim(container))
---  end
---end
-
 function mouseleft(item, result)
   if result:match("in") then
     local tresult = utils.split(result, ' ')
@@ -239,13 +190,9 @@ menus = {
  Wornmenuleft = buildmenu,
  Wornmouseright = mouseleft,
  Wornmouseleft = mouseleft,
- Inventorymenuright = buildsortmenu,
  Inventorymenuleft = buildmenu,
- Inventorymouseright = sortmenumouse,
  Inventorymouseleft = mouseleft,
- containermenuright = buildsortmenu,
  containermenuleft = buildmenu,
- containermouseright = sortmenumouse,
  containermouseleft = mouseleft,
  ifiltermenuleft = buildifiltermenu,
  ifiltermenuright = buildifiltermenu,
@@ -275,14 +222,17 @@ function menuclick(item, menu)
       -- right
       mousebutton = 'right'
     end
-    menu = menus[menutype .. 'menu' .. mousebutton](item)
-    local result = WindowMenu (eqwin.winid, WindowInfo (eqwin.winid, 14), WindowInfo (eqwin.winid, 15), menu) --do menu
-    if result:match(' - ') then
-      local tresult = utils.split(result, '-')
-      result = trim(tresult[1])
-    end
-    if result ~= "" then
-      menus[menutype .. 'mouse' .. mousebutton](item, result)
+    menufunc = menus[menutype .. 'menu' .. mousebutton]
+    if menufunc then
+      menu = menufunc(item)
+      local result = WindowMenu (eqwin.winid, WindowInfo (eqwin.winid, 14), WindowInfo (eqwin.winid, 15), menu) --do menu
+      if result:match(' - ') then
+        local tresult = utils.split(result, '-')
+        result = trim(tresult[1])
+      end
+      if result ~= "" then
+        menus[menutype .. 'mouse' .. mousebutton](item, result)
+      end
     end
   end
 end
@@ -327,9 +277,6 @@ function formatsingleline(linename, linecolour, data, datacolour)
 
   return lstyle
 end
-
---| Type       : Armor                     Level  :   100           |
---| Worth      : 100,000                   Weight :     5           |
 
 function formatdoubleline(linename, linecolour, data, linename2, data2)
   --print('formatsingleline', linename)
@@ -485,15 +432,13 @@ function builditem(item)
   --table.insert(lstyles, formatsingleline('Score', 'darkcyan', item.score))
 
   if item.flags ~= "" then
+    item.flags = item.flags:gsub('precious', '@Yprecious@w')
     local flags = wrap(item.flags, 51)
     local t = 0
     for i,v in ipairs(flags) do
       local header = 'Flags'
       if t ~= 0 then
         header = ''
-      end
-      if v == 'precious' then
-        v = '@Yprecious@w'
       end
       table.insert(lstyles, formatsingleline(header, 'darkcyan', v))
       t = t + 1
@@ -597,11 +542,15 @@ function builditem(item)
     local header = 'Spells'
     for i=1,4 do
       local key = 'sn' .. tostring(i)
-      if item.spells[key] ~= "" and item.spells[key] ~= nil then
+      if item.spells[key] ~= "" and item.spells[key] ~= nil and tonumber(item.spells[key]) ~= 0 then
         local spell = find_spell(item.spells[key])
+        local plural = ''
+        if tonumber(item.spells.uses) > 1 then
+          plural = 's'
+        end
         table.insert(lstyles, formatspecialline(header, 'darkcyan',
-                                string.format("%d use of level %d '@g%s@w'", tonumber(item.spells.uses), tonumber(item.spells.level),
-                                          tostring(spell.name):lower())))
+                                string.format("%d use%s of level %d '@g%s@w'", tonumber(item.spells.uses), plural,
+                                          tonumber(item.spells.level), tostring(spell.name):lower())))
       end
       header = ''
     end
@@ -1078,7 +1027,7 @@ function builddata(container)
         --print(item.plainname)
         for i=1,#newstyles do
           local tstyle = newstyles[i]
-          local style = popup_style(idwin, tstyle.text, tstyle.textcolour)
+          local style = popup_style(idwin, tstyle.text, tstyle.textcolour, 0x20)
           style.backcolour = tstyle.backcolour
 
           --print(length, #style.text, style.text)
