@@ -107,7 +107,6 @@ function EQdb:checkitemdetailstable()
           UNIQUE(serial),
           PRIMARY KEY(serial));)]])
     end
-
     if not self:checkfortable('resistmod') then
       self.db:exec([[
         CREATE TABLE resistmod(
@@ -118,7 +117,6 @@ function EQdb:checkitemdetailstable()
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
-
     if not self:checkfortable('statmod') then
       self.db:exec([[
         CREATE TABLE statmod(
@@ -157,6 +155,31 @@ function EQdb:checkitemdetailstable()
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
+    if not self:checkfortable('skillmod') then
+      self.db:exec([[
+        CREATE TABLE skillmod(
+        skid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        skillnum NUMBER,
+        amount NUMBER default 0,
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
+    if not self:checkfortable('spells') then
+      self.db:exec([[
+        CREATE TABLE spells(
+        spid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        uses NUMBER,
+        level NUMBER,
+        sn1 NUMBER,
+        sn2 NUMBER,
+        sn3 NUMBER,
+        sn4 NUMBER,
+        u1 NUMBER,
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
     self:close('checkitemdetailstable')
   end
 end
@@ -176,23 +199,30 @@ function EQdb:getitemdetails(serial)
         end
         titem['resistmod'][a.type] = a.amount
       end
-    end
-    if titem then
+      for a in self.db:nrows("SELECT * FROM spells WHERE serial = " .. tostring(serial)) do
+        titem['spells'] = a
+      end
       for a in self.db:nrows("SELECT * FROM statmod WHERE serial = " .. tostring(serial)) do
         if not titem['statmod'] then
           titem['statmod'] = {}
         end
         titem['statmod'][a.type] = a.amount
       end
-    end
-    if titem and tonumber(titem.type) == 5  then
-      for a in self.db:nrows("SELECT * FROM weapon WHERE serial = " .. tostring(serial)) do
-        titem['weapon'] = a
+      for a in self.db:nrows("SELECT * FROM skillmod WHERE serial = " .. tostring(serial)) do
+        if not titem['skillmod'] then
+          titem['skillmod'] = {}
+        end
+        titem['skillmod'][a.skillnum] = a.amount
       end
-    end
-    if titem and tonumber(titem.type) == 11  then
-      for a in self.db:nrows("SELECT * FROM container WHERE serial = " .. tostring(serial)) do
-        titem['container'] = a
+      if tonumber(titem.type) == 5  then
+        for a in self.db:nrows("SELECT * FROM weapon WHERE serial = " .. tostring(serial)) do
+          titem['weapon'] = a
+        end
+      end
+      if tonumber(titem.type) == 11  then
+        for a in self.db:nrows("SELECT * FROM container WHERE serial = " .. tostring(serial)) do
+          titem['container'] = a
+        end
       end
     end
     self:close('getitemdetails')
@@ -202,6 +232,54 @@ function EQdb:getitemdetails(serial)
   --  tprint(titem)
   --end
   return titem
+end
+
+function EQdb:addspells(item)
+  timer_start('EQdb:addspell')
+  if item.spells and next(item.spells) then
+    self.db:exec("DELETE * from spells where serial = " .. tostring(item.serial))
+    local stmt = self.db:prepare[[
+      INSERT into spells VALUES (
+        NULL,
+        :serial,
+        :uses,
+        :level,
+        :sn1,
+        :sn2,
+        :sn3,
+        :sn4,
+        :u1);]]
+    local spellm = copytable.deep(item.spells)
+    spellm['serial'] = item.serial
+    stmt:bind_names( spellm )
+    stmt:step()
+    stmt:finalize()
+  end
+  timer_end('EQdb:addspell')
+end
+
+function EQdb:addskillmod(item)
+  timer_start('EQdb:addskillmod')
+  if item.skillmod and next(item.skillmod) then
+    self.db:exec("DELETE * from skillmod where serial = " .. tostring(item.serial))
+    local stmt = self.db:prepare[[
+      INSERT into skillmod VALUES (
+        NULL,
+        :serial,
+        :skillnum,
+        :value);]]
+    for i,v in pairs(item.skillmod) do
+      local skillm = {}
+      skillm['serial'] = item.serial
+      skillm['skillnum'] = i
+      skillm['value'] = v
+      stmt:bind_names( skillm )
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+  end
+  timer_end('EQdb:addskillmod')
 end
 
 function EQdb:addcontainer(item)
@@ -356,6 +434,10 @@ function EQdb:additemdetail(item)
     end
     self:addresists(item)
     self:addstats(item)
+    self:addspells(item)
+    if item.skillmod and next(item.skillmod) then
+      self:addskillmod(item)
+    end
     if tonumber(item.type) == 5 then
       self:addweapon(item)
     end
