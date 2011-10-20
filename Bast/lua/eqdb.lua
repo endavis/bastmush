@@ -189,6 +189,21 @@ function EQdb:checkitemdetailstable()
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
+    if not self:checkfortable('drink') then
+      self.db:exec([[
+        CREATE TABLE drink(
+        did INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        servings NUMBER,
+        liquid NUMBER,
+        liquidmax NUMBER,
+        liquidleft NUMBER,
+        thirstpercent NUMBER,
+        hungerpercent NUMBER,
+        u1 NUMBER,
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
     self:close('checkitemdetailstable')
   end
 end
@@ -233,6 +248,11 @@ function EQdb:getitemdetails(serial)
           titem['container'] = a
         end
       end
+      if tonumber(titem.type) == 12  then
+        for a in self.db:nrows("SELECT * FROM drink WHERE serial = " .. tostring(serial)) do
+          titem['drink'] = a
+        end
+      end
       if tonumber(titem.type) == 14  then
         for a in self.db:nrows("SELECT * FROM food WHERE serial = " .. tostring(serial)) do
           titem['food'] = a
@@ -246,6 +266,30 @@ function EQdb:getitemdetails(serial)
   --  tprint(titem)
   --end
   return titem
+end
+
+function EQdb:adddrink(item)
+  timer_start('EQdb:adddrink')
+  if item.drink and next(item.drink) then
+    self.db:exec("DELETE * from drink where serial = " .. tostring(item.serial))
+    local stmt = self.db:prepare[[
+      INSERT into drink VALUES (
+        NULL,
+        :serial,
+        :servings,
+        :liquid,
+        :liquidmax,
+        :liquidleft,
+        :thirstpercent,
+        :hungerpercent,
+        :u1);]]
+    local drinkm = copytable.deep(item.drink)
+    drinkm['serial'] = item.serial
+    stmt:bind_names( drinkm )
+    stmt:step()
+    stmt:finalize()
+  end
+  timer_end('EQdb:adddrink')
 end
 
 function EQdb:addfood(item)
@@ -475,6 +519,9 @@ function EQdb:additemdetail(item)
     end
     if tonumber(item.type) == 11 then
       self:addcontainer(item)
+    end
+    if tonumber(item.type) == 12 then
+      self:adddrink(item)
     end
     if tonumber(item.type) == 14 then
       self:addfood(item)
