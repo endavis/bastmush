@@ -40,6 +40,7 @@ require "eqdb"
 require "copytable"
 require "colours"
 require "stringfuncs"
+require 'bastspell'
 
 -- figure out how to get uncurse into the menu
 -- there is a nodrop, nocurse flag in invdetails for an item
@@ -462,7 +463,7 @@ function builditem(item)
   style.text = '+------------------------------------------------------------------+'
   table.insert(lstyles, {style})
 
-  it item.keywords ~= '' and item.keywords ~= nil then
+  if item.keywords ~= '' and item.keywords ~= nil then
     table.insert(lstyles, formatsingleline('Keywords', item.keywords))
   end
   table.insert(lstyles, formatsingleline('Name', 'red', item.name))
@@ -571,6 +572,38 @@ function builditem(item)
     end
     if next(tt) then
       table.insert(lstyles, formatmod(header, 'darkcyan', tt))
+    end
+  end
+
+  if item.skillmod then
+    local style = {}
+    style.text = '+------------------------------------------------------------------+'
+    table.insert(lstyles, {style})
+
+    local header = 'Skill Mods'
+    for i,v in pairs(item.skillmod) do
+      local spell = find_spell(i)
+      table.insert(lstyles, formatspecialline(header, 'darkcyan',
+                              string.format('Modifies @g%s@w by @g%+d@w', tostring(spell.name):gsub("^%l", string.upper), tonumber(v))))
+      header = ''
+    end
+  end
+
+  if item.spells then
+    local style = {}
+    style.text = '+------------------------------------------------------------------+'
+    table.insert(lstyles, {style})
+
+    local header = 'Spells'
+    for i=1,4 do
+      local key = 'sn' .. tostring(i)
+      if item.spells[key] ~= "" and item.spells[key] ~= nil then
+        local spell = find_spell(item.spells[key])
+        table.insert(lstyles, formatspecialline(header, 'darkcyan',
+                                string.format("%d use of level %d '@g%s@w'", item.spells.uses, item.spells.level,
+                                          tostring(spell.name):lower())))
+      end
+      header = ''
     end
   end
 
@@ -1128,6 +1161,7 @@ end -- OnPluginClose
 function OnPluginEnable ()
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
   ldplugin ("eqDB", "aaa56faed92ffc6146964abc")
+  ldplugin ("broadcast_spellsskills", "aaa72f3b5453567e2bba9d50")
 
   CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "container_change", "oncontainerchange")
   CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "invdetails", "oninvdetails")
