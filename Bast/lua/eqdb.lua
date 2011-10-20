@@ -180,6 +180,15 @@ function EQdb:checkitemdetailstable()
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
+    if not self:checkfortable('food') then
+      self.db:exec([[
+        CREATE TABLE food(
+        fid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        percent NUMBER,
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
     self:close('checkitemdetailstable')
   end
 end
@@ -224,6 +233,11 @@ function EQdb:getitemdetails(serial)
           titem['container'] = a
         end
       end
+      if tonumber(titem.type) == 14  then
+        for a in self.db:nrows("SELECT * FROM food WHERE serial = " .. tostring(serial)) do
+          titem['food'] = a
+        end
+      end
     end
     self:close('getitemdetails')
   end
@@ -232,6 +246,24 @@ function EQdb:getitemdetails(serial)
   --  tprint(titem)
   --end
   return titem
+end
+
+function EQdb:addfood(item)
+  timer_start('EQdb:addfood')
+  if item.food and next(item.food) then
+    self.db:exec("DELETE * from food where serial = " .. tostring(item.serial))
+    local stmt = self.db:prepare[[
+      INSERT into food VALUES (
+        NULL,
+        :serial,
+        :percent);]]
+    local foodm = copytable.deep(item.food)
+    foodm['serial'] = item.serial
+    stmt:bind_names( foodm )
+    stmt:step()
+    stmt:finalize()
+  end
+  timer_end('EQdb:addfood')
 end
 
 function EQdb:addspells(item)
@@ -443,6 +475,9 @@ function EQdb:additemdetail(item)
     end
     if tonumber(item.type) == 11 then
       self:addcontainer(item)
+    end
+    if tonumber(item.type) == 14 then
+      self:addfood(item)
     end
     assert (self.db:exec("COMMIT"))
     phelper:mdebug('changes:', self.db:total_changes() - tchanges)
