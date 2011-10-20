@@ -137,6 +137,7 @@ function EQdb:checkitemdetailstable()
         special TEXT,
         inflicts TEXT,
         avedam NUMBER,
+        UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
@@ -152,6 +153,7 @@ function EQdb:checkitemdetailstable()
         itemsinside NUMBER,
         totalweight NUMBER,
         itemburden NUMBER,
+        UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
@@ -177,6 +179,7 @@ function EQdb:checkitemdetailstable()
         sn3 NUMBER,
         sn4 NUMBER,
         u1 NUMBER,
+        UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
@@ -186,6 +189,7 @@ function EQdb:checkitemdetailstable()
         fid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         percent NUMBER,
+        UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
@@ -201,6 +205,7 @@ function EQdb:checkitemdetailstable()
         thirstpercent NUMBER,
         hungerpercent NUMBER,
         u1 NUMBER,
+        UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
@@ -271,9 +276,8 @@ end
 function EQdb:adddrink(item)
   timer_start('EQdb:adddrink')
   if item.drink and next(item.drink) then
-    self.db:exec("DELETE * from drink where serial = " .. tostring(item.serial))
     local stmt = self.db:prepare[[
-      INSERT into drink VALUES (
+      INSERT or REPLACE into drink VALUES (
         NULL,
         :serial,
         :servings,
@@ -295,9 +299,8 @@ end
 function EQdb:addfood(item)
   timer_start('EQdb:addfood')
   if item.food and next(item.food) then
-    self.db:exec("DELETE * from food where serial = " .. tostring(item.serial))
     local stmt = self.db:prepare[[
-      INSERT into food VALUES (
+      INSERT or REPLACE into food VALUES (
         NULL,
         :serial,
         :percent);]]
@@ -313,9 +316,8 @@ end
 function EQdb:addspells(item)
   timer_start('EQdb:addspell')
   if item.spells and next(item.spells) then
-    self.db:exec("DELETE * from spells where serial = " .. tostring(item.serial))
     local stmt = self.db:prepare[[
-      INSERT into spells VALUES (
+      INSERT or REPLACE into spells VALUES (
         NULL,
         :serial,
         :uses,
@@ -361,9 +363,8 @@ end
 function EQdb:addcontainer(item)
   timer_start('EQdb:addcontainer')
   if item.container and next(item.container) then
-    self.db:exec("DELETE * from container where serial = " .. tostring(item.serial))
     local stmt = self.db:prepare[[
-      INSERT into container VALUES (
+      INSERT OR REPLACE into container VALUES (
         NULL,
         :serial,
         :itemweightpercent,
@@ -386,9 +387,8 @@ end
 function EQdb:addweapon(item)
   timer_start('EQdb:addweapon')
   if item.weapon and next(item.weapon) then
-    self.db:exec("DELETE * from weapon where serial = " .. tostring(item.serial))
     local stmt = self.db:prepare[[
-      INSERT into weapon VALUES (
+      INSERT or REPLACE into weapon VALUES (
         NULL,
         :serial,
         :wtype,
