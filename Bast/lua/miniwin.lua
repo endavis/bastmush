@@ -2761,20 +2761,26 @@ function empty(flags, hotspot_id)
 end
 
 -- create a popup style with another miniwindow
-function popup_style(win, text, colour)
+function popup_style(win, text, colour, mousebutton)
   local style = {}
   style.text = text
   style.textcolour = colour
-  style.mouseover = function (flags, hotspotid)
+  style.mouseover = function (window, flags, hotspotid)
                       win:show(true)
                     end
-  style.cancelmouseover = function (flags, hotspotid)
+  style.cancelmouseover = function (window, flags, hotspotid)
                       if not win.clickshow then
                         win:show(false)
                       end
                     end
-  style.mousedown = function (flags, hotspotid)
-                      win.clickshow = not win.clickshow
+  style.mousedown = function (window, flags, hotspotid)
+                      if mousebutton then
+                        if bit.band(flags, mousebutton) ~= 0 then
+                          win.clickshow = not win.clickshow
+                        end
+                      else
+                        win.clickshow = not win.clickshow
+                      end
                     end
   return style
 end
