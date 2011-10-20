@@ -195,10 +195,10 @@ allcontainer = -1
 
 layout ={
 invheader = {"serial", "level", "type", "worth", "weight", "wearable", "flags", "owner", "fromclan", "timer", "u1", "u2", "u3", "score"},
-container = {"capacity", "heaviestitem", "holding", "itemsinside", "totalweight", "itemsburden", "itemweightpercent"},
+container = {"capacity", "heaviestitem", "holding", "itemsinside", "totalweight", "itemburden", "itemweightpercent"},
 statmod = {"stat", "value"},
 resistmod = {"resist", "value"},
-weapon = {"type", "avedam", "inflicts", "damtype", "special"},
+weapon = {"wtype", "avedam", "inflicts", "damtype", "special"},
 skillmod = {"skillnum", "value"},
 spells = {"uses", "level", "sn1", "sn2", "sn3", "sn4", "u1"},
 food = {"percent"},
