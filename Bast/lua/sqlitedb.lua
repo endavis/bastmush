@@ -14,10 +14,14 @@ function Sqlitedb:initialize(args)
   local path, throw = GetInfo(58):gsub("^.\\",GetInfo(56))
   self.dbloc = GetPluginVariable ("", "dblocation") or path
   self.db = nil
-  self.dbname = "\\stats.db"
+  self.dbname = "\\sqlite.db"
   self.conns = 0
   self.version = 1
   self.versionfuncs = {}
+end
+
+function Sqlitedb:turnonpragmas()
+
 end
 
 function Sqlitedb:checkversion(args)
@@ -81,6 +85,7 @@ function Sqlitedb:open(from)
     --phelper:mdebug("opening db")
     --print('db dir', self.dbloc)
     self.db = assert(sqlite3.open(self.dbloc .. self.dbname))
+    self:turnonpragmas()
   end
   self.conns = self.conns + 1
   if self.db then
