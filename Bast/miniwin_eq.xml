@@ -600,11 +600,21 @@ function builditem(item)
       if item.spells[key] ~= "" and item.spells[key] ~= nil then
         local spell = find_spell(item.spells[key])
         table.insert(lstyles, formatspecialline(header, 'darkcyan',
-                                string.format("%d use of level %d '@g%s@w'", item.spells.uses, item.spells.level,
+                                string.format("%d use of level %d '@g%s@w'", tonumber(item.spells.uses), tonumber(item.spells.level),
                                           tostring(spell.name):lower())))
       end
       header = ''
     end
+  end
+
+  if item.food then
+    local style = {}
+    style.text = '+------------------------------------------------------------------+'
+    table.insert(lstyles, {style})
+
+    local header = 'Food'
+    table.insert(lstyles, formatspecialline(header, 'darkcyan',
+                                string.format("Will replenish hunger by %d%%", tonumber(item.food.percent))))
   end
 
   local style = {}
