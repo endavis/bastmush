@@ -371,7 +371,7 @@ end
 function EQdb:addskillmod(item)
   timer_start('EQdb:addskillmod')
   if item.skillmod and next(item.skillmod) then
-    self.db:exec("DELETE * from skillmod where serial = " .. tostring(item.serial))
+    self.db:exec("DELETE from skillmod where serial = " .. tostring(item.serial))
     local stmt = self.db:prepare[[
       INSERT into skillmod VALUES (
         NULL,
@@ -440,7 +440,7 @@ end
 function EQdb:addresists(item)
   timer_start('EQdb:addresists')
   if item.resistmod and next(item.resistmod) then
-    self.db:exec("DELETE * from resistmod where serial = " .. tostring(item.serial))
+    self.db:exec("DELETE from resistmod where serial = " .. tostring(item.serial))
     local stmt = self.db:prepare[[
       INSERT into resistmod VALUES (
         NULL,
@@ -464,7 +464,7 @@ end
 function EQdb:addstats(item)
   timer_start('EQdb:addstats')
   if item.statmod and next(item.statmod) then
-    self.db:exec("DELETE * from statmod where serial = " .. tostring(item.serial))
+    self.db:exec("DELETE from statmod where serial = " .. tostring(item.serial))
     local stmt = self.db:prepare[[
       INSERT into statmod VALUES (
         NULL,
@@ -491,9 +491,6 @@ function EQdb:additemdetail(item)
   self:checkitemdetailstable()
   if self:open('additemdetail') then
     local titem = self:getitemdetails(tonumber(item.serial))
-    self.db:exec("DELETE * from statmod where serial = " .. tostring(item.serial))
-    self.db:exec("DELETE * from resistmod where serial = " .. tostring(item.serial))
-    self.db:exec("DELETE * from skillmod where serial = " .. tostring(item.serial))
     local tchanges = self.db:total_changes()
     assert (self.db:exec("BEGIN TRANSACTION"))
     if titem then
