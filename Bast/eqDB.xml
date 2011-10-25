@@ -18,6 +18,9 @@
 <![CDATA[
 [FOR PLUGIN AUTHORS ONLY]
 
+#TODO: container changes when getting/removing
+#TODO: add designation to containers such as 'special', 'portal', 'potion'
+
 ]]>
 </description>
 </plugin>
@@ -185,8 +188,6 @@ invdata = {}
 container = ""
 place = 0
 initdb = false
-invdetails_cache = {}
-invdetails = {}
 wearingall = false
 removingall = false
 puttingall = false
@@ -306,6 +307,7 @@ function invdetails_redirect (name, line, wildcards, styles)
   ltype = 'unknown'
   if name == "start_invdetails" then
     invdetails = {}
+    timer_start('invdetails')
     phelper:enabletriggroup("invdetails", true)
     return
   elseif line == "{/invdetails}" then
@@ -315,9 +317,9 @@ function invdetails_redirect (name, line, wildcards, styles)
     invdetails.plainname = titem.plainname
     invdetails.containerid = titem.containerid
     invdetails.type = titem.type
-    invdetails_cache[tonumber(invdetails.serial)] = invdetails
+    timer_end('invdetails')
     db:additemdetail(invdetails)
-    phelper:processevent('invdetails', invdetails)
+    phelper:processevent('itemchange', invdetails)
     return
   end -- if
 
@@ -431,22 +433,18 @@ end
 
 function getinvdetails(id)
   --print('getinvdetails', type(id), id)
-  if invdetails_cache[tonumber(id)] then
-    phelper:processevent('invdetails', invdetails_cache[tonumber(id)])
+  local titem = db:getitemdetails(id)
+  if titem then
+    phelper:processevent('itemchange', titem)
   else
-    local titem = db:getitemdetails(id)
-    if titem then
-      phelper:processevent('invdetails', titem)
-    else
-      local titem2 = db:getitem(id)
-      if titem2 then
-        if titem2.containerid == 'Inventory' or titem2.containerid == 'Worn' then
-          sendcmd('invdetails ' .. tostring(id))
-        else
-          putobjectininv(titem2)
-          sendcmd('invdetails ' .. tostring(id))
-          putobjectbackinplace(titem2, titem2.containerid)
-        end
+    local titem2 = db:getitem(id)
+    if titem2 then
+      if titem2.containerid == 'Inventory' or titem2.containerid == 'Worn' then
+        sendcmd('invdetails ' .. tostring(id))
+      else
+        putobjectininv(titem2)
+        sendcmd('invdetails ' .. tostring(id))
+        putobjectbackinplace(titem2, titem2.containerid)
       end
     end
   end
