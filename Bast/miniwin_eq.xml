@@ -713,15 +713,10 @@ function buildwornitem(item)
       style.mouseup = menuclick(item)
       style.mouseover = function ()
         --print('got mouseover')
-        if not idwin:hastab(item.serial) then
-          detailswaiting[tonumber(item.serial)] = true
-          --print('calling plugin in mouseover', item.serial)
-          local rc = CallPlugin("aaa56faed92ffc6146964abc", 'getinvdetails', item.serial)
-          --print(rc)
-        else
-          idwin:changetotab(item.serial)
-          idwin:show(true)
-        end
+        detailswaiting[tonumber(item.serial)] = true
+        --print('calling plugin in mouseover', item.serial)
+        local rc = CallPlugin("aaa56faed92ffc6146964abc", 'getitemdetails', item.serial)
+        --print(rc)
       end
     end
 
@@ -1071,16 +1066,11 @@ function builddata(container)
           table.insert(lstyles, style)
           style.mouseover = function ()
             --print('got mouseover')
-            if not idwin:hastab(item.serial) then
-              if container == 'Inventory' then
-                detailswaiting[tonumber(item.serial)] = true
-                --print('calling plugin in mouseover', item.serial)
-                local rc = CallPlugin("aaa56faed92ffc6146964abc", 'getinvdetails', item.serial)
-                --print(rc)
-              end
-            else
-              idwin:changetotab(item.serial)
-              idwin:show(true)
+            if container == 'Inventory' then
+              detailswaiting[tonumber(item.serial)] = true
+              --print('calling plugin in mouseover', item.serial)
+              local rc = CallPlugin("aaa56faed92ffc6146964abc", 'getitemdetails', item.serial)
+              --print(rc)
             end
           end
         end
@@ -1118,7 +1108,7 @@ function oncontainerchange(container)
   adddata(container)
 end
 
-function oninvdetails(item)
+function onitemchange(item)
   local titem = assert (loadstring ('return ' .. item or ""))()
   titem.serial = tonumber(titem.serial)
   --print('got item', titem.serial)
@@ -1140,7 +1130,7 @@ function OnPluginBroadcast (msg, id, name, text)
 
   if id == "aaa56faed92ffc6146964abc" and tonumber(msg) == -2 then
     CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "container_change", "oncontainerchange")
-    CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "invdetails", "oninvdetails")
+    CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "itemchange", "onitemchange")
   end
 end
 
@@ -1162,7 +1152,7 @@ function OnPluginEnable ()
   ldplugin ("broadcast_spellsskills", "aaa72f3b5453567e2bba9d50")
 
   CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "container_change", "oncontainerchange")
-  CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "invdetails", "oninvdetails")
+  CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "itemchange", "onitemchange")
 
   phelper:OnPluginEnable()
   -- always create windows after OnPluginEnable due to default variable handling
@@ -1173,7 +1163,7 @@ end -- OnPluginEnable
 
 function OnPluginDisable ()
   CallPlugin("aaa56faed92ffc6146964abc", 'unregisterevent', GetPluginID(), "container_change", "oncontainerchange")
-  CallPlugin("aaa56faed92ffc6146964abc", 'unregisterevent', GetPluginID(), "invdetails", "oninvdetails")
+  CallPlugin("aaa56faed92ffc6146964abc", 'unregisterevent', GetPluginID(), "itemchange", "onitemchange")
 
   phelper:OnPluginDisable()
 end -- OnPluginDisable
