@@ -400,6 +400,9 @@ function build_level_window()
         style.textcolour = "white"
         table.insert(lstyle, style)
 
+        if not v.blessingtrains then
+          v.blessingtrains = 0
+        end
         local style = {}
         style.text = string.format("%2s ", tostring(v.bonustrains + v.blessingtrains))
         style.textcolour = "white"
