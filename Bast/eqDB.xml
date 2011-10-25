@@ -431,8 +431,8 @@ function getcontainers()
  end
 end
 
-function getinvdetails(id)
-  --print('getinvdetails', type(id), id)
+function getitemdetails(id)
+  --print('getitemdetails', type(id), id)
   local titem = db:getitemdetails(id)
   if titem then
     phelper:processevent('itemchange', titem)
