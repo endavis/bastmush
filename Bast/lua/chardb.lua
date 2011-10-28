@@ -397,7 +397,11 @@ function Statdb:savelevel( levelinfo, first )
       elseif levelinfo['type'] == 'pup' then
         self:addtostat('powerupsall', 1)
       end
-      levelinfo['newlevel'] = tonumber(db:getstat('totallevels'))
+      if levelinfo['totallevels'] ~= 0 and levelinfo['totallevels'] ~= nil then
+        levelinfo['newlevel'] = levelinfo['totallevels']
+      else
+        levelinfo['newlevel'] = tonumber(db:getstat('totallevels'))
+      end
     end
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[[ INSERT INTO levels VALUES (NULL, :type, :newlevel, :str,
