@@ -80,6 +80,20 @@ function EQdb:checkitemstable()
   end
 end
 
+function EQdb:checkidentifiertable()
+  if self:open('checkidentifiertable') then
+    if not self:checkfortable('identifier') then
+      self.db:exec([[CREATE TABLE identifier(
+        serial INTEGER NOT NULL,
+        identifier TEXT,
+        UNIQUE(identifier),
+        PRIMARY KEY(serial, identifier));
+      )]])
+    end
+    self:close('checkidentifiertable')
+  end
+end
+
 function EQdb:checkitemdetailstable()
   if self:open('checkitemdetailstable') then
     if not self:checkfortable('itemdetails') then
@@ -229,6 +243,12 @@ function EQdb:getitemdetails(serial)
     for a in self.db:nrows("SELECT * FROM itemdetails WHERE serial = " .. tostring(serial)) do
       titem = a
     end
+    for a in self.db:nrows("SELECT * FROM identifier WHERE serial = " .. tostring(serial)) do
+      if not titem['identifier'] then
+        titem['identifier'] = {}
+      end
+      table.insert(titem['identifier'], a['identifier'])
+    end
     if titem then
       for a in self.db:nrows("SELECT * FROM resistmod WHERE serial = " .. tostring(serial)) do
         if not titem['resistmod'] then
@@ -265,6 +285,14 @@ function EQdb:getitemdetails(serial)
         for a in self.db:nrows("SELECT * FROM container WHERE serial = " .. tostring(serial)) do
           titem['container'] = a
         end
+        local itemsinside = titem['container']['itemsinside']
+        local itemburden = titem['container']['itemburden']
+        for a in self.db:rows("SELECT COUNT(*) from items where containerid = " .. tostring(serial)) do
+          itemsinside = tonumber(a[1])
+          itemburden = tonumber(itemsinside) + 1
+        end
+        titem['container']['itemsinside'] = itemsinside
+        titem['container']['itemburden'] = itemburden
       end
       if tonumber(titem.type) == 12  then
         for a in self.db:nrows("SELECT * FROM drink WHERE serial = " .. tostring(serial)) do
@@ -666,7 +694,7 @@ function EQdb:reorderitemsmultiple(reorderstuff)
   timer_start('EQdb:reorderitemsmultiple')
   local titem = {containerid=containerid, place=place}
   self:checkitemstable()
-  if self:open('getitems') then
+  if self:open('reorderitemsmultiple') then
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmtremove = self.db:prepare[[ UPDATE items SET place=place - 1 WHERE containerid = :containerid and place > :place;]]
     local stmtadd = self.db:prepare[[UPDATE items SET place=place + 1 WHERE containerid = :containerid AND place >= :place;]]
@@ -686,7 +714,7 @@ function EQdb:reorderitemsmultiple(reorderstuff)
     stmtadd:finalize()
     stmtremove:finalize()
     assert (self.db:exec("COMMIT"))
-    self:close('getitem')
+    self:close('reorderitemsmultiple')
   end
   timer_end('EQdb:reorderitemsmultiple')
 end
@@ -729,16 +757,35 @@ function EQdb:updateitem(item)
   timer_end('EQdb:updateitem')
 end
 
-function EQdb:getitem(serial)
-  timer_start('EQdb:getitem')
-  local item = false
+function EQdb:getitembyserial(serial)
+  --print('getitembyserial', serial)
+  timer_start('EQdb:getitembyserial')
+  local item = nil
   self:checkitemstable()
-  if self:open('getitem') then
-    for a in self.db:nrows("SELECT * FROM items WHERE serial = '" .. tostring(serial) .. "'") do
-      item = a
+  if self:open('getitembyserial') then
+    --print('getitembyserial:tonumber', tonumber(serial))
+    if tonumber(serial) ~= nil  then
+      for a in self.db:nrows(string.format("SELECT * FROM items WHERE serial = %d;", tonumber(serial))) do
+        --print('getitembyserial')
+        --tprint(a)
+        item = a
+      end
     end
-    self:close('getitem')
+    self:close('getitembyserial')
   end
+  --print('getitembyserial', item)
+  timer_end('EQdb:getitembyserial')
+  return item
+end
+
+function EQdb:getitem(itemident)
+  --print('getitem', itemident)
+  timer_start('EQdb:getitem')
+  local item = self:getitembyserial(itemident)
+  if item == nil then
+    item = self:getitembyidentifier(itemident)
+  end
+  --print('getitem', item)
   timer_end('EQdb:getitem')
   return item
 end
@@ -819,21 +866,103 @@ function EQdb:getcontainers()
   return containers
 end
 
-function putobjectininv(item)
-  local teqdb = EQdb:new{}
-  local item = teqdb:getitem(item.serial)
-  if item.containerid == 'Worn' then
-    SendNoEcho('remove ' .. item.serial)
-  elseif item.containerid ~= 'Inventory' then
-    SendNoEcho('get ' .. item.serial .. ' ' .. item.containerid)
+function EQdb:addidentifier(itemsn, identifier)
+  timer_start('EQdb:addidentifier')
+  --tprint(item)
+  self:checkidentifiertable()
+  local titem = self:getitembyidentifier(identifier)
+  local item = self:getitembyserial(itemsn)
+  if next(item) then
+    if self:open('addidentifier') then
+      local titem = self:getitemdetails(tonumber(item.serial))
+      local tchanges = self.db:total_changes()
+      assert (self.db:exec("BEGIN TRANSACTION"))
+      local stmt = self.db:prepare[[
+        INSERT or REPLACE into identifier VALUES (
+        :serial,
+        :identifier);]]
+      local identm = copytable.deep(item)
+      identm.identifier = identifier
+      stmt:bind_names( identm )
+      stmt:step()
+      stmt:finalize()
+      assert (self.db:exec("COMMIT"))
+      self:close('addidentifier')
+    end
   end
+  timer_end('EQdb:addidentifier')
 end
 
-function putobjectbackinplace(item, container)
-  if container == 'Worn' then
-    SendNoEcho('wear ' .. item.serial)
-  elseif container ~= 'Inventory' then
-    SendNoEcho('put ' .. item.serial .. ' ' .. trim(container))
+function EQdb:getitembyidentifier(identifier)
+  timer_start('EQdb:getitembyidentifier')
+  --print('getitembyidentifier', identifier)
+  self:checkidentifiertable()
+  local item = nil
+  if self:open('getitembyidentifier') then
+    for a in self.db:nrows("SELECT * FROM identifier WHERE identifier='" .. tostring(identifier) .."';") do
+      item = a
+    end
+    self:close('getitembyidentifier')
   end
+  if item then
+    return self:getitembyserial(item.serial)
+  end
+  timer_end('EQdb:getitembyidentifier')
+  --print(item)
+  return item
+end
+
+function EQdb:removeidentifier(identifier)
+  timer_start('EQdb:removeidentifier')
+  --tprint(item)
+  self:checkidentifiertable()
+  if self:open('removeidentifier') then
+    self.db:exec("DELETE FROM identifier WHERE identifier=" .. tostring(identifier) ..";")
+    self:close('removeidentifier')
+  end
+  timer_end('EQdb:removeidentifier')
+end
+
+
+function putobjectininv(item, noworn)
+  local teqdb = EQdb:new{}
+  if type(item) ~= 'table' then
+    item = teqdb:getitem(item)
+  end
+  ---tprint(item)
+  if item and next(item) then
+    if item.containerid == 'Worn' and noworn == false then
+      SendNoEcho('remove ' .. item.serial)
+      return true
+    elseif item.containerid ~= 'Inventory' then
+      SendNoEcho('get ' .. item.serial .. ' ' .. item.containerid)
+      return true
+    end
+  end
+  return false
+end
+
+function putobjectincontainer(item, container)
+  local teqdb = EQdb:new{}
+  local tcontainer = tonumber(container)
+  if type(item) ~= 'table' then
+    item = teqdb:getitem(item)
+  end
+  if tcontainer then
+    if container == 'Worn' then
+      SendNoEcho('wear ' .. item.serial)
+      return true
+    elseif container ~= 'Inventory' then
+      SendNoEcho('put ' .. item.serial .. ' ' .. trim(container))
+      return true
+    end
+  else
+    local tcontainer = teqdb:getitembyidentifier(container)
+    if tcontainer and next(tcontainer) then
+      SendNoEcho('put ' .. item.serial .. ' ' .. tcontainer.serial)
+      return true
+    end
+  end
+  return false
 end
 
