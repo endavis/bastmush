@@ -680,7 +680,8 @@ function OnPluginSaveState ()
 end -- function OnPluginSaveState
 
 function OnPluginSend (sText)
-  if string.match(string.lower(sText), '^[g|ge|get]* .*$') ~= nil or string.match(string.lower(sText), '^[pu|put]* .*$') then
+  if string.match(string.lower(sText), '^[g|ge|get]* .*$') ~= nil or string.match(string.lower(sText), '^[pu|put]* .*$')
+          or string.match(string.lower(sText), '^[l|lo|loo|look]* [i|in] .*$') then
     local cmd = parse_cmdline(string.lower(sText))
     local ncmd = cmd[1]
     local item = cmd[2]
