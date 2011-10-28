@@ -228,6 +228,7 @@ function resetinfo()
   levelinfo.trains = 0
   levelinfo.bonustrains = 0
   levelinfo.blessingtrains = 0
+  levelinfo.totallevels = 0
 end
 
 function level ( name, line, wildcards )
@@ -245,6 +246,7 @@ function level ( name, line, wildcards )
       phelper:broadcast(4)
     end
   end
+  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.newlevel), char.base.remorts, char.base.tier)
   levelinfo.time = GetInfo(304)
   phelper:enabletriggroup( "linfo", true )
 end
