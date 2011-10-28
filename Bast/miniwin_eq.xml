@@ -82,6 +82,7 @@ flagname = {
  I = 'invis',
 }
 
+eqdbcmd = nil
 detailswaiting = {}
 
 filter = {}
@@ -96,6 +97,13 @@ function change_filter(container, filtercol, reverse, itype)
   end
   filter[container] = {filtercol=filtercol, reverse=reverse, itype=itype}
   oncontainerchange('"' .. container .. '"')
+end
+
+function runeqdbcmd(cmd)
+  if eqdbcmd == nil or eqdbcmd == '' then
+    eqdbcmd = GetPluginVariable("aaa56faed92ffc6146964abc", 'cmd')
+  end
+  Execute(eqdbcmd .. " " .. cmd)
 end
 
 function buildmenu(item)
@@ -124,6 +132,7 @@ function buildmenu(item)
     tstr = 'Unkeep '
   end
   menu = menu .. "| " .. tstr
+  menu = menu .. "| Add Identifier"
   if item.type == 11 then
       menu = menu .. " | Refresh Contents"
   end
@@ -139,17 +148,22 @@ function mouseleft(item, result)
     SendNoEcho('put ' .. item.serial .. ' ' .. incontainer)
   elseif result:match("Refresh Contents") then
     SendNoEcho('invdata ' .. item.serial)
+  elseif result:match("Add Identifier") then
+    local tresult = verify_string('', 'What identifier would you like to add?')
+    if tresult then
+      runeqdbcmd('addid ' .. tostring(item.serial) .. ' ' .. tresult)
+    end
   elseif result:match("Identify") then
     putobjectininv(item)
     SendNoEcho('identify ' .. item.serial)
     SendNoEcho('invdetails ' .. item.serial)
-    putobjectbackinplace(item, item.containerid)
+    putobjectincontainer(item, item.containerid)
   elseif result:match("Remove") then
     SendNoEcho('remove ' .. item.serial)
   elseif result:match("Compare") then
     putobjectininv(item)
     SendNoEcho('compare ' .. item.serial)
-    putobjectbackinplace(item, item.containerid)
+    putobjectincontainer(item, item.containerid)
   elseif result:match("Donate") then
     putobjectininv(item)
     SendNoEcho('donate ' .. item.serial)
@@ -165,7 +179,7 @@ function mouseleft(item, result)
       tstr = 'unkeep '
     end
     SendNoEcho(tstr .. item.serial)
-    putobjectbackinplace(item, item.containerid)
+    putobjectincontainer(item, item.containerid)
   end
 end
 
@@ -411,7 +425,19 @@ function builditem(item)
   if item.keywords ~= '' and item.keywords ~= nil then
     table.insert(lstyles, formatsingleline('Keywords', item.keywords))
   end
+
+  if item.identifier ~= '' and item.identifier ~= nil then
+    local tstr = strjoin(', ', item.identifier)
+    local idents = wrap(tstr, 51)
+    local header = 'Identifier'
+    for i,v in ipairs(idents) do
+      table.insert(lstyles, formatsingleline(header, 'darkcyan', v))
+      header = ''
+    end
+  end
+
   table.insert(lstyles, formatsingleline('Name', 'red', item.name))
+
   table.insert(lstyles, formatsingleline('Id', 'red', item.serial))
 
   -- Worn here
@@ -430,7 +456,6 @@ function builditem(item)
   --table.insert(lstyles, formatsingleline('Score', 'darkcyan', item.score))
 
   if item.flags ~= "" then
-    item.flags = item.flags:gsub('precious', '@Yprecious@w')
     local flags = wrap(item.flags, 51)
     local t = 0
     for i,v in ipairs(flags) do
@@ -438,6 +463,7 @@ function builditem(item)
       if t ~= 0 then
         header = ''
       end
+      v = v:gsub('precious', '@Yprecious@w')
       table.insert(lstyles, formatsingleline(header, 'darkcyan', v))
       t = t + 1
     end
@@ -641,7 +667,7 @@ function buildwornitem(item)
         style.mouseup = function ()
               putobjectininv(item)
               SendNoEcho('unkeep ' .. tostring(item.serial))
-              putobjectbackinplace(item, item.containerid)
+              putobjectincontainer(item, item.containerid)
           end
 
       else
@@ -653,7 +679,7 @@ function buildwornitem(item)
         style.mouseup = function ()
               putobjectininv(item)
               SendNoEcho('keep ' .. tostring(item.serial))
-              putobjectbackinplace(item, item.containerid)
+              putobjectincontainer(item, item.containerid)
         end
       end
       if count == 1 then
@@ -992,7 +1018,7 @@ function builddata(container)
               style.mouseup = function ()
                    putobjectininv(item)
                    SendNoEcho('unkeep ' .. tostring(item.serial))
-                   putobjectbackinplace(item, item.containerid)
+                   putobjectincontainer(item, item.containerid)
                 end
 
             else
@@ -1004,7 +1030,7 @@ function builddata(container)
               style.mouseup = function ()
                    putobjectininv(item)
                    SendNoEcho('keep ' .. tostring(item.serial))
-                   putobjectbackinplace(item, item.containerid)
+                   putobjectincontainer(item, item.containerid)
               end
             end
             if count == 1 then
@@ -1071,6 +1097,11 @@ function builddata(container)
               --print('calling plugin in mouseover', item.serial)
               local rc = CallPlugin("aaa56faed92ffc6146964abc", 'getitemdetails', item.serial)
               --print(rc)
+            else
+              local titem = db:getitemdetails(item.serial)
+              if titem and next(titem) then
+                builditem(titem)
+              end
             end
           end
         end
@@ -1114,7 +1145,7 @@ function onitemchange(item)
   --print('got item', titem.serial)
   --tprint(detailswaiting)
   --tprint(titem)
-  if detailswaiting[titem.serial] then
+  if detailswaiting[titem.serial] or eqwin:hastab(titem.serial) then
     detailswaiting[titem.serial] = nil
     builditem(titem)
   end
