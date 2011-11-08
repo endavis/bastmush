@@ -184,8 +184,19 @@ require "eqdb"
 
 db = EQdb:new{}
 
+P, V, Cg, Ct, Cc, S, R, C, Cf, Cb = lpeg.P, lpeg.V, lpeg.Cg, lpeg.Ct, lpeg.Cc, lpeg.S, lpeg.R, lpeg.C, lpeg.Cf, lpeg.Cb
+
+wearpeg = (P("wea") * -P(1)) + (P("wear") * -P(1))
+getpeg = (P("g") * -P(1)) + (P("ge") * -P(1)) + (P("get") * -P(1))
+putpeg = (P("pu") * -P(1)) + (P("put") * -P(1))
+lookpeg = (P("l") * -P(1)) + (P("lo") * -P(1)) + (P("loo") * -P(1)) + (P("look") * -P(1))
+removepeg = (P("re") * -P(1)) + (P("rem") * -P(1)) + (P("remo") * -P(1)) + (P("remov") * -P(1)) + (P("remove") * -P(1))
+alldotpeg = P("all") * P(".") * P(1)^1
+inpeg = (P("i") * -P(1)) + (P("in") * -P(1))
+
 eqdata = {}
 invdata = {}
+waiting = {}
 container = ""
 place = 0
 initdb = false
@@ -217,6 +228,26 @@ function sendcmd(cmd)
   else
     Send(cmd)
   end
+end
+
+function showoutput(stuff)
+  if phelper.showoutput then
+    print(stuff)
+  end
+end
+
+function getdata(type)
+  if waiting[type] then
+    return
+  end
+  if type == 'Inventory' then
+    sendcmd('invdata')
+  elseif type == 'Worn' then
+    sendcmd('eqdata')
+  else
+    sendcmd('invdata ' .. tostring(type))
+  end
+  waiting[type] = true
 end
 
 function addmod(ltype, mod)
@@ -263,6 +294,7 @@ function eqdata_redirect (name, line, wildcards, styles)
     db:additems(eqdata)
     --db:addcontainer('worn', eqdata)
     event_container_change('Worn')
+    waiting['Worn'] = nil
     return
   end -- if
 
@@ -293,6 +325,7 @@ function invdata_redirect (name, line, wildcards, styles)
     db:clearcontainer(container)
     db:additems(invdata)
     --db:addcontainer(container, invdata)
+    waiting[container] = nil
     event_container_change(container)
     if initdb then
       initdb = false
@@ -399,22 +432,18 @@ function emptyline()
   phelper:enabletriggroup("emptyline", false)
   --print('removingall =', removingall)
   --print('wearingall =', wearingall)
-  sendcmd('invdata')
+  getdata('Inventory')
   if removingall or wearingall then
-    sendcmd('eqdata')
-    if phelper.showoutput then
-      print('setting removingall and wearingall to false')
-    end
+    getdata('Worn')
+    showoutput('setting removingall and wearingall to false')
     removingall = false
     wearingall = false
   end
   if gettingall or puttingall then
     if allcontainer ~= -1 then
       db:clearcontainer(allcontainer)
-      sendcmd('invdata ' .. tostring(allcontainer))
-      if phelper.showoutput then
-        print('setting gettingall and puttingall = false')
-      end
+      getdata(allcontainer)
+      showoutput('setting gettingall and puttingall = false')
       gettingall = false
       puttingall = false
       allcontainer = -1
@@ -424,8 +453,8 @@ end
 
 function initinv(char)
   if char.status and char.status.state and tonumber(char.status.state) == 3 and db:checkfortable('items') == false then
-    sendcmd('eqdata')
-    sendcmd('invdata')
+    getdata('Worn')
+    getdata('Inventory')
     initdb = true
   end
 end
@@ -433,7 +462,7 @@ end
 function getcontainers()
  for i,v in pairs(invdata) do
    if tonumber(v.type) == 11 then
-     sendcmd('invdata ' .. tostring(v.serial))
+     getdata(v.serial)
    end
  end
 end
@@ -519,9 +548,7 @@ function checkaction(action, item, afterwait)
       event_container_change('Inventory')
       event_container_change('Worn')
     else
-      if phelper.showoutput then
-        print('action 2 setting removeall true')
-      end
+      showoutput('action 2 setting removeall true')
       removingall = true
       phelper:enabletriggroup("emptyline", true)
     end
@@ -558,9 +585,7 @@ function checkaction(action, item, afterwait)
     timer_end('EQdb:action5')
   elseif action == 5 and gettingall == true then
     db:clearcontainer('Inventory')
-    if phelper.showoutput then
-      print('action', 5, 'gettingall', gettingall)
-    end
+    showoutput('action: 5, gettingall: ' .. tostring(gettingall))
     allcontainer = item.containerid
     phelper:enabletriggroup("emptyline", true)
   elseif action == 6 and puttingall == false then
@@ -581,9 +606,7 @@ function checkaction(action, item, afterwait)
     timer_end('EQdb:action6')
   elseif action == 6 and puttingall == true then
     db:clearcontainer('Inventory')
-    if phelper.showoutput then
-      print('action', 6, 'puttingall', puttingall)
-    end
+    showoutput('action: 6, puttingall: ' ..  tostring(puttingall))
     allcontainer = item.containerid
     phelper:enabletriggroup("emptyline", true)
   elseif action == 7 then
@@ -680,9 +703,73 @@ function OnPluginSaveState ()
 end -- function OnPluginSaveState
 
 function OnPluginSend (sText)
-  if string.match(string.lower(sText), '^[g|ge|get]* .*$') ~= nil or string.match(string.lower(sText), '^[pu|put]* .*$')
-          or string.match(string.lower(sText), '^[l|lo|loo|look]* [i|in] .*$') then
-    local cmd = parse_cmdline(string.lower(sText))
+  local cmd = parse_cmdline(string.lower(sText))
+  if not cmd[1] then
+    cmd[1] = ""
+  end
+
+  local getp = false
+  local putp = false
+  local removep = false
+  local wearp = false
+  local lookp = false
+  local inp = false
+  local alldotp = false
+
+  if lpeg.match(getpeg, string.lower(cmd[1])) ~= nil then
+    print('setting getp')
+    getp = true
+    if cmd[2] and lpeg.match(alldotpeg, string.lower(cmd[2])) ~= nil then
+      print('setting allp')
+      alldotp = true
+    end
+  elseif lpeg.match(putpeg, string.lower(cmd[1])) ~= nil then
+    print('setting putp')
+    putp = true
+    if cmd[2] and lpeg.match(alldotpeg, string.lower(cmd[2])) ~= nil then
+      print('setting allp')
+      alldotp = true
+    end
+  elseif lpeg.match(removepeg, string.lower(cmd[1])) ~= nil then
+    print('setting removep')
+    removep = true
+    if cmd[2] and lpeg.match(alldotpeg, string.lower(cmd[2])) ~= nil then
+      print('setting allp')
+      alldotp = true
+    end
+  elseif lpeg.match(lookpeg, string.lower(cmd[1])) ~= nil then
+    print('setting lookp')
+    lookp = true
+    if cmd[2] and lpeg.match(inpeg, string.lower(cmd[2])) ~= nil then
+      print('setting inp')
+      inp = true
+    end
+  elseif lpeg.match(wearpeg, string.lower(cmd[1])) ~= nil then
+    print('setting wearp')
+    wearp = true
+    if cmd[2] and lpeg.match(alldotpeg, string.lower(cmd[2])) ~= nil then
+      print('setting allp')
+      alldotp = true
+    end
+  end
+
+  if wearp and alldotp then
+    showoutput('wearingall = true')
+    wearingall = true
+  elseif removep and alldotp then
+    showoutput('removingall = true')
+    removingall = true
+  elseif getp and alldotp then
+    showoutput('gettingall = true')
+    gettingall = true
+  elseif putp and alldotp then
+    showoutput('puttingall = true')
+    puttingall = true
+  end
+
+  if getp or putp
+          or (lookp and inp) then
+    print('looking for identifiers')
     local ncmd = cmd[1]
     local item = cmd[2]
     local cont = cmd[3]
@@ -691,10 +778,10 @@ function OnPluginSend (sText)
     if cont then
       citem = db:getitem(cont)
     end
-    if nitem then
+    if item and nitem then
       ncmd = ncmd .. ' ' .. tostring(nitem.serial)
-    else
-      ncmd = ncmd .. ' ' .. item
+    elseif item then
+      ncmd = ncmd .. ' ' .. "'" .. item .. "'"
     end
     if citem then
       ncmd = ncmd .. ' ' .. tostring(citem.serial)
@@ -705,37 +792,14 @@ function OnPluginSend (sText)
          end
       end
       if cont then
-        ncmd = ncmd .. ' ' .. cont
+        ncmd = ncmd .. ' ' .. "'" .. cont .. "'"
       end
     end
-    if phelper.showoutput then
-      print('I would send:', ncmd)
-    end
+    showoutput('I would send: ' ..  ncmd)
     SendNoEcho(ncmd)
     return false
   end
-  if string.lower(sText) == 'wea all' or string.lower(sText) == 'wear all' then
-    if phelper.showoutput then
-      print('wearingall = true')
-    end
-    wearingall = true
-  elseif string.lower(sText) == 're all' or string.lower(sText) == 'rem all' or string.lower(sText) == 'remo all'
-          or string.lower(sText) == 'remov all' or string.lower(sText) == 'remove all' then
-    if phelper.showoutput then
-      print('removingall = true')
-    end
-    removingall = true
-  elseif string.find(string.lower(sText), 'ge all\.') or string.find(string.lower(sText), 'get all\.') or string.find(string.lower(sText), 'g all\.') then
-    if phelper.showoutput then
-      print('gettingall = true')
-    end
-    gettingall = true
-  elseif string.find(string.lower(sText), 'pu all\.') or string.find(string.lower(sText), 'put all\.') then
-    if phelper.showoutput then
-      print('puttingall = true')
-    end
-    puttingall = true
-  end  return true
+  return true
 end
 ]]>
 </script>
