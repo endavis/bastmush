@@ -753,10 +753,10 @@ function OnPluginSend (sText)
     end
   end
 
-  if wearp and alldotp then
+  if wearp and cmd[2] == 'all' then
     showoutput('wearingall = true')
     wearingall = true
-  elseif removep and alldotp then
+  elseif removep and cmd[2] == 'all' then
     showoutput('removingall = true')
     removingall = true
   elseif getp and alldotp then
