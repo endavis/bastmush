@@ -156,11 +156,13 @@ objecttypes = {
   'raw material',
   'campfire'
 }
+objecttypes[0] = 'None'
 
 objecttypesrev = {}
 for i,v in ipairs(objecttypes) do
   objecttypesrev[v] = i
 end
+objecttypesrev['None'] = 0
 
 wearlocs = {
  'light',
