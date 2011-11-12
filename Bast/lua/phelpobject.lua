@@ -126,7 +126,9 @@ function Phelpobject:processevent(tevent, args)
     if v.plugin then
       local targs = serialize.save_simple(args)
       --print('calling', v.plugin, v.func, targs)
-      CallPlugin(v.plugin, v.func, targs)
+      local funcstr = string.format("CallPlugin('%s', '%s', [[%s]])", tostring(v.plugin) ,tostring(v.func), targs)
+      --print(funcstr)
+      DoAfterSpecial(.1, funcstr, sendto.script)
     else
       if v.func then
         v.func(v.object, args)
