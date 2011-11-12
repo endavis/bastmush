@@ -125,11 +125,20 @@ function Pluginhelper:run_cmd(cmddict)
   end
 
   local splitstr = " "
-  tcmddict = parse_cmdline(cmddict.list or '')
+  local tcmddict = parse_cmdline(cmddict.list or '')
   tcmddict.line = cmddict.line
   tcmddict.action = cmddict.action
 
   self:mdebug('tcmddict after parse_cmdline', tcmddict)
+  local targs = utils.split(tcmddict.line, ' ')
+  if targs[2] == tcmddict.action or targs[2] == phelper.cmd then
+    table.remove(targs, 2)
+  end
+
+  if targs[1] == tcmddict.action or targs[1] == phelper.cmd then
+    table.remove(targs, 1)
+  end
+  tcmddict.args = strjoin(' ', targs)
   local retcode = super(self, tcmddict, true)
 
   if not retcode then
@@ -138,6 +147,15 @@ function Pluginhelper:run_cmd(cmddict)
     if pobj ~= nil then
       tcmddict.action = tcmddict[1]
       table.remove(tcmddict, 1)
+      local targs = utils.split(tcmddict.line, ' ')
+      if targs[2] == tcmddict.action or targs[2] == phelper.cmd then
+        table.remove(targs, 2)
+      end
+
+      if targs[1] == tcmddict.action or targs[1] == phelper.cmd then
+        table.remove(targs, 1)
+      end
+      tcmddict.args = strjoin(' ', targs)
       pobj:run_cmd(tcmddict)
     else
       local tcmd = self:find_default_cmd()
@@ -151,6 +169,15 @@ function Pluginhelper:run_cmd(cmddict)
         table.remove(tcmddict, 1)
         tcmddict.line = cmddict.line
         tcmddict.action = tcmd
+        local targs = utils.split(tcmddict.line, ' ')
+        if targs[2] == tcmddict.action or targs[2] == phelper.cmd then
+          table.remove(targs, 2)
+        end
+
+        if targs[1] == tcmddict.action or targs[1] == phelper.cmd then
+          table.remove(targs, 1)
+        end
+        tcmddict.args = strjoin(' ', targs)
         retcode = super(self, tcmddict, true)
         return retcode
       end
@@ -826,7 +853,6 @@ function plugin_parse_helper(name, line, wildcards)
   --[[
     find the command that was specified and pass arguments to it
   --]]
-
   phelper.cmdstuff.action = wildcards.action
   phelper.cmdstuff.line = line
   phelper.cmdstuff.list = wildcards.list
