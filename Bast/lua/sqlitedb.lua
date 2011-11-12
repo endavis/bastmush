@@ -10,6 +10,14 @@ local Object = require 'objectlua.Object'
 
 Sqlitedb = Object:subclass()
 
+function fixsql (s)
+   if s then
+      return "'" .. (string.gsub (s, "'", "''")) .. "'" -- replace single quotes with two lots of single quotes
+   else
+      return "NULL"
+   end -- if
+end -- fixsql
+
 function Sqlitedb:initialize(args)
   local path, throw = GetInfo(58):gsub("^.\\",GetInfo(56))
   self.dbloc = GetPluginVariable ("", "dblocation") or path
