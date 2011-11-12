@@ -107,6 +107,7 @@ function runeqdbcmd(cmd)
 end
 
 function buildmenu(item)
+  local titem = db:getitemdetails(item.serial)
   local container = item.containerid
   menu = strip_colours(item.name) .. "|"
   if item.type ~= 11 then
@@ -132,7 +133,12 @@ function buildmenu(item)
     tstr = 'Unkeep '
   end
   menu = menu .. "| " .. tstr
-  menu = menu .. "| Add Identifier"
+  if titem and titem.identifier ~= nil then
+    menu = menu .. "| >Identifiers | Add Identifier"
+    menu = menu .. "| Remove Identifier | <"
+  else
+    menu = menu .. "| Add Identifier"
+  end
   if item.type == 11 then
       menu = menu .. " | Refresh Contents"
   end
@@ -150,8 +156,21 @@ function mouseleft(item, result)
     SendNoEcho('invdata ' .. item.serial)
   elseif result:match("Add Identifier") then
     local tresult = verify_string('', 'What identifier would you like to add?')
-    if tresult then
+    if tresult ~= nil then
       runeqdbcmd('addid ' .. tostring(item.serial) .. ' ' .. tresult)
+    end
+  elseif result:match('Remove Identifier') then
+    local titem = db:getitemdetails(item.serial)
+    local tresult = utils.multilistbox('Which identifier do you want to delete?',
+                                       'Identifiers',
+                                       titem.identifier,
+                                       nil)
+    local resstr = ''
+    for i,v in pairs(tresult) do
+      resstr = resstr .. ' ' .. titem.identifier[i]
+    end
+    if resstr ~= '' then
+      runeqdbcmd('remid ' .. resstr)
     end
   elseif result:match("Identify") then
     putobjectininv(item)
