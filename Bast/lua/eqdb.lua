@@ -18,6 +18,8 @@ item details
      foundat
      clanitem
 
+    SELECT * FROM itemdetails WHERE serial NOT IN(SELECT serial FROM items)
+
 --]]
 
 require 'tprint'
@@ -692,7 +694,6 @@ end
 
 function EQdb:reorderitemsmultiple(reorderstuff)
   timer_start('EQdb:reorderitemsmultiple')
-  local titem = {containerid=containerid, place=place}
   self:checkitemstable()
   if self:open('reorderitemsmultiple') then
     assert (self.db:exec("BEGIN TRANSACTION"))
@@ -724,9 +725,19 @@ function EQdb:updateitemlocation(item)
   self:checkitemstable()
   if self:open('updateitemlocation') then
     assert (self.db:exec("BEGIN TRANSACTION"))
+    self.db:exec("DROP INDEX IF EXISTS xref_items_container_place")
+    self.db:exec("DROP INDEX IF EXISTS xref_items_containerid")
+    self.db:exec("DROP INDEX IF EXISTS xref_items_plainname")
+    self.db:exec("DROP INDEX IF EXISTS xref_items_level")
+    self.db:exec("DROP INDEX IF EXISTS xref_items_place")
     self.db:exec(string.format("UPDATE items SET containerid = '%s', wearslot = %d, place = %d where serial = %d;",
                                      tostring(item.containerid), tonumber(item.wearslot),
                                      tonumber(item.place), tonumber(item.serial)))
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_container_place ON items(containerid, place);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_plainname ON items (plainname);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
     assert (self.db:exec("COMMIT"))
     self:close('updateitemlocation')
   end
@@ -790,20 +801,20 @@ function EQdb:getitem(itemident)
   return item
 end
 
-function EQdb:getitemsbywearslot(wearslot)
+function EQdb:getitembywearslot(wearslot)
   timer_start('EQdb:getitemsbywearslot')
-  local items = {}
+  local item = {}
   self:checkitemstable()
   if self:open('getitemsbywearslot') then
     for a in self.db:nrows("SELECT * FROM items WHERE wearslot=" .. tostring(wearslot) ..";") do
-      items[a.serial] = a
+      item = a
     end
     self:close('getitemsbywearslot')
   end
   timer_end('EQdb:getitemsbywearslot')
   --print('getitemsbywearslot', wearslot)
   --tprint(items)
-  return items
+  return item
 end
 
 
@@ -872,10 +883,11 @@ function EQdb:addidentifier(itemsn, identifier)
   self:checkidentifiertable()
   local titem = self:getitembyidentifier(identifier)
   local item = self:getitembyserial(itemsn)
+  local tchanges = 0
   if next(item) then
     if self:open('addidentifier') then
       local titem = self:getitemdetails(tonumber(item.serial))
-      local tchanges = self.db:total_changes()
+      tchanges = self.db:total_changes()
       assert (self.db:exec("BEGIN TRANSACTION"))
       local stmt = self.db:prepare[[
         INSERT or REPLACE into identifier VALUES (
@@ -887,10 +899,12 @@ function EQdb:addidentifier(itemsn, identifier)
       stmt:step()
       stmt:finalize()
       assert (self.db:exec("COMMIT"))
+      tchanges = self.db:total_changes() - tchanges
       self:close('addidentifier')
     end
   end
   timer_end('EQdb:addidentifier')
+  return tchanges
 end
 
 function EQdb:getitembyidentifier(identifier)
@@ -916,13 +930,52 @@ function EQdb:removeidentifier(identifier)
   timer_start('EQdb:removeidentifier')
   --tprint(item)
   self:checkidentifiertable()
+  local tchanges = 0
   if self:open('removeidentifier') then
-    self.db:exec("DELETE FROM identifier WHERE identifier=" .. tostring(identifier) ..";")
+    tchanges = self.db:total_changes()
+    self.db:exec("DELETE FROM identifier WHERE identifier='" .. tostring(identifier) .."';")
+    tchanges = self.db:total_changes() - tchanges
     self:close('removeidentifier')
   end
   timer_end('EQdb:removeidentifier')
+  return tchanges
 end
 
+function EQdb:getidentifiers(wearslot)
+  timer_start('EQdb:getidentifiers')
+  local items = {}
+  self:checkitemstable()
+  if self:open('getidentifiers') then
+    for a in self.db:nrows("SELECT identifier.identifier as identifier, items.name as name, items.plainname as plainname, items.serial as serial FROM items,identifier WHERE identifier.serial=items.serial ORDER BY serial;") do
+      if items[a.serial] then
+        table.insert(items[a.serial]['identifier'], a.identifier)
+      else
+        items[a.serial] = a
+        items[a.serial]['identifier'] = {a.identifier}
+      end
+    end
+    self:close('getidentifiers')
+  end
+  timer_end('EQdb:getidentifiers')
+  return items
+end
+
+function EQdb:cleandb()
+  local tablesql = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
+  self:close('cleandb', true)
+  if self:open('cleandb') then
+    for a in self.db:rows(tablesql) do
+      if a[1] ~= 'items' and a[1] ~= 'sqlite_sequence' and a[1] ~= 'version' and a[1] ~= 'identifier' then
+        local delsql = 'DELETE FROM ' .. tostring(a[1]) .. ' WHERE serial NOT IN(SELECT serial FROM items);'
+        local tchanges = self.db:total_changes()
+        print('cleaning table', a[1])
+        local retval = self.db:exec(delsql)
+        print('deleted', self.db:total_changes() - tchanges, 'rows from table:', a[1])
+      end
+    end
+    self.db:exec('VACUUM;')
+  end
+end
 
 function putobjectininv(item, noworn)
   local teqdb = EQdb:new{}
