@@ -70,20 +70,25 @@ require "var"
 require "pluginhelper"
 require 'ldplugin'
 
-runto = false
+P, V, Cg, Ct, Cc, S, R, C, Cf, Cb = lpeg.P, lpeg.V, lpeg.Cg, lpeg.Ct, lpeg.Cc, lpeg.S, lpeg.R, lpeg.C, lpeg.Cf, lpeg.Cb
+
+runpeg = (P("ru") * -P(1)) + (P("run") * -P(1))
+
+running = false
 seenrecall = false
+seenrun = false
 current_room = ''
 
 function runstart(name, line, wildcards)
-  runto = true
+  running = true
   seenrecall = false
   phelper:broadcast(1)
 end
 
 function runend(name, line, wildcards)
-  if runto then
+  if running then
     phelper:enabletriggroup("runtostuff", false)
-    runto = false
+    running = false
     phelper:broadcast(2)
   end
 end
@@ -95,7 +100,19 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   if id == '3e7dedbe37e44942dd46d264' then
-    if text:find("room.info") then
+    if text:find("char.status") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char.status")
+      status = assert (loadstring ('return ' .. gmcparg or ""))()
+
+      if running and tonumber(status.state) ~= 12 and seenrun then
+        running = false
+        phelper:broadcast(2)
+      end
+
+      if tonumber(status.state) == 12 then
+        seenrun = true
+      end
+    elseif text:find("room.info") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room")
       room = assert (loadstring ('return ' .. gmcparg or ""))()
 
@@ -147,6 +164,19 @@ function OnPluginSaveState ()
 
   phelper:OnPluginSaveState()
 end -- function OnPluginSaveState
+
+function OnPluginSend (sText)
+  local cmd = parse_cmdline(string.lower(sText))
+  if not cmd[1] then
+    cmd[1] = ""
+  end
+
+  if lpeg.match(runpeg, string.lower(cmd[1])) ~= nil then
+    running = true
+    seenrun = false
+    phelper:broadcast(1)
+  end
+end
 
 ]]>
 </script>
