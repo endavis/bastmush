@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="xBroadcast_Idle"
+   author="Bast"
+   id="aaabe45678afa22343c5a327"
+   language="Lua"
+   purpose="broadcasts when idle for more than 15 minutes"
+   save_state="y"
+   date_written="2009-08-02"
+   requires="4.73"
+   version="6.1"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+Broadcasts when idle
+
+Example:
+
+  function OnPluginBroadcast (msg, id, name, text)
+    if id == "aaafc15678afa22343c5a327" then
+      if msg == 1 then
+        --get the timer info
+        loadstring( text )()
+        -- do something with timer
+      if msg == 2 then
+        -- no longer idle
+      end
+    end
+  end
+
+
+]]>
+</description>
+
+</plugin>
+
+<!--  Triggers  -->
+<triggers>
+</triggers>
+
+<!--  Timers  -->
+<timers>
+  <timer
+      script="idletimer"
+      enabled="y"
+      minute="5"
+      name="idletimer"
+      >
+  </timer>
+</timers>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "var"
+require "pluginhelper"
+require "verify"
+require 'ldplugin'
+require 'serialize'
+
+lastcommand = os.time()
+idle = false
+
+function idletimer()
+  local idletime = os.time() - lastcommand
+  if idletime >  15*60 then
+    idle = true
+    phelper:broadcast(1)
+  end
+end
+
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+function OnPluginCommand ()
+  lastcommand = os.time()
+  if idle then
+    idle = false
+    phelper:broadcast(2)
+  end
+end
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'bidle')
+phelper:set_default('plugin_colour', 'orange')
+
+phelper:enable()
+
+]]>
+</script>
+</muclient>
