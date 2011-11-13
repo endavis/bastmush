@@ -165,16 +165,16 @@
   <timer
       script="dbbackup"
       enabled="y"
-      hour="12"
-      name="backuptimernoon"
+      hour="13"
+      name="backuptimeronepm"
       at_time="y"
       >
   </timer>
   <timer
       script="dbbackup"
       enabled="y"
-      hour="0"
-      name="backuptimermid"
+      hour="1"
+      name="backuptimermidoneam"
       at_time="y"
       >
   </timer>
@@ -243,10 +243,10 @@ eqdata = {"serial", "shortflags", "name", "level", "type", "unique", "wearslot",
 
 function dbbackup(name)
   local day = os.date("%a", GetInfo(304))
-  if name == "backuptimermid" then
-    db:backupdb(day .. '.midnight')
-  elseif name == "backuptimernoon" then
-    db:backupdb(day .. '.noon')
+  if name == "backuptimeronepm" then
+    db:backupdb(day .. '.onepm')
+  elseif name == "backuptimeroneam" then
+    db:backupdb(day .. '.oneam')
   else
     db:backupdb(day)
   end
