@@ -56,6 +56,14 @@ Example:
    group="runtostuff"
   >
   </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   script="runend"
+   match="^Invalid directions in command.$"
+   sequence="100"
+  >
+  </trigger>
 </triggers>
 
 <!--  Script  -->
@@ -171,7 +179,7 @@ function OnPluginSend (sText)
     cmd[1] = ""
   end
 
-  if lpeg.match(runpeg, string.lower(cmd[1])) ~= nil then
+ if lpeg.match(runpeg, string.lower(cmd[1])) ~= nil and cmd[2] and #cmd[2] > 1 then
     running = true
     seenrun = false
     phelper:broadcast(1)
