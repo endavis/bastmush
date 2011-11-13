@@ -161,6 +161,25 @@
   </trigger>
 </triggers>
 
+<timers>
+  <timer
+      script="dbbackup"
+      enabled="y"
+      hour="12"
+      name="backuptimernoon"
+      at_time="y"
+      >
+  </timer>
+  <timer
+      script="dbbackup"
+      enabled="y"
+      hour="0"
+      name="backuptimermid"
+      at_time="y"
+      >
+  </timer>
+</timers>
+
 <aliases>
 
 </aliases>
@@ -221,6 +240,17 @@ drink = {"servings", "liquid", "liquidmax", "liquidleft", "thirstpercent", "hung
 furniture = {"hpregen","manaregen","u1"},
 eqdata = {"serial", "shortflags", "name", "level", "type", "unique", "wearslot", "timer"}
 }
+
+function dbbackup(name)
+  local day = os.date("%a", GetInfo(304))
+  if name == "backuptimermid" then
+    db:backupdb(day .. '.midnight')
+  elseif name == "backuptimernoon" then
+    db:backupdb(day .. '.noon')
+  else
+    db:backupdb(day)
+  end
+end
 
 function sendcmd(cmd)
   if silent then
@@ -728,6 +758,7 @@ function OnPluginEnable ()
     initinv(char)
   end
 
+  dbbackup()
   phelper:OnPluginEnable()
 end -- OnPluginEnable
 
