@@ -127,7 +127,10 @@ function buildmenu(item)
   if container ~= 'Inventory' and container ~= 'Worn' then
      menu = menu .. "| Get"
   end
-  menu = menu .. "| Identify | Donate"
+  menu = menu .. "| Identify "
+  if not item.shortflags:match('K') then
+    menu = menu .. "| Donate "
+  end
   local tstr = 'Keep '
   if item.shortflags:match('K') then
     tstr = 'Unkeep '
@@ -465,6 +468,10 @@ function builditem(item)
 
   -- Worth, Weight here
   table.insert(lstyles, formatdoubleline('Worth', 'darkcyan', commas(item.worth), 'Weight', item.weight))
+
+  if tonumber(item.type) == 1 and item.light and next(item.light) then
+    table.insert(lstyles, formatsingleline('Duration', 'darkcyan', string.format('%s minutes', item.light.duration)))
+  end
 
   if item.wearable ~= "" then
     table.insert(lstyles, formatsingleline('Wearable', 'darkcyan', item.wearable))
