@@ -238,7 +238,8 @@ spells = {"uses", "level", "sn1", "sn2", "sn3", "sn4", "u1"},
 food = {"percent"},
 drink = {"servings", "liquid", "liquidmax", "liquidleft", "thirstpercent", "hungerpercent", "u1"},
 furniture = {"hpregen","manaregen","u1"},
-eqdata = {"serial", "shortflags", "name", "level", "type", "unique", "wearslot", "timer"}
+eqdata = {"serial", "shortflags", "name", "level", "type", "unique", "wearslot", "timer"},
+light = {"duration"}
 }
 
 function dbbackup(name)
