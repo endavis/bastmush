@@ -233,6 +233,16 @@ function EQdb:checkitemdetailstable()
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
+    if not self:checkfortable('light') then
+      self.db:exec([[
+        CREATE TABLE light(
+        lid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        duration NUMBER,
+        UNIQUE(serial),
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
     self:close('checkitemdetailstable')
   end
 end
@@ -272,6 +282,11 @@ function EQdb:getitemdetails(serial)
           titem['skillmod'] = {}
         end
         titem['skillmod'][a.skillnum] = a.amount
+      end
+      if tonumber(titem.type) == 1  then
+        for a in self.db:nrows("SELECT * FROM light WHERE serial = " .. tostring(serial)) do
+          titem['light'] = a
+        end
       end
       if tonumber(titem.type) == 5  then
         for a in self.db:nrows("SELECT * FROM weapon WHERE serial = " .. tostring(serial)) do
@@ -337,6 +352,23 @@ function EQdb:adddrink(item)
     stmt:finalize()
   end
   timer_end('EQdb:adddrink')
+end
+
+function EQdb:addlight(item)
+  timer_start('EQdb:addlight')
+  if item.light and next(item.light) then
+    local stmt = self.db:prepare[[
+      INSERT or REPLACE into light VALUES (
+        NULL,
+        :serial,
+        :duration);]]
+    local lightm = copytable.deep(item.light)
+    lightm['serial'] = item.serial
+    stmt:bind_names( lightm )
+    stmt:step()
+    stmt:finalize()
+  end
+  timer_end('EQdb:addlight')
 end
 
 function EQdb:addfurniture(item)
@@ -575,6 +607,9 @@ function EQdb:additemdetail(item)
     self:addspells(item)
     if item.skillmod and next(item.skillmod) then
       self:addskillmod(item)
+    end
+    if tonumber(item.type) == 1 and  item.light ~= nil then
+      self:addlight(item)
     end
     if tonumber(item.type) == 5 then
       self:addweapon(item)
