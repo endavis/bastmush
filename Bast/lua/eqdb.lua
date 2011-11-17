@@ -1019,7 +1019,7 @@ function putobjectininv(item, noworn)
   end
   ---tprint(item)
   if item and next(item) then
-    if item.containerid == 'Worn' and noworn == false then
+    if item.containerid == 'Worn' and (noworn == false or noworn == nil) then
       SendNoEcho('remove ' .. item.serial)
       return true
     elseif item.containerid ~= 'Inventory' then
@@ -1037,17 +1037,20 @@ function putobjectincontainer(item, container)
     item = teqdb:getitem(item)
   end
   if tcontainer then
+    local itcontainer = teqdb:getitem(tcontainer)
+    if itcontainer and next(itcontainer) then
+      SendNoEcho('put ' .. item.serial .. ' ' .. itcontainer.serial)
+      return true
+    else
+      SendNoEcho('put ' .. item.serial .. ' ' .. tcontainer)
+      return true
+    end
+  else
     if container == 'Worn' then
       SendNoEcho('wear ' .. item.serial)
       return true
     elseif container ~= 'Inventory' then
       SendNoEcho('put ' .. item.serial .. ' ' .. trim(container))
-      return true
-    end
-  else
-    local tcontainer = teqdb:getitembyidentifier(container)
-    if tcontainer and next(tcontainer) then
-      SendNoEcho('put ' .. item.serial .. ' ' .. tcontainer.serial)
       return true
     end
   end
