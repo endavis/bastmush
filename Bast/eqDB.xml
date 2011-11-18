@@ -845,8 +845,7 @@ function OnPluginSend (sText)
     puttingall = true
   end
 
-  if getp or putp or wearp or removep
-          or lookp then
+  if getp or putp or lookp or wearp or removep then
     --print('looking for identifiers')
     local ncmd = cmd[1]
     local item = cmd[2]
@@ -875,12 +874,8 @@ function OnPluginSend (sText)
         end
       end
     end
-    if wearp then
-      if nitem and nitem.containerid ~= 'Inventory' then
-        putobjectininv(nitem)
-      end
-    end
     showoutput('I would send: ' ..  ncmd)
+    --print('I would send: ' ..  ncmd)
     SendNoEcho(ncmd)
     timer_end('eqDB:OnPluginSend')
     return false
