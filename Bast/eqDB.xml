@@ -810,14 +810,14 @@ function OnPluginSend (sText)
     --print('setting getp')
     getp = true
     if cmd[2] and lpeg.match(alldotpeg, string.lower(cmd[2])) ~= nil then
-      print('setting allp')
+      --print('setting allp')
       alldotp = true
     end
   elseif lpeg.match(putpeg, string.lower(cmd[1])) ~= nil then
     --print('setting putp')
     putp = true
     if cmd[2] and lpeg.match(alldotpeg, string.lower(cmd[2])) ~= nil then
-      print('setting allp')
+      --print('setting allp')
       alldotp = true
     end
   elseif lpeg.match(lookpeg, string.lower(cmd[1])) ~= nil then
