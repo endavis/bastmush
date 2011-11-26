@@ -5,8 +5,8 @@ item details
  - fields
      serial (key)
      keywords
+     cname
      name
-     plainname
      type
      level
      worth
@@ -64,8 +64,8 @@ function EQdb:checkitemstable()
         serial INTEGER NOT NULL,
         shortflags TEXT,
         level NUMBER,
+        cname TEXT,
         name TEXT,
-        plainname TEXT,
         type NUMBER,
         containerid TEXT NOT NULL,
         wearslot INTEGER,
@@ -74,7 +74,7 @@ function EQdb:checkitemstable()
         PRIMARY KEY(serial, containerid));
       )]])
       self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
-      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_plainname ON items (plainname);]])
+      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
       self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
       self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
     end
@@ -103,8 +103,8 @@ function EQdb:checkitemdetailstable()
         CREATE TABLE itemdetails(
           serial INTEGER NOT NULL,
           keywords TEXT,
+          cname TEXT,
           name TEXT,
-          plainname TEXT,
           level NUMBER default 0,
           type NUMBER default 0,
           worth NUMBER default 0,
@@ -559,8 +559,8 @@ function EQdb:additemdetail(item)
     if titem then
       local stmtupd = self.db:prepare[[ UPDATE itemdetails SET
                                                   keywords = :keywords,
+                                                  cname = :cname,
                                                   name = :name,
-                                                  plainname = :plainname,
                                                   level = :level,
                                                   type = :type,
                                                   worth = :worth,
@@ -584,8 +584,8 @@ function EQdb:additemdetail(item)
       local stmt = self.db:prepare[[ INSERT INTO itemdetails VALUES (
                                            :serial,
                                            :keywords,
+                                           :cname,
                                            :name,
-                                           :plainname,
                                            :level,
                                            :type,
                                            :worth,
@@ -647,15 +647,15 @@ function EQdb:additems(items)
     assert (self.db:exec("BEGIN TRANSACTION"))
     self.db:exec("DROP INDEX IF EXISTS xref_items_container_place")
     self.db:exec("DROP INDEX IF EXISTS xref_items_containerid")
-    self.db:exec("DROP INDEX IF EXISTS xref_items_plainname")
+    self.db:exec("DROP INDEX IF EXISTS xref_items_name")
     self.db:exec("DROP INDEX IF EXISTS xref_items_level")
     self.db:exec("DROP INDEX IF EXISTS xref_items_place")
     local stmt = self.db:prepare[[ INSERT INTO items VALUES (
                                            :serial,
                                            :shortflags,
                                            :level,
+                                           :cname,
                                            :name,
-                                           :plainname,
                                            :type,
                                            :containerid,
                                            :wearslot,
@@ -670,7 +670,7 @@ function EQdb:additems(items)
     stmt:finalize()
     self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_container_place ON items(containerid, place);]])
     self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_plainname ON items (plainname);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
     self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
     self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
     assert (self.db:exec("COMMIT"))
@@ -763,7 +763,7 @@ function EQdb:updateitemlocation(item)
     assert (self.db:exec("BEGIN TRANSACTION"))
     self.db:exec("DROP INDEX IF EXISTS xref_items_container_place")
     self.db:exec("DROP INDEX IF EXISTS xref_items_containerid")
-    self.db:exec("DROP INDEX IF EXISTS xref_items_plainname")
+    self.db:exec("DROP INDEX IF EXISTS xref_items_name")
     self.db:exec("DROP INDEX IF EXISTS xref_items_level")
     self.db:exec("DROP INDEX IF EXISTS xref_items_place")
     self.db:exec(string.format("UPDATE items SET containerid = '%s', wearslot = %d, place = %d where serial = %d;",
@@ -771,7 +771,7 @@ function EQdb:updateitemlocation(item)
                                      tonumber(item.place), tonumber(item.serial)))
     self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_container_place ON items(containerid, place);]])
     self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_plainname ON items (plainname);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
     self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
     self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
     assert (self.db:exec("COMMIT"))
@@ -787,15 +787,15 @@ function EQdb:updateitem(item)
     assert (self.db:exec("BEGIN TRANSACTION"))
     self.db:exec(string.format([[UPDATE items SET shortflags = '%s',
                                                   level= %d,
+                                                  cname = '%s',
                                                   name = '%s',
-                                                  plainname = '%s',
                                                   type = %d,
                                                   containerid = '%s',
                                                   wearslot = %d,
                                                   place = %d
                                                   WHERE serial = %d;]],
                                      tostring(item.shortflags), tonumber(item.level),
-                                     tostring(item.name), tostring(item.plainname), tonumber(item.type),
+                                     tostring(item.cname), tostring(item.name), tonumber(item.type),
                                      tostring(item.containerid), tonumber(item.wearslot),
                                      tonumber(item.place), tonumber(item.serial)))
     assert (self.db:exec("COMMIT"))
@@ -982,7 +982,7 @@ function EQdb:getidentifiers(wearslot)
   local items = {}
   self:checkitemstable()
   if self:open('getidentifiers') then
-    for a in self.db:nrows("SELECT identifier.identifier as identifier, items.name as name, items.plainname as plainname, items.serial as serial FROM items,identifier WHERE identifier.serial=items.serial ORDER BY serial;") do
+    for a in self.db:nrows("SELECT identifier.identifier as identifier, items.cname as cname, items.name as name, items.serial as serial FROM items,identifier WHERE identifier.serial=items.serial ORDER BY serial;") do
       if items[a.serial] then
         table.insert(items[a.serial]['identifier'], a.identifier)
       else

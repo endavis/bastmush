@@ -238,7 +238,7 @@ spells = {"uses", "level", "sn1", "sn2", "sn3", "sn4", "u1"},
 food = {"percent"},
 drink = {"servings", "liquid", "liquidmax", "liquidleft", "thirstpercent", "hungerpercent", "u1"},
 furniture = {"hpregen","manaregen","u1"},
-eqdata = {"serial", "shortflags", "name", "level", "type", "unique", "wearslot", "timer"},
+eqdata = {"serial", "shortflags", "cname", "level", "type", "unique", "wearslot", "timer"},
 light = {"duration"}
 }
 
@@ -341,7 +341,7 @@ function eqdata_redirect (name, line, wildcards, styles)
     titem = dataparse(line, 'eqdata')
     titem.containerid = container
     titem.place = -2
-    titem.plainname = strip_colours(titem.name)
+    titem.name = strip_colours(titem.cname)
     eqdata[titem.serial] = titem
   end
 
@@ -376,7 +376,7 @@ function invdata_redirect (name, line, wildcards, styles)
   place = place + 1
   titem = dataparse(line, 'eqdata')
   titem.containerid = container
-  titem.plainname = strip_colours(titem.name)
+  titem.name = strip_colours(titem.cname)
   titem.place = place
   invdata[titem.serial] = titem
 end
@@ -392,8 +392,8 @@ function invdetails_redirect (name, line, wildcards, styles)
   elseif line == "{/invdetails}" then
     phelper:enabletriggroup("invdetails", false)
     local titem = db:getitem(invdetails.serial)
+    invdetails.cname = titem.cname
     invdetails.name = titem.name
-    invdetails.plainname = titem.plainname
     invdetails.containerid = titem.containerid
     invdetails.type = titem.type
     timer_end('invdetails')
@@ -580,7 +580,7 @@ end
 
 function print_id(item)
   local ids = strjoin(", ", item.identifier)
-  ColourNote("green", "black", string.format('%-15d %-30s %s', item.serial, ids, item.plainname))
+  ColourNote("green", "black", string.format('%-15d %-30s %s', item.serial, ids, item.name))
 end
 
 function cmd_listid(cmddict)

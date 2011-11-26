@@ -53,7 +53,7 @@ end
 
 function print_item(item)
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-15s %-15s %-5s %-5s %s",
-                         tostring(item.serial), tostring(item.containerid), tostring(item.level), tostring(item.score or ''), item.plainname))
+                         tostring(item.serial), tostring(item.containerid), tostring(item.level), tostring(item.score or ''), item.name))
 
 end
 

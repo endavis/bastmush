@@ -109,7 +109,7 @@ end
 function buildmenu(item)
   local titem = db:getitemdetails(item.serial)
   local container = item.containerid
-  menu = strip_colours(item.name) .. "|"
+  menu = item.name .. "|"
   if item.type ~= 11 then
     menu = menu  .. "| >Put "
     for i,v in pairs(db:getcontainers()) do
@@ -458,7 +458,7 @@ function builditem(item)
     end
   end
 
-  table.insert(lstyles, formatsingleline('Name', 'red', item.name))
+  table.insert(lstyles, formatsingleline('Name', 'red', item.cname))
 
   table.insert(lstyles, formatsingleline('Id', 'red', item.serial))
 
@@ -740,10 +740,10 @@ function buildwornitem(item)
 
   -- Name
   local style = {}
-  local newstyles = ColoursToStyles(item.name)
+  local newstyles = ColoursToStyles(item.cname)
   local length = 0
   local itemlength = 47
-  --print(item.plainname)
+  --print(item.name)
   for i=1,#newstyles do
     local tstyle = newstyles[i]
     local style = popup_style(idwin, tstyle.text, tstyle.textcolour, 0x20)
@@ -1091,10 +1091,10 @@ function builddata(container)
 
         -- Name
         local style = {}
-        local newstyles = ColoursToStyles(item.name)
+        local newstyles = ColoursToStyles(item.cname)
         local length = 0
         local itemlength = 47
-        --print(item.plainname)
+        --print(item.name)
         for i=1,#newstyles do
           local tstyle = newstyles[i]
           local style = popup_style(idwin, tstyle.text, tstyle.textcolour, 0x20)
@@ -1132,7 +1132,7 @@ function builddata(container)
           end
         end
         --tprint(newstyles)
-        --style.text = item.name
+        --style.text = item.cname
         --style.hint = "ID: " .. tostring(item.serial)
         --tprint(style)
         --table.insert(lstyles, style)
