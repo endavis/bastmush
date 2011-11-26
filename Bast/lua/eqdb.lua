@@ -58,8 +58,8 @@ function EQdb:turnonpragmas()
 end
 
 function EQdb:checkitemstable()
-  if self:open('checkitemstable') then
-    if not self:checkfortable('items') then
+  if not self:checkfortable('items') then
+    if self:open('checkitemstable') then
       self.db:exec([[CREATE TABLE items(
         serial INTEGER NOT NULL,
         shortflags TEXT,
@@ -83,8 +83,8 @@ function EQdb:checkitemstable()
 end
 
 function EQdb:checkidentifiertable()
-  if self:open('checkidentifiertable') then
-    if not self:checkfortable('identifier') then
+  if not self:checkfortable('identifier') then
+    if self:open('checkidentifiertable') then
       self.db:exec([[CREATE TABLE identifier(
         serial INTEGER NOT NULL,
         identifier TEXT,
@@ -97,8 +97,8 @@ function EQdb:checkidentifiertable()
 end
 
 function EQdb:checkitemdetailstable()
-  if self:open('checkitemdetailstable') then
-    if not self:checkfortable('itemdetails') then
+  if not self:checkfortable('itemdetails') then
+    if self:open('checkitemdetailstable') then
       self.db:exec([[
         CREATE TABLE itemdetails(
           serial INTEGER NOT NULL,
@@ -251,17 +251,18 @@ function EQdb:getitemdetails(serial)
   timer_start('EQdb:getitemdetails')
   local titem = nil
   self:checkitemdetailstable()
+  self:checkidentifiertable()
   if self:open('getitemdetails') then
     for a in self.db:nrows("SELECT * FROM itemdetails WHERE serial = " .. tostring(serial)) do
       titem = a
     end
-    for a in self.db:nrows("SELECT * FROM identifier WHERE serial = " .. tostring(serial)) do
-      if not titem['identifier'] then
-        titem['identifier'] = {}
-      end
-      table.insert(titem['identifier'], a['identifier'])
-    end
     if titem then
+      for a in self.db:nrows("SELECT * FROM identifier WHERE serial = " .. tostring(serial)) do
+        if not titem['identifier'] then
+          titem['identifier'] = {}
+        end
+        table.insert(titem['identifier'], a['identifier'])
+      end
       for a in self.db:nrows("SELECT * FROM resistmod WHERE serial = " .. tostring(serial)) do
         if not titem['resistmod'] then
           titem['resistmod'] = {}
