@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="eqLookup"
+   author="Bast"
+   id="aaa66caed92ffc6146964abc"
+   language="Lua"
+   purpose="lookup eq from the database"
+   save_state="y"
+   date_written="2009-02-22 14:20:07"
+   requires="4.73"
+   version="6.1"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+]]>
+</description>
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<triggers>
+</triggers>
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "verify"
+require "aardutils"
+require "chardb"
+require 'colours'
+require "eqdb"
+
+eqdb = EQdb:new{}
+
+function cmd_close(cmddict)
+  db:close('cmd_close', true)
+end
+
+function print_item(item)
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-15s %-15s %-5s %-5s %s",
+                         tostring(item.serial), tostring(item.containerid), tostring(item.level), tostring(item.score or ''), item.plainname))
+
+end
+
+function print_itemheader()
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-15s %-15s %-5s %-5s %s",
+                         'Serial', 'Container', 'Level', 'Score', 'Name'))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", '---------------------------------------------------------------')
+end
+
+function cmd_eqlookup(cmddict)
+  --print('eqlookup')
+  --tprint(cmddict)
+  if cmddict[1] then
+    local sqllu = strjoin(' ', cmddict)
+    local sqlcmd = 'SELECT * FROM items WHERE ' .. cmddict.args
+    print(sqlcmd)
+    if eqdb:open('cmd_eqlookup') then
+      local stmt = eqdb.db:prepare(sqlcmd)
+      if not stmt then
+        phelper:plugin_header('EQ Lookup')
+        print('The lookup arguments do not create a valid sql statement')
+        eqdb:close()
+        return
+      end
+      print_itemheader()
+      for a in stmt:nrows() do
+        print_item(a)
+      end
+      eqdb:close()
+    end
+    ColourNote("", "", "")
+  end
+end
+
+function cmd_eqshowitem(cmddict)
+  if cmddict[1] then
+    local sqlcmd = 'SELECT * from items WHERE serial in '
+    local ids = '('
+    for i,v in ipairs(cmddict) do
+      local ids = ids .. tostring(v) .. ','
+    end
+    ids = ids .. ')'
+    sqlcmd = sqlcmd .. ids
+    if eqdb:open('cmd_eqlookup') then
+      local stmt = eqdb.db:prepare(sqlcmd)
+      if not stmt then
+        print('Bug: please report this to Bast, stmt is nil in cmd_eqshowitem in eqLookup')
+        eqdb:close()
+        return
+      end
+      for a in stmt:nrows() do
+        tprint(a)
+      end
+    end
+  end
+end
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+
+phelper:set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'eqlu')
+
+phelper:add_cmd('lu', {func=cmd_eqlookup, help="lookup stuff in the db", default=true})
+phelper:add_cmd('getitem', {func=cmd_eqshowitem, help="get info on item with id"})
+phelper:add_cmd('close', {func=cmd_close, help="close the db"})
+
+phelper:enable()
+]]>
+</script>
+</muclient>
