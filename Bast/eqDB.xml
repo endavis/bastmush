@@ -398,6 +398,7 @@ function invdetails_redirect (name, line, wildcards, styles)
     invdetails.type = titem.type
     timer_end('invdetails')
     db:additemdetail(invdetails)
+    invdetails = db:getitemdetails(invdetails.serial)
     phelper:processevent('itemchange', invdetails)
     return
   end -- if
