@@ -492,7 +492,7 @@ function emptyline()
 end
 
 function initinv(char)
-  if char.status and char.status.state and tonumber(char.status.state) == 3 and db:checkfortable('items') == false then
+  if char.status and char.status.state and tonumber(char.status.state) == 3 and db:checkfortable('itemdetails') == false then
     getdata('Worn')
     getdata('Inventory')
     initdb = true
