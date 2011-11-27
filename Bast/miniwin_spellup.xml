@@ -1144,7 +1144,7 @@ function build_self()
 
   local style = {}
   style.text =  string.format("%-3s", " C ")
-  style.hint = "Not Learned"
+  style.hint = "Critical Spell (Shows up on summary tab)"
   style.textcolour = "criticalcolour"
   style.mouseup = function ()
     change_self_filter("critical", false, true)
