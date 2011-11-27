@@ -177,9 +177,43 @@ layer_table[8] = "f"
 layer_table[9] = "c"
 layer_table[10] = "a"
 
+url_re = rex.new("(?:https?://|mailto:)\\S*[\\w/=@#\\-\\?]")
 
 -- subclass phelpobject
 Miniwin = Phelpobject:subclass()
+
+function parseURLs(text)
+  local URLs = {}
+  local start, position = 0, 0
+
+  url_re:gmatch(text,
+    function (link, _)
+        start, position = string.find(text, link, position, true)
+        table.insert(URLs, {start=start, stop=position, text=link})
+    end
+  )
+
+  if next(URLs) then
+    local tparse = {}
+    local textlen = #text
+    local last = 1
+    for i,v in ipairs(URLs) do
+      if v.start ~= last then
+        table.insert(tparse, {text=string.sub(text, last, v.start - 1)})
+      end
+      table.insert(tparse, {text=string.sub(text, v.start, v.stop), url=true})
+      last = v.stop
+    end
+    if last ~= textlen then
+      table.insert(tparse, {text=string.sub(text, last + 1, textlten)})
+    end
+    return tparse
+  else
+    return {{text=text}}
+  end
+
+
+end -- function findURL
 
 -- initialize the Miniwindow
 function Miniwin:initialize(args)
@@ -979,6 +1013,7 @@ function Miniwin:buildmousemenu()
   end
   menu = menu .. '| < '
   menu = menu .. '|| Bring to Front | Send to Back '
+  menu = menu .. '|| Copy Text to Clipboard '
   menu = menu .. '|| Help'
   return menu
 end
@@ -1054,6 +1089,8 @@ function Miniwin:windowmenu(result)
     else
       self:set('layer', -200)
     end
+  elseif result == 'Copy Text to Clipboard' then
+    SetClipboard(self:getfulltextforactivetab())
   elseif result == "Reset Size" then
     self.width = self.set_options.width.default
     self.height = self.set_options.height.default
@@ -1106,6 +1143,15 @@ function Miniwin:pluginmenu(result)
       phelper:run_cmd({action=result})
     end
   end
+end
+
+function Miniwin:getfulltextforactivetab()
+  local newtext = ''
+  if self.activetab.justheader ~= '' then
+    newtext = self.activetab.justheader
+  end
+  newtext = newtext .. self.activetab.justtext
+  return newtext
 end
 
 function Miniwin:menuclick(flags)
@@ -1401,6 +1447,7 @@ end -- mousedown
 -- check against self.width or self.maxlinelength
 function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltype)
   local alllines = {}
+  local fulllinetext = ''
   local bottompadding = bottompadding or 0
   local toppadding = toppadding or 0
   local textpadding = textpadding or 0
@@ -1422,39 +1469,61 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
       def_colour = self:get_colour("header_text_colour")
   end
   linet.text = {}
+  if type(line) ~= 'table' then
+    line = findURLs(line)
+  end
   if type(line) == 'table' then
+    local ti = 0
     for i,style in ipairs(line) do
-      table.insert(linet.text, i, copytable.deep(style))
-      local font_id = self:addfont(style.font_name or self.fonts[def_font_id].name,
-                      style.font_size or self.fonts[def_font_id].size,
-                      style.bold or self.fonts[def_font_id].bold,
-                      style.italic or self.fonts[def_font_id].italic,
-                      style.underline or self.fonts[def_font_id].underline,
-                      style.strikeout or self.fonts[def_font_id].strikeout)
+      local pstuff = parseURLs(style.text)
+      for i2,v in ipairs(pstuff) do
+        ti = ti + 1
+        local tstyle = copytable.deep(style)
+        if v.url then
+          if tstyle.mouseup then
+          else
+            tstyle.mouseup = function ()
+              OpenBrowser(v.text)
+            end
+          end
+        end
+        tstyle.text = v.text
+        fulllinetext = fulllinetext .. v.text
+        if ti ~= 1 then
+          tstyle.start = nil
+        end
+        table.insert(linet.text, ti, tstyle)
+        local font_id = self:addfont(style.font_name or self.fonts[def_font_id].name,
+                        style.font_size or self.fonts[def_font_id].size,
+                        style.bold or self.fonts[def_font_id].bold,
+                        style.italic or self.fonts[def_font_id].italic,
+                        style.underline or self.fonts[def_font_id].underline,
+                        style.strikeout or self.fonts[def_font_id].strikeout)
 
-      maxfontheight = math.max(maxfontheight, self.fonts[font_id].height)
-      if style.image and style.image.name then
-         self:mdebug('Convert_Line: Got Image')
-      elseif style.circleOp and style.circleOp.width then
-         self:mdebug('Convert_Line: Got CircleOp')
-      else
-        local tlength = 0
-        if style.text then
-          tlength = WindowTextWidth (self.winid, font_id, strip_colours(style.text))
-        end
-        if style.start and style.start > start then
-          linet.text[i].start = style.start
-          start = style.start + tlength
+        maxfontheight = math.max(maxfontheight, self.fonts[font_id].height)
+        if tstyle.image and tstyle.image.name then
+          self:mdebug('Convert_Line: Got Image')
+        elseif tstyle.circleOp and tstyle.circleOp.width then
+          self:mdebug('Convert_Line: Got CircleOp')
         else
-          linet.text[i].start = start
-          start = start + tlength
+          local tlength = 0
+          if tstyle.text then
+            tlength = WindowTextWidth (self.winid, font_id, strip_colours(tstyle.text))
+          end
+          if tstyle.start and tstyle.start > start then
+            linet.text[ti].start = tstyle.start
+            start = tstyle.start + tlength
+          else
+            linet.text[ti].start = start
+            start = start + tlength
+          end
+          linet.text[ti].stylelen = tlength
+          linet.text[ti].font_id = font_id
+          linet.text[ti].bordercolour = tstyle.bordercolour or self.border_colour
+          linet.text[ti].textcolour = tstyle.textcolour or def_colour
         end
-        linet.text[i].stylelen = tlength
-        linet.text[i].font_id = font_id
-        linet.text[i].bordercolour = style.bordercolour or self.border_colour
-        linet.text[i].textcolour = style.textcolour or def_colour
+        linecharlength = linecharlength + tstyle.text:len()
       end
-      linecharlength = linecharlength + style.text:len()
     end
 
     linet.leftborder = line.leftborder or false
@@ -1465,16 +1534,6 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
     linet.borderwidth = line.borderwidth or 1
     linet.bordercolour = line.bordercolour or self.border_colour
     linet.backcolour = line.backcolour or nil
-  else
-      table.insert(linet.text, 1, {})
-      linet.text[1].font_id = self.default_font_id
-      linet.text[1].text = line
-      linet.text[1].start = start
-      linet.text[1].stylelen = tlength
-      maxfontheight = math.max(maxfontheight, self.fonts[self.default_font_id].height)
-      local tlength = WindowTextWidth (self.winid, self.default_font_id, linet.text[1].text)
-      start = start + tlength
-      linecharlength = linecharlength + linet.text[1].text:len()
   end
   linet.lineborder = line.lineborder
   linet.toppadding = toppadding
@@ -1486,7 +1545,9 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
   linet.gradient = line.gradient
   linet.colour1 = line.colour1
   linet.colour2 = line.colour2
+  linet.fulllinetext = fulllinetext
   table.insert(alllines, linet)
+  --print(fulllinetext)
   return alllines
 end
 
@@ -1587,6 +1648,8 @@ function Miniwin:convert_tab(tabname)
  timer_start('miniwin:convert_tab:' .. tabname)
  self.tabs[tabname].convtext = {}
  self.tabs[tabname].convheader = {}
+ self.tabs[tabname].justtext = ''
+ self.tabs[tabname].justheader = ''
  local maxwidth = 0
  local maxcharlength = 0
 
@@ -1596,6 +1659,7 @@ function Miniwin:convert_tab(tabname)
      local tlines = self:convert_line(v)
      for ii,vv in ipairs(tlines) do
        linenum = linenum + 1
+       self.tabs[tabname].justtext =  self.tabs[tabname].justtext .. vv.fulllinetext .. "\r\n"
        self.tabs[tabname].convtext[linenum] = vv
        maxwidth = math.max(maxwidth, self.tabs[tabname].convtext[linenum].width)
        maxcharlength = math.max(maxcharlength, self.tabs[tabname].convtext[linenum].linecharlength)
@@ -1617,6 +1681,7 @@ function Miniwin:convert_tab(tabname)
      end
      for ii,vv in ipairs(tlines) do
        linenum = linenum + 1
+       self.tabs[tabname].justheader =  self.tabs[tabname].justheader .. vv.fulllinetext .. "\r\n"
        self.tabs[tabname].convheader[linenum] = vv
        maxwidth = math.max(maxwidth, self.tabs[tabname].convheader[linenum].width)
        maxcharlength = math.max(maxcharlength, self.tabs[tabname].convheader[linenum].linecharlength)
