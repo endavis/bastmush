@@ -1470,7 +1470,7 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
   end
   linet.text = {}
   if type(line) ~= 'table' then
-    line = findURLs(line)
+    line = parseURLs(line)
   end
   if type(line) == 'table' then
     local ti = 0
