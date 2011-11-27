@@ -1214,8 +1214,10 @@ function OnPluginEnable ()
   phelper:OnPluginEnable()
   -- always create windows after OnPluginEnable due to default variable handling
 
-  oncontainerchange('"Worn"')
-  oncontainerchange('"Inventory"')
+  if IsConnected() then
+    oncontainerchange('"Worn"')
+    oncontainerchange('"Inventory"')
+  end
 end -- OnPluginEnable
 
 function OnPluginDisable ()
