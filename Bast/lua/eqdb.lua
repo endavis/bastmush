@@ -46,7 +46,8 @@ tableids = {
 function EQdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "\\eq.db"
-  self.version = 1
+  self.version = 2
+  self.versionfuncs[2] = self.updatenamecolumn
   self:checkversion()
 end
 
@@ -245,6 +246,18 @@ function EQdb:checkitemdetailstable()
     end
     self:close('checkitemdetailstable')
   end
+end
+
+function EQdb:countitems()
+  local count = 0
+  self:checkitemstable()
+  if self:open('countitems') then
+    for a in self.db:rows("SELECT COUNT(*) FROM items") do
+      count = a[1]
+    end
+    self:close('countitems')
+  end
+  return count
 end
 
 function EQdb:getitemdetails(serial)
@@ -1010,6 +1023,105 @@ function EQdb:cleandb()
       end
     end
     self.db:exec('VACUUM;')
+  end
+end
+
+function EQdb:updatenamecolumn()
+  if self:checkfortable('items') then
+    if self:open('updatenamecolumn') then
+      local olditems = {}
+      for a in self.db:nrows("SELECT * FROM items") do
+        table.insert(olditems, a)
+      end
+      self:close('updatenamecolumn', true)
+      self:open('updatenamecolumn2')
+      self.db:exec([[DROP TABLE IF EXISTS items;]])
+      self:close('updatenamecolumn2', true)
+      self:open('updatenamecolumn3')
+      local retval = self.db:exec([[CREATE TABLE items(
+          serial INTEGER NOT NULL,
+          shortflags TEXT,
+          level NUMBER,
+          cname TEXT,
+          name TEXT,
+          type NUMBER,
+          containerid TEXT NOT NULL,
+          wearslot INTEGER,
+          place INTEGER,
+          UNIQUE(serial),
+          PRIMARY KEY(serial, containerid));
+        )]])
+      assert (self.db:exec("BEGIN TRANSACTION"))
+      local stmt = self.db:prepare[[ INSERT INTO items VALUES (:serial, :shortflags, :level,
+                                                            :cname, :name, :type, :containerid,
+                                                            :wearslot, :place) ]]
+
+      for i,v in ipairs(olditems) do
+        v.cname = v.name
+        v.name = v.plainname
+        stmt:bind_names(v)
+        stmt:step()
+        stmt:reset()
+      end
+      stmt:finalize()
+      assert (self.db:exec("COMMIT"))
+      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
+      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
+      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
+      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
+      self:close('updatenamecolumn3')
+
+    end
+  end
+  if self:checkfortable('itemdetails') then
+    if self:open('updatenamecolumn') then
+      local olditems = {}
+      for a in self.db:nrows("SELECT * FROM itemdetails") do
+        table.insert(olditems, a)
+      end
+      self:close('updatenamecolumn', true)
+      self:open('updatenamecolumn2')
+      self.db:exec([[DROP TABLE IF EXISTS itemsdetails;]])
+      self:close('updatenamecolumn2', true)
+      self:open('updatenamecolumn3')
+      local retval = self.db:exec([[
+        CREATE TABLE itemdetails(
+          serial INTEGER NOT NULL,
+          keywords TEXT,
+          cname TEXT,
+          name TEXT,
+          level NUMBER default 0,
+          type NUMBER default 0,
+          worth NUMBER default 0,
+          weight NUMBER default 0,
+          wearable TEXT,
+          material NUMBER default 0,
+          score NUMBER default 0,
+          flags TEXT,
+          foundat TEXT,
+          fromclan TEXT,
+          owner TEXT,
+          UNIQUE(serial),
+          PRIMARY KEY(serial));)]])
+      assert (self.db:exec("BEGIN TRANSACTION"))
+      local stmt = self.db:prepare[[ INSERT INTO items VALUES (:serial, :keywords,
+                                                            :cname, :name, :level, :type, :worth,
+                                                            :weight, :wearable, :material
+                                                            :score, :flags, :foundat, :fromclan,
+                                                            :owner) ]]
+
+      for i,v in ipairs(olditems) do
+        v.cname = v.name
+        v.name = v.plainname
+        stmt:bind_names(v)
+        stmt:step()
+        stmt:reset()
+      end
+      stmt:finalize()
+      assert (self.db:exec("COMMIT"))
+      self:close('updatenamecolumn3')
+
+    end
   end
 end
 
