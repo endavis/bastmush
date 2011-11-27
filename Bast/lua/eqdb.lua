@@ -1069,8 +1069,9 @@ function EQdb:updatenamecolumn()
       self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
       self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
       self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
-      self:close('updatenamecolumn3')
+      self.db:exec("PRAGMA foreign_keys=1;")
 
+      self:close('updatenamecolumn3')
     end
   end
   if self:checkfortable('itemdetails') then
@@ -1081,10 +1082,11 @@ function EQdb:updatenamecolumn()
       end
       self:close('updatenamecolumn', true)
       self:open('updatenamecolumn2')
-      self.db:exec([[DROP TABLE IF EXISTS itemsdetails;]])
+      local retval = self.db:exec([[ALTER TABLE itemdetails RENAME TO itemdetails_bak;]])
       self:close('updatenamecolumn2', true)
-      self:open('updatenamecolumn3')
-      local retval = self.db:exec([[
+      if retval == 0 then
+        self:open('updatenamecolumn3')
+        local retval =  self.db:exec([[
         CREATE TABLE itemdetails(
           serial INTEGER NOT NULL,
           keywords TEXT,
@@ -1103,24 +1105,26 @@ function EQdb:updatenamecolumn()
           owner TEXT,
           UNIQUE(serial),
           PRIMARY KEY(serial));)]])
-      assert (self.db:exec("BEGIN TRANSACTION"))
-      local stmt = self.db:prepare[[ INSERT INTO items VALUES (:serial, :keywords,
-                                                            :cname, :name, :level, :type, :worth,
-                                                            :weight, :wearable, :material
-                                                            :score, :flags, :foundat, :fromclan,
-                                                            :owner) ]]
+        local stmt = self.db:prepare[[ INSERT INTO itemdetails VALUES (:serial, :keywords,
+                                                              :cname, :name, :level, :type, :worth,
+                                                              :weight, :wearable, :material,
+                                                              :score, :flags, :foundat, :fromclan,
+                                                              :owner) ]]
 
-      for i,v in ipairs(olditems) do
-        v.cname = v.name
-        v.name = v.plainname
-        stmt:bind_names(v)
-        stmt:step()
-        stmt:reset()
+        for i,v in ipairs(olditems) do
+          v.cname = v.name
+          v.name = v.plainname
+          stmt:bind_names(v)
+          stmt:step()
+          stmt:reset()
+        end
+        stmt:finalize()
+        assert (self.db:exec("COMMIT"))
+
+        self.db:exec("PRAGMA foreign_keys=0;")
+        local retval = self.db:exec([[DROP TABLE itemdetails_bak;]])
+        self:close('updatenamecolumn3')
       end
-      stmt:finalize()
-      assert (self.db:exec("COMMIT"))
-      self:close('updatenamecolumn3')
-
     end
   end
 end
