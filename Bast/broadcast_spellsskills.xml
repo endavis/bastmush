@@ -202,7 +202,9 @@ function setclanskill(spells)
     tspells[i].clanspellup = 1
   end
   db:updateclanskills(tspells)
-  local bcastnum = sbroadcast_table['spellup']
+  local bcastnum = sbroadcast_table['all']
+  phelper:broadcast(bcastnum)
+  local bcastnum = sbroadcast_table['learned']
   phelper:broadcast(bcastnum)
 end
 
@@ -212,7 +214,9 @@ function unsetclanskill(spells)
     tspells[i].clanskill = 0
   end
   db:updateclanskills(tspells)
-  local bcastnum = sbroadcast_table['spellup']
+  local bcastnum = sbroadcast_table['all']
+  phelper:broadcast(bcastnum)
+  local bcastnum = sbroadcast_table['learned']
   phelper:broadcast(bcastnum)
 end
 
