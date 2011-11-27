@@ -35,6 +35,23 @@ function reloadplugin(id)
     return false
 end
 
+function unloadplugin(id)
+    if id ~= GetPluginID () then
+      local pname = GetPluginInfo (id, 1)
+      local status = UnloadPlugin (id)
+      if status ~= error_code.eOK then
+        ColourNote ("red", "", "Could not unload plugin ID: " ..
+                    (id or "unknown") .. ", name: " .. pname)
+        check (status)
+        return false
+      else
+         ColourNote (getcolour(id), "black", "Unloaded plugin " .. tostring(id) .. " (" .. pname .. ")")
+      end -- no good
+      return true
+    end -- not us (we can't be reloadeed)
+    return false
+end
+
 function reloadallplugins()
   local plugins = GetPluginList() or {}
   for _, p in ipairs (plugins) do
@@ -113,7 +130,7 @@ function loadfromfile(file)
         return "Not Found"
       elseif retcode == eProblemsLoadingPlugin then
         return "Problem"
-      else      
+      else
         return false
       end
     else
@@ -152,11 +169,11 @@ function ldplugin_helper(plugin, id, silent)
   if silent then
     ColourNote("yellow", "black", "-----------------------------------------------------------------------")
     ColourNote("yellow", "black", " Loaded " .. plugin .. "(" .. loaded .. ")" )
-    ColourNote("yellow", "black", "-----------------------------------------------------------------------") 
+    ColourNote("yellow", "black", "-----------------------------------------------------------------------")
   end
   return loaded
 end
 
 function ldplugin(plugin, id, silent)
-  DoAfterSpecial(2, "ldplugin_helper('" .. plugin .. "', '" .. tostring(id) .."', " .. tostring(silent) .. ")", 12)
+  DoAfterSpecial(.1, "ldplugin_helper('" .. plugin .. "', '" .. tostring(id) .."', " .. tostring(silent) .. ")", 12)
 end
