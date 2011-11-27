@@ -196,6 +196,25 @@ function unsetclientspellup(spells)
   phelper:broadcast(bcastnum)
 end
 
+function setclanskill(spells)
+  local tspells = assert (loadstring ('return ' .. spells or ""))()
+  for i,v in pairs(tspells) do
+    tspells[i].clanspellup = 1
+  end
+  db:updateclanskills(tspells)
+  local bcastnum = sbroadcast_table['spellup']
+  phelper:broadcast(bcastnum)
+end
+
+function unsetclanskill(spells)
+  local tspells = assert (loadstring ('return ' .. spells or ""))()
+  for i,v in pairs(tspells) do
+    tspells[i].clanskill = 0
+  end
+  db:updateclanskills(tspells)
+  local bcastnum = sbroadcast_table['spellup']
+  phelper:broadcast(bcastnum)
+end
 
 function spelltag_on (name, line, wildcards)
   local spelltag = {}
