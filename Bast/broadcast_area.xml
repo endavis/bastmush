@@ -34,10 +34,10 @@ Example
     if id == "aaa2beeda10fa11787c6b438" and msg == 1 then
       local pvar = GetPluginVariable(  "aaa2beeda10fa11787c6b438", "areas" )
       areas = assert (loadstring ('return ' .. pvar or ""))()
-      
+
       local pvar = GetPluginVariable(  "aaa2beeda10fa11787c6b438", "areasbykeyword" )
       areasbykeyword = assert (loadstring ('return ' .. pvar or ""))()
-      
+
     end
   end
 
@@ -50,7 +50,7 @@ Samples:
       "speedwalk"=""
       "builder"=""
       "keyword"="sahuagin"
-      "name"="The Abyssal Caverns of Sahuagi" 
+      "name"="The Abyssal Caverns of Sahuagi"
 
  areasbykeyword:
     "longnight":
@@ -60,9 +60,9 @@ Samples:
       "speedwalk"=""
       "builder"=""
       "keyword"="longnight"
-      "name"="Into the Long Night" 
-      
-      
+      "name"="Into the Long Night"
+
+
 ]]>
 </description>
 
@@ -176,7 +176,7 @@ function parsearea (name, line, wildcards)
       areas[name]['lock'] = 0
     else
       areas[name]['lock'] = wildcards.lock
-    end    
+    end
   else
     area = {}
     area.name = name
@@ -226,6 +226,11 @@ end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
+  if IsPluginInstalled("aaa3cbbda10fa11787c6b438") then
+    ColourNote("red", "black", "broadcast_area will not load if areaDB is installed, unloading")
+    DoAfterSpecial(2, "plugins unload aaa2beeda10fa11787c6b438", 10)
+    return
+  end
 
   phelper:OnPluginInstall()
 end -- OnPluginInstall
