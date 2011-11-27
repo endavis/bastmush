@@ -187,6 +187,11 @@ end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
+  if IsPluginInstalled("aaa2beeda10fa11787c6b438") then
+    ColourNote("red", "black", "AreaDB will not load if broadcast_area is installed, unloading")
+    DoAfterSpecial(2, "plugins unload aaa3cbbda10fa11787c6b438", 10)
+    return
+  end
 
   phelper:OnPluginInstall()
 end -- OnPluginInstall
