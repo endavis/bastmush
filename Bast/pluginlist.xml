@@ -131,7 +131,7 @@ function getmatches(name)
                   cmd = GetPluginVariable(p, 'cmd') or "",
                   id = p,
                   file = GetPluginInfo (p, 6)}
-    if match_plugin_name(temp.name, name) or match_plugin_name(temp.cmd, name) then
+    if match_plugin_name(temp.name, name) or match_plugin_name(temp.cmd, name) or temp.id == name then
       matches[p] = temp
       numfound = numfound + 1
     end
@@ -143,6 +143,7 @@ functionlist = {
   Reload = {all = reloadallplugins, one = reloadplugin, tstr = "reloaded"},
   Enable = {all = enableallplugins, one = enableplugin, tstr = "enabled"},
   Disable = {all = disableallplugins, one = disableplugin, tstr = "disabled"},
+  Unload = {one = unloadplugin, tstr = "unloaded"},
 }
 
 function dofunc(type, id)
@@ -153,7 +154,9 @@ end
 function cmd_helper(type, tomatch, other)
   if tomatch == "all" then
     local tfunc = functionlist[type]['all']
-    tfunc()
+    if tfunc then
+      tfunc()
+    end
     return
   end
   local numfound = 0
@@ -218,6 +221,17 @@ function cmd_disable(cmddict)
   cmd_helper("Disable", tomatch, arg2)
 end
 
+function cmd_unload(cmddict)
+  if #cmddict < 1 then
+    phelper:plugin_header("Unload")
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "I need an argument to unload something")
+    ColourNote("", "", "")
+    return
+  end
+  tomatch = cmddict[1]
+  arg2 = cmddict[2]
+  cmd_helper("Unload", tomatch, arg2)
+end
 
 function cmd_load(cmddict)
   if #cmddict < 1 then
@@ -348,6 +362,7 @@ phelper:add_cmd('reload', {func=cmd_reload, help='reload a plugin, "all" will re
 phelper:add_cmd('load', {func=cmd_load, help="load a plugin by name"})
 phelper:add_cmd('enable', {func=cmd_enable, help='enable a plugin, "all" will enable all plugins, "<plugin> all" will enable all plugins that match <plugin>'})
 phelper:add_cmd('disable', {func=cmd_disable, help='disable a plugin, "all" will disable all plugins, "<plugin> all" will disable all plugins that match <plugin>'})
+phelper:add_cmd('unload', {func=cmd_unload, help='unload a plugin'})
 phelper:add_cmd('loaddir', {func=cmd_loaddir, help="load all plugins in a specific dir"})
 
 phelper:enable()
