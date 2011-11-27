@@ -42,12 +42,13 @@ tableids = {
 function Statdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "\\stats.db"
-  self.version = 6
+  self.version = 7
   self.versionfuncs[2] = self.updatedblqp -- update double qp flag
   self.versionfuncs[3] = self.updatemobkills -- slit, assassinate, etc..
   self.versionfuncs[4] = self.addmobsblessing
   self.versionfuncs[5] = self.addquestblessing
   self.versionfuncs[6] = self.addleveltrainblessing
+  self.versionfuncs[7] = self.addclanskill
   self:checkversion()
 end
 
@@ -724,6 +725,7 @@ function Statdb:checkskillstable()
         recovery INT default -1,
         spellup INT default 0,
         clientspellup INT default 0,
+        clanskill INT default 0,
         mag INT default -1,
         thi INT default -1,
         war INT default -1,
@@ -825,12 +827,31 @@ function Statdb:updateclientspellups(spellups)
       end
       stmt:finalize()
     end
-  assert (self.db:exec("COMMIT"))
+    assert (self.db:exec("COMMIT"))
 
-  self:close('updateclientspellups')
+    self:close('updateclientspellups')
   end
 end
 
+function Statdb:updateclanskills(spellups)
+  self:checkskillstable()
+  if self:open('updateclanskills') then
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare[[ UPDATE skills set clanskill = :clanskill where sn = :sn ]]
+    if stmt ~= nil then
+      for i,v in pairs(spellups) do
+        --local tt = {sn=i}
+        stmt:bind_names(  v  )
+        stmt:step()
+        stmt:reset()
+      end
+      stmt:finalize()
+    end
+    assert (self.db:exec("COMMIT"))
+
+    self:close('updateclanskills')
+  end
+end
 
 function Statdb:lookupskillbysn(sn)
   self:checkskillstable()
@@ -1299,5 +1320,57 @@ function Statdb:addleveltrainblessing()
     self.db:exec([[UPDATE levels SET blessingtrains = 0;]])
     --assert (self.db:exec("BEGIN TRANSACTION"))
     self:close('addleveltrainblessing', true)
+  end
+end
+
+function Statdb:addclanskill()
+  if not self:checkfortable('skills') then
+    return
+  end
+  if self:open('addclanskill') then
+    local oldskills = {}
+    for a in self.db:nrows("SELECT * FROM skills") do
+      oldskills[a.sn] = a
+    end
+    self:close('addclanskill', true)
+    self:open('addqclanspellup2')
+    self.db:exec([[DROP TABLE IF EXISTS skills;]])
+    self:close('addaclanspellup2', true)
+    self:open('addclanskill3')
+    local retcode = self.db:exec([[CREATE TABLE skills(
+      sn INTEGER NOT NULL PRIMARY KEY,
+      name TEXT,
+      percent INT default 0,
+      target INT default 0,
+      type INT default 0,
+      recovery INT default -1,
+      spellup INT default 0,
+      clientspellup INT default 0,
+      clanskill INT default 0,
+      mag INT default -1,
+      thi INT default -1,
+      war INT default -1,
+      cle INT default -1,
+      psi INT default -1,
+      ran INT default -1,
+      pal INT default -1
+    )]])
+
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare[[ INSERT INTO skills VALUES (:sn, :name, :percent,
+                                                          :target, :type, :recovery, :spellup,
+                                                          :clientspellup, :clanskill,
+                                                          :mag, :thi, :war, :cle, :psi,
+                                                          :ran, :pal) ]]
+    for i,v in tableSort(oldskills, 'sn') do
+      v['clanskill'] = 0
+      stmt:bind_names(v)
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    assert (self.db:exec("COMMIT"))
+    self:close('addclanskill3')
+
   end
 end
