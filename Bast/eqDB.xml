@@ -493,7 +493,8 @@ function emptyline()
 end
 
 function initinv(char)
-  if char.status and char.status.state and tonumber(char.status.state) == 3 and db:checkfortable('itemdetails') == false then
+
+  if char.status and char.status.state and tonumber(char.status.state) == 3 and db:checkfortable('items') == false then
     getdata('Worn')
     getdata('Inventory')
     initdb = true
@@ -532,7 +533,6 @@ function cmd_refresh(cmddict)
     db:close('cmd_refresh', true)
     db:open('cmd_refresh')
     local returnval = db.db:exec([[DROP TABLE IF EXISTS items;]])
-    --print('exec returned: ', returnval)
     db:close('cmd_refresh', true)
     local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
     local char = assert (loadstring ('return ' .. gmcparg or ""))()
