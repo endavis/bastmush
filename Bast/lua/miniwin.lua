@@ -1481,6 +1481,11 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
         local tstyle = copytable.deep(style)
         if v.url then
           if tstyle.mouseup then
+            local oldfunc = tstyle.mouseup
+            tstyle.mouseup = function (win, flags, hotspotid)
+               oldfunc(win, flags, hotspotid)
+               OpenBrowser(v.text)
+            end
           else
             tstyle.mouseup = function ()
               OpenBrowser(v.text)
@@ -1489,7 +1494,7 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
         end
         tstyle.text = v.text
         fulllinetext = fulllinetext .. v.text
-        if ti ~= 1 then
+        if ti ~= 1 and tstyle.start and tstyle.start < start then
           tstyle.start = nil
         end
         table.insert(linet.text, ti, tstyle)
