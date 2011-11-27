@@ -273,7 +273,7 @@ function activatespell(sn, fast)
       if v.disabled or isblocked(sn) then
         cast = false
       end
-      if not spells['learned'][sn] and spells['all'][sn]['clanskill'] == 0 then
+      if not spells['learned'][sn] then
         cast = false
       end
       if cast then
@@ -729,6 +729,9 @@ function cmd_toggleclanskill(cmddict)
           else
             uspells[aspell.sn] = aspell
             aspell.clanskill = 0
+            if waiting == aspell.sn then
+              setwaiting(false)
+            end
             ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " is no longer a clan skill.")
           end
         else
@@ -1176,7 +1179,7 @@ function OnPluginBroadcast (msg, id, name, text)
           local tagsn = tonumber(tag.sn)
           if tagsn == waiting then
             phelper.askedself[askedself_xref[tagsn]].disabled = true
-            ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because the affect already exists.")
+            ColourNote("red", "black", spells['all'][tagsn].name .. " disabled because the affect already exists.")
             make_askedself_xrefs()
             setwaiting(false)
             nextspellup('spell fail')
@@ -1197,14 +1200,24 @@ function OnPluginBroadcast (msg, id, name, text)
       elseif tag.reason == 6 then
         setwaiting(false)
       elseif tag.reason == 8 then
-        -- remove from askedself list
+        local tagsn = tonumber(tag.sn)
+        if askedself_xref[tonumber(tag.sn)] ~= nil then
+          local tagsn = tonumber(tag.sn)
+          if tagsn == waiting then
+            phelper.askedself[askedself_xref[tagsn]].disabled = true
+            ColourNote("red", "black", spells['all'][tagsn].name .. " disabled because you can't cast this spell.")
+            make_askedself_xrefs()
+            setwaiting(false)
+            nextspellup('spell fail')
+          end
+        end
       elseif tag.reason == 10 then
         setwaiting(false)
       elseif tag.reason == 11 then
         -- remove from askedself list
         local tagsn = tonumber(tag.sn)
         if tagsn == waiting then
-          ColourNote(RGBColourToName(var.plugin_colour), "black", spells['all'][tagsn].name .. " disabled because it is disabled mudside.")
+          ColourNote("red", "black", spells['all'][tagsn].name .. " disabled because it is disabled mudside.")
           phelper.askedself[askedself_xref[tagsn]].disabled = true
           setwaiting(false)
         end
