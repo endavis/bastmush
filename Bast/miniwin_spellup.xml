@@ -437,11 +437,6 @@ function build_windows(override)
         v.nolearn = true
       end
 
-      if spells['all'][v.sn]['clanskill'] == 1 then
-        v.nolearn = false
-        v.noprac = false
-      end
-
       if (not v.noprac) and (not v.nolearn) and phelper.criticalspells[tonumber(v.sn)] then
         v.critical = true
         if not v.disabled then
@@ -462,11 +457,6 @@ function build_windows(override)
       end
       if spells['notlearned'][tonumber(v.sn)] then
         v.nolearn = true
-      end
-
-      if spells['all'][v.sn]['clanskill'] == 1 then
-        v.nolearn = false
-        v.noprac = false
       end
 
     end -- for
@@ -1555,6 +1545,7 @@ function build_spells()
       style.cellborder = true
 
       local sp = spells['spellup'][v.sn]
+      local spa = spells['all'][v.sn]
 
       if sp and sp.clientspellup == 1 then
         style.text = string.format("%-3s", " C ")
@@ -1574,7 +1565,7 @@ function build_spells()
       local style = {}
       style.textcolour = "orange"
       style.cellborder = true
-      if sp and sp.clanskill == 1 then
+      if spa and spa.clanskill == 1 then
         style.text = string.format("%-4s", " CS ")
         style.mouseup = function ()
           runspellupcmd("toggleclan " .. tostring(v.sn))
