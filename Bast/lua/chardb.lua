@@ -893,7 +893,7 @@ function Statdb:getlearnedskills()
   self:checkskillstable()
   local spells = {}
   if self:open('getlearnedskills') then
-    for a in self.db:nrows("SELECT * FROM skills WHERE percent > 1") do
+    for a in self.db:nrows("SELECT * FROM skills WHERE percent > 1 or clanskill == 1") do
       spells[a.sn] = a
     end
     self:close('getlearnedskills')
@@ -905,7 +905,7 @@ function Statdb:getnotlearnedskills()
   self:checkskillstable()
   local spells = {}
   if self:open('getnotlearnedskills') then
-    for a in self.db:nrows("SELECT * FROM skills WHERE percent == 0") do
+    for a in self.db:nrows("SELECT * FROM skills WHERE percent == 0 and clanskill != 1") do
       spells[a.sn] = a
     end
     self:close('getnotlearnedskills')
@@ -917,7 +917,7 @@ function Statdb:getnotpracticedskills()
   self:checkskillstable()
   local spells = {}
   if self:open('getnotpracticedskills') then
-    for a in self.db:nrows("SELECT * FROM skills WHERE percent == 1") do
+    for a in self.db:nrows("SELECT * FROM skills WHERE percent == 1 and clanskill != 1") do
       spells[a.sn] = a
     end
     self:close('getnotpracticedskills')
