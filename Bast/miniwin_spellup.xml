@@ -437,12 +437,18 @@ function build_windows(override)
         v.nolearn = true
       end
 
+      if spells['all'][v.sn]['clanskill'] == 1 then
+        v.nolearn = false
+        v.noprac = false
+      end
+
       if (not v.noprac) and (not v.nolearn) and phelper.criticalspells[tonumber(v.sn)] then
         v.critical = true
         if not v.disabled then
           hascritical = true
         end
       end
+
       askedselfbysn[tonumber(v.sn)] = v
     end -- for
     timer_end('askedtable')
@@ -457,6 +463,12 @@ function build_windows(override)
       if spells['notlearned'][tonumber(v.sn)] then
         v.nolearn = true
       end
+
+      if spells['all'][v.sn]['clanskill'] == 1 then
+        v.nolearn = false
+        v.noprac = false
+      end
+
     end -- for
     timer_end('othertable')
 
@@ -1468,6 +1480,15 @@ function build_spells()
   table.insert(lstyle, style)
 
   local style = {}
+  style.text =  string.format("%-4s", " CS ")
+  style.textcolour = "yellow"
+  style.hint = "Clan Skill"
+  style.mouseup = function ()
+    change_spells_filter("clanskill", 0, true)
+  end
+  table.insert(lstyle, style)
+
+  local style = {}
   style.text =  string.format("%-4s", " RO ")
   style.textcolour = "orange"
   style.hint = "Requested for Casting on Others"
@@ -1547,6 +1568,22 @@ function build_spells()
             runspellupcmd("togglespellup " .. tostring(v.sn))
           end
         end
+      end
+      table.insert(lstyle, style)
+
+      local style = {}
+      style.textcolour = "orange"
+      style.cellborder = true
+      if sp and sp.clanskill == 1 then
+        style.text = string.format("%-4s", " CS ")
+        style.mouseup = function ()
+          runspellupcmd("toggleclan " .. tostring(v.sn))
+        end
+      else
+        style.text = string.format("%-4s", "   ")
+        style.mouseup = function ()
+            runspellupcmd("toggleclan " .. tostring(v.sn))
+          end
       end
       table.insert(lstyle, style)
 
