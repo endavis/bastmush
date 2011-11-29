@@ -351,7 +351,7 @@ end -- skillgain
 function parse_spell_line (line)
   local sn, name, target, duration, percent, recovery, skilltype =
     string.match (line, "^(%d+)%,([A-Za-z0-9 ]+)%,(%d+)%,(%d+)%,(%d+),(-?%d+),(%d+)$")
-  if not sn then
+  if not sn or not name or not target or not duration or not percent or not recovery or not skilltype then
     ColourNote ("white", "red", GetPluginInfo(GetPluginID(), 1) .. " - Invalid spellheaders line: " .. line)
     return nil
   end -- not a valid spell name
@@ -408,7 +408,9 @@ function spellheaders_redirect (name, line, wildcards, styles)
 
   local sn, name, target, duration, percent, recovery, skilltype = parse_spell_line (line)
 
-  if not sn then return end
+  if not sn then
+    return
+  end
 
   if not spells['all'] then
     ColourNote ("white", "red", "The spells list was not read correctly from the mud, please reload this plugin with the command 'plugins reload bsst'")
@@ -437,7 +439,7 @@ function spellheaders_redirect (name, line, wildcards, styles)
     spells['affected'][sn].finish = GetInfo(304) + tonumber(duration)
   end
 
-  if slisttype == 'spellup' then
+  if slisttype == 'spellup' and spells['all'][sn] then
     spells['all'][sn].spellup = 1
   end
 
