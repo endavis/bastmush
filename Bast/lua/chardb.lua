@@ -662,21 +662,6 @@ function Statdb:addclasses(classes)
   end
 end
 
-function Statdb:checkitemtable()
-  if self:open('checkitemtable') then
-    if not self:checkfortable('items') then
-      self.db:exec([[CREATE TABLE items(
-        sn INTEGER NOT NULL PRIMARY KEY,
-        name TEXT,
-        cleanname TEXT,
-        slot INT default -1,
-        flags TEXT,
-      )]])
-    end
-    self:close('checkitemtable')
-  end
-end
-
 function Statdb:getlast(ttable, num, where)
   local colid = tableids[ttable]
   local tstring = ''
