@@ -23,11 +23,21 @@ classabb table
   - a table of class abbreviations, key is the abbreviation, value is
     the long name for the class
 
-objecttypes table
+objecttypes/objecttypesrev table
   - table of object types
 
-wearlocs table
+wearlocs/wearlocsreverse tables
   - table of wear locations
+
+optionallocs tables
+  - table of wear locations that are optional when showing eq
+
+spelltarget table
+  - table of spell targets
+
+statestrings table
+  - table of statestrings
+
 --]]
 
 function hasmore(text)
