@@ -888,7 +888,7 @@ function buildworn(container)
           doit = false
         end
         if doit then
-          lstyles = buildwornitem({name="@r< empty >@w", shortflags="", wearslot=actualslot})
+          lstyles = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=actualslot})
         end
       end
       if next(lstyles) then
