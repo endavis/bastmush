@@ -203,16 +203,6 @@ require "eqdb"
 
 db = EQdb:new{}
 
-P, V, Cg, Ct, Cc, S, R, C, Cf, Cb = lpeg.P, lpeg.V, lpeg.Cg, lpeg.Ct, lpeg.Cc, lpeg.S, lpeg.R, lpeg.C, lpeg.Cf, lpeg.Cb
-
-wearpeg = (P("wea") * -P(1)) + (P("wear") * -P(1))
-getpeg = (P("g") * -P(1)) + (P("ge") * -P(1)) + (P("get") * -P(1))
-putpeg = (P("pu") * -P(1)) + (P("put") * -P(1))
-lookpeg = (P("l") * -P(1)) + (P("lo") * -P(1)) + (P("loo") * -P(1)) + (P("look") * -P(1))
-removepeg = (P("re") * -P(1)) + (P("rem") * -P(1)) + (P("remo") * -P(1)) + (P("remov") * -P(1)) + (P("remove") * -P(1))
-alldotpeg = P("all") * P(".") * P(1)^1
-inpeg = (P("i") * -P(1)) + (P("in") * -P(1))
-
 eqdata = {}
 invdata = {}
 waiting = {}
@@ -792,6 +782,17 @@ function fixarg(arg)
   end
 end
 
+P, V, Cg, Ct, Cc, S, R, C, Cf, Cb = lpeg.P, lpeg.V, lpeg.Cg, lpeg.Ct, lpeg.Cc, lpeg.S, lpeg.R, lpeg.C, lpeg.Cf, lpeg.Cb
+
+wearpeg = (P("wea") * -P(1)) + (P("wear") * -P(1))
+getpeg = (P("g") * -P(1)) + (P("ge") * -P(1)) + (P("get") * -P(1))
+putpeg = (P("pu") * -P(1)) + (P("put") * -P(1))
+lookpeg = (P("l") * -P(1)) + (P("lo") * -P(1)) + (P("loo") * -P(1)) + (P("look") * -P(1))
+removepeg = (P("re") * -P(1)) + (P("rem") * -P(1)) + (P("remo") * -P(1)) + (P("remov") * -P(1)) + (P("remove") * -P(1))
+identpeg = (P("id") * -P(1)) + (P("ide") * -P(1)) + (P("iden") * -P(1)) + (P("ident") * -P(1)) + (P("identi") * -P(1)) + (P("identif") * -P(1)) + (P("identiy") * -P(1))
+alldotpeg = P("all") * P(".") * P(1)^1
+inpeg = (P("i") * -P(1)) + (P("in") * -P(1))
+
 function OnPluginSend (sText)
   timer_start('eqDB:OnPluginSend')
   local cmd = parse_cmdline(string.lower(sText))
@@ -804,6 +805,7 @@ function OnPluginSend (sText)
   local removep = false
   local wearp = false
   local lookp = false
+  local identp = false
   local inp = false
   local alldotp = false
 
@@ -830,6 +832,9 @@ function OnPluginSend (sText)
   elseif lpeg.match(wearpeg, string.lower(cmd[1])) ~= nil then
     --print('setting wearp')
     wearp = true
+  elseif lpeg.match(identpeg, string.lower(cmd[1])) ~= nil then
+    --print('setting ident')
+    identp = true
   end
 
   if wearp and cmd[2] == 'all' then
@@ -846,7 +851,7 @@ function OnPluginSend (sText)
     puttingall = true
   end
 
-  if getp or putp or lookp or wearp or removep then
+  if getp or putp or lookp or wearp or removep or identp then
     --print('looking for identifiers')
     local ncmd = cmd[1]
     local item = cmd[2]
