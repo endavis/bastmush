@@ -94,22 +94,56 @@ function Mastertabwin:createtabstyle(start, key, newstyle)
   tstyle.text = newstyle.text
   tstyle.length = WindowTextWidth (self.id, self.default_font_id, strip_colours(tstyle.text))
   if self.wtabs[key].winid then
-    tstyle.mousedown = self.wtabs[key].func or self.toggletab
-    tstyle.hint = self.wtabs[key].popup or "Toggle " .. self.wtabs[key].name
+    tstyle.mouseup = self.tabclick
+    tstyle.hint = self.wtabs[key].popup or "Do stuff to " .. self.wtabs[key].name
     tstyle.hotspot_id = key
     self.hotspots[key] = key
   end
   return tstyle
 end
 
-function Mastertabwin:toggletab(flags, hotspot_id)
-  self:mdebug('flags', flags, 'hotspot_id', hotspot_id)
-  local id = self.wtabs[hotspot_id].objectid
-  local flag = not (WindowInfo(self.wtabs[hotspot_id].winid, 5))
-  local plugin = self.wtabs[hotspot_id].pluginid
-  local ttable = {flag=flag, id=id}
-  CallPlugin(plugin, 'showwin', serialize.save_simple( ttable ))
-  --WindowShow(self.hotspots[hotspot_id], not (WindowInfo(self.hotspots[hotspot_id], 5)))
+function Mastertabwin:buildmenu(hotspot_id)
+  local menu = self.wtabs[hotspot_id].name
+  local menu = menu .. '|| Bring to Front | Send to Back | Show | Hide'
+
+  return menu
+end
+
+function Mastertabwin:menuclick(result, hotspot_id)
+  local plugincmd = GetPluginVariable(self.wtabs[hotspot_id].pluginid, "cmd")
+  if result:match("Bring to Front") then
+    Execute(plugincmd .. ' ' .. self.wtabs[hotspot_id].name .. ' front')
+  elseif result:match("Send to Back") then
+    Execute(plugincmd .. ' ' .. self.wtabs[hotspot_id].name .. ' back')
+  elseif result:match("Show") then
+    Execute(plugincmd .. ' ' .. self.wtabs[hotspot_id].name .. ' show')
+  elseif result:match("Hide") then
+    Execute(plugincmd .. ' ' .. self.wtabs[hotspot_id].name .. ' hide')
+  end
+end
+
+function Mastertabwin:tabclick(flags, hotspot_id)
+  -- right click for window menu, left click for plugin menu
+  if bit.band(flags, 0x10) ~= 0 then
+    -- left
+    if self.wtabs[hotspot_id].func then
+      self.wtabs[hotspot_id].func(self)
+    else
+      self:mdebug('flags', flags, 'hotspot_id', hotspot_id)
+      local id = self.wtabs[hotspot_id].objectid
+      local flag = not (WindowInfo(self.wtabs[hotspot_id].winid, 5))
+      local plugin = self.wtabs[hotspot_id].pluginid
+      local ttable = {flag=flag, id=id}
+      CallPlugin(plugin, 'showwin', serialize.save_simple( ttable ))
+      --WindowShow(self.hotspots[hotspot_id], not (WindowInfo(self.hotspots[hotspot_id], 5)))
+    end
+  elseif bit.band(flags, 0x20) ~= 0 and self.wtabs[hotspot_id].func == nil then
+    -- right
+    local result = WindowMenu(self.winid, WindowInfo (self.winid, 14), WindowInfo (self.winid, 15), self:buildmenu(hotspot_id))
+    if result ~= "" then
+      self:menuclick(result, hotspot_id)
+    end
+  end
 end
 
 function Mastertabwin:drawtabs()
@@ -210,6 +244,6 @@ function Mastertabwin:set(option, value, args)
    retcode = super(self, option, value, args)
    if retcode and option == 'orientation' and not self.classinit then
      self:drawtabs()
-   end   
+   end
    return retcode
 end
