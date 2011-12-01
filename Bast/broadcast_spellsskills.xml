@@ -451,7 +451,7 @@ end -- function spellheaders_redirect
 function parse_recoveries_line (line)
   local sn, name, duration = string.match (line, "^(%d+)%,([A-Za-z0-9 ]+)%,(%d+)$")
 
-  if not sn then
+  if not sn or not name or not duration then
     ColourNote ("white", "red", "Invalid recoveries line: " .. line)
     return nil
   end -- not a valid spell name
