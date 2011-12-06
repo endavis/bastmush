@@ -13,6 +13,7 @@ Mastertabwin = Miniwin:subclass()
 
 function Mastertabwin:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
+  self.dontuseaardz = true
   self.wtabs = {}
   --self.tab_padding = 10
   self.tab_padding = 0
@@ -109,7 +110,7 @@ function Mastertabwin:buildmenu(hotspot_id)
   return menu
 end
 
-function Mastertabwin:menuclick(result, hotspot_id)
+function Mastertabwin:menuclickwindow(result, hotspot_id)
   local plugincmd = GetPluginVariable(self.wtabs[hotspot_id].pluginid, "cmd")
   if result:match("Bring to Front") then
     Execute(plugincmd .. ' ' .. self.wtabs[hotspot_id].name .. ' front')
@@ -141,7 +142,7 @@ function Mastertabwin:tabclick(flags, hotspot_id)
     -- right
     local result = WindowMenu(self.winid, WindowInfo (self.winid, 14), WindowInfo (self.winid, 15), self:buildmenu(hotspot_id))
     if result ~= "" then
-      self:menuclick(result, hotspot_id)
+      self:menuclickwindow(result, hotspot_id)
     end
   end
 end
