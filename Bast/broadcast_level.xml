@@ -285,7 +285,7 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   if id == '3e7dedbe37e44942dd46d264' then
-    if text:find("char.status") then
+    if text:find("char") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
       char = assert (loadstring ('return ' .. gmcparg or ""))()
       state = char.status.state
