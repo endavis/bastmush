@@ -36,6 +36,7 @@ tabwin:set_default('text_colour', 0x00FFFF)
 tabwin:set_default('header_height', 0)
 tabwin:set_default('height_padding', 0)
 tabwin:set_default('width_padding', 0)
+tabwin:set_default('layer', 200)
 
 ]]>
 </script>
@@ -78,6 +79,8 @@ end -- OnPluginClose
 function OnPluginEnable ()
 
   phelper:OnPluginEnable()
+
+  tabwin:set('layer', 200)
 end -- OnPluginEnable
 
 function OnPluginDisable ()
