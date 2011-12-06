@@ -211,7 +211,7 @@ function Pluginhelper:enable()
   self.helpwin:set_default('maxlines', 30)
   self.helpwin:set_default('layer', 1)
   self.helpwin.titlebartext = GetPluginName() .. ' Help'
-  self.helpwin.winid = 'z_' .. self.helpwin.id
+  self.helpwin.dontuseaardz = true
   self:add_pobject('win', self.helpwin)
 
   self:init_vars()
@@ -383,6 +383,7 @@ function Pluginhelper:OnPluginEnable()
   local theader, ttext = self:createhelp()
   self.helpwin:addtab('Plugin', ttext, theader, true)
   self.helpwin:show(false)
+  self.helpwin:set('layer', 999)
   WindowSetZOrder(self.helpwin.winid, 999)
 end
 
