@@ -288,11 +288,13 @@ function OnPluginBroadcast (msg, id, name, text)
     if text:find("char") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
       char = assert (loadstring ('return ' .. gmcparg or ""))()
-      state = char.status.state
-      statestring = statestrings[tonumber(state)]
-      if statestring == 'active' and waitcreated then
-        waitcreated = false
-        broadcast(2)
+      if char.status then
+        state = char.status.state
+        statestring = statestrings[tonumber(state)]
+        if statestring == 'active' and waitcreated then
+          waitcreated = false
+          broadcast(2)
+        end
       end
     end
   end
