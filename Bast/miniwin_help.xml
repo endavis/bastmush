@@ -115,7 +115,6 @@ TOPIC_REGEXP = "[-%a%d]+"
 helpdb = Aarddb:new{}
 
 helpwin = Miniwin:new{name="AardHelp"}
-helpwin.winid = 'y' .. helpwin.id
 helpwin:set_default('header_height', 0)
 helpwin:set_default('layer', 1)
 helpwin:set_default('width_padding', 4)
@@ -430,7 +429,7 @@ end -- OnPluginClose
 function OnPluginEnable ()
   phelper:OnPluginEnable()
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
-  
+
   if IsConnected () then
     CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request char")
   end -- if already connected
