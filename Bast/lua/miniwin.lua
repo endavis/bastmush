@@ -165,18 +165,6 @@ require 'commas'
 require 'wait'
 require 'colours'
 
-layer_table = {}
-layer_table[1] = "x"
-layer_table[2] = "v"
-layer_table[3] = "t"
-layer_table[4] = "q"
-layer_table[5] = "n"
-layer_table[6] = "k"
-layer_table[7] = "i"
-layer_table[8] = "f"
-layer_table[9] = "c"
-layer_table[10] = "a"
-
 url_re = rex.new("(?:https?://|mailto:)\\S*[\\w/=@#\\-\\?]")
 
 -- subclass phelpobject
@@ -262,6 +250,8 @@ function Miniwin:initialize(args)
   self.newy = -1
   self.resizewinid = 'z' .. self.winid .. ':movewin'
 
+  self.dontuseaardz = false
+
   self.titlebarlinenum = -1
   self.tablinenum = -1
 
@@ -334,7 +324,7 @@ see http://www.gammon.com.au/scripts/function.php?name=WindowCreate
   self:add_setting( 'maxtabs', {type="number", help="maximum # of tabs", default=1, low=0, sortlev=57, longname="Max Tabs"})
   self:add_setting( 'firstshown', {type="bool", help="shown first", default=verify_bool(false), sortlev=57})
   self:add_setting( 'lockwindow', {type="bool", help="make the window non draggable", default=verify_bool(false), sortlev=57, longname="Lock the Window in place"})
-  self:add_setting( 'layer', {type="number", help="the layer this miniwin is on, set to -123 to use the Z order for the Aardwolf MUSHclient", default=0, low=-200, high=200, longname="Set the Layer", sortlev=57})
+  self:add_setting( 'layer', {type="number", help="the layer this miniwin is on, this does not work when using the Aardwolf MUSHclient", default=0, low=-1000, high=1000, longname="Set the Layer", sortlev=57})
 
   self.default_font_id = '--NoFont--'
   self.default_font_id_bold = nil
@@ -371,9 +361,9 @@ function Miniwin:onfontchange(args)
 end
 
 function Miniwin:onlayerchange(args)
-  if IsPluginInstalled("462b665ecb569efbf261422f") then
-    CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
-  else
+  --print(self.cname, 'onlayerchange')
+  if self.dontuseaardz or not IsPluginInstalled("462b665ecb569efbf261422f") then
+    --print(self.cname, 'setting zorder to', self.layer)
     WindowSetZOrder(self.winid, self.layer)
   end
 end
@@ -814,7 +804,9 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
   if tfontt ~= nil then
     tfontt.id = fontid
   end
+
   if not WindowInfo (self.winid, 4) then
+    --print(self.cname, 'WindowCreate addfont')
     check (WindowCreate (self.winid,
                  0, 0,   -- left, top (auto-positions)
                  0,     -- width
@@ -822,6 +814,10 @@ function Miniwin:addfont(font, size, bold, italic, underline, strikeout)
                  0,
                  2,  -- flags
                  self:get_colour("bg_colour")) )
+    if IsPluginInstalled("462b665ecb569efbf261422f") and self.dontuseaardz == false then
+      --print(self.cname, 'registering window in add font')
+      CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
+    end
   end
   check (WindowFont (self.winid, tfontt.id, tfontt.name, tfontt.size,
                      tfontt.bold, tfontt.italic, tfontt.underline,
@@ -1077,14 +1073,14 @@ function Miniwin:windowmenu(result)
     self:cmd_reset()
   elseif result == 'Bring to Front' then
     if IsPluginInstalled("462b665ecb569efbf261422f") then
-      CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
+      --print(self.cname, 'boostMe')
       CallPlugin("462b665ecb569efbf261422f","boostMe", self.winid)
     else
       self:set('layer', 200)
     end
   elseif result == 'Send to Back' then
     if IsPluginInstalled("462b665ecb569efbf261422f") then
-      CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
+      --print(self.cname, 'dropMe')
       CallPlugin("462b665ecb569efbf261422f","dropMe", self.winid)
     else
       self:set('layer', -200)
@@ -1211,7 +1207,7 @@ end
 
 function Miniwin:front()
   if IsPluginInstalled("462b665ecb569efbf261422f") then
-    CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
+    --print(self.cname, 'boostMe')
     CallPlugin("462b665ecb569efbf261422f","boostMe", self.winid)
   else
     self:set('layer', 200)
@@ -1220,7 +1216,7 @@ end
 
 function Miniwin:back()
   if IsPluginInstalled("462b665ecb569efbf261422f") then
-    CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
+    --print(self.cname, 'dropMe')
     CallPlugin("462b665ecb569efbf261422f","dropMe", self.winid)
   else
     self:set('layer', -200)
@@ -2094,6 +2090,10 @@ function Miniwin:create_window(height, width, x, y)
                   0,  -- flags
                   self:get_colour("bg_colour")) )
     end
+    if IsPluginInstalled("462b665ecb569efbf261422f") and self.dontuseaardz == false then
+      --print(self.cname, 'registering window in create_window')
+      CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
+    end
   end
 
   self.dragscrolling = false
@@ -2817,6 +2817,9 @@ function Miniwin:OnPluginBroadcast(msg, id, name, text)
     if not self.disabled then
       self:onSettingChange(newset)
     end
+  elseif (id == "462b665ecb569efbf261422f" and msg==996 and text == "re-register z" and self.dontuseaardz == false) then
+    --print(self.cname, 'registering window broadcast')
+    CallPlugin("462b665ecb569efbf261422f", "registerMiniwindow", self.winid)
   end
 end
 
