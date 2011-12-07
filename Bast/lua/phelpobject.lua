@@ -87,7 +87,7 @@ function Phelpobject:initialize(args)
   self.bastmushversion = 'Unkn'
   self.bastmushversion = getversion()
 
-  self.id = GetPluginID() .. '-' .. self.cname
+  self.id = GetPluginID() .. '_' .. self.cname
   self:mdebug('phelpobject __init self.cname', self.cname)
   self.cmds_table = {}
   self.events = {}
