@@ -282,3 +282,17 @@ spelltarget_table[4] = 'object'
 
 spelltype_table = {'spell', 'skill'}
 
+statabb = {
+  strength = 'Str',
+  intelligence = 'Int',
+  wisdom = 'Wis',
+  dexterity = 'Dex',
+  constitution = 'Con',
+  luck = 'Luc',
+  ['hit points'] = 'HP',
+  mana = 'MN',
+  moves = 'MV',
+  saves = 'Sav',
+  ['damage roll'] = 'DR',
+  ['hit roll'] = 'HR',
+}
