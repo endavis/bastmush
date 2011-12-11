@@ -235,7 +235,7 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-phelper:set_default('cmd', 'bkarea')
+phelper:set_default('cmd', 'ardb')
 phelper:set_default('plugin_colour', 'cyan')
 
 phelper:add_cmd('refresh', {func=get_areas, help="refresh areas"})
