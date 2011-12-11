@@ -105,7 +105,7 @@ kill_info = {}
 
   <trigger
    enabled="y"
-   match="You receive * bonus experience points *."
+   match="You receive * bonus experience points *"
    name="bonusxp"
    script="mobxp"
    sequence="100"
