@@ -23,11 +23,9 @@ Broadcasts when idle
 Example:
 
   function OnPluginBroadcast (msg, id, name, text)
-    if id == "aaafc15678afa22343c5a327" then
+    if id == "aaabe45678afa22343c5a327" then
       if msg == 1 then
-        --get the timer info
-        loadstring( text )()
-        -- do something with timer
+        -- do idle
       if msg == 2 then
         -- no longer idle
       end
