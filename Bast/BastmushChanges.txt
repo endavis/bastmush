@@ -1,5 +1,53 @@
 Bastmush Changes List
 
+r1663 snapshot
+ *** NOTE ***: This upgrade adds a lot of functionality, some of it I could
+     not test as much as I would have liked, so please tell/note me or add
+     an issue at my issue tracker if you see anything out of the ordinary
+ - new: change to cp check layout has been accounted for in following plugins
+     broadcast_cp, miniwin_events, miniwin_cp
+ - new: invdetails are now saved to the eq database and incorporated into
+     miniwin_eq, you can mouseover an item in Inventory or Worn to get
+     the details
+ - new: can now add identifiers to items that will work with
+     get/put/wear/remove/look/identify, see 'eqdb addid', 'eqdb listid',
+     and 'eqdb remid'
+ - new: broadcast_idle plugin that detects idling after 15 minutes
+ - new: eqLookup plugin that can be used to lookup items in inventory
+     or containers
+ - new: all miniwindows now will allow clicking of urls with http at the start
+     as well as a "Copy Text to Clipboard" menu item
+ - new: can now toggle skills/spells to be a clanskill as a spellup,
+     see the spellup miniwindow or look at "bsp toggleclan"
+     *** NOTE *** - Since I am not in a clan, I could not really test this,
+     so please tell me of any issues.
+ - bug fix: areaDB will not load if broadcast_area is loaded and vice versa
+ - bug fix: miniwindows will now save layer if using Aardwolf MUSHclient
+ - bast_spellup.xml, miniwin_spellup.xml, broadcast_spellsskills.xml
+    - new: now can toggle if a skill/spell is a clanskill
+ - eqDB.xml
+    - bug fix: putting all/getting all from a container no longer lags the
+        client
+    - new: added a cleandb function to clean the tables of stale objects
+    - new: the db now backs up just like StatDB
+ - miniwin_stats.xml
+    - bug fix: nil blessing trains will no longer generate an error
+ - broadcast_level.xml
+    - new: totallevels from gmcp has been added to broadcast
+ - phelpobject.lua
+    - bug fix: process_event now uses the non blocking DoAfterSpecial
+ - pluginhelper.lua
+    - new: parse_cmdline now adds a targs item which is the original line
+        of arguments passed in
+ - pluginlist.xml
+    - new: added an unload command
+ - broadcast_spellsskills.xml
+    - bug fix: invalid spellheader or recovery lines should no longer give
+        an error
+ - miniwin_tabbar.xml
+    - new: right clicking on a window name will show additional options for
+        the window
+
 r1495 snapshot
  - lua/eqdb.lua
     - new: helper file for the eqDB and miniwin_eq plugins
