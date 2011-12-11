@@ -183,7 +183,7 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-phelper:set_default('cmd', 'larea')
+phelper:set_default('cmd', 'arlu')
 phelper:set_default('plugin_colour', 'cyan')
 
 phelper:add_cmd('keyword', {func=get_areabykeyword, help="get areas by keyword"})
