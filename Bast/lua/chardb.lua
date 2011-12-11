@@ -64,6 +64,15 @@ function Statdb:getstat(stat)
   return tstat
 end
 
+function Statdb:setstat(stat, value)
+  self:checkstatstable()
+  if self:open('setstat') then
+    self.db:exec(string.format('update stats set %s=%s where milestone = "current"', stat, value))
+    self:close('setstat')
+  end
+  return false
+end
+
 function Statdb:addtostat(stat, add)
   self:checkstatstable()
   if tonumber(add) == 0 then
@@ -393,8 +402,13 @@ function Statdb:savelevel( levelinfo, first )
   if self:open('savelevel') then
     if not first then
       if levelinfo['type'] == 'level' then
-        self:addtostat('totallevels', 1)
-        self:addtostat('level', 1)
+        if levelinfo['totallevels'] ~= 0 and levelinfo['totallevels'] ~= nil then
+          self:setstat('totallevels', levelinfo['totallevels'])
+          self:setstat('level', levelinfo['newlevel'])
+        else
+          self:addtostat('totallevels', 1)
+          self:addtostat('level', 1)
+        end
       elseif levelinfo['type'] == 'pup' then
         self:addtostat('powerupsall', 1)
       end
