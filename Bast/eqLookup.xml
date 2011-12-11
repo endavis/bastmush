@@ -126,7 +126,7 @@ function cmd_translate(cmddict)
     if ttype == 'wear' or ttype == 'wearlocs' then
       ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", 'Num', 'String'))
       for i,v in ipairs(wearlocs) do
-        ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", i, v))
+        ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", i-1, v))
       end
     elseif ttype == 'objecttypes' or ttype == 'object' then
       ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", 'Num', 'String'))
