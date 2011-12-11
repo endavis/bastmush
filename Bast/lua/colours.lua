@@ -17,5 +17,12 @@ function TextToColourTell (Text)
     for i,v in ipairs(newstyles) do
       ColourTell(RGBColourToName(v.textcolour), v.backcolour, v.text)
     end
-      
+
 end  -- TextToColourTell
+
+function getcolourlengthdiff(colouredstring)
+  local lennocolour = #strip_colours(colouredstring)
+  local lencolour = #colouredstring
+  local addspace = lencolour - lennocolour
+  return addspace
+end
