@@ -44,6 +44,7 @@ require "aardutils"
 require "chardb"
 require 'colours'
 require "eqdb"
+require "formatitem"
 
 eqdb = EQdb:new{}
 
@@ -52,9 +53,11 @@ function cmd_close(cmddict)
 end
 
 function print_item(item)
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-15s %-15s %-5s %-5s %s",
-                         tostring(item.serial), tostring(item.containerid), tostring(item.level), tostring(item.score or ''), item.name))
-
+  Hyperlink(phelper.cmd .. " getitem " .. tostring(item.serial), string.format('%-15s', tostring(item.serial)), "Lookup details", 0xE16941, GetInfo(271), false)
+  ColourTell(RGBColourToName(var.plugin_colour), "black", string.format(" %-15s %-5s %-5s ",
+                         tostring(item.containerid), tostring(item.level), tostring(item.score or '')))
+  TextToColourTell(item.cname)
+  ColourNote("", "", "")
 end
 
 function print_itemheader()
@@ -68,6 +71,9 @@ function cmd_eqlookup(cmddict)
   --tprint(cmddict)
   if cmddict[1] then
     local sqllu = strjoin(' ', cmddict)
+    --local sqlcmd = 'SELECT * FROM items WHERE ' .. cmddict.args .. ' LEFT JOIN on items.serial = itemdetails.serial'
+    --local sqlcmd = 'SELECT * FROM items LEFT JOIN itemdetails on items.serial = itemdetails.serial WHERE ' .. cmddict.args
+    --local sqlcmd = 'SELECT items.serial, containerid, shortflags, items.name, items.cname, score, flags FROM items LEFT JOIN itemdetails on items.serial = itemdetails.serial WHERE ' .. cmddict.args'
     local sqlcmd = 'SELECT * FROM items WHERE ' .. cmddict.args
     print(sqlcmd)
     if eqdb:open('cmd_eqlookup') then
@@ -80,6 +86,10 @@ function cmd_eqlookup(cmddict)
       end
       print_itemheader()
       for a in stmt:nrows() do
+        local titem = eqdb:getitemdetails(a.serial)
+        if titem then
+          a.score = titem.score
+        end
         print_item(a)
       end
       eqdb:close()
@@ -88,26 +98,46 @@ function cmd_eqlookup(cmddict)
   end
 end
 
-function cmd_eqshowitem(cmddict)
+function cmd_eqprintitem(cmddict)
+  --print('showitem')
+  --tprint(cmddict)
   if cmddict[1] then
-    local sqlcmd = 'SELECT * from items WHERE serial in '
-    local ids = '('
     for i,v in ipairs(cmddict) do
-      local ids = ids .. tostring(v) .. ','
-    end
-    ids = ids .. ')'
-    sqlcmd = sqlcmd .. ids
-    if eqdb:open('cmd_eqlookup') then
-      local stmt = eqdb.db:prepare(sqlcmd)
-      if not stmt then
-        print('Bug: please report this to Bast, stmt is nil in cmd_eqshowitem in eqLookup')
-        eqdb:close()
-        return
-      end
-      for a in stmt:nrows() do
-        tprint(a)
+      local titem = eqdb:getitemdetails(v)
+      if titem then
+        local fitem = formatitem(titem)
+        for i,v in ipairs(fitem) do
+          TextToColourTell(v)
+          ColourNote("", "", "")
+        end
+        ColourNote("", "", "")
+      else
+        ColourNote(RGBColourToName(var.plugin_colour), "black", "There is no info for that id in the database")
       end
     end
+  end
+end
+
+function cmd_translate(cmddict)
+  --print('eqlookup')
+  --tprint(cmddict)
+  if cmddict[1] then
+    local ttype = cmddict[1]:lower()
+    if ttype == 'wear' or ttype == 'wearlocs' then
+      ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", 'Num', 'String'))
+      for i,v in ipairs(wearlocs) do
+        ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", i, v))
+      end
+    elseif ttype == 'objecttypes' or ttype == 'object' then
+      ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", 'Num', 'String'))
+      for i,v in ipairs(objecttypes) do
+        ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", i, v))
+      end
+    end
+  else
+    phelper:plugin_header('EQ Lookup')
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "The following flags can be translated")
+    ColourNote(RGBColourToName(var.plugin_colour), "black", 'wearlocs (wear) and objecttypes (object)')
   end
 end
 
@@ -169,7 +199,8 @@ phelper:set_default('plugin_colour', 'orange')
 phelper:set_default('cmd', 'eqlu')
 
 phelper:add_cmd('lu', {func=cmd_eqlookup, help="lookup stuff in the db", default=true})
-phelper:add_cmd('getitem', {func=cmd_eqshowitem, help="get info on item with id"})
+phelper:add_cmd('getitem', {func=cmd_eqprintitem, help="print info on item with id"})
+phelper:add_cmd('translate', {func=cmd_translate, help="show what strings mean for certain types of flags"})
 phelper:add_cmd('close', {func=cmd_close, help="close the db"})
 
 phelper:enable()
