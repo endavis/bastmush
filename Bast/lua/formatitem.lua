@@ -14,10 +14,12 @@ function formatsingleline(linename, linecolour, data, datacolour)
 
   data = tostring(data)
 
-  local newnum = 51 + getcolourlengthdiff(data)
-  local printstring = '| %s%-11s@w: %s%-' .. tostring(newnum) .. 's@w|'
+  local printstring = '| %s%-11s@w: %s%s'
+  local ttext = string.format(printstring, linecolour, linename, datacolour, data)
+  local newnum = 66 - #strip_colours(ttext)
+  ttext = ttext .. string.format("%" .. tostring(newnum) .. "s@w|", "")
 
-  return string.format(printstring, linecolour, linename, datacolour, data)
+  return ttext
 end
 
 function formatdoubleline(linename, linecolour, data, linename2, data2)
