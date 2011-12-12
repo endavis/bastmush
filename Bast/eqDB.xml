@@ -449,7 +449,7 @@ function invitem( name, line, wildcards)
   olditem = db:getitem(tstuff.serial)
   if olditem then
     for i,v in pairs(layout['eqdata']) do
-      if v ~= 'name' then
+      if v ~= 'cname' then
         olditem[v] = tstuff[v]
       end
     end
