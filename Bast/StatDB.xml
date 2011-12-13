@@ -285,7 +285,6 @@ function cmdBackup(cmddict)
 end
 
 function cmdCampaignxp(cmddict)
-  tprint(cmddict)
   phelper:plugin_header("Campaign XP")
   if #cmddict == 0 then
     ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a xp amount")
@@ -344,6 +343,17 @@ function dbbackup(name)
     db:backupdb(day)
   end
 end
+
+function warning()
+  ColourNote('red', 'black', '-------------------------------------------------------------------------------')
+  ColourNote('red', 'black', '------------------------------- READ THIS -------------------------------------')
+  ColourNote('red', 'black', 'If you want StatDB to keep working correctly then please logout and then login!')
+  ColourNote('red', 'black', "Don't bother me if you start having StatDB issues and did not follow these")
+  ColourNote('red', 'black', 'directions.  There is a bug with gmcp that the number of remorts is not')
+  ColourNote('red', 'black', 'updated until you logout and login.  This will obviously mess with the levels')
+  ColourNote('red', 'black', 'that cps/gqs/levels/quests are saved at.')
+  ColourNote('red', 'black', '-------------------------------------------------------------------------------')
+end
 ]]>
 </script>
 
@@ -355,11 +365,15 @@ function OnPluginBroadcast (msg, id, name, text)
     savequest()
   elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
     savelevel()
-  elseif id == "aaa0ab9ed92f8fc614664bd1" and (msg == 3 or msg == 4 or msg == 6) then
+  elseif id == "aaa0ab9ed92f8fc614664bd1" and (msg == 3 or msg == 4) then
     createmilestone()
-  elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 5 then
-    savelevel(1)
+  elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 8 then
     createmilestone()
+    DoAfterSpecial(10, "savelevel()", 12)
+  elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 6 then
+    createmilestone('remort')
+    DoAfterSpecial(10, "savelevel()", 12)
+    DoAfterSpecial(10, "warning()", 12)
   elseif id == "aaaf9a8dc92f8fc614663ac0" and msg == 1 then
     sentwhois = false
     savewhois()
