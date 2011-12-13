@@ -1,5 +1,36 @@
 Bastmush Changes List
 
+r1675 snapshot
+ - lua/phelpobject.lua
+    - bug fix: escape [[ and ]] so that it doesn't break DoAfterSpecial in
+        processevent see The Davinci's 171 back item in miniwin_eq
+ - eqDB.xml
+    - bug fix: invitem was overwriting cname with the non coloured name
+ - lua/formatitem.lua
+    - bug fix: items with a lot of colours will no longer throw an error
+      and the eqid win will appear
+ - broadcast_level.xml
+    - bug fix: tier isn't broadcasted until the next time your state is
+        active
+    - bug fix: remort isn't broadcasted until the next time your state is
+        active
+    - new: preremort and pretier are now broadcasted when in the remort
+        chamber and the process has started
+ - bast_spellup.xml
+    - bug fix: will now pause in pre(remort/tier) and will go active after
+        it has gotten a new slist and the char goes to an active state
+ - broadcast_spellsskills.xml
+    - new: requests spells/skills update on tier/remort
+ - chardb.lua
+    - bug fix: don't save nil milestones
+ - broadcast_whois.xml
+    - bug fix: char.base.remorts isn't updated on remort, so revert to
+        counting classes from whois to set this
+ - eqDB.xml
+    - bug fix: don't put quotes around all keyword
+ StatDB.xml
+    - new: add warning when remorting about bug in char.base.remorts in gmcp
+
 r1663 snapshot
  *** NOTE ***: This upgrade adds a lot of functionality, some of it I could
      not test as much as I would have liked, so please tell/note me or add
