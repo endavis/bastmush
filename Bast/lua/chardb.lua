@@ -182,6 +182,9 @@ end
 
 function Statdb:addmilestone(milestone)
   self:checkstatstable()
+  if not milestone or milestone == '' or milestone == 'nil' then
+    return
+  end
   if self:open('addmilestone') then
     local found = false
     for a in self.db:nrows('SELECT * FROM stats WHERE milestone = "' .. milestone .. '"') do
