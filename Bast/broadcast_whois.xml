@@ -214,7 +214,7 @@ function whois_line1(name, line, wildcards)
   whoisinfo['subclass'] = string.lower(char.base.subclass)
   whoisinfo['powerupsall'] = 0
   whoisinfo['powerupsmort'] = 0
-  whoisinfo['remorts'] = tonumber(char.base.remorts)
+  --whoisinfo['remorts'] = tonumber(char.base.remorts)
   if tonumber(char.base.remorts) == 1 then
     whoisinfo['remorts'] = 1
     whoisinfo['classes'] = {}
@@ -231,6 +231,7 @@ function whois_line2(name, line, wildcards)
     tclass = string.gsub (tclass, " ", "")
     table.insert(whoisinfo['classes'], string.lower(trim(tclass)))
   end
+  whoisinfo['remorts'] = #whoisinfo['classes']
 end
 
 function whois_stats(name, line, wildcards)
