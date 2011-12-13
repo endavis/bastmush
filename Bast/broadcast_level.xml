@@ -52,8 +52,10 @@ Broadcasts
   2 - Created
   3 - Heroed
   4 - SuperHeroed
-  5 - Remorted to Level 1
-  6 - Tiered
+  5 - Preremort
+  6 - Remorted to Level 1
+  7 - Pre-Tiered
+  8 - Tiered
 
 ]]>
 </description>
@@ -61,6 +63,7 @@ Broadcasts
 
 
 <!--  Get our standard constants -->
+
 
 <include name="constants.lua"/>
 <triggers>
@@ -171,6 +174,22 @@ Broadcasts
    sequence="100"
   >
   </trigger>
+  <trigger
+   enabled="y"
+   match="## You have already remorted the max number of times."
+   name="tier"
+   script="tier"
+   sequence="100"
+  >
+  </trigger>
+    <trigger
+   enabled="y"
+   match="You are now flagged as remorting."
+   name="preremort"
+   script="preremort"
+   sequence="100"
+  >
+  </trigger>
 </triggers>
 
 
@@ -192,13 +211,27 @@ require "aardutils"
 -- bonusstats subtable keys are the bonus stat names
 levelinfo = {}
 waitcreated = false
+lasttier = -1
+lastremort = -1
+
+function tier(name, line, wildcards)
+  phelper:broadcast('7')
+  lasttier = tonumber(char.base.tier)
+  waittier = true
+end
 
 function created( name, line, wildcards )
   waitcreated = true
 end
 
 function superhero( name, line, wildcards )
+  levelinfo.newlevel = 201
+  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.newlevel), char.base.remorts, char.base.tier)
   phelper:broadcast(4)
+end
+
+function preremort(name, line, wildcards)
+  phelper:broadcast(5)
 end
 
 function remort(name, line, wildcards)
@@ -206,8 +239,9 @@ function remort(name, line, wildcards)
   levelinfo.newlevel = 1
   levelinfo.type = 'level'
   levelinfo.time = GetInfo(304)
+  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.newlevel), char.base.remorts + 1, char.base.tier)
   var.levelinfo = serialize.save( "levelinfo", levelinfo )
-  phelper:broadcast(5)
+  phelper:broadcast(6)
 end
 
 function resetinfo()
@@ -235,6 +269,10 @@ function level ( name, line, wildcards )
   resetinfo()
   if name == 'levelbless' then
     name = 'level'
+  end
+  if superf then
+    levelinfo.newlevel = 201
+    superf = false
   end
   levelinfo.type = name
   if levelinfo.type == "level" then
@@ -288,12 +326,30 @@ function OnPluginBroadcast (msg, id, name, text)
     if text:find("char") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
       char = assert (loadstring ('return ' .. gmcparg or ""))()
+      if waittier and tonumber(char.status.state) == 2 then
+        sawstate2 = true
+      end
       if char.status then
         state = char.status.state
         statestring = statestrings[tonumber(state)]
         if statestring == 'active' and waitcreated then
           waitcreated = false
-          broadcast(2)
+          phelper:broadcast(2)
+        end
+        if statestring == 'active' and waittier and sawstate2 and
+           tonumber(char.base.tier) == lasttier + 1 and
+           tonumber(char.base.remorts) == 1 then
+          waittier = false
+          sawstate2 = false
+          lasttier = -1
+          lastremort = -1
+          resetinfo()
+          levelinfo.newlevel = 1
+          levelinfo.type = 'level'
+          levelinfo.time = GetInfo(304)
+          levelinfo.totallevels = getactuallevel(tonumber(1), char.base.remorts, char.base.tier)
+          var.levelinfo = serialize.save( "levelinfo", levelinfo )
+          phelper:broadcast(8)
         end
       end
     end
