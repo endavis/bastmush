@@ -238,7 +238,10 @@ end
 function cmd_refresh(cmddict)
   setwaiting(false)
   noneed = false
-  SendNoEcho("slist affected noprompt")
+  local bsstcmd = GetPluginVariable('aaa72f3b5453567e2bba9d50', 'cmd')
+  if bsstcmd ~= nil and bsstcmd ~= '' then
+     Execute(bsstcmd .. " refresh")
+  end
   ColourNote(RGBColourToName(var.plugin_colour), "black", "Refreshing affected spells and resetting events")
 end
 
@@ -1093,6 +1096,12 @@ function check_slist()
       nextspellup('has slist')
     end
 end
+
+function tresume()
+  phelper.pause = false
+  event_status_change()
+end
+
 ]]>
 </script>
 
@@ -1117,6 +1126,14 @@ function OnPluginBroadcast (msg, id, name, text)
   end
   if stats and stats.status then
     old_state = tonumber(stats.status.state)
+  end
+  if id == "aaa0ab9ed92f8fc614664bd1" then
+    if msg == 5 or msg == 7  then
+      phelper.pause = true
+      event_status_change()
+    elseif msg == 6 or msg == 8 then
+      DoAfterSpecial(5, 'tresume()', 12)
+    end
   end
   if id == '3e7dedbe37e44942dd46d264' then
     if text:find("char") then
