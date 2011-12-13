@@ -1,6 +1,6 @@
 Bastmush Changes List
 
-r1675 snapshot
+r1676 snapshot
  - lua/phelpobject.lua
     - bug fix: escape [[ and ]] so that it doesn't break DoAfterSpecial in
         processevent see The Davinci's 171 back item in miniwin_eq
@@ -28,7 +28,7 @@ r1675 snapshot
         counting classes from whois to set this
  - eqDB.xml
     - bug fix: don't put quotes around all keyword
- StatDB.xml
+ - StatDB.xml
     - new: add warning when remorting about bug in char.base.remorts in gmcp
 
 r1663 snapshot
