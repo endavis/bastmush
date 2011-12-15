@@ -282,7 +282,7 @@ end
 
 function huntnext(name, line, wildcards)
   local mobname = wildcards[1]
-  local tmob = string.match (mob, "[%d]*[\.]*(.*)")
+  local tmob = string.match (mob, "[%d]*[%.]*(.*)")
   seenhunt = true
   --print(mobname, tmob, waiting, htype)
   if string.find(string.lower(mobname), string.lower(tmob)) ~= nil and not waiting and htype == 'auto' then

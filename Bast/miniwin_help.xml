@@ -185,7 +185,7 @@ function convert_related_helps(styles)
   tdict2 = utils.split(tdict1[2], ",")
   for i=1,#tdict2 do
     local style2 = {}
-    local text = tdict2[i]:gsub('[\.]', '')
+    local text = tdict2[i]:gsub('[%.]', '')
     if i == #tdict2 then
       style2.text = trim(text)
     else
@@ -211,7 +211,7 @@ function convert_categories(styles)
   tdict2 = utils.split(tdict1[2], ",")
   for i=1,#tdict2 do
     local style2 = {}
-    local text = tdict2[i]:gsub('[\.]', '')
+    local text = tdict2[i]:gsub('[%.]', '')
     if i == #tdict2 then
       style2.text = trim(text)
     else

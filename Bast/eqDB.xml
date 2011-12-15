@@ -775,7 +775,7 @@ function OnPluginSaveState ()
 end -- function OnPluginSaveState
 
 function fixarg(arg)
-  if string.find(arg, '[\.]') or arg == 'all' then
+  if string.find(arg, '[%.]') or arg == 'all' then
     return arg
   else
     return "'" .. arg .. "'"
