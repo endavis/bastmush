@@ -751,7 +751,6 @@ function OnPluginEnable ()
   ldplugin ("broadcast_idle", "aaabe45678afa22343c5a327")
 
   if IsConnected() then
-    print('getting char')
     local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
     char = assert (loadstring ('return ' .. gmcparg or ""))()
     initinv(char)
@@ -784,8 +783,10 @@ end -- function OnPluginSaveState
 function fixarg(arg)
   if string.find(arg, '[%.]') or arg == 'all' then
     return arg
-  else
+  elseif string.find(arg, ' ') then
     return "'" .. arg .. "'"
+  else
+    return arg
   end
 end
 
