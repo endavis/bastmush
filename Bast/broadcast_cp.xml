@@ -30,6 +30,7 @@ Broadcasts
         see below
    4 - campaign failed
         see below
+   5 - just taken new cp
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
@@ -561,6 +562,7 @@ function cp_new()
   cp_info['oncp'] = true
   cp_info['cantake'] = false
   SaveState()
+  phelper:broadcast(5)
 end
 
 function cp_none( name, line, wildcards)
