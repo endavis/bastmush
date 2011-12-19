@@ -327,8 +327,11 @@ function checkcampaign(level)
     end
 
     if numlevels ~= 1 then
-      sentnoexp = true
-      Send("noexp")
+      if verify_bool(GetPluginVariable("aaa65ac8122d795ad5348dcd", "noexp")) == false and sentnoexp == false then
+        print('sent noexp checkcampaign')
+        sentnoexp = true
+        Send("noexp")
+      end
     end
   end
 end
@@ -405,7 +408,7 @@ function OnPluginBroadcast (msg, id, name, text)
   elseif id == "aaa65ac8122d795ad5348dcd" then
     sentnoexp = false
   elseif id == "aaa66f81c50828bbbfda7100" and
-         msg == 1 and
+         msg == 5 and
          phelper.dontlevelnocampaign and
          verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp')) and
          not sentnoexp then
