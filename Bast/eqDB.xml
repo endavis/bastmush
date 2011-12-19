@@ -727,6 +727,12 @@ function OnPluginBroadcast (msg, id, name, text)
       -- stop the coroutine
     end
   end
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+    end
+  end
 end
 
 function OnPluginInstall ()
@@ -745,8 +751,9 @@ function OnPluginEnable ()
   ldplugin ("broadcast_idle", "aaabe45678afa22343c5a327")
 
   if IsConnected() then
+    print('getting char')
     local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
-    local char = assert (loadstring ('return ' .. gmcparg or ""))()
+    char = assert (loadstring ('return ' .. gmcparg or ""))()
     initinv(char)
   end
 
@@ -794,6 +801,10 @@ alldotpeg = P("all") * P(".") * P(1)^1
 inpeg = (P("i") * -P(1)) + (P("in") * -P(1))
 
 function OnPluginSend (sText)
+  if tonumber(char.status.state) == 5 then
+    return true
+  end
+
   timer_start('eqDB:OnPluginSend')
   local cmd = parse_cmdline(string.lower(sText))
   if not cmd[1] then
