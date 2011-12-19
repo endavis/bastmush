@@ -1,5 +1,21 @@
 Bastmush Changes List
 
+r1684 snapshot
+  *** A required upgrade if you run Aardwolf MUSHclient r1541 or later ***
+  - bug fix: fixes for the new luajit in r1541
+  - broadcast_level.xml
+     - bug fix: set correct level when a pup is found
+  - eqDB.xml
+     - bug fix: don't do substition when writing notes
+     - bug fix: only single quote an argument if it has a space in it
+  - broadcast_cp.xml
+     - new: added a new broadcast, 5, for when a cp is first requested
+  - StatDB.xml
+     - bug fix: campaignxp will now work in the early remorts and your xp
+         to level is 1000
+  - miniwin_map.xml
+     - bug fix: request the map when running is broken due to combat
+
 r1676 snapshot
  - lua/phelpobject.lua
     - bug fix: escape [[ and ]] so that it doesn't break DoAfterSpecial in
