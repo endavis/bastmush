@@ -270,6 +270,9 @@ function level ( name, line, wildcards )
   if name == 'levelbless' then
     name = 'level'
   end
+  if name == 'pup' then
+    levelinfo.newlevel = tonumber(char.status.level)
+  end
   if superf then
     levelinfo.newlevel = 201
     superf = false
