@@ -658,11 +658,6 @@ function EQdb:additems(items)
   if self:open('additems') then
     local tchanges = self.db:total_changes()
     assert (self.db:exec("BEGIN TRANSACTION"))
-    self.db:exec("DROP INDEX IF EXISTS xref_items_container_place")
-    self.db:exec("DROP INDEX IF EXISTS xref_items_containerid")
-    self.db:exec("DROP INDEX IF EXISTS xref_items_name")
-    self.db:exec("DROP INDEX IF EXISTS xref_items_level")
-    self.db:exec("DROP INDEX IF EXISTS xref_items_place")
     local stmt = self.db:prepare[[ INSERT INTO items VALUES (
                                            :serial,
                                            :shortflags,
@@ -681,11 +676,6 @@ function EQdb:additems(items)
       --print('additems: resetret', resetret)
     end
     stmt:finalize()
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_container_place ON items(containerid, place);]])
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
     assert (self.db:exec("COMMIT"))
     local rowid = self.db:last_insert_rowid()
     phelper:mdebug('rowid:', rowid)
@@ -707,90 +697,46 @@ function EQdb:clearcontainer(containerid)
   timer_end('EQdb:clearcontainer')
 end
 
-function EQdb:reorderitems(place, containerid, removed)
-  timer_start('EQdb:reorderitems')
-  local titem = {containerid=containerid, place=place}
+function EQdb:getlowestplace(container)
+  timer_start('EQdb:getlowestplace')
   self:checkitemstable()
-  --print('reorderitems - place: ' .. tostring(place))
-  --print('reorderitems - containerid: ' .. tostring(containerid))
-  --print('reorderitems - removed: ' .. tostring(removed))
-  if self:open('reorderitems') then
-    assert (self.db:exec("BEGIN TRANSACTION"))
-    local stmtremove = self.db:prepare[[ UPDATE items SET place=place - 1 WHERE place > :place AND containerid = :containerid;]]
-    local stmtadd = self.db:prepare[[UPDATE items SET place=place + 1 WHERE place >= :place AND containerid = :containerid;]]
-    if removed == true then
-      --print('executing removed')
-      --self.db:exec(string.format("UPDATE items SET place=place - 1 WHERE place > %d AND containerid = %d;", tonumber(place), tonumber(containerid)))
-      --print('removed')
-      stmtremove:bind_names(titem)
-      stmtremove:step()
-      stmtremove:reset()
-    else
-      --print('executing added')
-      --self.db:exec(string.format("UPDATE items SET place=place + 1 WHERE place >= %d AND containerid = %d;", tonumber(place), tonumber(containerid)))
-      --print('added')
-      stmtadd:bind_names(titem)
-      stmtadd:step()
-      stmtadd:reset()
+  local minplace = -1000
+  if self:open('getlowestplace') then
+    for a in self.db:rows(string.format("SELECT MIN(place) FROM items WHERE containerid = '%s';", tostring(container))) do
+      minplace = a[1]
     end
-    stmtadd:finalize()
-    stmtremove:finalize()
-    assert (self.db:exec("COMMIT"))
-    self:close('reorderitems')
+    self:close('getlowestplace')
   end
-  timer_end('EQdb:reorderitems')
+  timer_end('EQdb:getlowestplace')
+  return minplace
 end
 
-function EQdb:reorderitemsmultiple(reorderstuff)
-  timer_start('EQdb:reorderitemsmultiple')
+function EQdb:moveitem(item, container)
+  timer_start('EQdb:moveitem')
   self:checkitemstable()
-  if self:open('reorderitemsmultiple') then
+  if self:open('moveitem') then
+    minplace = self:getlowestplace(container)
     assert (self.db:exec("BEGIN TRANSACTION"))
-    local stmtremove = self.db:prepare[[ UPDATE items SET place=place - 1 WHERE containerid = :containerid and place > :place;]]
-    local stmtadd = self.db:prepare[[UPDATE items SET place=place + 1 WHERE containerid = :containerid AND place >= :place;]]
-    for i,v in pairs(reorderstuff) do
-      if v.removed == true then
-        --print('removed')
-        stmtremove:bind_names(v)
-        stmtremove:step()
-        stmtremove:reset()
-      else
-        --print('added')
-        stmtadd:bind_names(v)
-        stmtadd:step()
-        stmtadd:reset()
-      end
-    end
-    stmtadd:finalize()
-    stmtremove:finalize()
-    assert (self.db:exec("COMMIT"))
-    self:close('reorderitemsmultiple')
-  end
-  timer_end('EQdb:reorderitemsmultiple')
-end
-
-function EQdb:updateitemlocation(item)
-  timer_start('EQdb:updateitemlocation')
-  self:checkitemstable()
-  if self:open('updateitemlocation') then
-    assert (self.db:exec("BEGIN TRANSACTION"))
-    self.db:exec("DROP INDEX IF EXISTS xref_items_container_place")
-    self.db:exec("DROP INDEX IF EXISTS xref_items_containerid")
-    self.db:exec("DROP INDEX IF EXISTS xref_items_name")
-    self.db:exec("DROP INDEX IF EXISTS xref_items_level")
-    self.db:exec("DROP INDEX IF EXISTS xref_items_place")
     self.db:exec(string.format("UPDATE items SET containerid = '%s', wearslot = %d, place = %d where serial = %d;",
-                                     tostring(item.containerid), tonumber(item.wearslot),
-                                     tonumber(item.place), tonumber(item.serial)))
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_container_place ON items(containerid, place);]])
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
-    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
+                                     tostring(container), tonumber(item.wearslot),
+                                     minplace - 1, tonumber(item.serial)))
     assert (self.db:exec("COMMIT"))
-    self:close('updateitemlocation')
+    self:close('moveitem')
   end
-  timer_end('EQdb:updateitemlocation')
+  timer_end('EQdb:moveitem')
+end
+
+function EQdb:wearitem(item, wearloc)
+  timer_start('EQdb:wearitem')
+  self:checkitemstable()
+  if self:open('wearitem') then
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    self.db:exec(string.format("UPDATE items SET containerid = 'Worn', wearslot = %d, place = -2 where serial = %d;",
+                                     tonumber(item.wearslot),  tonumber(item.serial)))
+    assert (self.db:exec("COMMIT"))
+    self:close('wearitem')
+  end
+  timer_end('EQdb:wearitem')
 end
 
 function EQdb:updateitem(item)
