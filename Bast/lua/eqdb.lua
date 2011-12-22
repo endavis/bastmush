@@ -697,29 +697,14 @@ function EQdb:clearcontainer(containerid)
   timer_end('EQdb:clearcontainer')
 end
 
-function EQdb:getlowestplace(container)
-  timer_start('EQdb:getlowestplace')
-  self:checkitemstable()
-  local minplace = -1000
-  if self:open('getlowestplace') then
-    for a in self.db:rows(string.format("SELECT MIN(place) FROM items WHERE containerid = '%s';", tostring(container))) do
-      minplace = a[1]
-    end
-    self:close('getlowestplace')
-  end
-  timer_end('EQdb:getlowestplace')
-  return minplace
-end
-
 function EQdb:moveitem(item, container)
   timer_start('EQdb:moveitem')
   self:checkitemstable()
   if self:open('moveitem') then
-    minplace = self:getlowestplace(container)
     assert (self.db:exec("BEGIN TRANSACTION"))
-    self.db:exec(string.format("UPDATE items SET containerid = '%s', wearslot = %d, place = %d where serial = %d;",
+    self.db:exec(string.format("UPDATE items SET containerid = '%s', wearslot = %d, place = (SELECT MIN(place) - 1 from items where containerid = '%s') where serial = %d;",
                                      tostring(container), tonumber(item.wearslot),
-                                     minplace - 1, tonumber(item.serial)))
+                                     tostring(container), tonumber(item.serial)))
     assert (self.db:exec("COMMIT"))
     self:close('moveitem')
   end
