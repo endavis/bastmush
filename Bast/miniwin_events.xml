@@ -161,7 +161,7 @@ function show_cp_text ()
   table.insert(tstyle, style)
   if level and level.level > 0 then
     style = {}
-    style.text = "- Level: " .. tostring(level.level)
+    style.text = "- Taken at Level: " .. tostring(level.level)
     if not cptimer.cantake then
       style.textcolour = eventwin.text_colour
     else
@@ -171,6 +171,22 @@ function show_cp_text ()
 
   end
   table.insert (texttable, tstyle)
+  
+  tstyle = {}
+  tstyle.backcolour = "footer_bg_colour"
+  style = {}
+  style.text = ''
+  
+  if char and char.status then
+    style.text = 'Level ' .. tostring(char.status.level) .. ': '
+  end
+  if verify_bool(cptimer.cantake) then
+    style.text = style.text .. "You can take a cp"
+  else
+    style.text = style.text .. "You may not take a cp"  
+  end
+  table.insert(tstyle, style)  
+  table.insert(texttable, tstyle)
 
   eventwin:addtab('CP', texttable, header)
   eventwin:settabnametext('CP', ": " .. #cpmobs)
@@ -370,6 +386,7 @@ function OnPluginBroadcast (msg, id, name, text)
     if text:find("char") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
       tt = assert (loadstring ('return ' .. gmcparg or ""))()
+      char = tt
 
       if tt['status'] then
         tcurlevel = tt.status.level
@@ -440,6 +457,7 @@ function OnPluginEnable ()
 
   if IsConnected() then
     CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request quest")
+    CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request char")
   end
 end -- OnPluginEnable
 

@@ -98,6 +98,8 @@ function show_cp_text ()
   end -- for
 
   tstyle = {}
+  tstyle.topborder = true
+  tstyle.backcolour = "footer_bg_colour"
   style = {}
   style.text = string.format ("Time to go: %sd %sh %sm ", cptimer.days, cptimer.hours, cptimer.mins)
   style.textcolour = "time_colour"
@@ -113,6 +115,22 @@ function show_cp_text ()
     table.insert(tstyle, style)
   end
   table.insert (texttable, tstyle)
+
+  tstyle = {}
+  tstyle.backcolour = "footer_bg_colour"
+  style = {}
+  style.text = ''
+
+  if char and char.status then
+    style.text = 'Level ' .. tostring(char.status.level) .. ': '
+  end
+  if verify_bool(cptimer.cantake) then
+    style.text = style.text .. "You can take a cp"
+  else
+    style.text = style.text .. "You may not take a cp"
+  end
+  table.insert(tstyle, style)
+  table.insert(texttable, tstyle)
 
   cpwin:enable()
   cpwin:addtab('default', texttable, header, true)
@@ -169,7 +187,7 @@ function OnPluginBroadcast (msg, id, name, text)
     if text:find("char") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
       tt = assert (loadstring ('return ' .. gmcparg or ""))()
-
+      char = tt
       if tt['status'] then
         tcurlevel = tt.status.level
         if curlevel ~= tcurlevel then
@@ -200,6 +218,9 @@ function OnPluginEnable ()
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
 
   phelper:OnPluginEnable()
+  if IsConnected() then
+    CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request char")
+  end
 end -- OnPluginEnable
 
 function OnPluginDisable ()
