@@ -244,6 +244,7 @@ function dbbackup(name)
 end
 
 function sendcmd(cmd)
+  print('sending', cmd)
   if silent then
     SendNoEcho(cmd)
   else
@@ -589,13 +590,7 @@ function checkaction(action, item, afterwait)
     -- item removed
     --print('action 1')
     local oldwearslot = item.wearslot
-    item.containerid = 'Inventory'
-    item.wearslot = -1
-    item.place = 1
-    local reorder = {}
-    reorder['Inventory'] = {place=1, containerid='Inventory', removed=false}
-    db:reorderitemsmultiple(reorder)
-    db:updateitemlocation(item)
+    db:moveitem(item, 'Inventory')
     event_container_change('Inventory')
     event_container_change('Worn')
     event_wearloc_change(oldwearslot, 1)
@@ -607,14 +602,9 @@ function checkaction(action, item, afterwait)
     timer_start('EQdb:action2')
     -- item worn
     --print('action 2')
-    item.containerid = 'Worn'
-    olditem = db:getitem(item.serial)
-    item.place = -2
-    local reorder = {}
+    local olditem = db:getitem(item.serial)
     if olditem then
-      reorder['Inventory'] = {place=olditem.place, containerid='Inventory', removed=true}
-      db:reorderitemsmultiple(reorder)
-      db:updateitemlocation(item)
+      db:wearitem(olditem, item.wearslot)
       event_container_change('Inventory')
       event_container_change('Worn')
     else
@@ -639,16 +629,8 @@ function checkaction(action, item, afterwait)
     timer_start('EQdb:action5')
     -- removed from container
     --print('action 5')
-    olditem = db:getitem(item.serial)
-    item.containerid = 'Inventory'
-    item.place = 1
-    local reorder = {}
-    if olditem then
-      reorder[olditem.containerid] = {place=olditem.place, containerid=olditem.containerid, removed=true}
-    end
-    reorder['Inventory'] = {place=1, containerid='Inventory', removed=false}
-    db:reorderitemsmultiple(reorder)
-    db:updateitemlocation(item)
+    local olditem = db:getitem(item.serial)
+    db:moveitem(item, 'Inventory')
     event_container_change('Inventory')
     if olditem then
       event_container_change(olditem.containerid)
@@ -663,15 +645,8 @@ function checkaction(action, item, afterwait)
     timer_start('EQdb:action6')
     -- put into container
     --print('action 6')
-    olditem = db:getitem(item.serial)
-    item.place = 1
-    local reorder = {}
-    if olditem then
-      reorder['Inventory'] = {place=olditem.place, containerid='Inventory', removed=true}
-    end
-    reorder[item.containerid] = {place=1, containerid=item.containerid, removed=false}
-    db:reorderitemsmultiple(reorder)
-    db:updateitemlocation(item)
+    local olditem = db:getitem(item.serial)
+    db:moveitem(item, item.containerid)
     event_container_change('Inventory')
     event_container_change(item.containerid)
     timer_end('EQdb:action6')
@@ -802,7 +777,7 @@ alldotpeg = P("all") * P(".") * P(1)^1
 inpeg = (P("i") * -P(1)) + (P("in") * -P(1))
 
 function OnPluginSend (sText)
-  if tonumber(char.status.state) == 5 then
+  if char and char.status and tonumber(char.status.state) == 5 then
     return true
   end
 
