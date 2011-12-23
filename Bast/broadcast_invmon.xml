@@ -555,7 +555,8 @@ food = {"percent"},
 drink = {"servings", "liquid", "liquidmax", "liquidleft", "thirstpercent", "hungerpercent", "u1"},
 furniture = {"hpregen","manaregen","u1"},
 eqdata = {"objectid", "shortflags", "itemname", "level", "itemtype", "unique", "wearloc", "timer"},
-light = {"duration"}
+light = {"duration"},
+portal = {"uses"}
 }
 
 function addmod(ltype, mod)
