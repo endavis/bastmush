@@ -229,7 +229,8 @@ food = {"percent"},
 drink = {"servings", "liquid", "liquidmax", "liquidleft", "thirstpercent", "hungerpercent", "u1"},
 furniture = {"hpregen","manaregen","u1"},
 eqdata = {"serial", "shortflags", "cname", "level", "type", "unique", "wearslot", "timer"},
-light = {"duration"}
+light = {"duration"},
+portal = {"uses"}
 }
 
 function dbbackup(name)
