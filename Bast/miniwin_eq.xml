@@ -86,6 +86,10 @@ flagname = {
 eqdbcmd = nil
 detailswaiting = {}
 
+foundgroup = {}
+dontgroup = {}
+nogroup = {}
+
 filter = {}
 filter['Worn'] = {filtercol='wearslot', reverse=false}
 
@@ -110,7 +114,7 @@ end
 function buildmenu(item)
   local titem = db:getitemdetails(item.serial)
   local container = item.containerid
-  menu = item.name .. "|"
+  local menu = item.name .. "|"
   if item.type ~= 11 then
     menu = menu  .. "| >Put "
     for i,v in pairs(db:getcontainers()) do
@@ -142,6 +146,12 @@ function buildmenu(item)
     menu = menu .. "| Remove Identifier | <"
   else
     menu = menu .. "| Add Identifier"
+  end
+  local stylekey = item.name .. item.shortflags .. tostring(item.level)
+  if foundgroup[item.containerid][stylekey] and dontgroup[item.containerid][stylekey] then
+    menu = menu .. "| Group this item"
+  elseif foundgroup[item.containerid][stylekey] then
+    menu = menu .. "| Ungroup this item"
   end
   if item.type == 11 then
       menu = menu .. " | Refresh Contents"
@@ -203,6 +213,14 @@ function mouseleft(item, result)
     end
     SendNoEcho(tstr .. item.serial)
     putobjectincontainer(item, item.containerid)
+  elseif result:match("Group this item") then
+    local stylekey = item.name .. item.shortflags .. tostring(item.level)
+    dontgroup[item.containerid][stylekey] = false
+    oncontainerchange('"' .. item.containerid .. '"')
+  elseif result:match("Ungroup this item") then
+    local stylekey = item.name .. item.shortflags .. tostring(item.level)
+    dontgroup[item.containerid][stylekey] = true
+    oncontainerchange('"' .. item.containerid .. '"')
   end
 end
 
@@ -257,7 +275,7 @@ function menuclick(item, menu)
       -- right
       mousebutton = 'right'
     end
-    menufunc = menus[menutype .. 'menu' .. mousebutton]
+    local menufunc = menus[menutype .. 'menu' .. mousebutton]
     if menufunc then
       menu = menufunc(item)
       local result = WindowMenu (eqwin.winid, WindowInfo (eqwin.winid, 14), WindowInfo (eqwin.winid, 15), menu) --do menu
@@ -290,7 +308,9 @@ function builditem(item)
 
   idwin:addtab(item.serial, lstyles)
   idwin:changetotab(item.serial)
-  idwin:show(true)
+  if eqwin.showid then
+    idwin:show(true)
+  end
 end
 
 function buildwornitem(item)
@@ -387,7 +407,10 @@ function buildwornitem(item)
   --print(item.name)
   for i=1,#newstyles do
     local tstyle = newstyles[i]
-    local style = popup_style(idwin, tstyle.text, tstyle.textcolour, 0x20)
+    local style = copytable.shallow(tstyle)
+    if eqwin.showid then
+      style = popup_style(idwin, tstyle.text, tstyle.textcolour, 0x20)
+    end
     style.backcolour = tstyle.backcolour
     --print(length, #style.text, style.text)
     if length + #style.text >= itemlength and i ~= 1 then
@@ -608,6 +631,22 @@ function builddata(container)
   end
   table.insert(lstyles, style)
 
+  if eqwin.groupitems then
+    local style = {}
+    style.text = string.format("%3s   ", '#')
+    style.mouseup = function ()
+      nogroup[container] = not nogroup[container]
+      if nogroup[container] then
+        dontgroup[container] = {}
+      else
+        dontgroup[container] = copytable.shallow(foundgroup[container])
+      end
+      oncontainerchange('"' .. container .. '"')
+    end
+    style.hint = 'Click to group/ungroup all items in this container'
+    table.insert(lstyles, style)
+  end
+
   local style = {}
   style.text = string.format("%s", 'Item Name')
   style.mouseup = function ()
@@ -657,131 +696,179 @@ function builddata(container)
 
   local header=styles
 
-  styles = {}
-
+  local styles = {}
+  local numstyles = {}
   if not next(contents) then
     table.insert(styles, {{text='Nothing', hjust='center'}})
   else
     for key,item in pairs(contents) do
-      local lstyles = {}
-      if type(item) == 'table' then
+      local stylekey = item.name .. item.shortflags .. tostring(item.level)
+      local doit = true
+      --and item.type ~= 1 and item.type ~= 5 and item.type ~= 7 and item.type ~= 11 and item.type ~= 20
+      if eqwin.groupitems
+           and numstyles[stylekey] then
+        if not foundgroup[container] then
+          foundgroup[container] = {}
+        end
+        if not dontgroup[container] then
+          dontgroup[container] = {}
+        end
+        foundgroup[container][stylekey] = true
+        if dontgroup[container][stylekey] then
 
-        local style = {}
-        style.text = '('
-        table.insert(lstyles, style)
-        count = 0
-        for i,flag in pairs(flags) do
-          local colour = flagcolours[flag]
+        else
+          doit = false
+          numstyles[stylekey].text = string.format("%3d", tonumber(numstyles[stylekey].text) + 1)
+        end
+      end
+      if doit then
+        local lstyles = {}
+        if type(item) == 'table' then
+
           local style = {}
-          count = count + 1
-          if string.find(item.shortflags, flag) then
-            if count == 1 then
-              style.text = ' ' .. flag .. ' '
+          style.text = '('
+          table.insert(lstyles, style)
+          count = 0
+          for i,flag in pairs(flags) do
+            local colour = flagcolours[flag]
+            local style = {}
+            count = count + 1
+            if string.find(item.shortflags, flag) then
+              if count == 1 then
+                style.text = ' ' .. flag .. ' '
+              else
+                style.text = flag .. ' '
+              end
+              style.textcolour = colour
+              if flag == 'K' then
+                style.mouseup = function ()
+                    putobjectininv(item)
+                    SendNoEcho('unkeep ' .. tostring(item.serial))
+                    putobjectincontainer(item, item.containerid)
+                  end
+
+              else
+                style.mouseup = nofunc
+              end
+              style.hint = flagname[flag]
             else
-              style.text = flag .. ' '
-            end
-            style.textcolour = colour
-            if flag == 'K' then
-              style.mouseup = function ()
-                   putobjectininv(item)
-                   SendNoEcho('unkeep ' .. tostring(item.serial))
-                   putobjectincontainer(item, item.containerid)
+              if flag == 'K' then
+                style.mouseup = function ()
+                    putobjectininv(item)
+                    SendNoEcho('keep ' .. tostring(item.serial))
+                    putobjectincontainer(item, item.containerid)
                 end
-
-            else
-              style.mouseup = nofunc
-            end
-            style.hint = flagname[flag]
-          else
-            if flag == 'K' then
-              style.mouseup = function ()
-                   putobjectininv(item)
-                   SendNoEcho('keep ' .. tostring(item.serial))
-                   putobjectincontainer(item, item.containerid)
+              end
+              if count == 1 then
+                style.text = '   '
+              else
+                style.text = '  '
               end
             end
-            if count == 1 then
-              style.text = '   '
-            else
-              style.text = '  '
-            end
+            table.insert(lstyles, style)
           end
+          local style = {}
+          style.text = ')'
           table.insert(lstyles, style)
-        end
-        local style = {}
-        style.text = ')'
-        table.insert(lstyles, style)
 
-        local style = {}
-        style.text = ' '
-        table.insert(lstyles, style)
+          local style = {}
+          style.text = ' '
+          table.insert(lstyles, style)
 
-        -- Level
-        local style = {}
-        style.text = '('
-        table.insert(lstyles, style)
+          -- Level
+          local style = {}
+          style.text = '('
+          table.insert(lstyles, style)
 
-        local style = {}
-        style.text = string.format("%3d", tonumber(item.level))
-        style.textcolour = 'lightgreen'
-        table.insert(lstyles, style)
+          local style = {}
+          style.text = string.format("%3d", tonumber(item.level))
+          style.textcolour = 'lightgreen'
+          table.insert(lstyles, style)
 
-        local style = {}
-        style.text = ') '
-        table.insert(lstyles, style)
+          local style = {}
+          style.text = ') '
+          table.insert(lstyles, style)
 
-        -- Name
-        local style = {}
-        local newstyles = ColoursToStyles(item.cname)
-        local length = 0
-        local itemlength = 47
-        --print(item.name)
-        for i=1,#newstyles do
-          local tstyle = newstyles[i]
-          local style = popup_style(idwin, tstyle.text, tstyle.textcolour, 0x20)
-          style.backcolour = tstyle.backcolour
+          if eqwin.groupitems then
+            local style = {}
+            style.text = '('
+            table.insert(lstyles, style)
 
-          --print(length, #style.text, style.text)
-          if length + #style.text >= itemlength and i ~= 1 then
-            local tl = itemlength - length
-            if tl < 1 then
-              break
-            else
-              style.text = string.sub(style.text, 1, tl)
+            local style = {}
+            style.text = string.format("%3d", 1)
+            style.textcolour = 'royalblue'
+            style.hint = "click here to group/ungroup this item"
+            style.mouseup = function ()
+              dontgroup[container][stylekey] = not dontgroup[item.containerid][stylekey]
+              oncontainerchange('"' .. container .. '"')
             end
-          else
-            style.text = string.sub(style.text, 1, itemlength)
+            if not numstyles[stylekey] then
+              numstyles[stylekey] = style
+            end
+            table.insert(lstyles, style)
+
+            local style = {}
+            style.text = ') '
+            table.insert(lstyles, style)
           end
-          length = length + #style.text
-          style.hint = "ID: " .. tostring(item.serial)
-          style.mouseup = menuclick(item)
+
+          -- Name
+          local style = {}
+          local newstyles = ColoursToStyles(item.cname)
+          local length = 0
+          local itemlength = 47
+          --print(item.name)
+          for i=1,#newstyles do
+            local tstyle = newstyles[i]
+            local style = copytable.shallow(tstyle)
+            if eqwin.showid then
+              style = popup_style(idwin, tstyle.text, tstyle.textcolour, 0x20)
+            end
+            style.backcolour = tstyle.backcolour
+
+            --print(length, #style.text, style.text)
+            if length + #style.text >= itemlength and i ~= 1 then
+              local tl = itemlength - length
+              if tl < 1 then
+                break
+              else
+                style.text = string.sub(style.text, 1, tl)
+              end
+            else
+              style.text = string.sub(style.text, 1, itemlength)
+            end
+            length = length + #style.text
+            style.hint = "ID: " .. tostring(item.serial)
+            style.mouseup = menuclick(item)
+            --tprint(style)
+            table.insert(lstyles, style)
+            style.mouseover = function ()
+              --print('got mouseover')
+              if container == 'Inventory' then
+                detailswaiting[tonumber(item.serial)] = true
+                --print('calling plugin in mouseover', item.serial)
+                local rc = CallPlugin("aaa56faed92ffc6146964abc", 'getitemdetails', item.serial)
+                --print(rc)
+              else
+                local titem = db:getitemdetails(item.serial)
+                if titem and next(titem) then
+                  builditem(titem)
+                end
+              end
+            end
+          end
+          --tprint(newstyles)
+          --style.text = item.cname
+          --style.hint = "ID: " .. tostring(item.serial)
           --tprint(style)
-          table.insert(lstyles, style)
-          style.mouseover = function ()
-            --print('got mouseover')
-            if container == 'Inventory' then
-              detailswaiting[tonumber(item.serial)] = true
-              --print('calling plugin in mouseover', item.serial)
-              local rc = CallPlugin("aaa56faed92ffc6146964abc", 'getitemdetails', item.serial)
-              --print(rc)
-            else
-              local titem = db:getitemdetails(item.serial)
-              if titem and next(titem) then
-                builditem(titem)
-              end
-            end
-          end
-        end
-        --tprint(newstyles)
-        --style.text = item.cname
-        --style.hint = "ID: " .. tostring(item.serial)
-        --tprint(style)
-        --table.insert(lstyles, style)
+          --table.insert(lstyles, style)
 
-        table.insert(styles, lstyles)
+          table.insert(styles, lstyles)
+        end
       end
     end
   end
+  numstyles = {}
   return header, styles
 end
 
@@ -803,6 +890,14 @@ function adddata(tabname, data)
     eqwin:stickytab(tabname)
   end
 end
+
+function rebuildall()
+  for i,v in pairs(eqwin.tabs) do
+    oncontainerchange('"' .. i .. '"')
+  end
+end
+eqwin:add_setting("groupitems", {help="whether to group items, this is the global flag", type="bool", default=verify_bool("true"), sortlev=1, longname="Group items in the window", after=rebuildall})
+eqwin:add_setting("showid", {help="show idwin on mouseover", type="bool", default=verify_bool("true"), sortlev=1, longname="Show identify window on mouseover", after=rebuildall})
 
 function oncontainerchange(container)
   local container = assert (loadstring ('return ' .. container or ""))()
