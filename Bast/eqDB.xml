@@ -540,6 +540,60 @@ function cmd_close(cmddict)
   db:close('cmd_close', true)
 end
 
+function leq_helper(container, lev1, lev2, action)
+  local titem = db:getitem(container)
+  if titem then
+    local fromcontainer = tostring(titem.serial)
+    if action == 'put' then
+      fromcontainer = 'Inventory'
+    end
+    lev1 = tonumber(lev1)
+    lev2 = tonumber(lev2)
+    local sqlcmd = 'SELECT * FROM items WHERE containerid = "' .. fromcontainer .. '" and ' .. 'level = ' ..tostring(lev1)
+    if lev1 and lev2 then
+      sqlcmd = 'SELECT * FROM items WHERE containerid = "' .. fromcontainer .. '" and ' .. 'level between ' ..tostring(lev1) .. ' and ' .. tostring(lev2)
+    end
+    --print(sqlcmd)
+    if db:open('leq_helper') then
+      local stmt = db.db:prepare(sqlcmd)
+      if not stmt then
+        phelper:plugin_header('l' .. action)
+        print('The lookup arguments do not create a valid sql statement')
+        db:close()
+        return
+      end
+      for a in stmt:nrows() do
+        if tonumber(a.type) ~= 11 then
+          Send(action .. ' ' .. tostring(a.serial) .. ' ' .. tostring(titem.serial))
+        end
+      end
+      db:close()
+    end
+  else
+    phelper:plugin_header('l' .. action)
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "I don't know container " .. tostring(cmddict[1]))
+  end
+end
+
+function cmd_lget(cmddict)
+  if cmddict[1] and cmddict[2] and tonumber(cmddict[2]) then
+    leq_helper(cmddict[1], cmddict[2], cmddict[3], 'get')
+  else
+    phelper:plugin_header('lget')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: lget <container> <level1> <level2(optional)>")
+  end
+end
+
+function cmd_lput(cmddict)
+  if cmddict[1] and cmddict[2] and tonumber(cmddict[2]) then
+    leq_helper(cmddict[1], cmddict[2], cmddict[3], 'put')
+  else
+    phelper:plugin_header('lput')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: lput <container> <level1> <level2(optional)>")
+  end
+end
+
+
 function cmd_addid(cmddict)
   if cmddict[1] and cmddict[2] then
     local titem = db:getitem(cmddict[1])
@@ -892,6 +946,8 @@ phelper:add_cmd('close', {func=cmd_close, help="close the db"})
 phelper:add_cmd('addid', {func=cmd_addid, help="add an identifier to an item"})
 phelper:add_cmd('remid', {func=cmd_remid, help="remove an identifier from an item"})
 phelper:add_cmd('listid', {func=cmd_listid, help="list items with identifiers"})
+phelper:add_cmd('lget', {func=cmd_lget, help="get items from container between level1 and level2"})
+phelper:add_cmd('lput', {func=cmd_lput, help="put items in container between level1 and level2"})
 phelper:add_cmd('clean', {func=cmd_clean, help="clean the db of stale items"})
 
 
