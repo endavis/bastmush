@@ -98,8 +98,8 @@ function EQdb:checkidentifiertable()
 end
 
 function EQdb:checkitemdetailstable()
-  if not self:checkfortable('itemdetails') then
-    if self:open('checkitemdetailstable') then
+  if self:open('checkitemdetailstable') then
+    if not self:checkfortable('itemdetails') then
       self.db:exec([[
         CREATE TABLE itemdetails(
           serial INTEGER NOT NULL,
@@ -244,6 +244,16 @@ function EQdb:checkitemdetailstable()
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
+    if not self:checkfortable('portal') then
+      self.db:exec([[
+        CREATE TABLE portal(
+        portid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        uses NUMBER,
+        UNIQUE(serial),
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
     self:close('checkitemdetailstable')
   end
 end
@@ -300,6 +310,11 @@ function EQdb:getitemdetails(serial)
       if tonumber(titem.type) == 1  then
         for a in self.db:nrows("SELECT * FROM light WHERE serial = " .. tostring(serial)) do
           titem['light'] = a
+        end
+      end
+      if tonumber(titem.type) == 20  then
+        for a in self.db:nrows("SELECT * FROM portal WHERE serial = " .. tostring(serial)) do
+          titem['portal'] = a
         end
       end
       if tonumber(titem.type) == 5  then
@@ -383,6 +398,23 @@ function EQdb:addlight(item)
     stmt:finalize()
   end
   timer_end('EQdb:addlight')
+end
+
+function EQdb:addportal(item)
+  timer_start('EQdb:addportal')
+  if item.portal and next(item.portal) then
+    local stmt = self.db:prepare[[
+      INSERT or REPLACE into portal VALUES (
+        NULL,
+        :serial,
+        :uses);]]
+    local portalm = copytable.deep(item.portal)
+    portalm['serial'] = item.serial
+    stmt:bind_names( portalm )
+    stmt:step()
+    stmt:finalize()
+  end
+  timer_end('EQdb:addportal')
 end
 
 function EQdb:addfurniture(item)
@@ -622,8 +654,11 @@ function EQdb:additemdetail(item)
     if item.skillmod and next(item.skillmod) then
       self:addskillmod(item)
     end
-    if tonumber(item.type) == 1 and  item.light ~= nil then
+    if tonumber(item.type) == 1 and item.light ~= nil then
       self:addlight(item)
+    end
+    if tonumber(item.type) == 20 and item.portal ~= nil then
+      self:addportal(item)
     end
     if tonumber(item.type) == 5 then
       self:addweapon(item)
