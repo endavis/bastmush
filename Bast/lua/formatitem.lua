@@ -294,6 +294,13 @@ function formatitem(item)
     end
   end
 
+  if tonumber(item.type) == 20 then
+    if item.portal and next(item.portal) then
+      table.insert(ltext, divider)
+      table.insert(ltext, formatsingleline('Portal', '@R', string.format('@Y%s@w uses remaining.', item.portal.uses)))
+    end
+  end
+
   if item.statmod then
     table.insert(ltext, divider)
     table.insert(ltext, formatstatsheader())
