@@ -245,7 +245,7 @@ function dbbackup(name)
 end
 
 function sendcmd(cmd)
-  print('sending', cmd)
+  --print('sending', cmd)
   if silent then
     SendNoEcho(cmd)
   else
