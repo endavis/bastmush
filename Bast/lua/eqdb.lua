@@ -762,22 +762,25 @@ end
 function EQdb:updateitem(item)
   timer_start('EQdb:updateitem')
   self:checkitemstable()
+  local tchanges = 0
   if self:open('updateitem') then
+    tchanges = self.db:total_changes()
     assert (self.db:exec("BEGIN TRANSACTION"))
     self.db:exec(string.format([[UPDATE items SET shortflags = '%s',
-                                                  level= %d,
-                                                  cname = '%s',
-                                                  name = '%s',
+                                                  level = %d,
+                                                  cname = %s,
+                                                  name = %s,
                                                   type = %d,
                                                   containerid = '%s',
                                                   wearslot = %d,
                                                   place = %d
                                                   WHERE serial = %d;]],
                                      tostring(item.shortflags), tonumber(item.level),
-                                     tostring(item.cname), tostring(item.name), tonumber(item.type),
+                                     fixsql(tostring(item.cname)), fixsql(tostring(item.name)), tonumber(item.type),
                                      tostring(item.containerid), tonumber(item.wearslot),
                                      tonumber(item.place), tonumber(item.serial)))
     assert (self.db:exec("COMMIT"))
+    --print('rows changed', self.db:total_changes() - tchanges)
     self:close('updateitem')
   end
   timer_end('EQdb:updateitem')
