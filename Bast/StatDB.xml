@@ -328,7 +328,6 @@ function checkcampaign(level)
 
     if numlevels ~= 1 then
       if verify_bool(GetPluginVariable("aaa65ac8122d795ad5348dcd", "noexp")) == false and sentnoexp == false then
-        print('sent noexp checkcampaign')
         sentnoexp = true
         Send("noexp")
       end
