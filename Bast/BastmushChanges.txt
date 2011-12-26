@@ -1,6 +1,6 @@
 Bastmush Changes List
 
-r1700
+r1700 snapshot
   - miniwin_eq
      - new: add grouping to the miniwindow for items, there is a global flag,
          groupitems that can be toggled to for this functionality
