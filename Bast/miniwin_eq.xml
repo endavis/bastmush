@@ -148,9 +148,9 @@ function buildmenu(item)
     menu = menu .. "| Add Identifier"
   end
   local stylekey = item.name .. item.shortflags .. tostring(item.level)
-  if foundgroup[item.containerid][stylekey] and dontgroup[item.containerid][stylekey] then
+  if foundgroup[item.containerid][stylekey] and foundgroup[item.containerid][stylekey] > 1 and dontgroup[item.containerid][stylekey] then
     menu = menu .. "| Group this item"
-  elseif foundgroup[item.containerid][stylekey] then
+  elseif foundgroup[item.containerid][stylekey] and foundgroup[item.containerid][stylekey] > 1 then
     menu = menu .. "| Ungroup this item"
   end
   if item.type == 11 then
@@ -582,6 +582,24 @@ function builddata(container)
   end
   local lstyles = {}
 
+  -- # of items
+  if eqwin.groupitems then
+    local style = {}
+    style.text = string.format(" %3s  ", '#')
+    style.mouseup = function ()
+      nogroup[container] = not nogroup[container]
+      if nogroup[container] then
+        dontgroup[container] = {}
+      else
+        dontgroup[container] = copytable.shallow(foundgroup[container])
+      end
+      oncontainerchange('"' .. container .. '"')
+    end
+    style.hint = 'Click to group/ungroup all items in this container'
+    table.insert(lstyles, style)
+  end
+
+
   local style = {}
   style.text = '('
   table.insert(lstyles, style)
@@ -630,22 +648,6 @@ function builddata(container)
     style.text = '  '
   end
   table.insert(lstyles, style)
-
-  if eqwin.groupitems then
-    local style = {}
-    style.text = string.format("%3s   ", '#')
-    style.mouseup = function ()
-      nogroup[container] = not nogroup[container]
-      if nogroup[container] then
-        dontgroup[container] = {}
-      else
-        dontgroup[container] = copytable.shallow(foundgroup[container])
-      end
-      oncontainerchange('"' .. container .. '"')
-    end
-    style.hint = 'Click to group/ungroup all items in this container'
-    table.insert(lstyles, style)
-  end
 
   local style = {}
   style.text = string.format("%s", 'Item Name')
@@ -698,32 +700,54 @@ function builddata(container)
 
   local styles = {}
   local numstyles = {}
+  foundgroup[container] = {}
   if not next(contents) then
     table.insert(styles, {{text='Nothing', hjust='center'}})
   else
     for key,item in pairs(contents) do
       local stylekey = item.name .. item.shortflags .. tostring(item.level)
       local doit = true
-      --and item.type ~= 1 and item.type ~= 5 and item.type ~= 7 and item.type ~= 11 and item.type ~= 20
       if eqwin.groupitems
            and numstyles[stylekey] then
-        if not foundgroup[container] then
-          foundgroup[container] = {}
-        end
         if not dontgroup[container] then
           dontgroup[container] = {}
         end
-        foundgroup[container][stylekey] = true
+        if foundgroup[container][stylekey] == nil then
+          foundgroup[container][stylekey] = 2
+        else
+          foundgroup[container][stylekey] = foundgroup[container][stylekey] + 1
+        end
         if dontgroup[container][stylekey] then
 
         else
           doit = false
-          numstyles[stylekey].text = string.format("%3d", tonumber(numstyles[stylekey].text) + 1)
+          numstyles[stylekey].text = string.format("(%3d) ", foundgroup[container][stylekey])
         end
       end
       if doit then
         local lstyles = {}
         if type(item) == 'table' then
+
+          -- # of items
+          if eqwin.groupitems then
+            local style = {}
+            if eqwin.groupitems and dontgroup[container] and dontgroup[container][stylekey] then
+              style.text = string.format("   -  ")
+            else
+              style.text = string.format("      ")
+            end
+            style.textcolour = 'white'
+            style.hint = "click here to group/ungroup this item"
+            style.mouseup = function ()
+              dontgroup[container][stylekey] = not dontgroup[item.containerid][stylekey]
+              oncontainerchange('"' .. container .. '"')
+            end
+            if not numstyles[stylekey] then
+              numstyles[stylekey] = style
+            end
+            table.insert(lstyles, style)
+
+          end
 
           local style = {}
           style.text = '('
@@ -775,6 +799,7 @@ function builddata(container)
           style.text = ' '
           table.insert(lstyles, style)
 
+
           -- Level
           local style = {}
           style.text = '('
@@ -788,29 +813,6 @@ function builddata(container)
           local style = {}
           style.text = ') '
           table.insert(lstyles, style)
-
-          if eqwin.groupitems then
-            local style = {}
-            style.text = '('
-            table.insert(lstyles, style)
-
-            local style = {}
-            style.text = string.format("%3d", 1)
-            style.textcolour = 'royalblue'
-            style.hint = "click here to group/ungroup this item"
-            style.mouseup = function ()
-              dontgroup[container][stylekey] = not dontgroup[item.containerid][stylekey]
-              oncontainerchange('"' .. container .. '"')
-            end
-            if not numstyles[stylekey] then
-              numstyles[stylekey] = style
-            end
-            table.insert(lstyles, style)
-
-            local style = {}
-            style.text = ') '
-            table.insert(lstyles, style)
-          end
 
           -- Name
           local style = {}
