@@ -749,10 +749,10 @@ end
 function OnPluginBroadcast (msg, id, name, text)
   phelper:OnPluginBroadcast(msg, id, name, text)
   if id == "aaafc15678afa22343c5a327" then
-    if msg == 1 then
+    if msg == 15 then
       -- idle for more than 15 minutes
       -- start going through the cache and updating them (need a coroutine)
-    elseif msg == 2 then
+    elseif msg == 0 then
       -- no longer idle
       -- stop the coroutine
     end
