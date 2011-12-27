@@ -132,6 +132,12 @@ function buildmenu(item)
   if container ~= 'Inventory' and container ~= 'Worn' then
      menu = menu .. "| Get"
   end
+  if item.type == 8 then
+     menu = menu .. "| Quaff"
+  end
+  if item.type == 2 then
+     menu = menu .. "| Recite"
+  end
   menu = menu .. "| Identify "
   if not item.shortflags:match('K') then
     menu = menu .. "| Donate "
@@ -221,6 +227,12 @@ function mouseleft(item, result)
     local stylekey = item.name .. item.shortflags .. tostring(item.level)
     dontgroup[item.containerid][stylekey] = true
     oncontainerchange('"' .. item.containerid .. '"')
+  elseif result:match("Quaff") then
+    putobjectininv(item)
+    SendNoEcho('quaff ' .. tostring(item.serial))
+  elseif result:match("Recite") then
+    putobjectininv(item)
+    SendNoEcho('recite ' .. tostring(item.serial))
   end
 end
 
