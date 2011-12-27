@@ -25,8 +25,10 @@ Example:
   function OnPluginBroadcast (msg, id, name, text)
     if id == "aaabe45678afa22343c5a327" then
       if msg == 1 then
-        -- do idle
-      if msg == 2 then
+        -- idle for 1 minute
+      elseif msg == 2 then
+        -- idle for 2 minutes
+      elseif msg == 0
         -- no longer idle
       end
     end
@@ -47,7 +49,7 @@ Example:
   <timer
       script="idletimer"
       enabled="y"
-      minute="5"
+      minute="1"
       name="idletimer"
       >
   </timer>
@@ -69,12 +71,14 @@ require 'serialize'
 
 lastcommand = os.time()
 idle = false
+lastbroadcast = 0
 
 function idletimer()
   local idletime = os.time() - lastcommand
-  if idletime >  15*60 then
+  if math.floor(idletime/60) > lastbroadcast then
+    lastbroadcast = math.floor(idletime/60)
     idle = true
-    phelper:broadcast(1)
+    phelper:broadcast(lastbroadcast)
   end
 end
 
@@ -130,7 +134,8 @@ function OnPluginCommand ()
   lastcommand = os.time()
   if idle then
     idle = false
-    phelper:broadcast(2)
+    lastbroadcast = 0
+    phelper:broadcast(0)
   end
 end
 
