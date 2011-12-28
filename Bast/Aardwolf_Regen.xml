@@ -72,6 +72,9 @@ require "tprint"
 require "pluginhelper"
 require "commas"
 require "aardutils"
+require "eqdb"
+
+db = EQdb:new{}
 
 stats = {}
 oldstats = {}
@@ -80,6 +83,7 @@ oldstatus = {}
 tryremove = false
 trywear = false
 regenrooms = {}
+current19 = {}
 runto = false
 
 state = -1
@@ -102,9 +106,11 @@ function wear_regen()
   if trywear then
     return
   end
+  --print('trywear', trywear)
+  --print('tryremove', tryremove)
   if not verify_bool(phelper.regenworn) or tryremove then
+    --print('setting trywear = true')
     trywear = true
-    --DoAfterSpecial (3, 'try_wear()', sendto.script)
     if phelper.regensn then
       SendNoEcho("wear " .. phelper.regensn .. " lfinger")
     else
@@ -114,18 +120,16 @@ function wear_regen()
 end
 
 function remove_regen()
+  if verify_bool(phelper.off) == true then
+    return
+  end
   if tryremove then
     return
   end
   if verify_bool(phelper.regenworn) or trywear then
+    --print('setting tryremove = true')
     tryremove = true
     SendNoEcho("wear " .. phelper.oldringsn .. " lfinger")
-  end
-end
-
-function try_wear()
-  if not tryremove then
-    SendNoEcho("wear regen lfinger")
   end
 end
 
@@ -135,7 +139,8 @@ function sleep(name, line, wildcards)
 end
 
 function checkstand()
-  if oldstatus.statestring == 'sleeping' and not verify_bool(phelper.inregen) then
+  --print('checkstand')
+  if oldstatus.statestring == 'sleeping' and phelper.regenworn and not verify_bool(phelper.inregen) then
     remove_regen()
   end
 end
@@ -186,13 +191,45 @@ function show_rooms(name, line, wildcards)
   ColourNote("", "", "")
 end
 
+function onwearlocchange(stuff)
+  local stuff = assert (loadstring ('return ' .. stuff or ""))()
+  local wearloc = stuff.wearloc
+  local action = stuff.action
+  local item = db:getitem(stuff.item.serial)
+  --print('onwearlocchange')
+  --tprint(stuff)
+  if tonumber(wearloc) == 19 and tonumber(action) == 2 then
+    current19 = item
+    if item.name == "Aardwolf Ring of Regeneration" then
+      phelper:set('regenworn',  true, {silent=true})
+      phelper:set('regensn', item.serial, {silent=true})
+      trywear = false
+      SaveState()
+    elseif item and not tryremove then
+      phelper:set('oldringsn', item.serial, {silent=true})
+      phelper:set('oldringdesc', item.plainname, {silent=true})
+      SaveState()
+    end
+  elseif tonumber(wearloc) == 19 and tonumber(action) == 1 then
+    if item.name == "Aardwolf Ring of Regeneration" then
+      phelper:set('regenworn', false, {silent=true})
+      tryremove = false
+      SaveState()
+    end
+    current19 = {}
+  end
+end
+
 ]]>
 </script>
 
 <script>
 <![CDATA[
-
 function OnPluginBroadcast (msg, id, name, text)
+
+  if id == "aaa56faed92ffc6146964abc" and tonumber(msg) == -2 then
+    CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "wearlocchange", "onwearlocchange")
+  end
 
   if id == '3e7dedbe37e44942dd46d264' then
     if text:find("room.info") then
@@ -204,61 +241,27 @@ function OnPluginBroadcast (msg, id, name, text)
       oldregen  = verify_bool(phelper.inregen)
       phelper:set('inregen', check_room(current_room.id), {silent=true})
 
-      if oldregen and verify_bool(phelper.inregen) then
-        return
-      end
-
-      if verify_bool(phelper.inregen) and ((not verify_bool(phelper.regenworn)) or tryremove) and not runto then
-        wear_regen()
-        return
-      end
-
-      if (not verify_bool(phelper.inregen)) and (verify_bool(phelper.regenworn) or trywear) then
+      if not phelper.inregen and phelper.regenworn then
         remove_regen()
-        return
       end
 
     elseif text:find("char.status") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
       char = assert (loadstring ('return ' .. gmcparg or ""))()
       oldstatus = status
-      status={state=char.status.state,statestring=statestrings[tonumber(state)]}
-      if status.statestring == 'active' then
+      status={state=char.status.state,statestring=statestrings[tonumber(char.status.state)]}
+      if status.statestring == 'active' and oldstatus.statestring == 'sleeping' then
         checkstand()
-      end      
-    end    
-  elseif id == "aaa7b6edb20fa44565c5a327" then
-    if msg == 1 then
-      runto = true
-    elseif msg == 2 then
-      runto = false
+      end
     end
-  elseif id == "aaa7dc9ed92ffc6146964abc" then
-    if msg == 2 then
-      loadstring(text)()
-      eqitem = item
-      if eqitem.placestr == "lfinger" then
-        if eqitem.name == "Aardwolf Ring of Regeneration" then
-          phelper:set('regenworn',  true, {silent=true})
-          phelper:set('regensn', eqitem.objectid, {silent=trie})
-          trywear = false
-          SaveState()
-        end
+  elseif id == "aaabe45678afa22343c5a327" then
+    if msg == 1 then
+      if phelper.inregen and not phelper.regenworn then
+        --print('wearing regen from idle')
+        wear_regen()
       end
-    elseif msg == 1 then
-      loadstring(text)()
-      eqitem = item
-      if eqitem.placestr == "lfinger" then
-        if eqitem.name ~= "Aardwolf Ring of Regeneration" then
-          phelper:set('oldringsn', eqitem.objectid, {silent=true})
-          phelper:set('oldringdesc', eqitem.name, {silent=true})
-          SaveState()
-        elseif eqitem.name == "Aardwolf Ring of Regeneration" then
-          phelper:set('regenworn', false, {silent=true})
-          tryremove = false
-          SaveState()
-        end
-      end
+    --elseif msg == 0 and phelper.regenworn then
+    --  remove_regen()
     end
   end
   phelper:OnPluginBroadcast(msg, id, name, text)
@@ -281,12 +284,15 @@ function OnPluginEnable ()
 
   ldplugin ("broadcast_runto")
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
-  ldplugin ("broadcast_invmon")
+  ldplugin ('eqdb')
+
+  CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "wearlocchange", "onwearlocchange")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
+  CallPlugin("aaa56faed92ffc6146964abc", 'unregisterevent', GetPluginID(), "wearlocchange", "onwearlocchange")
 
   phelper:OnPluginDisable()
 end -- OnPluginDisable
