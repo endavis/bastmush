@@ -129,7 +129,6 @@ TODO: add footer, this could be used for resizing, tabs, status bar type things
 TODO: add a specific line width that can be used to wrap lines - see "help statmon" and the chat miniwindow
 TODO: add ability to add shapes as styles - see Bigmap_Graphical plugin and WindowCircleOp
 TODO: addline function that adds a single line to the text addline(line, tab) tab is optional, then I could just convert_line and adjust_line
-TODO: automatically detect urls: (.*)(http\:\/\/(?:[A-Za-z0-9\.\\\/\?])+)(.*)
 TODO: have adjust_line be the one that breaks up the lines
 
 windowwidth = self.windowborderwidth
@@ -1509,7 +1508,11 @@ function Miniwin:convert_line(line, toppadding, bottompadding, textpadding, ltyp
         else
           local tlength = 0
           if tstyle.text then
-            tlength = WindowTextWidth (self.winid, font_id, strip_colours(tstyle.text))
+            if tstyle.nocolourconvert then
+              tlength = WindowTextWidth (self.winid, font_id, tstyle.text)
+            else
+              tlength = WindowTextWidth (self.winid, font_id, strip_colours(tstyle.text))
+            end
           end
           if tstyle.start and tstyle.start > start then
             linet.text[ti].start = tstyle.start
