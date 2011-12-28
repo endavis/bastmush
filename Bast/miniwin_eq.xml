@@ -910,8 +910,6 @@ function rebuildall()
     oncontainerchange('"' .. i .. '"')
   end
 end
-eqwin:add_setting("groupitems", {help="whether to group items, this is the global flag", type="bool", default=verify_bool("true"), sortlev=1, longname="Group items in the window", after=rebuildall})
-eqwin:add_setting("showid", {help="show idwin on mouseover", type="bool", default=verify_bool("true"), sortlev=1, longname="Show identify window on mouseover", after=rebuildall})
 
 function oncontainerchange(container)
   local container = assert (loadstring ('return ' .. container or ""))()
@@ -929,6 +927,10 @@ function onitemchange(item)
     detailswaiting[titem.serial] = nil
     builditem(titem)
   end
+end
+
+function refresh()
+  runeqdbcmd('refresh')
 end
 ]]>
 </script>
@@ -1001,6 +1003,12 @@ end -- function OnPluginSaveState
 
 <script>
 <![CDATA[
+
+eqwin:add_button('refresh', {text=" R ", mouseup=function (win, tflags, hotspotid)
+                        refresh()
+                      end, hint="Refresh eq", place=80})
+eqwin:add_setting("groupitems", {help="whether to group items, this is the global flag", type="bool", default=verify_bool("true"), sortlev=1, longname="Group items in the window", after=rebuildall})
+eqwin:add_setting("showid", {help="show idwin on mouseover", type="bool", default=verify_bool("true"), sortlev=1, longname="Show identify window on mouseover", after=rebuildall})
 
 phelper:set_default('cmd', 'mneq')
 phelper:set_default('plugin_colour', 'steelblue')
