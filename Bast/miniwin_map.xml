@@ -336,6 +336,7 @@ function parse_map(map)
   for i,line in ipairs(map) do
     for i,v in ipairs(line) do
       v.backcolour = "bg_colour"
+      v.nocolourconvert = true
     end
     if i <= 2 then
       table.insert(header, line)
