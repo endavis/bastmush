@@ -68,6 +68,7 @@ require "pluginhelper"
 require 'ldplugin'
 require 'colours'
 
+firstrun = false
 onquest = false
 ongq = false
 oncp = false
@@ -79,11 +80,11 @@ questmob = {}
 function togglescan(name, line, wildcards)
   if name == 'scanon' then
     if onquest or ongq or oncp then
-      print('turning on scan matching')
+      --print('turning on scan matching')
       phelper:enabletriggroup('scan', true)
     end
   elseif name == 'scanoff' then
-    print('turning off scan matching')
+    --print('turning off scan matching')
     phelper:enabletriggroup('scan', false)
   end
 end
@@ -138,7 +139,18 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
-  if id == "aaa8a9eda20fa11787c6b438" then
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+
+      if not firstrun and char.status and tonumber(char.status.state) == 3 then
+        firstrun = true
+        SendNoEcho('tags scan on')
+      end
+
+    end
+  elseif id == "aaa8a9eda20fa11787c6b438" then
     -- quest stuff
     if msg == 2 then
       -- quest mob info
@@ -193,6 +205,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
   ldplugin ("broadcast_quest")
   ldplugin ("broadcast_cp")
   ldplugin ("broadcast_gq")
@@ -201,18 +214,17 @@ function OnPluginEnable ()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
+  SendNoEcho('tags scan off')
 
   phelper:OnPluginDisable()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
-  SendNoEcho('tags scan on')
 
   phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
-  SendNoEcho('tags scan off')
 
   phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
