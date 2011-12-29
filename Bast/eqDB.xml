@@ -292,9 +292,9 @@ function event_container_change(containerid)
   timer_end('event_container_change')
 end
 
-function event_wearloc_change(wearloc,action)
+function event_wearloc_change(wearloc,action,item)
   timer_start('event_wearloc_change')
-  phelper:processevent('wearlocchange', {wearloc=wearloc,action=action})
+  phelper:processevent('wearlocchange', {wearloc=wearloc,action=action,item=item})
   timer_end('event_wearloc_change')
 end
 
@@ -648,7 +648,7 @@ function checkaction(action, item, afterwait)
     db:moveitem(item, 'Inventory')
     event_container_change('Inventory')
     event_container_change('Worn')
-    event_wearloc_change(oldwearslot, 1)
+    event_wearloc_change(oldwearslot, 1, item)
     timer_end('EQdb:action1')
   elseif action == 1 and removingall then
      db:clearcontainer('Worn')
@@ -667,7 +667,7 @@ function checkaction(action, item, afterwait)
       removingall = true
       phelper:enabletriggroup("emptyline", true)
     end
-    event_wearloc_change(item.wearslot, 2)
+    event_wearloc_change(item.wearslot, 2, item)
     timer_end('EQdb:action2')
   elseif action == 2 and wearingall then
    phelper:enabletriggroup("emptyline", true)
