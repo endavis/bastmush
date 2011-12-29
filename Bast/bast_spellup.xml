@@ -285,7 +285,11 @@ function activatespell(sn, fast)
           setwaiting(tonumber(sn))
         end
         if tonumber(spells['all'][sn]['type']) == 1 then
-          SendNoEcho('cast ' .. tostring(sn))
+          if phelper.selfargs[sn] then
+            SendNoEcho('cast ' .. tostring(sn) .. ' ' .. tostring(phelper.selfargs[sn]))
+          else
+            SendNoEcho('cast ' .. tostring(sn))
+          end
         else
           words = justWords(spells['all'][sn].name)
           SendNoEcho(words[1])
@@ -984,6 +988,27 @@ function cmd_sremove(cmddict)
   end
 end
 
+function cmd_searg(cmddict)
+  if #cmddict ~= 2 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please provide 2 arguments, the first a spell, the second the argument, use 'None' for the second argument to remove for the spell")
+    return
+  end
+  local aspell = find_spell(cmddict[1])
+  local args = cmddict[2]
+  if not aspell then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Spell " .. tostring(cmddict[1]) .. " could not be found")
+    return
+  end
+  if args:lower() == 'none' then
+    phelper.selfargs[tonumber(aspell.sn)] = nil
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Spell " .. tostring(aspell.name) .. " will be cast with no args")
+  else
+    phelper.selfargs[tonumber(aspell.sn)] = args
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Spell " .. tostring(aspell.name) .. " will be cast with args, " .. tostring(args))
+  end
+
+end
+
 function cmd_sadd(cmddict)
   if #cmddict >= 1 then
     local added = false
@@ -1374,6 +1399,7 @@ phelper:set_default('cmd', 'bsp')
 phelper:set_default('plugin_colour', 'lime')
 
 phelper:add_setting( 'askedself', {type="table", help="the list of spells to use on self", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatspells, readonly=true, after=make_askedself_xrefs})
+phelper:add_setting( 'selfargs', {type="table", help="a table for spells that need arguments", default=serialize.save_simple({}), sortlev=36, istable=true, readonly=true})
 phelper:add_setting( 'askedother', {type="table", help="the list of spells to use on other", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatother, readonly=true, after=make_askedother_xrefs})
 phelper:add_setting( 'nocast_rooms', {type="table", help="the list of rooms that are nocast", default=serialize.save_simple({}), sortlev=35, istable=true, readonly=true})
 phelper:add_setting( 'pause', {type="bool", help="pause spellup", default=false, sortlev=35, readonly=true})
@@ -1384,6 +1410,7 @@ phelper:add_cmd('sadd', {func=cmd_sadd, help="add a spell, use 'all' to add all 
 phelper:add_cmd('sremove', {func=cmd_sremove, help="remove a spell, use 'all' to clear table"})
 phelper:add_cmd('sdisable', {func=cmd_sdisable, help="disable a spell"})
 phelper:add_cmd('senable', {func=cmd_senable, help="enable a spell"})
+phelper:add_cmd('searg', {func=cmd_searg, help="add an argument to be cast with a spell, for spells with multiple words, surround with ' or use the sn, to remove use 'None' as the second argument"})
 phelper:add_cmd('sba', {func=cmd_sablocker, help="add blockers, Ex. 'protection good:inertial barrier'"})
 phelper:add_cmd('sbr', {func=cmd_sdblocker, help="remove blockers"})
 phelper:add_cmd('pause', {func=cmd_pause, help="pause spellup"})
@@ -1395,7 +1422,7 @@ phelper:add_cmd('oadd', {func=cmd_oadd, help="add spells to cast on other, for s
 phelper:add_cmd('oremove', {func=cmd_oremove, help="remove spells to cast on other"})
 phelper:add_cmd('odisable', {func=cmd_odisable, help="disable a spell"})
 phelper:add_cmd('oenable', {func=cmd_oenable, help="enable a spell"})
-phelper:add_cmd('olist', {func=cmd_olist, help="remove spells to cast on other"})
+phelper:add_cmd('olist', {func=cmd_olist, help="list spells to be cast on other"})
 phelper:add_cmd('export', {func=cmd_export, help="export current spell list as list of commands"})
 phelper:add_cmd('info', {func=cmd_info, help="show info on a spell"})
 phelper:add_cmd('togglespellup', {func=cmd_togglespellup, help="toggle a spell to be a spellup regardless of what the mud says"})
