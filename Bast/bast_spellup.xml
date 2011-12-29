@@ -614,6 +614,12 @@ function cmd_export(cmddict)
     local tdis = phelper.cmd .. " sdisable " .. table.concat(tdisabled, " ")
     ColourNote(RGBColourToName(var.plugin_colour), "black", tdis)
   end
+  if next(phelper.selfargs) then
+    for i,v in pairs(phelper.selfargs) do
+      local targ = phelper.cmd .. " searg " .. tostring(i) .. " " .. tostring(v)
+      ColourNote(RGBColourToName(var.plugin_colour), "black", targ)
+    end
+  end
   local tdict = {}
   local tdisabled = {}
   for i,v in ipairs(phelper.askedother) do
