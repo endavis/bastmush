@@ -193,30 +193,32 @@ end
 
 function onwearlocchange(stuff)
   local stuff = assert (loadstring ('return ' .. stuff or ""))()
+  --tprint(stuff)
   local wearloc = stuff.wearloc
   local action = stuff.action
-  local item = db:getitem(stuff.item.serial)
-  --print('onwearlocchange')
-  --tprint(stuff)
-  if tonumber(wearloc) == 19 and tonumber(action) == 2 then
-    current19 = item
-    if item.name == "Aardwolf Ring of Regeneration" then
-      phelper:set('regenworn',  true, {silent=true})
-      phelper:set('regensn', item.serial, {silent=true})
-      trywear = false
-      SaveState()
-    elseif item and not tryremove then
-      phelper:set('oldringsn', item.serial, {silent=true})
-      phelper:set('oldringdesc', item.plainname, {silent=true})
-      SaveState()
+  if wearloc ~= 'All' then
+    local item = db:getitem(stuff.item.serial)
+    --print('onwearlocchange')
+    if tonumber(wearloc) == 19 and tonumber(action) == 2 then
+      current19 = item
+      if item.name == "Aardwolf Ring of Regeneration" then
+        phelper:set('regenworn',  true, {silent=true})
+        phelper:set('regensn', item.serial, {silent=true})
+        trywear = false
+        SaveState()
+      elseif item and not tryremove then
+        phelper:set('oldringsn', item.serial, {silent=true})
+        phelper:set('oldringdesc', item.plainname, {silent=true})
+        SaveState()
+      end
+    elseif tonumber(wearloc) == 19 and tonumber(action) == 1 then
+      if item.name == "Aardwolf Ring of Regeneration" then
+        phelper:set('regenworn', false, {silent=true})
+        tryremove = false
+        SaveState()
+      end
+      current19 = {}
     end
-  elseif tonumber(wearloc) == 19 and tonumber(action) == 1 then
-    if item.name == "Aardwolf Ring of Regeneration" then
-      phelper:set('regenworn', false, {silent=true})
-      tryremove = false
-      SaveState()
-    end
-    current19 = {}
   end
 end
 
@@ -282,7 +284,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
 
-  ldplugin ("broadcast_runto")
+  ldplugin ("broadcast_idle")
   ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
   ldplugin ('eqdb')
 
