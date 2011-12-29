@@ -110,7 +110,7 @@ have_slist = false
 waiting = false
 need_moves = false
 need_mana = false
-nocast = falseq
+nocast = false
 
 current_room = -1
 
@@ -1131,6 +1131,16 @@ end
 function tresume()
   phelper.pause = false
   event_status_change()
+end
+
+function hasarg(spell)
+  local aspell = find_spell(spell)
+  if aspell then
+    if phelper.selfargs[tonumber(aspell.sn)] then
+      return true
+    end
+  end
+  return false
 end
 
 ]]>
