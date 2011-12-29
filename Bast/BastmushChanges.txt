@@ -1,7 +1,30 @@
 Bastmush Changes List
 
+r1753 snapshot
+  - miniwin_eq.xml
+     - new: added quaff for potions to the item menu
+     - new: added recite for scrolls to the item menu
+     - new: added a refresh button to the titlebar
+  - scan_highlight.xml
+     - new: plugin to highlight quest/gq/cp mobs in scan
+  - miniwin_map.xml
+     - bug fix: maps with @ in them will now be correct
+  - Aardwolf_Regen.xml
+     - new: uses eqDB and broadcast_idle
+     - change: regen ring is now worn when a char is idle for 1 minute in a
+         regen room
+  - bast_spellup.xml
+     - bug fix: playing in another client and then reconnecting should
+         no longer disable spells
+     - bug fix: should no longer error when removing spells and they are
+         marked as critical
+     - new: add the ability to add arguments to a spell when cast, this
+         is really only useful for gaia's focus
+  - miniwin_spellup.xml
+     - new: added the ability to add/remove arguments from the spell menu
+
 r1700 snapshot
-  - miniwin_eq
+  - miniwin_eq.xml
      - new: add grouping to the miniwindow for items, there is a global flag,
          groupitems that can be toggled to for this functionality
      - new: portal uses will now show when identifying a portal
