@@ -183,6 +183,14 @@ function buildmenu(item, menutype)
   elseif menutype == 'self' and phelper.criticalspells[tonumber(item)] then
     menu = menu .. "| Remove from Critical"
   end
+  if menutype == 'self' then
+    local ret, test = CallPlugin("aaaf0c555a44169e0f1d9674", "hasarg", tostring(item))
+    if test then
+      menu = menu .. "| Remove args"
+    else
+      menu = menu .. "| Add args"
+    end
+  end
   return menu
 end
 
@@ -205,6 +213,13 @@ function mouseleft(result, item, menutype)
         runspellupcmd('sba ' .. item .. ':' .. result)
       end
     end
+  elseif result:match('Add args') then
+    local args = verify_string(nil, {msg="Add args"})
+    if args then
+      runspellupcmd("searg " .. item .. " " .. args)
+    end
+  elseif result:match('Remove args') then
+    runspellupcmd("searg " .. item .. " None")
   elseif result:match("Set as Critical") then
     --SendNoEcho("c disrupt " .. item)
     phelper.criticalspells[tonumber(item)] = true
