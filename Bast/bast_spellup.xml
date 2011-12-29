@@ -1348,11 +1348,14 @@ function OnPluginConnect ()
   TelnetOptionOn (TELOPT_SPELLUP)
   TelnetOptionOn (TELOPT_SKILLGAINS)
 
+  have_slist = false
+
   phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
 function OnPluginDisconnect ()
 
+  have_slist = false
   phelper:OnPluginDisconnect()
 end -- function OnPluginConnect
 
