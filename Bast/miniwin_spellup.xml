@@ -882,7 +882,7 @@ function build_summary()
 
       local v = askedselfbysn[tonumber(i)]
 
-      if not v.noprac and not v.nolearn then
+      if v and not v.noprac and not v.nolearn then
 
         local stuff = ''
         local hint = ''
