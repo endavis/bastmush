@@ -847,6 +847,8 @@ function parse_cmdline(cmdline)
 
   re:gmatch (cmdline, f)
 
+
+  rtable.args = cmdline
   return rtable
 end
 
