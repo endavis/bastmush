@@ -77,7 +77,7 @@ item = {}
    script="invitem"
    sequence="100"
    regexp="y"
-   omit_from_output="y"
+   omit_from_output="n"
   >
   </trigger>
 
