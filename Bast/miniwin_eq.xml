@@ -111,6 +111,31 @@ function runeqdbcmd(cmd)
   Execute(eqdbcmd .. " " .. cmd)
 end
 
+function containermenu()
+  local menu = 'Containers | - | Worn | Inventory'
+  for i,v in pairs(db:getcontainers()) do
+    local titem = db:getitemdetails(v.serial)
+    if titem then
+      menu = menu .. ' | ' .. titem.name
+      if titem.identifier then
+        local identifier = strjoin(', ', titem.identifier)
+        identifier = ' - ' .. identifier
+        menu = menu .. identifier
+      end
+      menu = menu .. ' - ' .. tostring(titem.serial)
+    else
+      menu = menu .. ' | ' .. v.name .. ' - ' .. tostring(v.serial)
+    end
+  end
+  local result = WindowMenu (eqwin.winid, WindowInfo (eqwin.winid, 14), WindowInfo (eqwin.winid, 15), menu) --do menu
+  if result ~= '' and result ~= nil and result ~= 'Containers' then
+     local tdata = utils.split(result, '-')
+     local containerid = trim(tdata[#tdata])
+     adddata(containerid)
+     eqwin:changetotab(containerid)
+  end
+end
+
 function buildmenu(item)
   local titem = db:getitemdetails(item.serial)
   local container = item.containerid
@@ -1005,6 +1030,11 @@ end -- function OnPluginSaveState
 
 <script>
 <![CDATA[
+
+-- add a button that lists all containers (with name and identifiers)
+eqwin:add_button('containers', {text=" C ", mouseup=function (win, tflags, hotspotid)
+                        containermenu()
+                      end, hint="Change containers", place=20})
 
 eqwin:add_button('refresh', {text=" R ", mouseup=function (win, tflags, hotspotid)
                         refresh()
