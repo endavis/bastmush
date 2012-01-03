@@ -153,11 +153,13 @@ function buildmenu(item)
   else
     menu = menu .. "| Add Identifier"
   end
-  local stylekey = item.name .. item.shortflags .. tostring(item.level)
-  if foundgroup[item.containerid][stylekey] and foundgroup[item.containerid][stylekey] > 1 and dontgroup[item.containerid][stylekey] then
-    menu = menu .. "| Group this item"
-  elseif foundgroup[item.containerid][stylekey] and foundgroup[item.containerid][stylekey] > 1 then
-    menu = menu .. "| Ungroup this item"
+  if item.containerid ~= 'Worn' then
+    local stylekey = item.name .. item.shortflags .. tostring(item.level)
+    if foundgroup[item.containerid][stylekey] and foundgroup[item.containerid][stylekey] > 1 and dontgroup[item.containerid][stylekey] then
+      menu = menu .. "| Group this item"
+    elseif foundgroup[item.containerid][stylekey] and foundgroup[item.containerid][stylekey] > 1 then
+      menu = menu .. "| Ungroup this item"
+    end
   end
   if item.type == 11 then
       menu = menu .. " | Refresh Contents"
