@@ -931,7 +931,7 @@ function EQdb:getitembyidentifier(identifier)
   self:checkidentifiertable()
   local item = nil
   if self:open('getitembyidentifier') then
-    for a in self.db:nrows("SELECT * FROM identifier WHERE identifier='" .. tostring(identifier) .."';") do
+    for a in self.db:nrows("SELECT * FROM identifier WHERE identifier=" .. fixsql(tostring(identifier)) ..";") do
       item = a
     end
     self:close('getitembyidentifier')
