@@ -432,8 +432,11 @@ function Pluginhelper:OnPluginSaveState()
 end
 
 function Pluginhelper:cmd_help(cmddict)
-
-  if cmddict and cmddict[1] == 'text' then
+  local helptext = false
+  if IsPluginInstalled("e8520531407cb4281bea544e") then
+    helptext = GetPluginVariable("e8520531407cb4281bea544e", "helpoutputtext")
+  end
+  if (cmddict and cmddict[1] == 'text') or helptext then
     self:showhelptext()
   else
     self.helpwin:show(true)
