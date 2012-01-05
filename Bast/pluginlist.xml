@@ -356,6 +356,8 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'plugins')
 phelper:set_default('plugin_colour', 'red')
 
+phelper:add_setting("helpoutputtext", {help="true: all help text goes to output, false: opens miniwindow", type="bool", default=verify_bool("false"), sortlev=1, longname="All help goes to output window"})
+
 phelper:add_cmd('list', {func=cmd_list, help="list all plugins", default=true})
 phelper:add_cmd('phelp', {func=cmd_phelp, help="list plugins that are installed with pluginhelper"})
 phelper:add_cmd('reload', {func=cmd_reload, help='reload a plugin, "all" will reload all plugins, "<plugin> all" will reload all plugins that match <plugin>'})
