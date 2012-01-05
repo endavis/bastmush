@@ -50,7 +50,7 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
    name="b"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    group="consider"
@@ -61,7 +61,7 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
    name="c"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    group="consider"
@@ -94,7 +94,7 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
    name="f"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    group="consider"
@@ -106,7 +106,7 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
    name="g"
   >
   </trigger>
-    
+
   <trigger
    enabled="y"
    group="consider"
@@ -117,7 +117,7 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
    name="h"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    group="consider"
@@ -128,7 +128,7 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
    name="i"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    group="consider"
@@ -139,7 +139,7 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
    name="j"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    group="consider"
@@ -150,7 +150,7 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
    name="k"
   >
   </trigger>
-  
+
   <trigger
    enabled="y"
    group="consider"
@@ -161,7 +161,7 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
    name="l"
   >
   </trigger>
- 
+
   <trigger
    enabled="y"
    group="consider"
@@ -172,7 +172,7 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
    name="m"
   >
   </trigger>
-  
+
 </triggers>
 
 <!--  Script  -->
@@ -182,21 +182,21 @@ When you type "consider" (or "consider all") the lines are coloured to make it e
 <![CDATA[
 
 consider_messages = {
-    a = { range = "-19 and below",  colour = "gray", },
+    a = { range = "-20 and below",  colour = "gray", },
     b = { range = "-10 to -19",     colour = "darkgreen", },
-    c = { range = "-6 to -9",       colour = "forestgreen", },
-    d = { range = "-2 to -6",       colour = "chartreuse", },
-    e = { range = "-2 to +2",       colour = "springgreen", },
-    f = { range = "+2 to +3",       colour = "darkgoldenrod", },
-    g = { range = "+3 to +8",       colour = "gold", },
-    h = { range = "+8 to +16",      colour = "tomato", },
-    i = { range = "+16 to +21",     colour = "crimson", },
-    j = { range = "+21 to +32",     colour = "lightpink", },
-    k = { range = "+32 to +41",     colour = "darkmagenta", },
+    c = { range = "-5 to -9",       colour = "forestgreen", },
+    d = { range = "-2 to -4",       colour = "chartreuse", },
+    e = { range = "-1 to +1",       colour = "springgreen", },
+    f = { range = "+2 to +4",       colour = "darkgoldenrod", },
+    g = { range = "+5 to +9",       colour = "gold", },
+    h = { range = "+10 to +15",     colour = "tomato", },
+    i = { range = "+16 to +20",     colour = "crimson", },
+    j = { range = "+21 to +30",     colour = "lightpink", },
+    k = { range = "+31 to +40",     colour = "darkmagenta", },
     l = { range = "+41 to +50",     colour = "darkviolet", },
-    m = { range = "+50 and above",  colour = "magenta", },
+    m = { range = "+51 and above",  colour = "magenta", },
       } -- end of consider_messages
-      
+
 function adapt_consider (name, line, wildcards)
   mob = consider_messages [name]
   if mob then
