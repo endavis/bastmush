@@ -233,6 +233,8 @@ light = {"duration"},
 portal = {"uses"}
 }
 
+invitemcache = {}
+
 function dbbackup(name)
   local day = os.date("%a", GetInfo(304))
   if name == "backuptimeronepm" then
@@ -456,8 +458,10 @@ function invitem( name, line, wildcards)
       end
     end
     db:updateitem(olditem)
+    event_container_change('Inventory')
+  else
+    invitemcache[tstuff.serial] = tstuff
   end
-  event_container_change('Inventory')
 end
 
 function emptyline()
@@ -828,7 +832,7 @@ putpeg = (P("pu") * -P(1)) + (P("put") * -P(1))
 lookpeg = (P("l") * -P(1)) + (P("lo") * -P(1)) + (P("loo") * -P(1)) + (P("look") * -P(1))
 removepeg = (P("re") * -P(1)) + (P("rem") * -P(1)) + (P("remo") * -P(1)) + (P("remov") * -P(1)) + (P("remove") * -P(1))
 identpeg = (P("id") * -P(1)) + (P("ide") * -P(1)) + (P("iden") * -P(1)) + (P("ident") * -P(1)) + (P("identi") * -P(1)) + (P("identif") * -P(1)) + (P("identiy") * -P(1))
-alldotpeg = P("all") * P(".") * P(1)^1
+alldotpeg = (P("all") * P(".") * P(1)^1) + (P("all") * P(".") * -P(1))
 inpeg = (P("i") * -P(1)) + (P("in") * -P(1))
 
 function OnPluginSend (sText)
@@ -893,11 +897,16 @@ function OnPluginSend (sText)
     puttingall = true
   end
 
+  local changed = false
   if getp or putp or lookp or wearp or removep or identp then
     --print('looking for identifiers')
     local ncmd = cmd[1]
     local item = cmd[2]
     local cont = cmd[3]
+    if item == 'all.' then
+      item = 'all.' .. "'" .. tostring(cmd[3]) .. "'"
+      cont = cmd[4]
+    end
     local nitem = db:getitem(item)
     local citem = nil
     if cont then
@@ -905,16 +914,19 @@ function OnPluginSend (sText)
     end
     if item and nitem then
       ncmd = ncmd .. ' ' .. tostring(nitem.serial)
+      changed = true
     elseif item then
       ncmd = ncmd .. ' ' .. fixarg(item)
     end
     if citem then
       ncmd = ncmd .. ' ' .. tostring(citem.serial)
+      changed = true
     else
       if not wearp and not removep then
         if nitem then
           if nitem.containerid ~= 'Worn' and nitem.containerid ~= 'Inventory' then
             ncmd = ncmd .. ' ' .. tostring(nitem.containerid)
+            changed = true
           end
         end
         if cont then
@@ -922,9 +934,13 @@ function OnPluginSend (sText)
         end
       end
     end
-    showoutput('I would send: ' ..  ncmd)
-    --print('I would send: ' ..  ncmd)
-    SendNoEcho(ncmd)
+    if changed then
+      showoutput('I would send changed: ' ..  ncmd)
+      SendNoEcho(ncmd)
+    else
+      showoutput('I would send original: ' ..  cmd.args)
+      SendNoEcho(cmd.args)
+    end
     timer_end('eqDB:OnPluginSend')
     return false
   end
