@@ -135,7 +135,7 @@
     script="opendoor"
     group="huntdoor"
     name="nopass"
-    match="^Magical wards around the door bounce you back\.$"
+    match="^Magical wards around .* bounce you back\.$"
     regexp="y"
       >
   </trigger>
@@ -155,7 +155,7 @@
     script="opendoor"
     group="huntdoor"
     name="nokey"
-    match="^The door is locked and you do not have a key\.$"
+    match="^The .* is locked and you do not have a key\.$"
     regexp="y"
       >
   </trigger>
