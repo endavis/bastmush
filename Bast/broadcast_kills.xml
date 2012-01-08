@@ -270,6 +270,9 @@ require "commas"
 require "pluginhelper"
 require "verify"
 require "ldplugin"
+require "eqdb"
+
+db = EQdb:new{}
 
 function reset_kill()
   local room_id = kill_info.room_id
@@ -412,6 +415,37 @@ function trivmob( name, line, wildcards )
   kill_info.tp = 1
 end
 
+function onwearlocchange(stuff)
+  local stuff = assert (loadstring ('return ' .. stuff or ""))()
+  --tprint(stuff)
+  local wearloc = stuff.wearloc
+  local action = stuff.action
+  local sitem = stuff.item
+  if wearloc ~= 'All' then
+    local item = db:getitem(stuff.item.serial)
+    --print('onwearlocchange')
+    if tonumber(action) == 2 then
+      if sitem.placestr == 'wielded' then
+        phelper:set('weaponsn', item.serial, {silent=true})
+      elseif sitem.placestr == 'second' then
+        phelper:set('secondsn', item.serial, {silent=true})
+      end
+    elseif tonumber(action) == 1 then
+      if sitem.placestr == 'wielded' then
+        phelper:set('weaponsn', '', {silent=true})
+      elseif sitem.placestr == 'second' then
+        phelper:set('secondsn', '', {silent=true})
+      end
+    end
+  elseif wearloc == 'All' then
+    -- get wielded and second from db
+    local witem = db:getitembywearslot(24)
+    local sitem = db:getitembywearslot(25)
+    phelper:set('weaponsn', witem.serial, {silent=true})
+    phelper:set('secondsn', sitem.serial, {silent=true})
+  end
+end
+
 ]]>
 </script>
 
@@ -420,7 +454,10 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
 
-  if id == '3e7dedbe37e44942dd46d264' then
+
+  if id == "aaa56faed92ffc6146964abc" and tonumber(msg) == -2 then
+    CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "wearlocchange", "onwearlocchange")
+  elseif id == '3e7dedbe37e44942dd46d264' then
     if text:find("char.status") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
       tt = assert (loadstring ('return ' .. gmcparg or ""))()
@@ -447,20 +484,6 @@ function OnPluginBroadcast (msg, id, name, text)
     end
   end
 
-  if id == "aaa7dc9ed92ffc6146964abc" then
-    if msg == 2 then
-      loadstring(text)()
-      local eqitem = item
-      if eqitem.placestr == 'wielded' then
-        phelper:set('weaponsn', eqitem.objectid, {silent=true})
-      end
-      if eqitem.placestr == 'second' then
-        phelper:set('secondsn', eqitem.objectid, {silent=true})
-      end
-
-    end
-  end
-
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
@@ -477,12 +500,15 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
-  ldplugin("broadcast_invmon")
+  ldplugin ('eqdb')
+
+  CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "wearlocchange", "onwearlocchange")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
+  CallPlugin("aaa56faed92ffc6146964abc", 'unregisterevent', GetPluginID(), "wearlocchange", "onwearlocchange")
 
   phelper:OnPluginDisable()
 end -- OnPluginDisable
