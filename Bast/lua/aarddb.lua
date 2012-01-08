@@ -147,8 +147,9 @@ end
 
 function Aarddb:lookupareasbyname(area)
   local areas = {}
+  local area = fixsql(area, true)
   if self:open() and self:checkfortable('areas')  then
-    for a in self.db:nrows( "SELECT * FROM areas WHERE name LIKE '%" .. area .. "%'" ) do
+    for a in self.db:nrows( "SELECT * FROM areas WHERE name LIKE " .. area ) do
       table.insert(areas, a)
     end
     self:close()
@@ -158,8 +159,9 @@ end
 
 function Aarddb:lookupareasbykeyword(keyword)
   local areas = {}
+  local keyword = fixsql(keyword, true)
   if self:open() and self:checkfortable('areas')  then
-    for a in self.db:nrows( "SELECT * FROM areas WHERE keyword LIKE '%" .. keyword .. "%'" ) do
+    for a in self.db:nrows( "SELECT * FROM areas WHERE keyword LIKE " .. keyword ) do
       table.insert(areas, a)
     end
     self:close()
