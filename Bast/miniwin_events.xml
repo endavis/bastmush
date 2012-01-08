@@ -75,6 +75,7 @@ eventwin:add_setting("quest_avail_bg_colour", {help="the background colour for w
 eventwin:add_setting("cp_mobdead_colour", {help="the colour for when a mob is dead", type="colour", default=verify_colour("red"), sortlev=1, longname="Colour for a Dead CP mob"})
 eventwin:add_setting("cp_notlevel_colour", {help="the colour for when this cp is no longer from this level", type="colour", default=verify_colour("cyan"), sortlev=1, longname="Colour for when the CP was not taken at the current level"})
 eventwin:add_setting("time_colour", {help="the colour for the time", type="colour", default=verify_colour(0xD670DA), sortlev=1, longname="Time Colour"})
+eventwin:add_setting("numbermobs", {help="put numbers in front of mobs", type="bool", default=false, sortlev=1, longname="Number the moblist for cps and gqs"})
 
 
 function build_quest(showflag)
@@ -145,7 +146,11 @@ function show_cp_text ()
   -- list of mobs
   for i, v in ipairs (cpmobs) do
     style = {}
-    style.text = string.format("%-30s %s", v.name, " (" .. v.room .. ")")
+    if eventwin.numbermobs then
+      style.text = string.format("%2d) %-30s %s", i, v.name, " (" .. v.room .. ")")
+    else
+      style.text = string.format("%-30s %s", v.name, " (" .. v.room .. ")")
+    end
     if verify_bool(v.mobdead) then
       style.textcolour = "cp_mobdead_colour"
     end
@@ -171,21 +176,21 @@ function show_cp_text ()
 
   end
   table.insert (texttable, tstyle)
-  
+
   tstyle = {}
   tstyle.backcolour = "footer_bg_colour"
   style = {}
   style.text = ''
-  
+
   if char and char.status then
     style.text = 'Level ' .. tostring(char.status.level) .. ': '
   end
   if verify_bool(cptimer.cantake) then
     style.text = style.text .. "You can take a cp"
   else
-    style.text = style.text .. "You may not take a cp"  
+    style.text = style.text .. "You may not take a cp"
   end
-  table.insert(tstyle, style)  
+  table.insert(tstyle, style)
   table.insert(texttable, tstyle)
 
   eventwin:addtab('CP', texttable, header)
@@ -214,7 +219,11 @@ function build_gq ()
   for i, v in ipairs (gqmobs) do
     mobcount = mobcount + v.num
     style = {}
-    style.text = string.format("%3s: %-30s %s", v.num, v.name, " (" .. v.room .. ")")
+    if eventwin.numbermobs then
+      style.text = string.format("%2d) %3s: %-30s %s", i, v.num, v.name, " (" .. v.room .. ")")
+    else
+      style.text = string.format("%3s: %-30s %s", v.num, v.name, " (" .. v.room .. ")")
+    end
     style.len = #style.text
     style.style = 0
     table.insert (texttable, {style})
