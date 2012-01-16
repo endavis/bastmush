@@ -159,6 +159,26 @@
    sequence="10"
   >
   </trigger>
+  <trigger
+   enabled="n"
+   match="+-----------------------------------------------------------------+"
+   script="identify"
+   name="identifyon"
+   omit_from_output="n"
+   group="identify"
+   sequence="10"
+  >
+  </trigger>
+  <trigger
+   enabled="n"
+   match="*"
+   script="identify_redirect"
+   name="multi_line_identify"
+   omit_from_output="n"
+   group="identify_redirect"
+   sequence="10"
+  >
+  </trigger>
 </triggers>
 
 <timers>
@@ -197,7 +217,6 @@ require "commas"
 require "pluginhelper"
 require "verify"
 require "aardutils"
-require "chardb"
 require 'colours'
 require "eqdb"
 
@@ -206,6 +225,8 @@ db = EQdb:new{}
 eqdata = {}
 invdata = {}
 waiting = {}
+identdata = {}
+lastidentkey = ''
 container = ""
 place = 0
 initdb = false
@@ -261,6 +282,17 @@ function showoutput(stuff)
   end
 end
 
+function checkvaliditem(item)
+  if item.serial == "" or item.serial == nil or
+     item.level == "" or item.level == nil or
+     item.type == "" or item.type == nil or
+     item.name == "" or item.name == nil or
+     item.cname == "" or item.cname == nil then
+       return false
+  end
+  return true
+end
+
 function getdata(type)
   if waiting[type] then
     return
@@ -300,6 +332,56 @@ function event_wearloc_change(wearloc,action,item)
   timer_end('event_wearloc_change')
 end
 
+function togglehideoutput(flag)
+  --print('toggling hide output', flag)
+  for i,v in ipairs({"identifyon", "multi_line_identify"}) do
+    SetTriggerOption(v, "omit_from_output", flag);
+  end
+end
+
+function identify(name, line, wildcards)
+  if name == 'identifyon' then
+    --print('enabling identify_redirect')
+    phelper:enabletriggroup('identify_redirect', true)
+    identdata = {}
+    lastidentkey = ''
+  end
+end
+
+function identify_redirect(name, line, wildcards)
+  if line == '' then
+    --print('disabling identify_redirect')
+    phelper:enabletriggroup('identify_redirect', false)
+    --print('disabling identify')
+    phelper:enabletriggroup('identify', false)
+    togglehideoutput("n")
+    db:updateitemident(identdata)
+    invdetails = db:getitemdetails(invdetails.serial)
+    phelper:processevent('itemchange', invdetails)
+    return
+  end
+  if line ~= "+-----------------------------------------------------------------+" then
+    line = line:gsub("^| ", "")
+    line = line:gsub(" |$", "")
+    local tstuff = utils.split(line, ':')
+    if trim(tstuff[1]) == 'Material' or trim(tstuff[1]) == 'Keywords' or trim(tstuff[1]) == 'Found at'
+       or trim(tstuff[1]) == 'Id' or trim(tstuff[1]) == 'Affect Mods' or (trim(tstuff[1]) == '' and lastidentkey ~= '') then
+      local tkey = trim(tstuff[1]:lower())
+      local tkey = tkey:gsub(" ", "")
+      local tvalue = trim(tstuff[2])
+      if tkey ~= '' then
+        lastidentkey = tkey
+        identdata[tkey] = tvalue
+      else
+        identdata[lastidentkey] = identdata[lastidentkey] .. ' ' .. tostring(tvalue)
+      end
+    else
+      lastidentkey = ''
+    end
+  end
+  --if
+end
+
 function dataparse(line, layoutname)
   local tlist = utils.split(line, ',')
   local wearloc = tlist[7]
@@ -336,7 +418,12 @@ function eqdata_redirect (name, line, wildcards, styles)
     titem.containerid = container
     titem.place = -2
     titem.name = strip_colours(titem.cname)
-    eqdata[titem.serial] = titem
+    if checkvaliditem(titem) then
+      eqdata[titem.serial] = titem
+    else
+      ColourNote("red", "", "Got a bad item, rerequesting inventory data for " .. container)
+      DoAfterSpecial(1, 'getdata("' .. container .. '")', 12)
+    end
   end
 
 end
@@ -372,7 +459,12 @@ function invdata_redirect (name, line, wildcards, styles)
   titem.containerid = container
   titem.name = strip_colours(titem.cname)
   titem.place = place
-  invdata[titem.serial] = titem
+  if checkvaliditem(titem) then
+    invdata[titem.serial] = titem
+  else
+    ColourNote("red", "", "Got a bad item, rerequesting inventory data for " .. container)
+    DoAfterSpecial(1, 'getdata("' .. container .. '")', 12)
+  end
 end
 
 function invdetails_redirect (name, line, wildcards, styles)
@@ -508,16 +600,19 @@ end
 function getitemdetails(id)
   --print('getitemdetails', type(id), id)
   local titem = db:getitemdetails(id)
-  if titem then
+  if titem and titem.keywords ~= nil and titem.keywords  ~= "" then
     phelper:processevent('itemchange', titem)
   else
     local titem2 = db:getitem(id)
     if titem2 then
-      if titem2.containerid == 'Inventory' or titem2.containerid == 'Worn' then
+      togglehideoutput("y")
+      if titem2.containerid == 'Inventory' then
+        Execute('identify ' .. tostring(id))
+      elseif titem2.containerid == 'Worn' then
         sendcmd('invdetails ' .. tostring(id))
       else
         putobjectininv(titem2)
-        sendcmd('invdetails ' .. tostring(id))
+        Execute('identify ' .. tostring(id))
         putobjectincontainer(titem2, titem2.containerid)
       end
     end
@@ -725,7 +820,7 @@ end
 function toggleoutput(tflag)
   local trigstoupdate = {"invmon", "invitem", "start_invdetails", "multi_line_invdetails", "start_eqdata",
                     "multi_line_eqdata" , "start_invdata", "multi_line_invdata", "badinvdata1",
-                    "badinvdata2", "badinvdata3"}
+                    "badinvdata2", "badinvdata3", "emptyline"}
   for i,v in ipairs(trigstoupdate) do
     if tflag then
       SetTriggerOption(v, "omit_from_output", "n");
@@ -831,7 +926,7 @@ getpeg = (P("g") * -P(1)) + (P("ge") * -P(1)) + (P("get") * -P(1))
 putpeg = (P("pu") * -P(1)) + (P("put") * -P(1))
 lookpeg = (P("l") * -P(1)) + (P("lo") * -P(1)) + (P("loo") * -P(1)) + (P("look") * -P(1))
 removepeg = (P("re") * -P(1)) + (P("rem") * -P(1)) + (P("remo") * -P(1)) + (P("remov") * -P(1)) + (P("remove") * -P(1))
-identpeg = (P("id") * -P(1)) + (P("ide") * -P(1)) + (P("iden") * -P(1)) + (P("ident") * -P(1)) + (P("identi") * -P(1)) + (P("identif") * -P(1)) + (P("identiy") * -P(1))
+identpeg = (P("id") * -P(1)) + (P("ide") * -P(1)) + (P("iden") * -P(1)) + (P("ident") * -P(1)) + (P("identi") * -P(1)) + (P("identif") * -P(1)) + (P("identify") * -P(1))
 alldotpeg = (P("all") * P(".") * P(1)^1) + (P("all") * P(".") * -P(1))
 inpeg = (P("i") * -P(1)) + (P("in") * -P(1))
 
@@ -915,6 +1010,11 @@ function OnPluginSend (sText)
     if item and nitem then
       ncmd = ncmd .. ' ' .. tostring(nitem.serial)
       changed = true
+      if identp then
+        SendNoEcho('invdetails ' .. tostring(nitem.serial))
+        --print('enabling identify')
+        phelper:enabletriggroup('identify', true)
+      end
     elseif item then
       ncmd = ncmd .. ' ' .. fixarg(item)
     end
