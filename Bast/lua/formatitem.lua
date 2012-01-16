@@ -277,6 +277,16 @@ function formatitem(item)
     table.insert(ltext, formatsingleline('Found at', '@G', "@M" .. item.foundat .. "@w"))
   end
 
+  if item.affectmod then
+    local amods = strjoin(', ', item.affectmod)
+    local keyws = wrap(amods, 49)
+    local header = 'Affect Mods'
+    for i,v in ipairs(keyws) do
+      table.insert(ltext, formatsingleline(header, '@G', v))
+      header = ''
+    end
+  end
+
   if item.container then
     table.insert(ltext, divider)
     table.insert(ltext, formatspecialline('Capacity', '@c', item.container.capacity, 'Heaviest Item', item.container.heaviestitem))
