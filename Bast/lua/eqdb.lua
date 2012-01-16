@@ -620,7 +620,6 @@ function EQdb:additemdetail(item)
     assert (self.db:exec("BEGIN TRANSACTION"))
     if titem then
       local stmtupd = self.db:prepare[[ UPDATE itemdetails SET
-                                                  keywords = :keywords,
                                                   cname = :cname,
                                                   name = :name,
                                                   level = :level,
@@ -628,10 +627,8 @@ function EQdb:additemdetail(item)
                                                   worth = :worth,
                                                   weight = :weight,
                                                   wearable = :wearable,
-                                                  material = :material,
                                                   score = :score,
                                                   flags = :flags,
-                                                  foundat = :foundat,
                                                   fromclan = :fromclan,
                                                   owner = :owner
                                                   WHERE serial = :serial;
@@ -658,7 +655,8 @@ function EQdb:additemdetail(item)
                                            :flags,
                                            :foundat,
                                            :fromclan,
-                                           :owner); ]]
+                                           :owner,
+                                           :leadsto); ]]
 
       stmt:bind_names(item)
       local stepret = stmt:step()
