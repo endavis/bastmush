@@ -383,7 +383,7 @@ function build_level_window()
       for i,v in tableSort(lastitems, nil, nil, true) do
         local level = convertlevel(v.level)
         local length = v.finishtime - v.starttime
-        local days, hours, mins, secs = SecondsToDHMS(length)
+        local years, days, hours, mins, secs = SecondsToDHMS(length)
 
         local lstyle = {}
         local style = {}
@@ -738,7 +738,7 @@ function build_quest_window()
         local aname = tname[#tname]
         local level = convertlevel(v.level)
         local length = v.finishtime - v.starttime
-        local days, hours, mins, secs = SecondsToDHMS(length)
+        local years, days, hours, mins, secs = SecondsToDHMS(length)
 
         local style = {}
         style.text = string.format("%2d ", v.qp or 0)
@@ -1042,10 +1042,10 @@ function build_cp_window()
         local level  = convertlevel(v.level)
         local levelstr = 'T' .. tostring(level.tier) .. ' R' .. tostring(level.remort) .. ' L' .. tostring(level.level)
         local length = 'Unknown'
-        local days, hours, mins, secs = -1, -1, -1, -1
+        local years, days, hours, mins, secs = -1, -1, -1, -1, -1
         if v.starttime then
           length = v.finishtime - v.starttime
-          days, hours, mins, secs = SecondsToDHMS(length)
+          years, days, hours, mins, secs = SecondsToDHMS(length)
         end
 
         local style = {}
@@ -1445,7 +1445,7 @@ function build_gq_window()
         local level  = convertlevel(v.level)
         local levelstr = 'T' .. tostring(level.tier) .. ' R' .. tostring(level.remort) .. ' L' .. tostring(level.level)
         local length = v.finishtime - v.starttime
-        local days, hours, mins, secs = SecondsToDHMS(length)
+        local years, days, hours, mins, secs = SecondsToDHMS(length)
 
         local style = {}
         style.text = string.format("%-10s ", levelstr)
