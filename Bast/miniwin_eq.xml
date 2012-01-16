@@ -950,7 +950,7 @@ function onitemchange(item)
   --print('got item', titem.serial)
   --tprint(detailswaiting)
   --tprint(titem)
-  if detailswaiting[titem.serial] or eqwin:hastab(titem.serial) then
+  if detailswaiting[titem.serial] or idwin:hastab(titem.serial) then
     detailswaiting[titem.serial] = nil
     builditem(titem)
   end
