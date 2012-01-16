@@ -142,7 +142,11 @@ function formatpup()
       end
       if starttime > 0 and finishtime > 0 then
         length = finishtime - starttime
-        days, hours, mins, secs = SecondsToDHMS(length)
+        local years, days, hours, mins, secs = SecondsToDHMS(length)
+        if years > 0 then
+          table.insert( tmsg, colourwrap(string.format( "%02d", years ), 'stat') )
+          table.insert( tmsg, colourwrap("y:") )
+        end
         if days > 0 then
           table.insert( tmsg, colourwrap(string.format( "%02d", days ), 'stat') )
           table.insert( tmsg, colourwrap("d:") )
@@ -241,7 +245,11 @@ function formatlevel()
         end
         if starttime > 0 and finishtime > 0 then
           length = finishtime - starttime
-          days, hours, mins, secs = SecondsToDHMS(length)
+          local years, days, hours, mins, secs = SecondsToDHMS(length)
+          if years > 0 then
+            table.insert( tmsg, colourwrap(string.format( "%02d", years ), 'stat') )
+            table.insert( tmsg, colourwrap("y:") )
+          end
           if days > 0 then
             table.insert( tmsg, colourwrap(string.format( "%02d", days ), 'stat') )
             table.insert( tmsg, colourwrap("d:") )
@@ -288,7 +296,7 @@ function formatquest()
 
   local tmsg = { colourwrap("Quest finished for ")}
   length = quest_stuff.finishtime - quest_stuff.starttime
-  days, hours, mins, secs = SecondsToDHMS(length)
+  local years, days, hours, mins, secs = SecondsToDHMS(length)
   table.insert(tmsg, colourwrap(tostring(quest_stuff.qp), 'stat'))
   if quest_stuff.lucky and tonumber(quest_stuff.lucky) > 0 then
     table.insert(tmsg, colourwrap('+'))
@@ -372,7 +380,7 @@ function formatcp()
     end
     if cp_stuff.finishtime and cp_stuff.starttime then
       length = cp_stuff.finishtime - cp_stuff.starttime
-      days, hours, mins, secs = SecondsToDHMS(length)
+      local years, days, hours, mins, secs = SecondsToDHMS(length)
       tmsg[#tmsg] = tmsg[#tmsg] .. colourwrap(".  It took ")
       table.insert( tmsg, colourwrap(string.format( "%02d", days ), 'stat') )
       table.insert( tmsg, colourwrap("d:") )
