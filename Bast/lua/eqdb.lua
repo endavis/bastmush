@@ -140,6 +140,15 @@ function EQdb:checkitemdetailstable()
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]])
     end
+    if not self:checkfortable('affectmod') then
+      self.db:exec([[
+        CREATE TABLE affectmod(
+        aid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        type TEXT,
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+      )]])
+    end
     if not self:checkfortable('weapon') then
       self.db:exec([[
         CREATE TABLE weapon(
@@ -291,6 +300,12 @@ function EQdb:getitemdetails(serial)
           titem['resistmod'] = {}
         end
         titem['resistmod'][a.type] = a.amount
+      end
+      for a in self.db:nrows("SELECT * FROM affectmod WHERE serial = " .. tostring(serial)) do
+        if not titem['affectmod'] then
+          titem['affectmod'] = {}
+        end
+        table.insert(titem['affectmod'], a.type)
       end
       for a in self.db:nrows("SELECT * FROM spells WHERE serial = " .. tostring(serial)) do
         titem['spells'] = a
@@ -682,6 +697,57 @@ function EQdb:additemdetail(item)
   timer_end('EQdb:additemdetail')
 end
 
+function EQdb:addaffectmods(serial, affectmods)
+  timer_start('EQdb:addresists')
+  if serial and next(affectmods) then
+    self.db:exec("DELETE from affectmod where serial = " .. tostring(serial))
+    local stmt = self.db:prepare[[
+      INSERT into affectmod VALUES (
+        NULL,
+        :serial,
+        :type);]]
+    for i,v in pairs(affectmods) do
+      local affectm = {}
+      affectm['serial'] = serial
+      affectm['type'] = trim(v)
+      stmt:bind_names( affectm )
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+  end
+  timer_end('EQdb:addresists')
+end
+
+function EQdb:updateitemident(item)
+  self:checkitemdetailstable()
+  if self:open('additemdetail') then
+    local titem = self:getitemdetails(tonumber(item.id))
+    local tchanges = self.db:total_changes()
+    if titem then
+      assert (self.db:exec("BEGIN TRANSACTION"))
+      local stmtupd = self.db:prepare[[ UPDATE itemdetails SET
+                                                  keywords = :keywords,
+                                                  material = :material,
+                                                  foundat = :foundat
+                                                  WHERE serial = :id;
+                                                            ]]
+
+      stmtupd:bind_names( item )
+      stmtupd:step()
+      stmtupd:reset()
+      stmtupd:finalize()
+      if item.affectmods then
+        local amods = utils.split(item.affectmods, ',')
+        self:addaffectmods(item.id, amods)
+      end
+      assert (self.db:exec("COMMIT"))
+    end
+    phelper:mdebug('changes:', self.db:total_changes() - tchanges)
+    self:close()
+  end
+end
+
 function EQdb:additems(items)
   timer_start('EQdb:additems')
   self:checkitemstable()
@@ -889,12 +955,13 @@ function EQdb:getcontainers()
     for a in self.db:nrows("SELECT * FROM items WHERE type = 11") do
       table.insert(containers, a)
     end
-    self:close('updateitemlocation')
+    self:close('getcontainers')
   end
   timer_end('EQdb:getcontainers')
   return containers
 end
 
+-- Identifier stuff
 function EQdb:addidentifier(itemsn, identifier)
   timer_start('EQdb:addidentifier')
   --tprint(item)
@@ -995,6 +1062,7 @@ function EQdb:cleandb()
   end
 end
 
+--- version updates
 function EQdb:updatenamecolumn()
   if self:checkfortable('items') then
     if self:open('updatenamecolumn') then
@@ -1098,6 +1166,12 @@ function EQdb:updatenamecolumn()
   end
 end
 
+-- eqset stuff
+function EQdb:addeqset(item, eqsetname, wearloc)
+
+end
+
+-- helper functions
 function putobjectininv(item, noworn)
   local teqdb = EQdb:new{}
   if type(item) ~= 'table' then
