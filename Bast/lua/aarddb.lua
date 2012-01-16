@@ -157,6 +157,18 @@ function Aarddb:lookupareasbyname(area)
   return areas
 end
 
+function Aarddb:lookupareasbyexactname(area)
+  local areas = {}
+  local area = fixsql(area)
+  if self:open() and self:checkfortable('areas')  then
+    for a in self.db:nrows( "SELECT * FROM areas WHERE LOWER(name) = LOWER(" .. area ..  ")") do
+      table.insert(areas, a)
+    end
+    self:close()
+  end
+  return areas
+end
+
 function Aarddb:lookupareasbykeyword(keyword)
   local areas = {}
   local keyword = fixsql(keyword, true)
