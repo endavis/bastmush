@@ -222,7 +222,7 @@ function mouseleft(item, result)
   elseif result:match("Identify") then
     putobjectininv(item)
     SendNoEcho('identify ' .. item.serial)
-    SendNoEcho('invdetails ' .. item.serial)
+    --SendNoEcho('invdetails ' .. item.serial)
     putobjectincontainer(item, item.containerid)
   elseif result:match("Remove") then
     SendNoEcho('remove ' .. item.serial)
