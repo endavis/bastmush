@@ -118,6 +118,23 @@ function cmd_eqprintitem(cmddict)
   end
 end
 
+function cmd_eqcomp(cmddict)
+  if cmddict[1] then
+    local tstyle = string.format('%-15s', 'Name') .. string.format(' %-5s ', 'Score') .. formatstatsheader()
+    TextToColourTell(tstyle)
+    ColourNote("", "", "")
+    ColourNote("", "", string.rep('-', 89))
+    for i,v in ipairs(cmddict) do
+      local titem = eqdb:getitemdetails(v)
+      local tstyle = string.format('%-15s', string.sub(titem.name, 1, 15)) .. string.format(' @C%-5s@w ', titem.score)
+      tstyle = tstyle .. formatstats(titem.statmod)
+      TextToColourTell(tstyle)
+      ColourNote("", "", "")
+    end
+  end
+  ColourNote("", "", "")
+end
+
 function cmd_translate(cmddict)
   --print('eqlookup')
   --tprint(cmddict)
@@ -200,6 +217,7 @@ phelper:set_default('cmd', 'eqlu')
 
 phelper:add_cmd('lu', {func=cmd_eqlookup, help="lookup stuff in the db", default=true})
 phelper:add_cmd('getitem', {func=cmd_eqprintitem, help="print info on item with id"})
+phelper:add_cmd('comp', {func=cmd_eqcomp, help="compare items,args = list of serials"})
 phelper:add_cmd('translate', {func=cmd_translate, help="show what strings mean for certain types of flags"})
 phelper:add_cmd('close', {func=cmd_close, help="close the db"})
 
