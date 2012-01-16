@@ -190,16 +190,44 @@ function formatheader(name1, name2)
  ColourNote(RGBColourToName(var.plugin_colour), "black",   "____________________________________________________")
 end
 
-function formatitem(itemname, value1, value2)
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-20s" , itemname),
-             RGBColourToName(var.plugin_colour), "black", string.format("%-10d" , value1),
-             RGBColourToName(var.plugin_colour), "black", string.format("%-10d", value2),
-             RGBColourToName(var.plugin_colour), "black", string.format("%-10d", math.abs(value1 - value2)))
+function formatitem(itemname, value1, value2, value3)
+  ColourTell(RGBColourToName(var.plugin_colour), "black", string.format("%-20s" , itemname),
+             RGBColourToName(var.plugin_colour), "black", string.format("%-10s" , tostring(value1)),
+             RGBColourToName(var.plugin_colour), "black", string.format("%-10s", tostring(value2)))
+
+  if value3 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-10s", tostring(value3)))
+  else
+    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-10d", math.abs(value1 - value2)))
+  end
 end
 
 function formatCompMile(milestone1, milestone2)
   phelper:plugin_header("Comparing " .. milestone1.milestone .. " to " .. milestone2.milestone)
   formatheader(milestone1.milestone, milestone2.milestone)
+  local datemile1 = os.date("%x", milestone1.time)
+  local timemile1 = os.date("%X", milestone1.time)
+  local timesec1 = milestone1.time
+  if milestone1.time < 1 then
+    datemile1 = 'Now'
+    timemile1 = ''
+    timesec1 = GetInfo(304)
+  end
+  local datemile2 = os.date("%x", milestone2.time)
+  local timemile2 = os.date("%X", milestone2.time)
+  local timesec2 = milestone2.time
+  if milestone2.time < 1 then
+    datemile2 = 'Now'
+    timemile2 = ''
+    timesec2 = GetInfo(304)
+  end
+  local datediff = timesec1 - timesec2
+  if timesec2 > timesec1 then
+    datediff = timesec2 - timesec1
+  end
+  local timed = format_time(datediff)
+  formatitem('Date', datemile1, datemile2, timed)
+  formatitem('Time', timemile1, timemile2, '')
   for h,item in pairs(fieldstocomp) do
     formatitem(item, milestone1[item] or 0, milestone2[item] or 0)
   end
