@@ -277,6 +277,10 @@ function formatitem(item)
     table.insert(ltext, formatsingleline('Found at', '@G', "@M" .. item.foundat .. "@w"))
   end
 
+  if item.leadsto ~= '' and item.leadsto ~= nil then
+    table.insert(ltext, formatsingleline('Leads to', '@G', "@M" .. item.leadsto .. "@w"))
+  end
+
   if item.affectmod then
     local amods = strjoin(', ', item.affectmod)
     local keyws = wrap(amods, 49)

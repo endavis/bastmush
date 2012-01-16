@@ -46,8 +46,9 @@ tableids = {
 function EQdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "\\eq.db"
-  self.version = 2
+  self.version = 3
   self.versionfuncs[2] = self.updatenamecolumn
+  self.versionfuncs[3] = self.addleadsto
   self:checkversion()
 end
 
@@ -117,6 +118,7 @@ function EQdb:checkitemdetailstable()
           foundat TEXT,
           fromclan TEXT,
           owner TEXT,
+          leadsto TEXT,
           UNIQUE(serial),
           PRIMARY KEY(serial));)]])
     end
@@ -729,7 +731,8 @@ function EQdb:updateitemident(item)
       local stmtupd = self.db:prepare[[ UPDATE itemdetails SET
                                                   keywords = :keywords,
                                                   material = :material,
-                                                  foundat = :foundat
+                                                  foundat = :foundat,
+                                                  leadsto = :leadsto
                                                   WHERE serial = :id;
                                                             ]]
 
@@ -1163,6 +1166,18 @@ function EQdb:updatenamecolumn()
         self:close('updatenamecolumn3')
       end
     end
+  end
+end
+
+function EQdb:addleadsto()
+  if not self:checkfortable('itemdetails') then
+    return
+  end
+  if self:open('addleadsto') then
+    self.db:exec([[ALTER TABLE itemdetails ADD COLUMN leadsto TEXT;]])
+    --self.db:exec([[UPDATE itemdetails SET blessingtrains = 0;]])
+    --assert (self.db:exec("BEGIN TRANSACTION"))
+    self:close('addleadsto', true)
   end
 end
 

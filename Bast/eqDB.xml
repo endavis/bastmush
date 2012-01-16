@@ -365,7 +365,8 @@ function identify_redirect(name, line, wildcards)
     line = line:gsub(" |$", "")
     local tstuff = utils.split(line, ':')
     if trim(tstuff[1]) == 'Material' or trim(tstuff[1]) == 'Keywords' or trim(tstuff[1]) == 'Found at'
-       or trim(tstuff[1]) == 'Id' or trim(tstuff[1]) == 'Affect Mods' or (trim(tstuff[1]) == '' and lastidentkey ~= '') then
+       or trim(tstuff[1]) == 'Id' or trim(tstuff[1]) == 'Affect Mods' or trim(tstuff[1]) == 'Leads to'
+       or (trim(tstuff[1]) == '' and lastidentkey ~= '') then
       local tkey = trim(tstuff[1]:lower())
       local tkey = tkey:gsub(" ", "")
       local tvalue = trim(tstuff[2])
