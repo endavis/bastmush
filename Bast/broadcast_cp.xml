@@ -515,7 +515,7 @@ function build_time()
   local time_to_go = when_required - os.time ()
   timer['secs'] = time_to_go
   timer['text'] = convert_time(time_to_go)
-  local days, hours, mins, seconds = SecondsToDHMS(time_to_go)
+  local years, days, hours, mins, seconds = SecondsToDHMS(time_to_go)
   timer['days'] = days
   timer['hours'] = hours
   timer['mins'] = mins
