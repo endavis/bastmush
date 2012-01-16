@@ -875,18 +875,24 @@ function SecondsToDHMS(sSeconds)
   if nSeconds == 0 then
     return 0, 0, 0, 0
   else
+    local nYears = math.floor(nSeconds/(3600 * 24 * 365))
+    nSeconds = nSeconds - (nYears * 365 * 24 * 60 * 60)
     local nDays = math.floor(nSeconds/(3600 * 24))
     local nHours = math.floor(nSeconds/3600 - (nDays * 24))
     local nMins = math.floor(nSeconds/60 - (nHours * 60) - (nDays * 24 * 60))
     local nSecs = sSeconds % 60
-    return nDays, nHours, nMins, nSecs
+    return nYears, nDays, nHours, nMins, nSecs
   end
 end
 
 function format_time(length)
   -- returns time in the format 10d:3h:4m:3s
   local tmsg = {}
-  local days, hours, mins, secs = SecondsToDHMS(length)
+  local years, days, hours, mins, secs = SecondsToDHMS(length)
+  if years > 0 then
+    table.insert( tmsg, string.format( "%d", years ) )
+    table.insert( tmsg, "y:" )
+  end
   if days > 0 then
     table.insert( tmsg, string.format( "%02d", days ) )
     table.insert( tmsg, "d:" )
@@ -911,9 +917,17 @@ function convert_ticks(ticks)
     return tout
   end
   local seconds = (ticks / 2) * 60
-  tout.days, tout.hours, tout.mins, tout.secs = SecondsToDHMS(seconds)
+  tout.years, tout.days, tout.hours, tout.mins, tout.secs = SecondsToDHMS(seconds)
   local tstring = {}
-  if tout.days ~= 0 then
+  if tout.years ~= 0 then
+    table.insert(tstring, string.format('%sy', tostring(tout.years)))
+    table.insert(tstring, string.format('%sd', tostring(tout.days)))
+    table.insert(tstring, string.format('%sh', tostring(tout.hours)))
+    table.insert(tstring, string.format('%sm', tostring(tout.mins)))
+    if tout.secs ~= 0 then
+      table.insert(tstring, string.format('%ss', tostring(tout.secs)))
+    end
+  elseif tout.days ~= 0 then
     table.insert(tstring, string.format('%sd', tostring(tout.days)))
     table.insert(tstring, string.format('%sh', tostring(tout.hours)))
     table.insert(tstring, string.format('%sm', tostring(tout.mins)))
