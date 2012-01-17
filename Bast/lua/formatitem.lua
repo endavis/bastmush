@@ -281,6 +281,19 @@ function formatitem(item)
     table.insert(ltext, formatsingleline('Leads to', '@G', "@M" .. item.leadsto .. "@w"))
   end
 
+  if item.note then
+    table.insert(ltext, divider)
+
+    for i,v in pairs(item.note) do
+      local notews = wrap(v, 49)
+      local header = 'Note'
+      for i,v in ipairs(notews) do
+        table.insert(ltext, formatsingleline(header, '@W', v, '@w'))
+        header = ''
+      end
+    end
+  end
+
   if item.affectmod then
     local amods = strjoin(', ', item.affectmod)
     local keyws = wrap(amods, 49)
@@ -393,19 +406,6 @@ function formatitem(item)
     local header = 'Heal Rate'
     table.insert(ltext, formatspecialline(header, '@c',
                                 string.format("Health [@Y%d@w]    Magic [@Y%d@w]", tonumber(item.furniture.hpregen), tonumber(item.furniture.manaregen))))
-  end
-
-  if item.note then
-    table.insert(ltext, divider)
-
-    for i,v in pairs(item.note) do
-      local notews = wrap(v, 49)
-      local header = 'Note'
-      for i,v in ipairs(notews) do
-        table.insert(ltext, formatsingleline(header, '@W', v, '@w'))
-        header = ''
-      end
-    end
   end
 
   table.insert(ltext, divider)
