@@ -348,39 +348,55 @@ function identify(name, line, wildcards)
   end
 end
 
-function identify_redirect(name, line, wildcards)
+function identify_redirect(name, line, wildcards, styles)
   if line == '' then
     --print('disabling identify_redirect')
     phelper:enabletriggroup('identify_redirect', false)
     --print('disabling identify')
     phelper:enabletriggroup('identify', false)
     togglehideoutput("n")
+    if identdata['note'] then
+      local notel = identdata['note']
+      identdata['note'] = {}
+      table.insert(identdata['note'], strjoin(" ", notel))
+    end
     db:updateitemident(identdata)
     invdetails = db:getitemdetails(invdetails.serial)
     phelper:processevent('itemchange', invdetails)
+    phelper:processevent('oniddone')
     return
   end
   if line ~= "+-----------------------------------------------------------------+" then
     line = line:gsub("^| ", "")
     line = line:gsub(" |$", "")
-    local tstuff = utils.split(line, ':')
-    if trim(tstuff[1]) == 'Material' or trim(tstuff[1]) == 'Keywords' or trim(tstuff[1]) == 'Found at'
-       or trim(tstuff[1]) == 'Id' or trim(tstuff[1]) == 'Affect Mods' or trim(tstuff[1]) == 'Leads to'
-       or (trim(tstuff[1]) == '' and lastidentkey ~= '') then
+    if line:find(':') then
+      local tstuff = utils.split(line, ':')
       local tkey = trim(tstuff[1]:lower())
       local tkey = tkey:gsub(" ", "")
       local tvalue = trim(tstuff[2])
       if tkey ~= '' then
         lastidentkey = tkey
         identdata[tkey] = tvalue
-      else
+      elseif lastidentkey ~= '' then
         identdata[lastidentkey] = identdata[lastidentkey] .. ' ' .. tostring(tvalue)
+      else
+        print('found unknown line')
+        print(line)
       end
     else
-      lastidentkey = ''
+      if not identdata['note'] then
+        identdata['note'] = {}
+      end
+      styles[1].text = styles[1].text:gsub("^| ", "")
+      styles[1].text = trim(styles[1].text)
+      styles[#styles].text = styles[#styles].text:gsub(" |$", "")
+      styles[#styles].text = trim(styles[#styles].text)
+      --table.remove(styles,#styles)
+      table.insert(identdata['note'], trim(StylesToColoursOneLine(styles):gsub("^@w", "")))
+      --print('found unknown line')
+      --print(line)
     end
   end
-  --if
 end
 
 function dataparse(line, layoutname)
@@ -598,10 +614,10 @@ function getcontainers()
  end
 end
 
-function getitemdetails(id)
+function getitemdetails(id, override)
   --print('getitemdetails', type(id), id)
   local titem = db:getitemdetails(id)
-  if titem and titem.keywords ~= nil and titem.keywords  ~= "" then
+  if titem and not override and titem.keywords ~= nil and titem.keywords  ~= "" then
     phelper:processevent('itemchange', titem)
   else
     local titem2 = db:getitem(id)
@@ -737,6 +753,27 @@ function cmd_listid(cmddict)
     print_id(v)
   end
   ColourNote("", "", "")
+end
+
+function idinv_oniddone()
+ if next(getiditems) then
+   local nextitem = getiditems[1]
+   table.remove(getiditems, 1)
+   getitemdetails(nextitem.serial, true)
+ else
+  phelper:plugin_header('Finished identify of items in inventory')
+  phelper:unregisterevent('oniddone', nil, idinv_oniddone)
+ end
+end
+
+function cmd_idinv(cmddict)
+  phelper:plugin_header('Starting identify of items in inventory')
+  getiditems = db:getcontainercontents('Inventory')
+  --register with oniddone
+  phelper:registerevent('oniddone', nil, idinv_oniddone)
+  local firstitem = getiditems[1]
+  table.remove(getiditems, 1)
+  getitemdetails(firstitem.serial, true)
 end
 
 function checkaction(action, item, afterwait)
@@ -1066,7 +1103,7 @@ phelper:add_cmd('listid', {func=cmd_listid, help="list items with identifiers"})
 phelper:add_cmd('lget', {func=cmd_lget, help="get items from container between level1 and level2"})
 phelper:add_cmd('lput', {func=cmd_lput, help="put items in container between level1 and level2"})
 phelper:add_cmd('clean', {func=cmd_clean, help="clean the db of stale items"})
-
+phelper:add_cmd('idinv', {func=cmd_idinv, help="identify all items in inventory"})
 
 phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 
