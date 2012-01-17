@@ -776,6 +776,23 @@ function cmd_idinv(cmddict)
   getitemdetails(firstitem.serial, true)
 end
 
+function cmd_addnote(cmddict)
+  if #cmddict >= 2 then
+    local item = cmddict[1]
+    local note = ""
+    table.remove(cmddict, 1)
+    if #cmddict == 1 then
+      note = note .. cmddict[1]
+    else
+      note = note .. strjoin(' ', cmddict)
+    end
+    db:addnote(item, {note})
+  else
+    phelper:plugin_header('Add Note')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: note <serial> \"the note you want to add\"")
+  end
+end
+
 function checkaction(action, item, afterwait)
   if action == 1 and removingall == false then
     timer_start('EQdb:action1')
@@ -1104,6 +1121,7 @@ phelper:add_cmd('lget', {func=cmd_lget, help="get items from container between l
 phelper:add_cmd('lput', {func=cmd_lput, help="put items in container between level1 and level2"})
 phelper:add_cmd('clean', {func=cmd_clean, help="clean the db of stale items"})
 phelper:add_cmd('idinv', {func=cmd_idinv, help="identify all items in inventory (does not include Worn or items in bags)"})
+phelper:add_cmd('note', {func=cmd_addnote, help="add a note to an item, first arg is serial, the rest will be the note"})
 
 phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 
