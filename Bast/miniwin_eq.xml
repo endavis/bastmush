@@ -178,6 +178,12 @@ function buildmenu(item)
   else
     menu = menu .. "| Add Identifier"
   end
+  if titem and titem.note ~= nil then
+    menu = menu .. "| >Note | Add Note"
+    menu = menu .. "| Remove Note | <"
+  else
+    menu = menu .. "| Add Note"
+  end
   if item.containerid ~= 'Worn' then
     local stylekey = item.name .. item.shortflags .. tostring(item.level)
     if foundgroup[item.containerid][stylekey] and foundgroup[item.containerid][stylekey] > 1 and dontgroup[item.containerid][stylekey] then
@@ -218,6 +224,23 @@ function mouseleft(item, result)
     end
     if resstr ~= '' then
       runeqdbcmd('remid ' .. resstr)
+    end
+  elseif result:match("Add Note") then
+    local tresult = verify_string('', 'What note would you like to add?')
+    if tresult ~= nil then
+      runeqdbcmd('addnote ' .. tostring(item.serial) .. ' "' .. tresult .. '"')
+    end
+  elseif result:match('Remove Note') then
+    local titem = db:getitemdetails(item.serial)
+    local tresult = utils.multilistbox('Which note do you want to delete?',
+                                       'Notes',
+                                       titem.note,
+                                       nil)
+    local resstr = ''
+    if tresult and next(tresult) then
+      for i,v in pairs(tresult) do
+        runeqdbcmd('remnote ' .. tostring(titem.serial) .. ' ' .. tostring(i) )
+      end
     end
   elseif result:match("Identify") then
     putobjectininv(item)
