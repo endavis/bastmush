@@ -395,6 +395,19 @@ function formatitem(item)
                                 string.format("Health [@Y%d@w]    Magic [@Y%d@w]", tonumber(item.furniture.hpregen), tonumber(item.furniture.manaregen))))
   end
 
+  if item.note then
+    table.insert(ltext, divider)
+
+    for i,v in pairs(item.note) do
+      local notews = wrap(v, 49)
+      local header = 'Note'
+      for i,v in ipairs(notews) do
+        table.insert(ltext, formatsingleline(header, '@W', v, '@w'))
+        header = ''
+      end
+    end
+  end
+
   table.insert(ltext, divider)
 
   return ltext
