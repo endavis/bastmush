@@ -98,6 +98,20 @@ function EQdb:checkidentifiertable()
   end
 end
 
+function EQdb:checknotetable()
+  if not self:checkfortable('note') then
+    if self:open('checknotetable') then
+      local retval = self.db:exec([[CREATE TABLE note(
+        nid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        note TEXT,
+        fromident INTEGER default 0);
+      )]])
+    end
+    self:close('checknotetable')
+  end
+end
+
 function EQdb:checkitemdetailstable()
   if self:open('checkitemdetailstable') then
     if not self:checkfortable('itemdetails') then
@@ -318,6 +332,12 @@ function EQdb:getitemdetails(serial)
         end
         titem['statmod'][a.type] = a.amount
       end
+      for a in self.db:nrows("SELECT * FROM note WHERE serial = " .. tostring(serial)) do
+        if not titem['note'] then
+          titem['note'] = {}
+        end
+        table.insert(titem['note'], a.note)
+      end
       for a in self.db:nrows("SELECT * FROM skillmod WHERE serial = " .. tostring(serial)) do
         if not titem['skillmod'] then
           titem['skillmod'] = {}
@@ -375,6 +395,41 @@ function EQdb:getitemdetails(serial)
   --  tprint(titem)
   --end
   return titem
+end
+
+function EQdb:addnote(serial, notes, fromident)
+  local count = 0
+  self:checknotetable()
+  if self:open('addnote') then
+    if fromident then
+      self.db:exec("DELETE from note where fromident = 1 and serial = " .. tostring(serial))
+    else
+      assert (self.db:exec("BEGIN TRANSACTION"))
+    end
+    local stmt = self.db:prepare[[
+      INSERT into note VALUES (
+        NULL,
+        :serial,
+        :note,
+        :fromident);]]
+    for i,v in pairs(notes) do
+      local notem = {}
+      notem['serial'] = serial
+      notem['note'] = v
+      if fromident then
+        notem['fromident'] = 1
+      else
+        notem['fromident'] = 0
+      end
+      stmt:bind_names( notem )
+      stmt:step()
+      stmt:reset()
+    end
+    if not fromident then
+      assert (self.db:exec("COMMIT"))
+    end
+    self:close('addnote')
+  end
 end
 
 function EQdb:adddrink(item)
@@ -741,6 +796,9 @@ function EQdb:updateitemident(item)
       if item.affectmods then
         local amods = utils.split(item.affectmods, ',')
         self:addaffectmods(item.id, amods)
+      end
+      if item.note then
+        self:addnote(item.id, item.note, true)
       end
       assert (self.db:exec("COMMIT"))
     end
