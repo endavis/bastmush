@@ -1103,7 +1103,7 @@ phelper:add_cmd('listid', {func=cmd_listid, help="list items with identifiers"})
 phelper:add_cmd('lget', {func=cmd_lget, help="get items from container between level1 and level2"})
 phelper:add_cmd('lput', {func=cmd_lput, help="put items in container between level1 and level2"})
 phelper:add_cmd('clean', {func=cmd_clean, help="clean the db of stale items"})
-phelper:add_cmd('idinv', {func=cmd_idinv, help="identify all items in inventory"})
+phelper:add_cmd('idinv', {func=cmd_idinv, help="identify all items in inventory (does not include Worn or items in bags)"})
 
 phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 
