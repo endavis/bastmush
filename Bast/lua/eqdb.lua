@@ -336,7 +336,7 @@ function EQdb:getitemdetails(serial)
         if not titem['note'] then
           titem['note'] = {}
         end
-        table.insert(titem['note'], a.note)
+        titem['note'][a.nid] = a.note
       end
       for a in self.db:nrows("SELECT * FROM skillmod WHERE serial = " .. tostring(serial)) do
         if not titem['skillmod'] then
@@ -398,7 +398,6 @@ function EQdb:getitemdetails(serial)
 end
 
 function EQdb:addnote(serial, notes, fromident)
-  local count = 0
   self:checknotetable()
   if self:open('addnote') then
     if fromident then
@@ -406,6 +405,7 @@ function EQdb:addnote(serial, notes, fromident)
     else
       assert (self.db:exec("BEGIN TRANSACTION"))
     end
+    tchanges = self.db:total_changes()
     local stmt = self.db:prepare[[
       INSERT into note VALUES (
         NULL,
@@ -428,8 +428,28 @@ function EQdb:addnote(serial, notes, fromident)
     if not fromident then
       assert (self.db:exec("COMMIT"))
     end
+    tchanges = self.db:total_changes() - tchanges
     self:close('addnote')
+    if tchanges > 0 then
+      return true
+    end
   end
+  return false
+end
+
+function EQdb:removenote(notenum)
+  timer_start('EQdb:removeidentifier')
+  --tprint(item)
+  self:checknotetable()
+  local tchanges = 0
+  if self:open('removenote') then
+    tchanges = self.db:total_changes()
+    self.db:exec("DELETE FROM note WHERE nid= " .. tostring(notenum) .." and fromident = 0;")
+    tchanges = self.db:total_changes() - tchanges
+    self:close('removenote')
+  end
+  timer_end('EQdb:removenote')
+  return tchanges
 end
 
 function EQdb:adddrink(item)
