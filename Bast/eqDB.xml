@@ -717,6 +717,8 @@ function cmd_addid(cmddict)
       local changes = db:addidentifier(titem.serial, cmddict[2])
       if changes > 0 then
         ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Identifier " .. cmddict[2] .. " was added to " .. cmddict[1])
+        local invdetails = db:getitemdetails(titem.serial)
+        phelper:processevent('itemchange', invdetails)
       else
 
       end
@@ -778,18 +780,56 @@ end
 
 function cmd_addnote(cmddict)
   if #cmddict >= 2 then
-    local item = cmddict[1]
-    local note = ""
-    table.remove(cmddict, 1)
-    if #cmddict == 1 then
-      note = note .. cmddict[1]
-    else
-      note = note .. strjoin(' ', cmddict)
+    local titem = db:getitem(cmddict[1])
+    if titem then
+      local note = ""
+      table.remove(cmddict, 1)
+      if #cmddict == 1 then
+        note = note .. cmddict[1]
+      else
+        note = note .. strjoin(' ', cmddict)
+      end
+      if db:addnote(titem.serial, {note}) then
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Note was added to " .. tostring(titem.serial))
+        local invdetails = db:getitemdetails(titem.serial)
+        phelper:processevent('itemchange', invdetails)
+      end
     end
-    db:addnote(item, {note})
   else
     phelper:plugin_header('Add Note')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: note <serial> \"the note you want to add\"")
+  end
+end
+
+function cmd_remnote(cmddict)
+  local titem = db:getitem(cmddict[1])
+  table.remove(cmddict, 1)
+  if titem and cmddict[1] then
+    for i,v in ipairs(cmddict) do
+      local tchange = db:removenote(v)
+      if tchange == 1 then
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Identifier " .. v .. " was removed from " .. tostring(titem.serial))
+        local invdetails = db:getitemdetails(titem.serial)
+        phelper:processevent('itemchange', invdetails)
+      else
+        ColourNote("red", "black", "Note " .. v .. " was not found")
+      end
+    end
+  end
+end
+
+function cmd_listnote(cmddict)
+  local titem = db:getitemdetails(cmddict[1])
+  if titem then
+    if titem.note then
+      ColourNote("green", "black", string.format('%4s : %s', 'Num', 'Note'))
+      ColourNote("green", "black", string.rep('-', 70))
+      for i,v in pairs(titem.note) do
+        ColourNote("green", "black", string.format("%4d : %s", i, v))
+      end
+    else
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "The item has no notes")
+    end
   end
 end
 
@@ -1121,7 +1161,9 @@ phelper:add_cmd('lget', {func=cmd_lget, help="get items from container between l
 phelper:add_cmd('lput', {func=cmd_lput, help="put items in container between level1 and level2"})
 phelper:add_cmd('clean', {func=cmd_clean, help="clean the db of stale items"})
 phelper:add_cmd('idinv', {func=cmd_idinv, help="identify all items in inventory (does not include Worn or items in bags)"})
-phelper:add_cmd('note', {func=cmd_addnote, help="add a note to an item, first arg is serial, the rest will be the note"})
+phelper:add_cmd('addnote', {func=cmd_addnote, help="add a note to an item, first arg is serial, the rest will be the note"})
+phelper:add_cmd('remnote', {func=cmd_remnote, help="remove a note from an item, only arg is note number"})
+phelper:add_cmd('listnote', {func=cmd_listnote, help="list notes for an item, only arg is item serial"})
 
 phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 
