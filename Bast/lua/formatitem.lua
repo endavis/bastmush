@@ -287,7 +287,7 @@ function formatitem(item)
     for i,v in pairs(item.note) do
       local notews = wrap(v, 49)
       local header = 'Note'
-      for i,v in ipairs(notews) do
+      for i,v in pairs(notews) do
         table.insert(ltext, formatsingleline(header, '@W', v, '@w'))
         header = ''
       end
