@@ -384,17 +384,19 @@ function identify_redirect(name, line, wildcards, styles)
         print(line)
       end
     else
-      if not identdata['note'] then
-        identdata['note'] = {}
+      if trim(line) ~= 'A full appraisal will reveal further information on this item.' then
+        if not identdata['note'] then
+          identdata['note'] = {}
+        end
+        styles[1].text = styles[1].text:gsub("^| ", "")
+        styles[1].text = trim(styles[1].text)
+        styles[#styles].text = styles[#styles].text:gsub(" |$", "")
+        styles[#styles].text = trim(styles[#styles].text)
+        --table.remove(styles,#styles)
+        table.insert(identdata['note'], trim(StylesToColoursOneLine(styles):gsub("^@w", "")))
+        --print('found unknown line')
+        --print(line)
       end
-      styles[1].text = styles[1].text:gsub("^| ", "")
-      styles[1].text = trim(styles[1].text)
-      styles[#styles].text = styles[#styles].text:gsub(" |$", "")
-      styles[#styles].text = trim(styles[#styles].text)
-      --table.remove(styles,#styles)
-      table.insert(identdata['note'], trim(StylesToColoursOneLine(styles):gsub("^@w", "")))
-      --print('found unknown line')
-      --print(line)
     end
   end
 end
