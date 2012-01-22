@@ -1,5 +1,69 @@
 Bastmush Changes List
 
+r1800 snapshot
+  - Highlights
+     - new: added identify info to the eqdb
+     - new: added ability to add notes to items, either command line or through
+         miniwin_eq
+     - new: added a compare function to eqLookup
+  - lua/eqdb.lua
+     - bug fix: various fixes for columns so they can contain single quotes
+     - new: add function to save things gotten from Identify
+     - new: add new leadsto field to invdetails
+     - new: added a notes table to put notes on items
+  - eqDB
+     - bug fix: remove extra space when doing all.'a lot of keywords'
+         in put/get
+     - new: parses identify to get keywords, materials, found at,
+         affect mods, leads to, and extra notes (like in daily blessing
+         tokens)
+     - new: sends an invdetails on an identify with a serial
+     - bug fix: if invdata/eqdata gets a bad item, rerequest that data
+     - new: added the ability to add notes to an item, see the commands
+         "addnote", "remnote", "listnote"
+     - new: added new command "idinv" which will id everything in inventory,
+         but not in containers or worn
+  - eqLookup
+     - new: added a comp function that can compare several items
+  - miniwin_eq
+     - bug fix: menu will now work in Worn tab
+     - new: added a menu to change containers to the menu bar
+     - bug fix: on identify, invdetails is automatically done, so remove
+         the one miniwin_eq does
+     - bug fix: check the correct window for items
+     - new: added the ability to add notes to an item from the menu
+  - lua/formatitem.lua
+     - new: added layout for Notes, Affect Mods, Leads To
+  - broadcast_invmon
+     - bug fix: invitem should not be omit_from_output
+     - bug fix: if invdata/eqdata gets a bad item, rerequest that data
+  - StatDB
+     - new: show time difference when comparing two milestones
+  - broadcast_kills
+     - bug fix: strip all colours when saving mob names
+  - Aardwolf_consider
+     - bug fix: update ranges to conform with help file
+  - PotionQuaffer
+     - bug fix: now recognizes buying a single potion
+  - bast_hunt
+     - bug fix: locked doors with a keyword should now work
+  - pluginlist
+     - new: added a variable to make all plugins help to default to text
+         see "plugins set" and the variable helpoutputtext
+  - lua/pluginhelper.lua
+     - new: added args argument to the table returned by parse_cmdline, which
+         contains the full argument string
+     - new: use the new option "helpoutputtext" to show the help
+  - miniwin_events
+     - new: add flag to put mob # in window for gq and cp, see
+         "mev events set" and the variable numbermobs
+  - lua/sqlitedb.lua
+     - bug fix: add like flag to fixsql
+  - lua/aarddb.lua
+     - bug fix: use fixsql in the lookup functions
+     - new: add lookupareasbyexactname function
+
+
 r1753 snapshot
   - miniwin_eq.xml
      - new: added quaff for potions to the item menu
