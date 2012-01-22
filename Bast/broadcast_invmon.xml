@@ -430,6 +430,17 @@ function check_inventory()
 --  end
 end
 
+function checkvaliditem(item)
+  if item.serial == "" or item.serial == nil or
+     item.level == "" or item.level == nil or
+     item.type == "" or item.type == nil or
+     item.name == "" or item.name == nil or
+     item.cname == "" or item.cname == nil then
+       return false
+  end
+  return true
+end
+
 function invitem( name, line, wildcards)
   local rline = wildcards[1]
   local tstuff = dataparse(rline, 'eqdata')
@@ -649,8 +660,10 @@ function eqdata_redirect (name, line, wildcards, styles)
 
   if line ~= "" then
     titem = dataparse(line, 'eqdata')
-    eqdata[tonumber(titem.wearloc)] = titem
-    eqdata_cache[titem.objectid] = titem
+    if checkvaliditem(titem) then
+      eqdata[tonumber(titem.wearloc)] = titem
+      eqdata_cache[titem.objectid] = titem
+    end
   end
 
 end
@@ -683,9 +696,11 @@ function invdata_redirect (name, line, wildcards, styles)
 
   place = place + 1
   titem = dataparse(line, 'eqdata')
-  titem.place = place
-  invdata_temp[titem.objectid] = titem
-  invdata_cache[titem.objectid] = titem
+  if checkvaliditem(titem) then
+    titem.place = place
+    invdata_temp[titem.objectid] = titem
+    invdata_cache[titem.objectid] = titem
+  end
 end
 
 --function cmd_showstuff(cmddict)
