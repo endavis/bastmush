@@ -332,6 +332,7 @@ function EQdb:getitemdetails(serial)
         end
         titem['statmod'][a.type] = a.amount
       end
+      self:checknotetable()
       for a in self.db:nrows("SELECT * FROM note WHERE serial = " .. tostring(serial)) do
         if not titem['note'] then
           titem['note'] = {}
