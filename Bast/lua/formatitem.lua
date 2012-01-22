@@ -260,7 +260,7 @@ function formatitem(item)
         header = ''
       end
       v = v:gsub('precious', '@Yprecious@w')
-      table.insert(ltext, formatsingleline(header, '@c', v))
+      table.insert(ltext, formatsingleline(header, '@c', trim(v)))
       t = t + 1
     end
   end
