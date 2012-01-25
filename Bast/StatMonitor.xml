@@ -74,9 +74,17 @@ hourtotals = {}
 
 function DisplayInfo( info, type )
   local typechan = phelper[type..'chan']
-  if typechan == 'None' or not typechan then
+  if typechan == 'None' or typechan == 'commlog' or not typechan then
     TextToColourTell(strjoin('', info))
     ColourNote( "", "", "" )
+    if typechan == "commlog" and IsPluginInstalled("b555825a4a5700c35fa80780") and GetPluginInfo("b555825a4a5700c35fa80780", 17) then
+      local statstr =  "@WStatMonitor@w: "
+      local infocolour = phelper.infocolour
+      if infocolour:find('@') == 1 then
+        statstr =  phelper.infocolour .. "StatMonitor@w: "
+      end
+      CallPlugin("b555825a4a5700c35fa80780","storeFromOutside",statstr .. strjoin('', info))
+    end
   else
     SendNoEcho(typechan .. ' ' .. strjoin('', info))
   end
@@ -84,9 +92,19 @@ end
 
 function colourwrap(tstr, wtype)
   if wtype == 'stat' then
-    return "@W" .. tostring(tstr) .. "@w"
+    local statcolour = phelper.statcolour
+    if statcolour:find('@') == 1 then
+      return statcolour .. tostring(tstr) .. "@w"
+    else
+      return "@W" .. tostring(tstr) .. "@w"
+    end
   else
-    return "@G" .. tostring(tstr) .. "@w"
+    local infocolour = phelper.infocolour
+    if infocolour:find('@') == 1 then
+      return infocolour .. tostring(tstr) .. "@w"
+    else
+      return "@W" .. tostring(tstr) .. "@w"
+    end
   end
 end
 
@@ -663,6 +681,9 @@ phelper:add_setting('questchan', {help="the channel to put quest results on", ty
 phelper:add_setting('levelchan', {help="the channel to put level/pup results on", type="string", default="None", sortlev=20})
 phelper:add_setting('cpchan', {help="the channel to put cp results on", type="string", default="None", sortlev=20})
 phelper:add_setting('gqchan', {help="the channel to put gq results on", type="string", default="None", sortlev=20})
+phelper:add_setting('statcolour', {help="colour of stats in a statmonitor display, this only takes Aardwolf colour codes", type="string", default="@W", sortlev=20})
+phelper:add_setting('infocolour', {help="colour of info in a statmonitor colour, this only takes Aardwolf colour codes", type="string", default="@G", sortlev=20})
+
 
 phelper:add_cmd('report', {func=cmd_report, help="show stats for the last x minutes, x being what is passed as an argument"})
 
