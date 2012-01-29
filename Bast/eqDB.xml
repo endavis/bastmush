@@ -568,7 +568,9 @@ function invitem( name, line, wildcards)
         olditem[v] = tstuff[v]
       end
     end
-    db:updateitem(olditem)
+    if olditem.place then
+      db:updateitem(olditem)
+    end
     event_container_change('Inventory')
   else
     invitemcache[tstuff.serial] = tstuff
