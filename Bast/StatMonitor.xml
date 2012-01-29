@@ -78,17 +78,27 @@ function DisplayInfo( info, type )
     TextToColourTell(strjoin('', info))
     ColourNote( "", "", "" )
     if typechan == "commlog" and IsPluginInstalled("b555825a4a5700c35fa80780") and GetPluginInfo("b555825a4a5700c35fa80780", 17) then
-      local statstr =  "@WStatMonitor@w: "
-      local infocolour = phelper.infocolour
-      if infocolour:find('@') == 1 then
-        statstr =  phelper.infocolour .. "StatMonitor@w: "
-      end
-      CallPlugin("b555825a4a5700c35fa80780","storeFromOutside",statstr .. strjoin('', info))
+      CallPlugin("b555825a4a5700c35fa80780","storeFromOutside",strjoin('', info))
     end
   else
     SendNoEcho(typechan .. ' ' .. strjoin('', info))
   end
 end
+
+--function DisplayInfo(info, type)
+--  local typechan = phelper[type..'chan']
+--  tprint(info)
+--  local tline = StylesToColoursOneLine(info)
+--  print(tline)
+--  if typechan == 'None' or typechan == 'commlog' or not typechan then
+--    TextToColourTell(tline)
+--    if typechan == "commlog" and IsPluginInstalled("b555825a4a5700c35fa80780") and GetPluginInfo("b555825a4a5700c35fa80780", 17) then
+--      CallPlugin("b555825a4a5700c35fa80780","storeFromOutside",tline)
+--    end
+--  else
+--    SendNoEcho(typechan .. ' ' .. strjoin('', tline))
+--  end
+--end
 
 function colourwrap(tstr, wtype)
   if wtype == 'stat' then
@@ -108,6 +118,18 @@ function colourwrap(tstr, wtype)
   end
 end
 
+--function colourwrap(tstr, wtype)
+--   local style = {}
+--   style.text = tostring(tstr)
+--   style.length = #style.text
+--   if wtype == 'stat' then
+--     style.textcolour = verify_colour(phelper.statcolour)
+--   else
+--     style.textcolour = verify_colour(phelper.infocolour)
+--   end
+--   return style
+--end
+
 function formatpup()
   local starttime = 0
   local finishtime = 0
@@ -118,8 +140,9 @@ function formatpup()
   --get the mob info
   loadstring( pvar )()
   levelgains = levelinfo
-
-  local tmsg = { colourwrap("Gained a ") .. colourwrap(levelgains.type, 'stat') ..colourwrap(": ") }
+  local tmsg = { colourwrap("StatMonitor") }
+  table.insert(tmsg, colourwrap(": "))
+  table.insert(tmsg, colourwrap("Gained a "..levelgains.type..": "))
   table.insert(tmsg, colourwrap(levelgains.trains, 'stat'))
   local totaltrains = tonumber(levelgains.trains)
   if levelgains.bonustrains and tonumber(levelgains.bonustrains) > 0 then
@@ -212,7 +235,9 @@ function formatlevel()
 
   level = db:getstat('totallevels')
 
-  local tmsg = { colourwrap("Gained a "..levelgains.type..": ") }
+  local tmsg = { colourwrap("StatMonitor") }
+  table.insert(tmsg, colourwrap(": "))
+  table.insert( tmsg, colourwrap("Gained a "..levelgains.type..": "))
   table.insert( tmsg, colourwrap(levelgains.hp, 'stat') )
   table.insert( tmsg, colourwrap("hp ") )
   table.insert( tmsg, colourwrap(levelgains.mp, 'stat') )
@@ -312,7 +337,9 @@ function formatquest()
   loadstring( pvar )()
   quest_stuff = quest_info
 
-  local tmsg = { colourwrap("Quest finished for ")}
+  local tmsg = { colourwrap("StatMonitor") }
+  table.insert(tmsg, colourwrap(": "))
+  table.insert(tmsg, colourwrap("Quest finished for "))
   length = quest_stuff.finishtime - quest_stuff.starttime
   local years, days, hours, mins, secs = SecondsToDHMS(length)
   table.insert(tmsg, colourwrap(tostring(quest_stuff.qp), 'stat'))
@@ -383,23 +410,31 @@ function formatcp()
   loadstring( pvar )()
   cp_stuff = cp_info
   if cp_stuff.failed == 0 then
-    local tmsg = { colourwrap("CP finished for "), colourwrap(cp_stuff.qp, 'stat'), colourwrap("qp") }
+    local tmsg = { colourwrap("StatMonitor") }
+    table.insert(tmsg, colourwrap(": "))
+    table.insert(tmsg, colourwrap("CP finished for "))
+    table.insert(tmsg, colourwrap(cp_stuff.qp, 'stat'))
+    table.insert(tmsg, colourwrap("qp"))
+
     if cp_stuff.tp and tonumber(cp_stuff.tp) > 0 then
-      table.insert( tmsg, " ".. colourwrap(cp_stuff.tp, 'stat') )
+      table.insert(tmsg, colourwrap(" "))
+      table.insert( tmsg,  colourwrap(cp_stuff.tp, 'stat') )
       table.insert( tmsg, colourwrap("TP") )
     end
     if cp_stuff.trains and tonumber(cp_stuff.trains) > 0 then
-      table.insert( tmsg, " ".. colourwrap(cp_stuff.trains, 'stat') )
+      table.insert(tmsg, colourwrap(" "))
+      table.insert( tmsg, colourwrap(cp_stuff.trains, 'stat') )
       table.insert( tmsg, colourwrap("tr") )
     end
     if cp_stuff.pracs and tonumber(cp_stuff.pracs) > 0 then
-      table.insert( tmsg, " ".. colourwrap(cp_stuff.pracs, 'stat') )
+      table.insert(tmsg, colourwrap(" "))
+      table.insert( tmsg, colourwrap(cp_stuff.pracs, 'stat') )
       table.insert( tmsg, colourwrap("pr") )
     end
     if cp_stuff.finishtime and cp_stuff.starttime then
       length = cp_stuff.finishtime - cp_stuff.starttime
       local years, days, hours, mins, secs = SecondsToDHMS(length)
-      tmsg[#tmsg] = tmsg[#tmsg] .. colourwrap(".  It took ")
+      table.insert( tmsg, colourwrap(".  It took "))
       table.insert( tmsg, colourwrap(string.format( "%02d", days ), 'stat') )
       table.insert( tmsg, colourwrap("d:") )
       table.insert( tmsg, colourwrap(string.format( "%02d", hours ), 'stat') )
@@ -416,22 +451,28 @@ function formatgq()
   local pvar = GetPluginVariable(  "aaa77f81c5408278ccda7100", "gq_info")
   --get the gq info
   loadstring( pvar )()
-  local tmsg = { colourwrap("GQ finished for "), colourwrap(gq_info.qp, 'stat') }
+  local tmsg = { colourwrap("StatMonitor") }
+  table.insert(tmsg, colourwrap(": "))
+  table.insert(tmsg, colourwrap("GQ finished for "))
+  table.insert(tmsg, colourwrap(gq_info.qp, 'stat'))
   if gq_info.qpmobs and tonumber(gq_info.qpmobs) > 0 then
     table.insert( tmsg, colourwrap('+') )
     table.insert( tmsg, colourwrap(gq_info.qpmobs, 'stat') )
   end
   table.insert(tmsg, colourwrap('qp'))
   if gq_info.tp and tonumber(gq_info.tp) > 0 then
-    table.insert( tmsg, " ".. colourwrap(gq_info.tp, 'stat') )
+    table.insert(tmsg, colourwrap(" "))
+    table.insert( tmsg, colourwrap(gq_info.tp, 'stat') )
     table.insert( tmsg, colourwrap("TP") )
   end
   if gq_info.trains and tonumber(gq_info.trains) > 0 then
-    table.insert( tmsg, " ".. colourwrap(gq_info.trains, 'stat') )
+    table.insert(tmsg, colourwrap(" "))
+    table.insert( tmsg, colourwrap(gq_info.trains, 'stat') )
     table.insert( tmsg, colourwrap("tr") )
   end
   if gq_info.pracs and tonumber(gq_info.pracs) > 0 then
-    table.insert( tmsg, " ".. colourwrap(gq_info.pracs, 'stat') )
+    table.insert(tmsg, colourwrap(" "))
+    table.insert( tmsg, colourwrap(gq_info.pracs, 'stat') )
     table.insert( tmsg, colourwrap("pr") )
   end
 
@@ -681,9 +722,8 @@ phelper:add_setting('questchan', {help="the channel to put quest results on", ty
 phelper:add_setting('levelchan', {help="the channel to put level/pup results on", type="string", default="None", sortlev=20})
 phelper:add_setting('cpchan', {help="the channel to put cp results on", type="string", default="None", sortlev=20})
 phelper:add_setting('gqchan', {help="the channel to put gq results on", type="string", default="None", sortlev=20})
-phelper:add_setting('statcolour', {help="colour of stats in a statmonitor display, this only takes Aardwolf colour codes", type="string", default="@W", sortlev=20})
-phelper:add_setting('infocolour', {help="colour of info in a statmonitor colour, this only takes Aardwolf colour codes", type="string", default="@G", sortlev=20})
-
+phelper:add_setting('statcolour', {help="colour of stats in a statmonitor display, this only takes Aardwolf colour codes", type="aardcolour", default="@W", sortlev=20})
+phelper:add_setting('infocolour', {help="colour of info in a statmonitor colour, this only takes Aardwolf colour codes", type="aardcolour", default="@G", sortlev=20})
 
 phelper:add_cmd('report', {func=cmd_report, help="show stats for the last x minutes, x being what is passed as an argument"})
 
