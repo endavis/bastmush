@@ -135,9 +135,9 @@ function verify_number(numberval, args)
        msg = msg .. 'Must be less that or equal to '  .. tostring(args.high)
      end
      if args.default then
-       msg = msg .. '\nThe default value is ' .. tostring(args.default)      
+       msg = msg .. '\nThe default value is ' .. tostring(args.default)
      end
-     local tmsg = args.default or ""   
+     local tmsg = args.default or ""
      tvalue = tonumber(utils.inputbox(msg, "", tmsg))
   end
 
@@ -258,6 +258,19 @@ function formatfont(font)
   return font.name .. ', ' .. font.size
 end
 
+function verify_aardcolour(colour, args)
+  local tcolour, number = colour:match("^@([xcmyrgbwCMYRGBWD])(.*)$")
+  if tcolour ~= nil and tcolour ~= 'x' and (number == nil or number == '') then
+    return colour
+  elseif tcolour == 'x' then
+    local ton = tonumber(number)
+    if ton and ton >= 0 and ton <= 255 then
+      return colour
+    end
+  end
+  return nil
+end
+
 function verify_table(tableval, args)
   if type(tableval) == 'table' then
     return tableval
@@ -272,6 +285,7 @@ verify_table = {
                bool = verify_bool,
                font = verify_font,
                table = verify_table,
+               aardcolour = verify_aardcolour,
               }
 
 function verify(value, ttype, args)
