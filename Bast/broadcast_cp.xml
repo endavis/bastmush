@@ -293,6 +293,18 @@ cp_info = {}
 
  <trigger
    enabled="n"
+   match="You cannot take another campaign for *."
+   send_to="10"
+   sequence="100"
+   script="level"
+   group="campaignin"
+   name="shtime"
+   omit_from_output="y"
+  >
+  </trigger>
+
+ <trigger
+   enabled="n"
    match="Congratulations, that was one of your CAMPAIGN mobs!"
    send_to="10"
    sequence="100"
@@ -415,6 +427,8 @@ end
 function level(name, line, wildcards)
   if name == 'cantake' then
     cp_info['cantake'] = true
+  elseif name == 'shtime' then
+    cp_info['shtime'] = wildcards[1]
   end
 end
 
@@ -520,6 +534,7 @@ function build_time()
   timer['hours'] = hours
   timer['mins'] = mins
   timer['cantake'] = cp_info['cantake']
+  timer['shtime'] = cp_info['shtime']
   var.timer = serialize.save( "timer", timer )
   phelper:broadcast(2, var.timer)
 end
@@ -561,6 +576,7 @@ function cp_new()
   cp_info['finishtime'] = 0
   cp_info['oncp'] = true
   cp_info['cantake'] = false
+  cp_info['shtime'] = nil
   SaveState()
   phelper:broadcast(5)
 end
