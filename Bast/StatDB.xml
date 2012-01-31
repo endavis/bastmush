@@ -418,7 +418,7 @@ function OnPluginBroadcast (msg, id, name, text)
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
       char = assert (loadstring ('return ' .. gmcparg or ""))()
 
-      if char.status and char.status.state and tonumber(char.status.state) == 3 and db:getstat('totallevels') == nil and sentwhois == false then
+      if char.status and char.status.state and (tonumber(char.status.state) == 3 or tonumber(char.status.state) == 8) and db:getstat('totallevels') == nil and sentwhois == false then
         sentwhois = true
         Execute('whois')
       end
