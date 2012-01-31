@@ -121,10 +121,12 @@ function show_cp_text ()
   style = {}
   style.text = ''
 
-  if char and char.status then
+  if char and char.status and not cptimer.shtime then
     style.text = 'Level ' .. tostring(char.status.level) .. ': '
   end
-  if verify_bool(cptimer.cantake) then
+  if cptimer.shtime then
+    style.text = style.text .. "Can Take: " .. tostring(cptimer.shtime)
+  elseif verify_bool(cptimer.cantake) then
     style.text = style.text .. "You can take a cp"
   else
     style.text = style.text .. "You may not take a cp"
