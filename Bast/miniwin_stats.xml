@@ -588,6 +588,7 @@ function build_quest_window()
       local linestyles = format_row("Tier",
           stats['tier'],
           string.format("%.3f", stats['avetier'] or 0) .. '/quest')
+      table.insert(allstyles, linestyles)
       local linestyles = format_row("QP Per Quest", "", string.format("%.3f", stats['dboverallave'] or 0) .. '/quest')
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Gold",
