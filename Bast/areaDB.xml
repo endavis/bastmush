@@ -116,6 +116,10 @@ aarddb = Aarddb:new{}
 areasbykeyword = aarddb:getallareas()
 areas = {}
 
+fixnames = {}
+fixnames['The Abyssal Caverns of Sahuagi'] = 'The Abyssal Caverns of Sahuagin'
+fixnames['The Darkside of the Fractured'] = 'The Darkside of the Fractured Lands'
+
 fourthheader = ''
 
 function get_areas()
@@ -152,7 +156,11 @@ end
 function parsearea (name, line, wildcards)
   local name = trim(wildcards.name)
   area = new_area()
-  area.name = name
+  if fixnames[name] then
+    area.name = fixnames[name]
+  else
+    area.name = name
+  end
   area.ato = wildcards.to
   area.afrom = wildcards.from
   area[fourthheader] = wildcards['fourth']
