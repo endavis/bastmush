@@ -890,22 +890,22 @@ function format_time(length)
   local tmsg = {}
   local years, days, hours, mins, secs = SecondsToDHMS(length)
   if years > 0 then
-    table.insert( tmsg, string.format( "%d", years ) )
+    table.insert( tmsg, string.format( "%d", years or 0 ) )
     table.insert( tmsg, "y:" )
   end
   if days > 0 then
-    table.insert( tmsg, string.format( "%02d", days ) )
+    table.insert( tmsg, string.format( "%02d", days or 0 ) )
     table.insert( tmsg, "d:" )
   end
   if hours > 0 then
-    table.insert( tmsg, string.format( "%02d", hours) )
+    table.insert( tmsg, string.format( "%02d", hours or 0 ) )
     table.insert( tmsg, "h:" )
   end
   if mins > 0 then
-    table.insert( tmsg, string.format( "%02d", mins ) )
+    table.insert( tmsg, string.format( "%02d", mins or 0 ) )
     table.insert( tmsg, "m:" )
   end
-  table.insert( tmsg, string.format( "%02d", secs ) )
+  table.insert( tmsg, string.format( "%02d", secs or 0 ) )
   table.insert( tmsg, "s " )
   return strjoin("", tmsg)
 end
