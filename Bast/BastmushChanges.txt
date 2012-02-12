@@ -1,10 +1,34 @@
 Bastmush Changes List
 
+r1817 snapshot
+  - StatMonitor
+     - new: added ability to display to the commlog, set the chan to commlog
+     - new: added the variables statcolour and infocolour to control the
+         colour of the output
+     - new: add xp/min to the output
+     - new: added variable exppermin as the threshold for showing exppermin
+  - eqDB
+     - bug fix: don't update if place is nil
+  - lua/eqdb
+     - bug fix: note table is now checked correctly
+  - StatDB
+     - bug fix: send noexp even if fighting
+  - miniwin_stats
+     - bug fix: show stats for tier qp in quests tab
+  - broadcast_cp
+     - new: added time to take next cp at sh
+  - miniwin_events/miniwin_cp
+     - new: added time to take next cp at sh
+  - areaDB
+     - new: fix area names that are cutoff by the areas output
+  - lua/pluginhelper
+     - bug fix: default items to 0 if nil in format_time
+
 r1800 snapshot
   - Highlights
      - new: added identify info to the eqdb
-     - new: added ability to add notes to items, either command line or through
-         miniwin_eq
+     - new: added ability to add notes to items, either command line or
+         through miniwin_eq
      - new: added a compare function to eqLookup
   - lua/eqdb.lua
      - bug fix: various fixes for columns so they can contain single quotes
