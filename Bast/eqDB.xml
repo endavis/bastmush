@@ -630,7 +630,7 @@ function getitemdetails(id, override)
       if titem2.containerid == 'Inventory' then
         Execute('identify ' .. tostring(id))
       elseif titem2.containerid == 'Worn' then
-        sendcmd('invdetails ' .. tostring(id))
+        Execute('identify ' .. tostring(id) .. ' worn')
       else
         putobjectininv(titem2)
         Execute('identify ' .. tostring(id))
