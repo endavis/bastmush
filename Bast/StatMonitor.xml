@@ -135,6 +135,7 @@ function formatpup()
   local finishtime = 0
   local mobskilled = 0
   local mobsavexp = 0
+  local length = nil
   local pvar = GetPluginVariable(  "aaa0ab9ed92f8fc614664bd1" , "levelinfo")
 
   --get the mob info
@@ -212,7 +213,14 @@ function formatpup()
           table.insert( tmsg, colourwrap(mobskilled, 'stat') )
           table.insert( tmsg, colourwrap(" mobs killed (") )
           table.insert( tmsg, colourwrap(string.format( "%02.02f", mobsavexp ), 'stat') )
-          table.insert( tmsg, colourwrap("xp/mob)") )
+          table.insert( tmsg, colourwrap("xp/mob") )
+          if length and tonumber(char.base.perlevel)/(length/60) > phelper.exppermin then
+            local exp_per_min = tonumber(char.base.perlevel)/(length/60)
+            table.insert( tmsg, colourwrap(string.format( " %d", exp_per_min ), 'stat') )
+            table.insert( tmsg, colourwrap("xp/min)") )
+          else
+            table.insert( tmsg, colourwrap(")") )
+          end
         end
       end
       db:close()
@@ -227,6 +235,7 @@ function formatlevel()
   local finishtime = 0
   local mobskilled = 0
   local mobsavexp = 0
+  local length = nil
   local pvar = GetPluginVariable(  "aaa0ab9ed92f8fc614664bd1" , "levelinfo")
 
   --get the mob info
@@ -318,7 +327,14 @@ function formatlevel()
           table.insert( tmsg, colourwrap(mobskilled, 'stat') )
           table.insert( tmsg, colourwrap(" mobs killed (") )
           table.insert( tmsg, colourwrap(string.format( "%02.02f", mobsavexp ), 'stat') )
-          table.insert( tmsg, colourwrap("xp/mob)") )
+          table.insert( tmsg, colourwrap("xp/mob") )
+          if length and tonumber(char.base.perlevel)/(length/60) > phelper.exppermin then
+            local exp_per_min = tonumber(char.base.perlevel)/(length/60)
+            table.insert( tmsg, colourwrap(string.format( " %d", exp_per_min ), 'stat') )
+            table.insert( tmsg, colourwrap("xp/min)") )
+          else
+            table.insert( tmsg, colourwrap(")") )
+          end
         end
       end
       db:close()
@@ -660,6 +676,11 @@ function OnPluginBroadcast (msg, id, name, text)
     DoAfterSpecial(.1, 'formatcp()', 12)
   elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
     DoAfterSpecial(.1, 'formatgq()', 12)
+  elseif id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+    end
   end
 
   phelper:OnPluginBroadcast(msg, id, name, text)
@@ -682,6 +703,11 @@ function OnPluginEnable ()
   ldplugin('broadcast_level')
   ldplugin('broadcast_cp')
   ldplugin('broadcast_gq')
+
+  if IsConnected() then
+    local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+    char = assert (loadstring ('return ' .. gmcparg or ""))()
+  end
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
@@ -724,6 +750,8 @@ phelper:add_setting('cpchan', {help="the channel to put cp results on", type="st
 phelper:add_setting('gqchan', {help="the channel to put gq results on", type="string", default="None", sortlev=20})
 phelper:add_setting('statcolour', {help="colour of stats in a statmonitor display, this only takes Aardwolf colour codes", type="aardcolour", default="@W", sortlev=20})
 phelper:add_setting('infocolour', {help="colour of info in a statmonitor colour, this only takes Aardwolf colour codes", type="aardcolour", default="@G", sortlev=20})
+phelper:add_setting('exppermin', {help="the threshhold that when leveling, exp per min is shown", type="number", default="20", sortlev=20})
+
 
 phelper:add_cmd('report', {func=cmd_report, help="show stats for the last x minutes, x being what is passed as an argument"})
 
