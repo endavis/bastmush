@@ -300,6 +300,7 @@ function EQdb:getitemdetails(serial)
   local titem = nil
   self:checkitemdetailstable()
   self:checkidentifiertable()
+  self:checknotetable()
   if self:open('getitemdetails') then
     for a in self.db:nrows("SELECT * FROM itemdetails WHERE serial = " .. tostring(serial)) do
       titem = a
@@ -332,7 +333,6 @@ function EQdb:getitemdetails(serial)
         end
         titem['statmod'][a.type] = a.amount
       end
-      self:checknotetable()
       for a in self.db:nrows("SELECT * FROM note WHERE serial = " .. tostring(serial)) do
         if not titem['note'] then
           titem['note'] = {}
