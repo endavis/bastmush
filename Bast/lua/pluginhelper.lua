@@ -873,7 +873,7 @@ end
 function SecondsToDHMS(sSeconds)
   local nSeconds = tonumber(sSeconds)
   if nSeconds == 0 then
-    return 0, 0, 0, 0
+    return 0, 0, 0, 0, 0
   else
     local nYears = math.floor(nSeconds/(3600 * 24 * 365))
     nSeconds = nSeconds - (nYears * 365 * 24 * 60 * 60)
