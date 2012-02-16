@@ -441,7 +441,7 @@ function Statdb:savelevel( levelinfo, first )
       if levelinfo['type'] == 'level' then
         if levelinfo['totallevels'] ~= 0 and levelinfo['totallevels'] ~= nil then
           self:setstat('totallevels', levelinfo['totallevels'])
-          self:setstat('level', levelinfo['newlevel'])
+          self:setstat('level', levelinfo['level'])
         else
           self:addtostat('totallevels', 1)
           self:addtostat('level', 1)
@@ -450,11 +450,12 @@ function Statdb:savelevel( levelinfo, first )
         self:addtostat('powerupsall', 1)
       end
       if levelinfo['totallevels'] ~= 0 and levelinfo['totallevels'] ~= nil then
-        levelinfo['newlevel'] = levelinfo['totallevels']
+        levelinfo['level'] = levelinfo['totallevels']
       else
-        levelinfo['newlevel'] = tonumber(db:getstat('totallevels'))
+        levelinfo['level'] = tonumber(db:getstat('totallevels'))
       end
     end
+    levelinfo.finishtime = -1
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare(self:converttoinsert('levels'))
     stmt:bind_names(  levelinfo  )
@@ -464,7 +465,7 @@ function Statdb:savelevel( levelinfo, first )
     local rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted", levelinfo['type'], ":", rowid)
     local stmt2 = self.db:exec(string.format("UPDATE levels SET finishtime = %d WHERE level_id = %d;" ,
-                                          levelinfo.time, rowid - 1))
+                                          levelinfo.starttime, rowid - 1))
     rowid = self.db:last_insert_rowid()
     self:close('savelevel')
     if levelinfo['type'] == 'level' then
