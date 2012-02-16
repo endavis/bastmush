@@ -21,8 +21,8 @@
 Broadcasts when anything happens in a campaign
 Broadcasts
    1 - Mob list, get var.mobs and loadstring it
-       mobs = { 1 = {name = 'Some name', room = 'Some room', clean = 'A name with some stuff removed'},
-              2 = {name = 'Another name', room = 'Another room', clean = 'Another name with some stuff removed'}, }
+       mobs = { 1 = {name = 'Some name', location = 'Some location', clean = 'A name with some stuff removed'},
+              2 = {name = 'Another name', location = 'Another location', clean = 'Another name with some stuff removed'}, }
        It will be resent when a mob is killed and will be nil when a cp is not active
    2 - timer, will be updated every 60 seconds, get var.timer and loadstring it
         timer = {secs = num, text = 'time in text format', days = days, hours = hours, mins = minutes}
@@ -47,67 +47,67 @@ xBroadcast_CP : Broadcast 1
 mobs = {}
   mobs[1] = {}
     mobs[1].mobdead = false
-    mobs[1].room = "Desert Doom"
+    mobs[1].location = "Desert Doom"
     mobs[1].name = "Tjac's personal advisor"
     mobs[1].clean = "tjac's personal advisor"
   mobs[2] = {}
     mobs[2].mobdead = false
-    mobs[2].room = "Desert Doom"
+    mobs[2].location = "Desert Doom"
     mobs[2].name = "A Sunset herbalist"
     mobs[2].clean = "a sunset herbalist"
   mobs[3] = {}
     mobs[3].mobdead = false
-    mobs[3].room = "Desert Doom"
+    mobs[3].location = "Desert Doom"
     mobs[3].name = "A Sunset scavenger"
     mobs[3].clean = "a sunset scavenger"
   mobs[4] = {}
     mobs[4].mobdead = false
-    mobs[4].room = "Desert Doom"
+    mobs[4].location = "Desert Doom"
     mobs[4].name = "A Sunrise warrior"
     mobs[4].clean = "a sunrise warrior"
   mobs[5] = {}
     mobs[5].mobdead = false
-    mobs[5].room = "Desert Doom"
+    mobs[5].location = "Desert Doom"
     mobs[5].name = "A Sunrise guard"
     mobs[5].clean = "a sunrise guard"
   mobs[6] = {}
     mobs[6].mobdead = false
-    mobs[6].room = "Into the Long Night"
+    mobs[6].location = "Into the Long Night"
     mobs[6].name = "an animated body"
     mobs[6].clean = "an animated body"
   mobs[7] = {}
     mobs[7].mobdead = false
-    mobs[7].room = "The Archipelago of Entropy"
+    mobs[7].location = "The Archipelago of Entropy"
     mobs[7].name = "the playwright"
     mobs[7].clean = "the playwright"
   mobs[8] = {}
     mobs[8].mobdead = false
-    mobs[8].room = "The Casino"
+    mobs[8].location = "The Casino"
     mobs[8].name = "Method Man"
     mobs[8].clean = "method man"
   mobs[9] = {}
     mobs[9].mobdead = false
-    mobs[9].room = "The Dark Temple of Zyian"
+    mobs[9].location = "The Dark Temple of Zyian"
     mobs[9].name = "A Eunuch"
     mobs[9].clean = "a eunuch"
   mobs[10] = {}
     mobs[10].mobdead = false
-    mobs[10].room = "The Drageran Empire"
+    mobs[10].location = "The Drageran Empire"
     mobs[10].name = "Aliza"
     mobs[10].clean = "aliza"
   mobs[11] = {}
     mobs[11].mobdead = false
-    mobs[11].room = "The Slaughter House"
+    mobs[11].location = "The Slaughter House"
     mobs[11].name = "Asmodeus"
     mobs[11].clean = "asmodeus"
   mobs[12] = {}
     mobs[12].mobdead = false
-    mobs[12].room = "The Slaughter House"
+    mobs[12].location = "The Slaughter House"
     mobs[12].name = "Sepulchrumalum"
     mobs[12].clean = "sepulchrumalum"
   mobs[13] = {}
     mobs[13].mobdead = false
-    mobs[13].room = "Tir na nOg"
+    mobs[13].location = "Tir na nOg"
     mobs[13].name = "The goddess Morrigan"
     mobs[13].clean = "the goddess morrigan"
 
@@ -124,67 +124,67 @@ cp_info = {}
   cp_info.mobs = {}
     cp_info.mobs[1] = {}
       cp_info.mobs[1].name = "Tjac's personal advisor"
-      cp_info.mobs[1].room = "Desert Doom"
+      cp_info.mobs[1].location = "Desert Doom"
       cp_info.mobs[1].mobdead = false
       cp_info.mobs[1].clean = "tjac's personal advisor"
     cp_info.mobs[2] = {}
       cp_info.mobs[2].name = "A Sunset herbalist"
-      cp_info.mobs[2].room = "Desert Doom"
+      cp_info.mobs[2].location = "Desert Doom"
       cp_info.mobs[2].mobdead = false
       cp_info.mobs[2].clean = "a sunset herbalist"
     cp_info.mobs[3] = {}
       cp_info.mobs[3].name = "A Sunset scavenger"
-      cp_info.mobs[3].room = "Desert Doom"
+      cp_info.mobs[3].location = "Desert Doom"
       cp_info.mobs[3].mobdead = false
       cp_info.mobs[3].clean = "a sunset scavenger"
     cp_info.mobs[4] = {}
       cp_info.mobs[4].name = "A Sunrise warrior"
-      cp_info.mobs[4].room = "Desert Doom"
+      cp_info.mobs[4].location = "Desert Doom"
       cp_info.mobs[4].mobdead = false
       cp_info.mobs[4].clean = "a sunrise warrior"
     cp_info.mobs[5] = {}
       cp_info.mobs[5].name = "A Sunrise guard"
-      cp_info.mobs[5].room = "Desert Doom"
+      cp_info.mobs[5].location = "Desert Doom"
       cp_info.mobs[5].mobdead = false
       cp_info.mobs[5].clean = "a sunrise guard"
     cp_info.mobs[6] = {}
       cp_info.mobs[6].name = "an animated body"
-      cp_info.mobs[6].room = "Into the Long Night"
+      cp_info.mobs[6].location = "Into the Long Night"
       cp_info.mobs[6].mobdead = false
       cp_info.mobs[6].clean = "an animated body"
     cp_info.mobs[7] = {}
       cp_info.mobs[7].name = "the playwright"
-      cp_info.mobs[7].room = "The Archipelago of Entropy"
+      cp_info.mobs[7].location = "The Archipelago of Entropy"
       cp_info.mobs[7].mobdead = false
       cp_info.mobs[7].clean = "the playwright"
     cp_info.mobs[8] = {}
       cp_info.mobs[8].name = "Method Man"
-      cp_info.mobs[8].room = "The Casino"
+      cp_info.mobs[8].location = "The Casino"
       cp_info.mobs[8].mobdead = false
       cp_info.mobs[8].clean = "method man"
     cp_info.mobs[9] = {}
       cp_info.mobs[9].name = "A Eunuch"
-      cp_info.mobs[9].room = "The Dark Temple of Zyian"
+      cp_info.mobs[9].location = "The Dark Temple of Zyian"
       cp_info.mobs[9].mobdead = false
       cp_info.mobs[9].clean = "a eunuch"
     cp_info.mobs[10] = {}
       cp_info.mobs[10].name = "Aliza"
-      cp_info.mobs[10].room = "The Drageran Empire"
+      cp_info.mobs[10].location = "The Drageran Empire"
       cp_info.mobs[10].mobdead = false
       cp_info.mobs[10].clean = "aliza"
     cp_info.mobs[11] = {}
       cp_info.mobs[11].name = "Asmodeus"
-      cp_info.mobs[11].room = "The Slaughter House"
+      cp_info.mobs[11].location = "The Slaughter House"
       cp_info.mobs[11].mobdead = false
       cp_info.mobs[11].clean = "asmodeus"
     cp_info.mobs[12] = {}
       cp_info.mobs[12].name = "Sepulchrumalum"
-      cp_info.mobs[12].room = "The Slaughter House"
+      cp_info.mobs[12].location = "The Slaughter House"
       cp_info.mobs[12].mobdead = false
       cp_info.mobs[12].clean = "sepulchrumalum"
     cp_info.mobs[13] = {}
       cp_info.mobs[13].name = "The goddess Morrigan"
-      cp_info.mobs[13].room = "Tir na nOg"
+      cp_info.mobs[13].location = "Tir na nOg"
       cp_info.mobs[13].mobdead = false
       cp_info.mobs[13].clean = "the goddess morrigan"
   cp_info.tp = 0
@@ -257,7 +257,7 @@ cp_info = {}
 
   <trigger
    enabled="n"
-   match="^You still have to kill(?&lt;num&gt;[ \d]*) \* (?&lt;name&gt;.*?) \((?&lt;room&gt;.*?)(?&lt;dead&gt; - Dead|)\)(|\.)$"
+   match="^You still have to kill(?&lt;num&gt;[ \d]*) \* (?&lt;name&gt;.*?) \((?&lt;location&gt;.*?)(?&lt;dead&gt; - Dead|)\)(|\.)$"
    name="campaign_item"
    script="campaign_item"
    sequence="100"
@@ -435,7 +435,7 @@ end
 function campaign_item (name, line, wildcards)
   name = wildcards.name
   mobdead = false
-  room = wildcards.room
+  location = wildcards.location
   if wildcards.dead ==  ' - Dead' then
     mobdead = true
   end
@@ -444,11 +444,11 @@ function campaign_item (name, line, wildcards)
       check(EnableTimer("mob_timer", true))
     end
   end
-  if not name or not room then
+  if not name or not location then
     print("error parsing line: ", line)
     tprint(wildcards)
   else
-    table.insert(mobsleft, {name=name, room=room, clean=cleanname(name), mobdead=mobdead})
+    table.insert(mobsleft, {name=name, location=location, clean=cleanname(name), mobdead=mobdead})
   end
 end -- campaign_item
 
