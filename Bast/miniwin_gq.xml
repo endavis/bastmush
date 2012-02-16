@@ -62,7 +62,7 @@ function build_gq ()
   for i, v in ipairs (gqmobs) do
     mobcount = mobcount + v.num
     style = {}
-    style.text = string.format("%3s: %-30s %s", v.num, v.name, " (" .. v.room .. ")")
+    style.text = string.format("%3s: %-30s %s", v.num, v.name, " (" .. v.location .. ")")
     style.len = #style.text
     style.style = 0
     table.insert (texttable, {style})

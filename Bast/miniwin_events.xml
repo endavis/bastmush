@@ -147,9 +147,9 @@ function show_cp_text ()
   for i, v in ipairs (cpmobs) do
     style = {}
     if eventwin.numbermobs then
-      style.text = string.format("%2d) %-30s %s", i, v.name, " (" .. v.room .. ")")
+      style.text = string.format("%2d) %-30s %s", i, v.name, " (" .. v.location .. ")")
     else
-      style.text = string.format("%-30s %s", v.name, " (" .. v.room .. ")")
+      style.text = string.format("%-30s %s", v.name, " (" .. v.location .. ")")
     end
     if verify_bool(v.mobdead) then
       style.textcolour = "cp_mobdead_colour"
@@ -222,9 +222,9 @@ function build_gq ()
     mobcount = mobcount + v.num
     style = {}
     if eventwin.numbermobs then
-      style.text = string.format("%2d) %3s: %-30s %s", i, v.num, v.name, " (" .. v.room .. ")")
+      style.text = string.format("%2d) %3s: %-30s %s", i, v.num, v.name, " (" .. v.location .. ")")
     else
-      style.text = string.format("%3s: %-30s %s", v.num, v.name, " (" .. v.room .. ")")
+      style.text = string.format("%3s: %-30s %s", v.num, v.name, " (" .. v.location .. ")")
     end
     style.len = #style.text
     style.style = 0

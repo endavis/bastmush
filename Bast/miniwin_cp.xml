@@ -90,7 +90,7 @@ function show_cp_text ()
   -- list of mobs
   for i, v in ipairs (cpmobs) do
     style = {}
-    style.text = string.format("%-30s %s", v.name, " (" .. v.room .. ")")
+    style.text = string.format("%-30s %s", v.name, " (" .. v.location .. ")")
     if verify_bool(v.mobdead) then
       style.textcolour = "mobdead_colour"
     end
