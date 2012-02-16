@@ -30,10 +30,25 @@ function Sqlitedb:initialize(args)
   self.conns = 0
   self.version = 1
   self.versionfuncs = {}
+  self.tableids = {}
+  self.createtablesql = {}
+  self.createtablesql['version'] = [[CREATE TABLE version(
+        version_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+        version INT default 1
+      )]]
 end
 
 function Sqlitedb:turnonpragmas()
 
+end
+
+function Sqlitedb:checktable(tablename)
+  if self.createtablesql[tablename] and  self:open('checktable:' .. tablename) then
+    if not self:checkfortable(tablename) then
+      self.db:exec(self.createtablesql[tablename])
+    end
+    self:close('checktable:' .. tablename)
+  end
 end
 
 function Sqlitedb:checkversion(args)
@@ -50,12 +65,9 @@ end
 function Sqlitedb:checkversiontable()
   if self:open('checkversiontable') then
     if not self:checkfortable('version') then
-      self.db:exec([[CREATE TABLE version(
-        version_id INTEGER NOT NULL PRIMARY KEY autoincrement,
-        version INT default 1
-      )]])
+      self.db:exec(self.createtablesql['version'])
       assert (self.db:exec("BEGIN TRANSACTION"))
-      local stmt = self.db:exec[[ INSERT INTO version VALUES (NULL, 1) ]]
+      local stmt = self.db:exec(string.format('INSERT INTO version VALUES (NULL, %d)', self.version))
       assert (self.db:exec("COMMIT"))
     end
     self:close('checkversiontable')
@@ -205,4 +217,33 @@ function Sqlitedb:backupdb(extension)
   ChangeDir(GetInfo(66)) -- Go back to default directory
   Note("FINISHED DATABASE BACKUP. YOU MAY NOW GO BACK TO MUDDING.")
   --in_backup = false
+end
+
+function Sqlitedb:getcolumnsfromsql(tablename)
+  local columns = {}
+  local columnsbykeys = {}
+  if self.createtablesql[tablename] then
+    local tlist = utils.split(self.createtablesql[tablename], '\n')
+    for i,v in ipairs(tlist) do
+      v = trim(v)
+      if v:find('CREATE') == nil and v:find(')') == nil then
+        local ilist = utils.split(v, ' ')
+        table.insert(columns, ilist[1])
+        columnsbykeys[ilist[1]] = true
+      end
+    end
+  end
+  return columns, columnsbykeys
+end
+
+function Sqlitedb:converttoinsert(tablename)
+  local execstr = nil
+  local columns = {}
+  if self.createtablesql[tablename] then
+    local columns, columnsbykeys = self:getcolumnsfromsql(tablename)
+    local colstring = strjoin(', :', columns)
+    colstring = ':' .. colstring
+    execstr = string.format("INSERT INTO %s VALUES (%s)", tablename, colstring)
+  end
+  return execstr
 end
