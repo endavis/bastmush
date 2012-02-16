@@ -33,7 +33,7 @@ Example
 
 xBroadcast_Kills : Broadcast 1
 kill_info = {}
-  kill_info.mob = "The miller's wife"
+  kill_info.name = "The miller's wife"
   kill_info.vorpal = 0
   kill_info.wielded_weapon = ""
   kill_info.second_weapon = ""
@@ -301,7 +301,7 @@ function reset_kill()
   kill_info.totalxp = 0
   kill_info.gold = 0
   kill_info.tp = 0
-  kill_info.mob = ""
+  kill_info.name = ""
   kill_info.wielded_weapon = ''
   kill_info.second_weapon = ''
   kill_info.bcasted = true
@@ -314,13 +314,13 @@ var.cur_weapon = ''
 lastroom = -1
 
 function mobnone(name, line, wildcards)
-  --print('setting mob to none')
-  kill_info.mob = ""
+  --print('setting name to none')
+  kill_info.name = ""
 end
 
 function mobname(name, line, wildcards)
-  if kill_info.mob == "" then
-    kill_info.mob = strip_colours(wildcards[2])
+  if kill_info.name == "" then
+    kill_info.name = strip_colours(wildcards[2])
   end
   if name == 'saccorpse' then
     broadcast_kill()
@@ -362,16 +362,16 @@ function vorpmob( name, line, wildcards)
 end
 
 function mobswitch( name, line, wildcards)
-  kill_info.mob = strip_colours(wildcards[1])
+  kill_info.name = strip_colours(wildcards[1])
 end
 
 function assassinatemob( name, line, wildcards)
-  kill_info.mob = strip_colours(wildcards[1])
+  kill_info.name = strip_colours(wildcards[1])
   kill_info.assassinate = 1
 end
 
 function slitmob( name, line, wildcards)
-  kill_info.mob = strip_colours(wildcards[1])
+  kill_info.name = strip_colours(wildcards[1])
   kill_info.slit = 1
   kill_info.bcasted = false
   kill_info.time = GetInfo(304)
@@ -379,7 +379,7 @@ function slitmob( name, line, wildcards)
 end
 
 function disintegratemob( name, line, wildcards)
-  kill_info.mob = strip_colours(wildcards[1])
+  kill_info.name = strip_colours(wildcards[1])
   kill_info.disintegrate = 1
   kill_info.bcasted = false
   kill_info.time = GetInfo(304)
@@ -387,7 +387,7 @@ function disintegratemob( name, line, wildcards)
 end
 
 function banishmob( name, line, wildcards)
-  kill_info.mob = strip_colours(wildcards[1])
+  kill_info.name = strip_colours(wildcards[1])
   kill_info.banishment = 1
   kill_info.bcasted = false
   kill_info.time = GetInfo(304)
@@ -395,15 +395,15 @@ function banishmob( name, line, wildcards)
 end
 
 function deathblowmob( name, line, wildcards)
-  kill_info.mob = strip_colours(wildcards[1])
+  kill_info.name = strip_colours(wildcards[1])
   kill_info.deathblow = 1
 end
 
 function mobgold( name, line, wildcards )
   if name == 'mobgold' then
     kill_info.gold = wildcards[1]
-    if kill_info.mob == "" then
-      kill_info.mob = strip_colours(wildcards[3])
+    if kill_info.name == "" then
+      kill_info.name = strip_colours(wildcards[3])
     end
   elseif name == 'splitgold' then
     kill_info.gold = wildcards[2]
@@ -413,8 +413,8 @@ end
 
 function broadcast_kill()
   if kill_info.bcasted == false then
-    if kill_info.mob == nil then
-      kill_info.mob = 'did not get the mob name'
+    if kill_info.name == nil then
+      kill_info.name = 'did not get the mob name'
     end
     kill_info.totalxp = tonumber(kill_info.xp or 0) + tonumber(kill_info.bonusxp or 0) + tonumber(kill_info.blessingxp or 0)
     var.kill_info = serialize.save( "kill_info", kill_info )
@@ -478,9 +478,9 @@ function OnPluginBroadcast (msg, id, name, text)
 
       if tt['status'] then
         kill_info.level = tonumber(tt.status.level)
-        if tt.status.enemy ~= "" and kill_info.mob == "" then
-          --print('setting mob to', tt.status.enemy)
-          kill_info.mob = strip_colours(tt.status.enemy)
+        if tt.status.enemy ~= "" and kill_info.name == "" then
+          --print('setting name to', tt.status.enemy)
+          kill_info.name = strip_colours(tt.status.enemy)
         end
       end
     elseif text:find('room.info') then
@@ -489,10 +489,10 @@ function OnPluginBroadcast (msg, id, name, text)
 
       kill_info.room_id = tonumber(tt.num)
 
-      if tonumber(tt.num) ~= lastroom and kill_info.mob ~= "" then
+      if tonumber(tt.num) ~= lastroom and kill_info.name ~= "" then
         lastroom = tonumber(tt.num)
-        kill_info.mob = ""
-        --print('resetting mob to none')
+        kill_info.name = ""
+        --print('resetting name to none')
       end
 
     end
