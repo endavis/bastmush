@@ -46,8 +46,8 @@ Broadcasts
         levelinfo.int = 0
         levelinfo.mp = "24"
         levelinfo.dex = 0
-        levelinfo.time = 1241310623
-        levelinfo.newlevel = "67"
+        levelinfo.starttime = 1241310623
+        levelinfo.level = "67"
         levelinfo.str = 0
   2 - Created
   3 - Heroed
@@ -225,8 +225,8 @@ function created( name, line, wildcards )
 end
 
 function superhero( name, line, wildcards )
-  levelinfo.newlevel = 201
-  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.newlevel), char.base.remorts, char.base.tier)
+  levelinfo.level = 201
+  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.level), char.base.remorts, char.base.tier)
   phelper:broadcast(4)
 end
 
@@ -236,10 +236,10 @@ end
 
 function remort(name, line, wildcards)
   resetinfo()
-  levelinfo.newlevel = 1
+  levelinfo.level = 1
   levelinfo.type = 'level'
-  levelinfo.time = GetInfo(304)
-  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.newlevel), char.base.remorts + 1, char.base.tier)
+  levelinfo.starttime = GetInfo(304)
+  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.level), char.base.remorts + 1, char.base.tier)
   var.levelinfo = serialize.save( "levelinfo", levelinfo )
   phelper:broadcast(6)
 end
@@ -247,14 +247,14 @@ end
 function resetinfo()
   levelinfo = {}
   levelinfo.type = ""
-  levelinfo.newlevel = -1
+  levelinfo.level = -1
   levelinfo.str = 0
   levelinfo.int = 0
   levelinfo.wis = 0
   levelinfo.dex = 0
   levelinfo.con = 0
   levelinfo.luc = 0
-  levelinfo.time = -1
+  levelinfo.starttime = -1
   levelinfo.hp = 0
   levelinfo.mp = 0
   levelinfo.mv = 0
@@ -271,24 +271,24 @@ function level ( name, line, wildcards )
     name = 'level'
   end
   if name == 'pup' then
-    levelinfo.newlevel = tonumber(char.status.level)
+    levelinfo.level = tonumber(char.status.level)
   end
   if superf then
-    levelinfo.newlevel = 201
+    levelinfo.level = 201
     superf = false
   end
   levelinfo.type = name
   if levelinfo.type == "level" then
-    levelinfo.newlevel = wildcards[1]
-    if tonumber(levelinfo.newlevel) == 200 then
+    levelinfo.level = wildcards[1]
+    if tonumber(levelinfo.level) == 200 then
       phelper:broadcast(3)
     end
-    if tonumber(levelinfo.newlevel) == 201 then
+    if tonumber(levelinfo.level) == 201 then
       phelper:broadcast(4)
     end
   end
-  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.newlevel), char.base.remorts, char.base.tier)
-  levelinfo.time = GetInfo(304)
+  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.level), char.base.remorts, char.base.tier)
+  levelinfo.starttime = GetInfo(304)
   phelper:enabletriggroup( "linfo", true )
 end
 
@@ -347,9 +347,9 @@ function OnPluginBroadcast (msg, id, name, text)
           lasttier = -1
           lastremort = -1
           resetinfo()
-          levelinfo.newlevel = 1
+          levelinfo.level = 1
           levelinfo.type = 'level'
-          levelinfo.time = GetInfo(304)
+          levelinfo.starttime = GetInfo(304)
           levelinfo.totallevels = getactuallevel(tonumber(1), char.base.remorts, char.base.tier)
           var.levelinfo = serialize.save( "levelinfo", levelinfo )
           phelper:broadcast(8)
