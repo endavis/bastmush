@@ -93,9 +93,7 @@ function savecp()
 
   --get the cp info
   loadstring( pvar )()
-  cp_stuff = cp_info
-   cpgains = tostring(cp_stuff.qp)
-   db:savecp(cp_stuff)
+  db:savecp(cp_info)
 end
 
 function savewhois()
@@ -312,6 +310,14 @@ function cmdBackup(cmddict)
   db:backupdb(cmddict[1])
 end
 
+function cmdFixTable(cmddict)
+  if #cmddict == 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a table")
+    return true
+  end
+  db:fixtable(cmddict[1])
+end
+
 function cmdCampaignxp(cmddict)
   phelper:plugin_header("Campaign XP")
   if #cmddict == 0 then
@@ -343,7 +349,7 @@ function checkcampaign(level)
     return
   end
   if clevel == -1 or clevel ~= level then
-    db:checkcptable()
+    db:checktable('campaigns')
 
     local numlevels = 0
     local totallevels = db:getstat('totallevels')
@@ -507,6 +513,7 @@ phelper:add_cmd('comparemilstone', {func=CompareMilestones, help="compare two mi
 phelper:add_cmd('listmilestones', {func=ListMilestones, help="list all milestones"})
 phelper:add_cmd('backup', {func=cmdBackup, help="backup the database, the only argument is the extension"})
 phelper:add_cmd('campaignxp', {func=cmdCampaignxp, help="set noexp if a campaign hasn't been taken and tnl is less than the argument to this function, use 'off' (no quotes) disable"})
+phelper:add_cmd('fixtable', {func=cmdFixTable, help="fix a table"})
 
 phelper:set_default('cmd', 'statdb')
 phelper:set_default('plugin_colour', 'orange')
