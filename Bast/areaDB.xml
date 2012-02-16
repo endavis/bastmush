@@ -115,6 +115,7 @@ aarddb = Aarddb:new{}
 
 areasbykeyword = aarddb:getallareas()
 areas = {}
+gettingareas = false
 
 fixnames = {}
 fixnames['The Abyssal Caverns of Sahuagi'] = 'The Abyssal Caverns of Sahuagin'
@@ -124,6 +125,7 @@ fourthheader = ''
 
 function get_areas()
   areas = {}
+  gettingareas = true
   phelper:enabletriggroup("areareg", true)
   phelper:enabletriggroup("area", true)
   SendNoEcho('areas keywords')
@@ -135,6 +137,7 @@ function areas_done(name, line, wildcards)
   if next(areas) then
     aarddb:addareas(areas)
   end
+  gettingareas = false
 end
 
 function new_area()
@@ -190,6 +193,20 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char.status") then
+      local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+
+      if tonumber(char.status.state) == 3 and gettingareas == false and ((areas and not next(areas)) or not areas) then
+        print('getting areas')
+        get_areas()
+        print('done getting areas')
+      end
+
+    end
+  end
+
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
 
@@ -210,9 +227,7 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  if not next(areasbykeyword) then
-    get_areas()
-  end
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
