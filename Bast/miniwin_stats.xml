@@ -1153,11 +1153,11 @@ function create_cp_popup(cp_id)
       local lstyle = {}
 
       local style = {}
-      style.text = string.format("%-30s ", strip_colours(v.mobname))
+      style.text = string.format("%-30s ", strip_colours(v.name))
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%-s ", v.mobarea)
+      style.text = string.format("%-s ", v.location)
       table.insert(lstyle, style)
 
       table.insert(allstyles, lstyle)
@@ -1559,11 +1559,11 @@ function create_gq_popup(gq_id)
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%-30s ", strip_colours(v.mobname))
+      style.text = string.format("%-30s ", strip_colours(v.name))
       table.insert(lstyle, style)
 
       local style = {}
-      style.text = string.format("%-s ", v.mobarea)
+      style.text = string.format("%-s ", v.location)
       table.insert(lstyle, style)
 
       table.insert(allstyles, lstyle)
