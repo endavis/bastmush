@@ -199,9 +199,9 @@ function OnPluginBroadcast (msg, id, name, text)
       char = assert (loadstring ('return ' .. gmcparg or ""))()
 
       if tonumber(char.status.state) == 3 and gettingareas == false and ((areas and not next(areas)) or not areas) then
-        print('getting areas')
+        --print('getting areas')
         get_areas()
-        print('done getting areas')
+        --print('done getting areas')
       end
 
     end
