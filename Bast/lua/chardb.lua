@@ -34,10 +34,10 @@ function Statdb:initialize(args)
   self.version = 9
   self.versionfuncs[2] = self.updatedblqp -- update double qp flag
   self.versionfuncs[3] = self.updatemobkills -- slit, assassinate, etc..
-  self.versionfuncs[4] = self.addmobsblessing
-  self.versionfuncs[5] = self.addquestblessing
-  self.versionfuncs[6] = self.addleveltrainblessing
-  self.versionfuncs[7] = self.addclanskill
+  self.versionfuncs[4] = self.addmobsblessing -- add blessing xp to mobs table
+  self.versionfuncs[5] = self.addquestblessing -- add blessing qp to quest table
+  self.versionfuncs[6] = self.addleveltrainblessing -- add blessing trains to level table
+  self.versionfuncs[7] = self.addclanskill -- add
   self.versionfuncs[8] = self.updatecpmobfields
   self.versionfuncs[9] = self.updategqmobfields
   self:checkversion()
@@ -270,15 +270,10 @@ function Statdb:savewhois(whoisinfo)
   local oldlevel = self:getstat('level')
   if self:open('savewhois') then
     if name == nil then
-      local stmt = self.db:prepare[[ INSERT INTO stats VALUES (NULL, :name, :level, :totallevels,
-                                                          :remorts, :tiers,:race, :sex,
-                                                          :subclass, :qpearned, :questscomplete,
-                                                          :questsfailed, :campaignsdone, :campaignsfld,
-                                                          :gquestswon, :duelswon, :duelslost,
-                                                          :timeskilled, :monsterskilled,
-                                                          :combatmazewins, :combatmazedeaths,
-                                                          :powerupsall, :totaltrivia, 0, 'current') ]]
-
+      whoisinfo.milestone = 'current'
+      whoisinfo.time = 0
+      print('getting stats insert')
+      local stmt = self.db:prepare(self:converttoinsert('stats'))
       stmt:bind_names(  whoisinfo  )
       stmt:step()
       stmt:finalize()
@@ -464,9 +459,11 @@ function Statdb:savelevel( levelinfo, first )
     assert (self.db:exec("COMMIT"))
     local rowid = self.db:last_insert_rowid()
     phelper:mdebug("inserted", levelinfo['type'], ":", rowid)
-    local stmt2 = self.db:exec(string.format("UPDATE levels SET finishtime = %d WHERE level_id = %d;" ,
-                                          levelinfo.starttime, rowid - 1))
-    rowid = self.db:last_insert_rowid()
+    if rowid ~= 1 then
+      local stmt2 = self.db:exec(string.format("UPDATE levels SET finishtime = %d WHERE level_id = %d;" ,
+                                            levelinfo.starttime, rowid - 1))
+      rowid = self.db:last_insert_rowid()
+    end
     self:close('savelevel')
     if levelinfo['type'] == 'level' then
       self:addmilestone(tostring(levelinfo['totallevels']))
