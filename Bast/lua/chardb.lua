@@ -513,6 +513,9 @@ function Statdb:savemobkill( killinfo )
     killinfo['level'] = tonumber(db:getstat('totallevels'))
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare(self:converttoinsert('mobkills'))
+    if killinfo.name == "" then
+      killinfo.name = "Unknown"
+    end
     stmt:bind_names(  killinfo  )
     stmt:step()
     stmt:finalize()
