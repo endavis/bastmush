@@ -1251,7 +1251,9 @@ function OnPluginBroadcast (msg, id, name, text)
         need_mana = true
         event_status_change()
       elseif tag.reason == 5 then
-        phelper.nocast_rooms[tonumber(current_room)] = true
+        if current_room ~= -1 then
+          phelper.nocast_rooms[tonumber(current_room)] = true
+        end
         nocast = true
         setwaiting(false)
         event_status_change()
