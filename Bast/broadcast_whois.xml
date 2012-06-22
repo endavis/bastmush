@@ -87,7 +87,7 @@ You currently display 30 lines per page.
 
 <triggers>
   <trigger
-   script="whois_line1"
+   script="whois_header"
    match="^\[.*\]\s+.*\s*\((\w+)\s+(\w+)\)$"
    enabled="n"
    regexp="y"
@@ -97,7 +97,7 @@ You currently display 30 lines per page.
   >
   </trigger>
   <trigger
-   script="whois_line2"
+   script="classes"
    match="^\[Multiclass Player: (.*) \]$"
    enabled="n"
    regexp="y"
@@ -205,7 +205,7 @@ function whois_start(name, line, wildcards)
   Send(line)
 end
 
-function whois_line1(name, line, wildcards)
+function whois_header(name, line, wildcards)
   whoisinfo["name"] = char.base.name
   whoisinfo['level'] = tonumber(char.status.level)
   whoisinfo['tiers'] = tonumber(char.base.tier)
@@ -223,7 +223,7 @@ function whois_line1(name, line, wildcards)
   check(EnableTrigger("whois_end", true))
 end
 
-function whois_line2(name, line, wildcards)
+function classes(name, line, wildcards)
   tlist = utils.split(wildcards[1],"/")
   remorts = #tlist
   whoisinfo['classes'] = {}
