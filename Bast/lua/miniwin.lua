@@ -400,62 +400,88 @@ function Miniwin:addline(tabname, line)
 end
 
 function Miniwin:addtab(tabname, text, header, makeactive, sticky, position, resetstart)
- timer_start('miniwin:addtab')
- if self.disabled then
-   self.classinit = true
-   self:init(true)
-   self:enable()
- end
- if self.tabs[tabname] == nil then
-   self.tabs[tabname] = {}
-   self.tabs[tabname].text = text
-   self.tabs[tabname].tabname = tabname
-   self.tabs[tabname].header = header
-   self.tabs[tabname].buttonstyles = {}
-   self.tabs[tabname].tabstyles = {}
-   if sticky then
-     self.tabs[tabname].sticky = true
-   end
-   if position and #self.tablist >= position then
-     table.insert(self.tablist, position, tabname)
-   else
-     table.insert(self.tablist, tabname)
-   end
- else
-   self.tabs[tabname].text = text
-   self.tabs[tabname].header = header
-   self.tabs[tabname].build_data = nil
-   self.tabs[tabname].convtext = nil
-   self.tabs[tabname].convheader = nil
- end
- if resetstart then
-   self.tabs[tabname].startline = nil
- end
- if not self.classinit then
-  if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
-    local tabremoved = false
-    for i,v in pairs(self.tablist) do
-      if not self.tabs[v].sticky then
-        tabremoved = table.remove(self.tablist, i)
-        break
+  timer_start('miniwin:addtab')
+  if self.disabled then
+    self.classinit = true
+    self:init(true)
+    self:enable()
+  end
+  if self.tabs[tabname] == nil then
+    self.tabs[tabname] = {}
+    self.tabs[tabname].text = text
+    self.tabs[tabname].tabname = tabname
+    self.tabs[tabname].header = header
+    self.tabs[tabname].buttonstyles = {}
+    self.tabs[tabname].tabstyles = {}
+    if sticky then
+      self.tabs[tabname].sticky = true
+    end
+    if position and #self.tablist >= position then
+      table.insert(self.tablist, position, tabname)
+    else
+      table.insert(self.tablist, tabname)
+    end
+  else
+    self.tabs[tabname].text = text
+    self.tabs[tabname].header = header
+    self.tabs[tabname].build_data = nil
+    self.tabs[tabname].convtext = nil
+    self.tabs[tabname].convheader = nil
+  end
+  if resetstart then
+    self.tabs[tabname].startline = nil
+  end
+
+  if not self.classinit then
+--      if self.activetab then
+--        print('activetab.tabname', self.activetab.tabname)
+--      else
+--        print('no active tab')
+--      end
+--      print('tabname', tabname)
+    if self.maxtabs > 0 and self:counttabs() > self.maxtabs then
+      local tabremoved = false
+      for i,v in pairs(self.tablist) do
+        if not self.tabs[v].sticky then
+          tabremoved = table.remove(self.tablist, i)
+          break
+        end
       end
+      self.tabs[tabremoved] = nil
+      if tabremoved == self.activetab then
+        self:changeactivetab(tabname)
+        self:resettabs()
+      else
+        if #self.tablist > 2 then
+          --print('redrawing tabline only')
+          self:redrawtabline()
+        else
+          self:resettabs()
+        end
+      end
+    elseif self.activetab and self.activetab.tabname ~= tabname then
+      --redraw tab line only
+      if #self.tablist > 2 then
+        --print('redrawing tabline only')
+        self:redrawtabline()
+      else
+        self:resettabs()
+      end
+    else
+      self:redraw()
     end
-    self.tabs[tabremoved] = nil
-    if tabremoved == self.activetab then
+    if self.activetab == nil or makeactive then
       self:changeactivetab(tabname)
+      self:resettabs()
     end
+    --self:resettabs()
+    --self:redraw()
   end
-  if self.activetab == nil or makeactive then
-    self:changeactivetab(tabname)
+  if not self.firstshown then
+    self:set('firstshown', true)
+    self:show(true)
   end
-  self:resettabs()
-  --self:redraw()
- end
- if not self.firstshown then
-   self:set('firstshown', true)
-   self:show(true)
- end
- timer_end('miniwin:addtab')
+  timer_end('miniwin:addtab')
 end
 
 function Miniwin:changeactivetab(tabname)
@@ -468,21 +494,20 @@ function Miniwin:settabnametext(tabname, newtext)
     self.tabs[tabname].tabnametext = newtext
   end
   -- just redraw the tabline instead of the entire window
-  --self:redrawtabline()
+  self:redrawtabline()
 end
 
 function Miniwin:redrawtabline()
-  --self.activetab.build_data.tabbarlinenum
-  if self:counttabs() > 1  and self.showtabline then
-    local tabline = self:buildtabline()
-    --self.activetab.build_data.tabbarlinenum = linenum
-    self.activetab.tabbarlineconv = self:convert_line(tabline, 1, 0, 0, 'tabbarline')[1]
-    --self.activetab.maxwidth = math.max(self.activetab.maxwidth, self.activetab.tabbarlineconv.width)
-    local top = self.activetab.build_data[self.activetab.build_data.tabbarlinenum - 1].linebottom
-    self.activetab.build_data[self.activetab.build_data.tabbarlinenum] = self:justify_line(self.activetab.tabbarlineconv, top, self.activetab.build_data.tabbarlinenum, 'titlebarline')
-    --print('redrawing tabline', self.activetab)
-    --self:displayline(self.activetab.build_data[self.activetab.build_data.tabbarlinenum])
-    self:displayline(self.activetab.tabbarlineconv)
+  if self:counttabs() > 1 and self.showtabline then
+    if self.activetab.build_data and next(self.activetab.build_data) and self.activetab.build_data.tabbarlinenum then
+      local tabline = self:buildtabline()
+      self.activetab.tabbarlineconv = self:convert_line(tabline, 1, 0, 0, 'tabbarline')[1]
+      if self.activetab.build_data[self.activetab.build_data.tabbarlinenum - 1] then
+        local top = self.activetab.build_data[self.activetab.build_data.tabbarlinenum - 1].linebottom
+        self.activetab.build_data[self.activetab.build_data.tabbarlinenum] = self:justify_line(self.activetab.tabbarlineconv, top, self.activetab.build_data.tabbarlinenum, 'tabbarline')
+        self:displayline(self.activetab.tabbarlineconv, true)
+      end
+    end
   end
 end
 
@@ -1942,12 +1967,15 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
 end -- colourtext
 
 -- display a single line that has been converted and adjusted
-function Miniwin:displayline (styles)
+function Miniwin:displayline (styles, redo)
   --self:mdebug('Displaying', styles)
   local def_font_id = self.default_font_id
   local def_colour = self:get_colour("text_colour")
   local def_bg_colour = self:get_colour("bg_colour")
 
+  if redo then
+    WindowRectOp (self.winid, 2, styles.linestart, styles.linetop, styles.lineend, styles.linebottom, def_bg_colour )
+  end
   if not self.shaded and styles.linebottom > (WindowInfo(self.winid, 4) - self.window_border_width - self.height_padding) then
     styles.bottom = WindowInfo(self.winid, 4) - self.window_border_width - self.height_padding
   end
@@ -2485,6 +2513,10 @@ end
 function Miniwin:drawshuttle()
     local downbutton = self.activetab.build_data.downbutton
     local upbutton = self.activetab.build_data.upbutton
+    if not upbutton or not downbutton then
+      print('error on upbutton or downbutton in drawshuttle')
+      return
+    end
     local shuttle = self.activetab.build_data.shuttle
     local sliderheight = downbutton.top - upbutton.bottom
     shuttle.top = math.ceil(upbutton.bottom + ((sliderheight / #self.activetab.convtext) * (self.activetab.startline - 1)))
@@ -2545,6 +2577,8 @@ function Miniwin:drawwin()
   end
   if self.activetab.build_data == nil or self.activetab.build_data[1] == nil then
     self:pre_create_window_internal()
+  else
+    self:redrawtabline()
   end
   local endline = #self.activetab.build_data
   local window_height = 0
