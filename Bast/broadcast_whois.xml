@@ -33,41 +33,38 @@ Example
     end
   end
 
-xBroadcast_Whois : Broadcast 1
-whoisinfo = {}
-  whoisinfo.powerupsall = 0
-  whoisinfo.birthdate = "15 Jul 2003"
-  whoisinfo.questscomplete = "7061"
-  whoisinfo.tiers = "0"
-  whoisinfo.qpearned = "152329"
-  whoisinfo.race = "shade"
-  whoisinfo.combatmazewins = "0"
-  whoisinfo.trainedstats = "711"
-  whoisinfo.totallevels = 943
-  whoisinfo.level = "139"
-  whoisinfo.triviapoints = "52"
-  whoisinfo.hoursonline = "5567"
-  whoisinfo.questpoints = "22318"
-  whoisinfo.powerupsmort = 0
+Broadcast 1
+ whoisinfo = {}
   whoisinfo.combatmazedeaths = "0"
-  whoisinfo.timeskilled = "166"
+  whoisinfo.duelslost = "0"
+  whoisinfo.totallevels = 1733
+  whoisinfo.questsfailed = "141"
+  whoisinfo.gquestswon = "148"
   whoisinfo.subclass = "ninja"
-  whoisinfo.monsterskilled = "35153"
-  whoisinfo.campaignsfld = "35"
-  whoisinfo.duelswon = "0"
+  whoisinfo.birthdate = "15 Jul 2003"
+  whoisinfo.trainedstats = "685"
+  whoisinfo.powerupsall = 0
+  whoisinfo.combatmazewins = "0"
+  whoisinfo.questpoints = "114997"
+  whoisinfo.hoursonline = "9578"
+  whoisinfo.level = 125
+  whoisinfo.powerupsmort = 0
+  whoisinfo.timeskilled = "178"
+  whoisinfo.tiers = 1
+  whoisinfo.sex = "male"
+  whoisinfo.triviapoints = "183"
   whoisinfo.classes = {}
     whoisinfo.classes[1] = "thief"
     whoisinfo.classes[2] = "psionicist"
-    whoisinfo.classes[3] = "cleric"
-    whoisinfo.classes[4] = "paladin"
-    whoisinfo.classes[5] = "mage"
-  whoisinfo.campaignsdone = "850"
-  whoisinfo.remorts = 5
-  whoisinfo.sex = "male"
-  whoisinfo.gquestswon = "48"
-  whoisinfo.duelslost = "0"
-  whoisinfo.questsfailed = "138"
+  whoisinfo.race = "shadow"
+  whoisinfo.monsterskilled = "64004"
+  whoisinfo.duelswon = "0"
+  whoisinfo.campaignsfld = "38"
+  whoisinfo.qpearned = "288254"
+  whoisinfo.questscomplete = "12871"
+  whoisinfo.campaignsdone = "1635"
   whoisinfo.name = "Bast"
+  whoisinfo.remorts = 2
 
 pagesize 30
 Page size set to 30 lines.

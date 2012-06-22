@@ -32,17 +32,26 @@ Example
   end
 
 xBroadcast_Kills : Broadcast 1
-kill_info = {}
-  kill_info.name = "The miller's wife"
-  kill_info.vorpal = 0
+ kill_info = {}
   kill_info.wielded_weapon = ""
+  kill_info.totalxp = 90
   kill_info.second_weapon = ""
-  kill_info.time = 1275867123
-  kill_info.gold = "2267"
-  kill_info.bonusxp = "5"
-  kill_info.level = "139"
-  kill_info.xp = "5"
+  kill_info.bcasted = false
+  kill_info.blessingxp = 0
   kill_info.tp = 0
+  kill_info.deathblow = 0
+  kill_info.assassinate = 0
+  kill_info.xp = 90
+  kill_info.time = 1340386052
+  kill_info.slit = 0
+  kill_info.disintegrate = 0
+  kill_info.level = 126
+  kill_info.banishment = 0
+  kill_info.gold = "3869"
+  kill_info.vorpal = 0
+  kill_info.room_id = 11390
+  kill_info.name = "Grectza"
+  kill_info.bonusxp = 0
 
 ]]>
 </description>

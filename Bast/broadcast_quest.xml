@@ -43,44 +43,50 @@ Example:
     end
   end
 
-xBroadcast_Quest : Broadcast 2
-quest_info = {}
-  quest_info.starttime = 1275941847
+Broadcast 2
+ quest_info = {}
+  quest_info.starttime = 1340386244
+  quest_info.mobname = "a mountain lion"
+  quest_info.finishtime = -1
   quest_info.lucky = 0
-  quest_info.mobroom = "The Grey Watchtower"
-  quest_info.mobarea = "The Fortress of Angband"
   quest_info.tier = 0
-  quest_info.trains = 0
-  quest_info.tp = 0
   quest_info.mccp = 0
   quest_info.pracs = 0
-  quest_info.gold = 0
-  quest_info.finishtime = -1
-  quest_info.mobname = "Grey Orcish Guard"
+  quest_info.tp = 0
+  quest_info.totqp = 0
+  quest_info.double = 0
   quest_info.failed = 0
+  quest_info.daily = 0
+  quest_info.gold = 0
+  quest_info.mobarea = "The Broken Halls of Horath"
+  quest_info.trains = 0
   quest_info.qp = 0
+  quest_info.mobroom = "Nearing the Palace"
 
 xBroadcast_Quest : Broadcast 3
 timer = {}
   timer.text = "44 m"
   timer.secs = 2640
 
-xBroadcast_Quest : Broadcast 6
-quest_info = {}
-  quest_info.starttime = 1275941847
-  quest_info.lucky = 0
-  quest_info.mobroom = "The Grey Watchtower"
-  quest_info.mobarea = "The Fortress of Angband"
-  quest_info.tier = 0
-  quest_info.trains = 0
-  quest_info.tp = 0
+Broadcast 6
+ quest_info = {}
+  quest_info.starttime = 1340386244
+  quest_info.mobname = "a mountain lion"
+  quest_info.finishtime = 1340386313
+  quest_info.lucky = "0"
+  quest_info.tier = "1"
   quest_info.mccp = "2"
-  quest_info.pracs = 0
-  quest_info.gold = "3578"
-  quest_info.finishtime = 1275941920
-  quest_info.mobname = "Grey Orcish Guard"
+  quest_info.pracs = "0"
+  quest_info.tp = "0"
+  quest_info.totqp = 19
+  quest_info.double = 0
   quest_info.failed = 0
-  quest_info.qp = "17"
+  quest_info.daily = 0
+  quest_info.gold = "4294"
+  quest_info.mobarea = "The Broken Halls of Horath"
+  quest_info.trains = "0"
+  quest_info.qp = "16"
+  quest_info.mobroom = "Nearing the Palace"
 
 xBroadcast_Quest : Broadcast 7
 timer = {}
