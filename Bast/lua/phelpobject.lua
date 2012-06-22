@@ -356,7 +356,7 @@ function Phelpobject:set(option, value, args)
       self:processevent('option-any', {option=option, value=value})
     end
     SaveState()
-    return true
+    return true, tvalue
   end
   return false
 end
@@ -389,9 +389,9 @@ function Phelpobject:set_external(option, value, args)
       end
       ColourNote("", "", "")
   end
-  local retcode = self:set(option, value, args)
+  local retcode, rvalue = self:set(option, value, args)
   if retcode == true then
-    changedsetting(option, varstuff, tvalue)
+    changedsetting(option, varstuff, rvalue)
     return true
   end
   return false

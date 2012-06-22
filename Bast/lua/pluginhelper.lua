@@ -258,8 +258,8 @@ function Pluginhelper:set(option, value, args)
     args = {}
   end
   args.putvar = true
-  local retcode = super(self, option, value, args)
-  return retcode
+  local retcode, tvalue = super(self, option, value, args)
+  return retcode, tvalue
 end
 
 function Pluginhelper:find_pobject(object)
