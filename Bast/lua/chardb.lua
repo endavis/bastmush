@@ -269,6 +269,7 @@ function Statdb:savewhois(whoisinfo)
   local oldtlevel = self:getstat('totallevels')
   local oldlevel = self:getstat('level')
   if self:open('savewhois') then
+    self:resetclasses()
     if name == nil then
       whoisinfo.milestone = 'current'
       whoisinfo.time = 0
@@ -277,7 +278,6 @@ function Statdb:savewhois(whoisinfo)
       stmt:bind_names(  whoisinfo  )
       stmt:step()
       stmt:finalize()
-      self:resetclasses()
       self:addmilestone('start')
       phelper:mdebug("no previous stats, created new")
     else
