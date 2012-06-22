@@ -272,11 +272,12 @@ function Statdb:savewhois(whoisinfo)
     if name == nil then
       whoisinfo.milestone = 'current'
       whoisinfo.time = 0
-      print('getting stats insert')
+      whoisinfo.totaltrivia = 0
       local stmt = self.db:prepare(self:converttoinsert('stats'))
       stmt:bind_names(  whoisinfo  )
       stmt:step()
       stmt:finalize()
+      self:resetclasses()
       self:addmilestone('start')
       phelper:mdebug("no previous stats, created new")
     else
@@ -564,15 +565,28 @@ end
 
 function Statdb:resetclasses()
   local stmt2 = nil
+  self:checktable('classes')
+  local classes = self:getclasses()
   if self:open('resetclasses') then
     assert (self.db:exec("BEGIN TRANSACTION"))
-    stmt2 = self.db:prepare("INSERT INTO classes VALUES (:name, -1)")
-    for i,v in pairs(classabb) do
-      stmt2:bind_names ({name = i})
-      stmt2:step()
-      stmt2:reset()
+    if next(classes) then
+      stmt2 = self.db:prepare[[ UPDATE classes SET remort = -1
+                                              WHERE class = :class ]]
+      for i,v in ipairs(classes) do
+        stmt2:bind_names ({class = string.sub(v, 0, 3)})
+        stmt2:step()
+        stmt2:reset()
+      end
+      stmt2:finalize()
+    else
+      stmt2 = self.db:prepare("INSERT INTO classes VALUES (:name, -1)")
+      for i,v in pairs(classabb) do
+        stmt2:bind_names ({name = i})
+        stmt2:step()
+        stmt2:reset()
+      end
+      stmt2:finalize()
     end
-    stmt2:finalize()
     assert (self.db:exec("COMMIT"))
     self:close('resetclasses')
   end
