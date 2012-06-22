@@ -1,5 +1,44 @@
 Bastmush Changes List
 
+r1844 snapshot
+ *** NOTE FOR PLUGIN AUTHORS THAT USE BROADCAST PLUGINS ***:
+     This upgrade changes the format of some broadcasts:
+     broadcast_cp, broadcast_gq, broadcast_level, broadcast_quest,
+     broadcast_kills, broadcast_whois: please see each plugin for
+     the new formats
+  - General Bug Fixes:
+     - issue137 fixed, can now set variables without an error
+  - lua/pluginhelper.lua
+     - bug fix: should be returning 5 zeros in SecondsToDHMS
+  - lua/sqlitedb.lua
+     - bug fix: set the version to whatever the current version is if the
+         verson table does not exist
+     - new: move the sql to create tables into a variable
+     - new: add a function to create sql insert statements from the create
+         table sql statement
+     - new: add a function to get columns from the create table sql
+         statement
+  - lua/chardb.lua
+     - new: changes to use the new functions for tables in sqlitedb.lua
+     - new: default all text columns to "Unknown"
+     - bug fix: bug on adding first level if statsdb is empty
+     - bug fix: resetclasses now will create classes as well as update them
+         if called
+     - bug fix: reset all classes on first whois
+  - broadcast_cp/gq
+     - new: change room to location field
+  - miniwin_cp/gq/events/stats
+     - new: updates for new location field in broadcast_cp/gq
+  - broadcast_kills
+     - new: change mobname field to name for easier integration into chardb
+  - broadcast_level
+     - new: changes to align with chardb
+  - bast_spellup
+     - bug fix: don't add unknown rooms to the nocast variable
+  - StatDB
+     - bug fix: fix field names on first whois
+     - bug fix: reset classes on tier
+
 r1817 snapshot
   - StatMonitor
      - new: added ability to display to the commlog, set the chan to commlog
