@@ -433,7 +433,7 @@ function OnPluginBroadcast (msg, id, name, text)
         if phelper.dontlevelnocampaign and
            not verify_bool(GetPluginVariable('aaa65ac8122d795ad5348dcd', 'noexp')) and
            not sentnoexp
-           and not (tonumber(char.status.state) == 8) then
+           and (tonumber(char.status.state) == 8 or tonumber(char.status.state) == 3) then
           checkcampaign(tonumber(char.status.level))
         end
       end
