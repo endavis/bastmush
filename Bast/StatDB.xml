@@ -106,20 +106,21 @@ function savewhois()
   if db:countlevels() == 0 then
     levelinfo = {}
     levelinfo.type = "level"
-    levelinfo.newlevel = tonumber(db:getstat('totallevels'))
+    levelinfo.level = tonumber(db:getstat('totallevels'))
     levelinfo.str = 0
     levelinfo.int = 0
     levelinfo.wis = 0
     levelinfo.dex = 0
     levelinfo.con = 0
     levelinfo.luc = 0
-    levelinfo.time = GetInfo(304)
+    levelinfo.starttime = GetInfo(304)
     levelinfo.hp = 0
     levelinfo.mp = 0
     levelinfo.mv = 0
     levelinfo.pracs = 0
     levelinfo.trains = 0
     levelinfo.bonustrains = 0
+    levelinfo.blessingtrains = 0
     db:savelevel(levelinfo, true)
   end
 end
@@ -405,7 +406,9 @@ function OnPluginBroadcast (msg, id, name, text)
     createmilestone()
   elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 8 then
     createmilestone()
+    db:resetclasses()
     DoAfterSpecial(10, "savelevel()", 12)
+    DoAfterSpecial(10, "warning()", 12)
   elseif id == "aaa0ab9ed92f8fc614664bd1" and msg == 6 then
     createmilestone('remort')
     DoAfterSpecial(10, "savelevel()", 12)
