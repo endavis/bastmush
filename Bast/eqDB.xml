@@ -436,7 +436,10 @@ function eqdata_redirect (name, line, wildcards, styles)
     titem = dataparse(line, 'eqdata')
     titem.containerid = container
     titem.place = -2
-    titem.name = strip_colours(titem.cname)
+    if (titem.cname ~= nil) then
+      titem.name = strip_colours(titem.cname)
+      -- else handled by checkvaliditem
+    end
     if checkvaliditem(titem) then
       eqdata[titem.serial] = titem
     else
@@ -476,7 +479,10 @@ function invdata_redirect (name, line, wildcards, styles)
   place = place + 1
   titem = dataparse(line, 'eqdata')
   titem.containerid = container
-  titem.name = strip_colours(titem.cname)
+  if (titem.cname ~= nil) then
+    titem.name = strip_colours(titem.cname)
+    -- else handled by checkvaliditem
+  end
   titem.place = place
   if checkvaliditem(titem) then
     invdata[titem.serial] = titem
