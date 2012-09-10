@@ -115,6 +115,7 @@ function Sqlitedb:open(from)
     self.conns = self.conns + 1
     return true
   else
+    self.db = nil
     return false
   end
 end
@@ -139,7 +140,6 @@ function Sqlitedb:checkfortable(tablename)
   if self:open('checkfortable') then
     for a in self.db:nrows('SELECT * FROM sqlite_master WHERE name = "' .. tablename .. '" AND type = "table"') do
       if a['name'] == tablename then
-        self:close('checkfortable')
         rv = true
       end
     end
