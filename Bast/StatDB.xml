@@ -468,13 +468,13 @@ function OnPluginClose ()
 end -- OnPluginClose
 
 function OnPluginEnable ()
-  ldplugin('broadcast_quest')
-  ldplugin('broadcast_level')
-  ldplugin('broadcast_whois')
-  ldplugin('broadcast_cp')
-  ldplugin('broadcast_kills')
-  ldplugin('broadcast_gq')
-  ldplugin('broadcast_noexp')
+  ldplugin('broadcast_quest', 'aaa8a9eda20fa11787c6b438')
+  ldplugin('broadcast_level', 'aaa0ab9ed92f8fc614664bd1')
+  ldplugin('broadcast_whois', 'aaaf9a8dc92f8fc614663ac0')
+  ldplugin('broadcast_cp', 'aaa66f81c50828bbbfda7100')
+  ldplugin('broadcast_kills', 'aaa61c4570508448e19c7c14')
+  ldplugin('broadcast_gq', 'aaa77f81c5408278ccda7100')
+  ldplugin('broadcast_noexp', 'aaa65ac8122d795ad5348dcd')
 
   phelper:OnPluginEnable()
 

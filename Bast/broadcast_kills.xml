@@ -523,7 +523,7 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
-  ldplugin ('eqdb')
+  ldplugin ('eqdb', 'aaa56faed92ffc6146964abc')
 
   CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "wearlocchange", "onwearlocchange")
 
