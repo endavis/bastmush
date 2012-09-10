@@ -873,10 +873,11 @@ function EQdb:clearcontainer(containerid)
   timer_start('EQdb:clearcontainer')
   self:checkitemstable()
   --print('clearing container', containerid)
-  if self:open('additems') then
+  if self:open('clearcontainer') then
     --assert (self.db:exec("BEGIN TRANSACTION"))
     self.db:exec("DELETE from items where containerid = '" .. tostring(containerid) .. "';")
     --assert (self.db:exec("COMMIT"))
+    self.close('clearcontainer')
   end
   timer_end('EQdb:clearcontainer')
 end

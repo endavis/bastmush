@@ -104,15 +104,15 @@ function Sqlitedb:updateversion(oldversion, newversion)
 end
 
 function Sqlitedb:open(from)
-  --phelper:mdebug('open - conns:', self.conns, from)
+  phelper:mdebug('open - conns:', self.conns, from, '->', self.conns + 1)
   if self.db == nil then
     --phelper:mdebug("opening db")
     --print('db dir', self.dbloc)
     self.db = assert(sqlite3.open(self.dbloc .. self.dbname))
     self:turnonpragmas()
   end
-  self.conns = self.conns + 1
   if self.db then
+    self.conns = self.conns + 1
     return true
   else
     return false
@@ -120,11 +120,11 @@ function Sqlitedb:open(from)
 end
 
 function Sqlitedb:close(from, force)
+  phelper:mdebug('close - conns:', self.conns, from, '->', self.conns - 1)
   self.conns = self.conns - 1
   if self.conns < 0 and not force then
     phelper:mdebug("BUG: conns < 0 for db", self.dbname)
   end
-  phelper:mdebug('close - conns:', self.conns, from)
   if self.db ~= nil and (self.conns == 0 or force) then
 --  if self.db ~= nil and force then
     --phelper:mdebug("closing db")
@@ -135,16 +135,17 @@ function Sqlitedb:close(from, force)
 end
 
 function Sqlitedb:checkfortable(tablename)
+  local rv = false
   if self:open('checkfortable') then
     for a in self.db:nrows('SELECT * FROM sqlite_master WHERE name = "' .. tablename .. '" AND type = "table"') do
       if a['name'] == tablename then
         self:close('checkfortable')
-        return true
+        rv = true
       end
     end
     self:close('checkfortable')
   end
-  return false
+  return rv
 end
 
 function Sqlitedb:dbcheck (code)
