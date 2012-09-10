@@ -301,77 +301,78 @@ function EQdb:getitemdetails(serial)
   self:checkitemdetailstable()
   self:checkidentifiertable()
   self:checknotetable()
+  local fixed = fixsql(tostring(serial))
   if self:open('getitemdetails') then
-    for a in self.db:nrows("SELECT * FROM itemdetails WHERE serial = " .. tostring(serial)) do
+    for a in self.db:nrows("SELECT * FROM itemdetails WHERE serial = " .. fixed) do
       titem = a
     end
     if titem then
-      for a in self.db:nrows("SELECT * FROM identifier WHERE serial = " .. tostring(serial)) do
+      for a in self.db:nrows("SELECT * FROM identifier WHERE serial = " .. fixed) do
         if not titem['identifier'] then
           titem['identifier'] = {}
         end
         table.insert(titem['identifier'], a['identifier'])
       end
-      for a in self.db:nrows("SELECT * FROM resistmod WHERE serial = " .. tostring(serial)) do
+      for a in self.db:nrows("SELECT * FROM resistmod WHERE serial = " .. fixed) do
         if not titem['resistmod'] then
           titem['resistmod'] = {}
         end
         titem['resistmod'][a.type] = a.amount
       end
-      for a in self.db:nrows("SELECT * FROM affectmod WHERE serial = " .. tostring(serial)) do
+      for a in self.db:nrows("SELECT * FROM affectmod WHERE serial = " .. fixed) do
         if not titem['affectmod'] then
           titem['affectmod'] = {}
         end
         table.insert(titem['affectmod'], a.type)
       end
-      for a in self.db:nrows("SELECT * FROM spells WHERE serial = " .. tostring(serial)) do
+      for a in self.db:nrows("SELECT * FROM spells WHERE serial = " .. fixed) do
         titem['spells'] = a
       end
-      for a in self.db:nrows("SELECT * FROM statmod WHERE serial = " .. tostring(serial)) do
+      for a in self.db:nrows("SELECT * FROM statmod WHERE serial = " .. fixed) do
         if not titem['statmod'] then
           titem['statmod'] = {}
         end
         titem['statmod'][a.type] = a.amount
       end
-      for a in self.db:nrows("SELECT * FROM note WHERE serial = " .. tostring(serial)) do
+      for a in self.db:nrows("SELECT * FROM note WHERE serial = " .. fixed) do
         if not titem['note'] then
           titem['note'] = {}
         end
         titem['note'][a.nid] = a.note
       end
-      for a in self.db:nrows("SELECT * FROM skillmod WHERE serial = " .. tostring(serial)) do
+      for a in self.db:nrows("SELECT * FROM skillmod WHERE serial = " .. fixed) do
         if not titem['skillmod'] then
           titem['skillmod'] = {}
         end
         titem['skillmod'][a.skillnum] = a.amount
       end
       if tonumber(titem.type) == 1  then
-        for a in self.db:nrows("SELECT * FROM light WHERE serial = " .. tostring(serial)) do
+        for a in self.db:nrows("SELECT * FROM light WHERE serial = " .. fixed) do
           titem['light'] = a
         end
       end
       if tonumber(titem.type) == 20  then
-        for a in self.db:nrows("SELECT * FROM portal WHERE serial = " .. tostring(serial)) do
+        for a in self.db:nrows("SELECT * FROM portal WHERE serial = " .. fixed) do
           titem['portal'] = a
         end
       end
       if tonumber(titem.type) == 5  then
-        for a in self.db:nrows("SELECT * FROM weapon WHERE serial = " .. tostring(serial)) do
+        for a in self.db:nrows("SELECT * FROM weapon WHERE serial = " .. fixed) do
           titem['weapon'] = a
         end
       end
       if tonumber(titem.type) == 9  then
-        for a in self.db:nrows("SELECT * FROM furniture WHERE serial = " .. tostring(serial)) do
+        for a in self.db:nrows("SELECT * FROM furniture WHERE serial = " .. fixed) do
           titem['furniture'] = a
         end
       end
       if tonumber(titem.type) == 11  then
-        for a in self.db:nrows("SELECT * FROM container WHERE serial = " .. tostring(serial)) do
+        for a in self.db:nrows("SELECT * FROM container WHERE serial = " .. fixed) do
           titem['container'] = a
         end
         local itemsinside = titem['container']['itemsinside']
         local itemburden = titem['container']['itemburden']
-        for a in self.db:rows("SELECT COUNT(*) from items where containerid = " .. tostring(serial)) do
+        for a in self.db:rows("SELECT COUNT(*) from items where containerid = " .. fixed) do
           itemsinside = tonumber(a[1])
           itemburden = tonumber(itemsinside) + 1
         end
@@ -379,12 +380,12 @@ function EQdb:getitemdetails(serial)
         titem['container']['itemburden'] = itemburden
       end
       if tonumber(titem.type) == 12  then
-        for a in self.db:nrows("SELECT * FROM drink WHERE serial = " .. tostring(serial)) do
+        for a in self.db:nrows("SELECT * FROM drink WHERE serial = " .. fixed) do
           titem['drink'] = a
         end
       end
       if tonumber(titem.type) == 14  then
-        for a in self.db:nrows("SELECT * FROM food WHERE serial = " .. tostring(serial)) do
+        for a in self.db:nrows("SELECT * FROM food WHERE serial = " .. fixed) do
           titem['food'] = a
         end
       end
@@ -400,9 +401,10 @@ end
 
 function EQdb:addnote(serial, notes, fromident)
   self:checknotetable()
+  local fixed = fixsql(tostring(serial))
   if self:open('addnote') then
     if fromident then
-      self.db:exec("DELETE from note where fromident = 1 and serial = " .. tostring(serial))
+      self.db:exec("DELETE from note where fromident = 1 and serial = " .. fixed)
     else
       assert (self.db:exec("BEGIN TRANSACTION"))
     end
@@ -775,8 +777,9 @@ end
 
 function EQdb:addaffectmods(serial, affectmods)
   timer_start('EQdb:addresists')
+  local fixed = fixsql(tostring(serial))
   if serial and next(affectmods) then
-    self.db:exec("DELETE from affectmod where serial = " .. tostring(serial))
+    self.db:exec("DELETE from affectmod where serial = " .. fixed)
     local stmt = self.db:prepare[[
       INSERT into affectmod VALUES (
         NULL,

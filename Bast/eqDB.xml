@@ -823,6 +823,9 @@ function cmd_remnote(cmddict)
 end
 
 function cmd_listnote(cmddict)
+  if (not cmddict[1]) then
+    return
+  end
   local titem = db:getitemdetails(cmddict[1])
   if titem then
     if titem.note then
