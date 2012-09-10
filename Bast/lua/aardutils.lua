@@ -96,6 +96,9 @@ function getactuallevel(level, remorts, tier)
 end
 
 function convertlevel(level)
+  if (level == nil) then
+    return {tier = -1, remort = -1, level = -1}
+  end
   local level = tonumber(level)
   if level < 1 then
     return {tier = -1, remort = -1, level = -1}
