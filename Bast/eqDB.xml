@@ -846,6 +846,7 @@ function checkaction(action, item, afterwait)
     -- item removed
     --print('action 1')
     local oldwearslot = item.wearslot
+    item.wearslot = -1
     db:moveitem(item, 'Inventory')
     event_container_change('Inventory')
     event_container_change('Worn')

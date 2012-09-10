@@ -902,7 +902,7 @@ function EQdb:wearitem(item, wearloc)
   if self:open('wearitem') then
     assert (self.db:exec("BEGIN TRANSACTION"))
     self.db:exec(string.format("UPDATE items SET containerid = 'Worn', wearslot = %d, place = -2 where serial = %d;",
-                                     tonumber(item.wearslot),  tonumber(item.serial)))
+                                     tonumber(wearloc),  tonumber(item.serial)))
     assert (self.db:exec("COMMIT"))
     self:close('wearitem')
   end
