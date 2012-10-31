@@ -65,14 +65,14 @@ function format_header()
 end
 
 function plugins_list_helper(header, type, search)
-  phelper:plugin_header(header)
-  format_header()
-  ColourNote("white", "black", "-----------------------------------------------------------------------")
   local pluginsall = {}
   if search == nil then
     search = '.*'
   end
   numfound, plist = getmatches(search)
+  phelper:plugin_header(header .. ' - Found: ' .. tostring(numfound))
+  format_header()
+  ColourNote("white", "black", "-----------------------------------------------------------------------")
   for _, pdict in pairs(plist) do
     pluginsall[GetPluginInfo(pdict.id, 1)] = { id = pdict.id,
                       name = pdict.name,
