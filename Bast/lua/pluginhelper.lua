@@ -891,22 +891,36 @@ function format_time(length)
   local years, days, hours, mins, secs = SecondsToDHMS(length)
   if years > 0 then
     table.insert( tmsg, string.format( "%d", years or 0 ) )
-    table.insert( tmsg, "y:" )
+    table.insert( tmsg, "y" )
   end
   if days > 0 then
+    if years > 0 then
+      table.insert( tmsg, string.format( ":" ) )
+    end
     table.insert( tmsg, string.format( "%02d", days or 0 ) )
-    table.insert( tmsg, "d:" )
+    table.insert( tmsg, "d" )
   end
   if hours > 0 then
+    if years > 0 or days > 0 then
+      table.insert( tmsg, string.format( ":" ) )
+    end
     table.insert( tmsg, string.format( "%02d", hours or 0 ) )
-    table.insert( tmsg, "h:" )
+    table.insert( tmsg, "h" )
   end
   if mins > 0 then
+    if years > 0 or days > 0 or hours > 0 then
+      table.insert( tmsg, string.format( ":" ) )
+    end
     table.insert( tmsg, string.format( "%02d", mins or 0 ) )
-    table.insert( tmsg, "m:" )
+    table.insert( tmsg, "m" )
   end
-  table.insert( tmsg, string.format( "%02d", secs or 0 ) )
-  table.insert( tmsg, "s " )
+  if secs > 0 or #tmsg == 0 then
+    if years > 0 or days > 0 or hours > 0 or mins > 0 then
+      table.insert( tmsg, string.format( ":" ) )
+    end
+    table.insert( tmsg, string.format( "%02d", secs or 0 ) )
+    table.insert( tmsg, "s " )
+  end
   return strjoin("", tmsg)
 end
 
