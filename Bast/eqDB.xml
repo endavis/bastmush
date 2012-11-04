@@ -328,6 +328,8 @@ end
 
 function event_wearloc_change(wearloc,action,item)
   timer_start('event_wearloc_change')
+  --print("event_wearloc_change")
+  --tprint({wearloc=wearloc,action=action,item=item})
   phelper:processevent('wearlocchange', {wearloc=wearloc,action=action,item=item})
   timer_end('event_wearloc_change')
 end
@@ -878,6 +880,7 @@ function checkaction(action, item, afterwait)
     event_wearloc_change(item.wearslot, 2, item)
     timer_end('EQdb:action2')
   elseif action == 2 and wearingall then
+   --print('enabling emptyline trigger')
    phelper:enabletriggroup("emptyline", true)
   elseif action == 3 then
     -- dropped, sold
@@ -992,6 +995,9 @@ function OnPluginEnable ()
     local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
     char = assert (loadstring ('return ' .. gmcparg or ""))()
     initinv(char)
+  else
+    --print('OnPluginConnect: setting wearingall to true')
+    wearingall = true
   end
 
   dbbackup()
@@ -1004,7 +1010,7 @@ function OnPluginDisable ()
 end -- OnPluginDisable
 
 function OnPluginConnect ()
-  wearingall = true
+
   phelper:OnPluginConnect()
 end -- function OnPluginConnect
 
