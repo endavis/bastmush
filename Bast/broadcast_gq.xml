@@ -107,6 +107,8 @@ Global Quest: Global quest # 459558 has been declared for levels 141 to 155.
 
 You have now joined the quest. See 'help gquest' for available commands.
 
+The global quest has not yet started.
+
 Global Quest: The global quest for levels 117 to 130 has now started.
 Global Quest: Use 'gquest info' to see the targets.
 
@@ -125,7 +127,7 @@ You still have to kill 1 * A cleaning maid (Verdure Estate)
 Congratulations, that was one of the GLOBAL QUEST mobs!
 3 quest points awarded.
 
-CONGRATULATIONS! You were the first to complete this quest!
+You were the first to complete this quest!
 Reward of 4 practice sessions added.
 Reward of 12100 gold coins added.
 Reward of 13 quest points added.
@@ -134,6 +136,11 @@ You may win 2 more gquests at this level.
 Global Quest: The global quest has been won by Bast - 13th win.
 
 You are not on a global quest.
+
+Global Quest: The global quest has been won by Bast - 170th win.
+Global Quest: The global quest will go into extended time for 3 more minutes.
+Global Quest: No active players remaining, global quest is now over.
+
 -->
 </plugin>
 
@@ -154,9 +161,10 @@ You are not on a global quest.
   >
   </trigger>
 
+
  <trigger
    enabled="y"
-   match="^You have now joined the quest. See 'help gquest' for available commands.$"
+   match="^You have now joined the quest. See 'help gquest' for available commands\.$"
    name="gq_join"
    script="gq_join"
    sequence="100"
@@ -170,6 +178,7 @@ You are not on a global quest.
    match="^Global Quest: The global quest for levels (.*) to (.*) has now started\.$"
    name="gq_start"
    script="gq_start"
+   group="gq_start"
    sequence="100"
    regexp="y"
    omit_from_output="n"
@@ -210,7 +219,17 @@ You are not on a global quest.
 
   <trigger
    enabled="n"
-   match="^(\s*)Reward of (?&lt;amount&gt;\d+) (?&lt;type&gt;.+) (.+) added.$"
+   match="The global quest has not yet started."
+   name="notstarted"
+   script="gq_item"
+   group="gqcheck"
+   sequence="101"
+  >
+  </trigger>
+
+  <trigger
+   enabled="n"
+   match="^(\s*)Reward of (?&lt;amount&gt;\d+) (?&lt;type&gt;.+) (.+) added\.$"
    sequence="100"
    script="gq_reward"
    group="gqrew"
@@ -230,6 +249,15 @@ You are not on a global quest.
 
  <trigger
    enabled="n"
+   match="You were the first to complete this quest!"
+   sequence="100"
+   script="gq_complete"
+   group="gqin"
+  >
+  </trigger>
+
+ <trigger
+   enabled="n"
    match="CONGRATULATIONS! You were the first to complete this quest!"
    sequence="100"
    script="gq_complete"
@@ -239,19 +267,50 @@ You are not on a global quest.
 
  <trigger
    enabled="n"
-   match="Global Quest: The global quest has been won by (.*) - (.*) win."
+   match="^Global Quest: The global quest has been won by (.*) - (.*) win.$"
    sequence="100"
-   script="gq_none"
+   script="getnextline"
    group="gqdone"
    regexp="y"
   >
   </trigger>
+
+  <trigger
+   enabled="n"
+   match="*"
+   name="nextaftercomp"
+   script="nextafterfinish"
+   group="getnextline"
+   sequence="101"
+  >
+  </trigger>
+
  <trigger
    enabled="n"
-   match="You are no longer part of the current quest."
+   match="^You are no longer part of the current quest.$"
    sequence="100"
    script="gq_quit"
    group="gqdone"
+   regexp="y"
+  >
+  </trigger>
+
+ <trigger
+   enabled="n"
+   match="^Global Quest: The extended global quest is now over.$"
+   sequence="100"
+   script="gq_none"
+   group="gqext"
+   regexp="y"
+  >
+  </trigger>
+
+ <trigger
+   enabled="n"
+   match="^Global Quest: No active players remaining, global quest is now over.$"
+   sequence="100"
+   script="gq_none"
+   group="gqext"
    regexp="y"
   >
   </trigger>
@@ -305,29 +364,57 @@ mobsleft = {}
 gq_info = {}
 enemy = ""
 
+function getnextline(name, line, wildcards)
+  --print('getting next line')
+  if not phelper.joined then
+    --print('I never joined')
+    gq_none()
+  elseif gq_info['won'] == 1 then
+    --print('I won, so no extra!')
+    gq_none()
+  else
+    --print('enabling getnextline')
+    phelper:enabletriggroup("getnextline", true)
+  end
+end
+
+function nextafterfinish(name, line, wildcards)
+  phelper:enabletriggroup("getnextline", false)
+
+  if line == 'Global Quest: The global quest will go into extended time for 3 more minutes.' then
+    --print('found extended gquest')
+    phelper:enabletriggroup("gqext", true)
+  else
+    gq_none()
+  end
+end
+
 function cleanname(name)
   return string.lower(string.gsub(name, ",", ""))
 end
 
 function gq_declared (name, line, wildcards)
   check( EnableTrigger ("gq_join", true) )
-  check( EnableTrigger ("gq_start", true) )
   phelper:enabletriggroup("gqdone", true)
+  phelper.declared = true
   phelper:broadcast(1)
 end
 
 function gq_join (name, line, wildcards)
+  phelper:enabletriggroup("gq_start", true)
   phelper:set('joined', true)
   mobsleft = {}
   gq_new()
   phelper:broadcast(2)
-  if phelper.started then
+  if not phelper.declared then
     gq_start()
   end
 end
 
 function gq_start (name, line, wildcards)
-  check( EnableTrigger ("gq_start", false) )
+  if name == 'gq_start' then
+    check( EnableTrigger ("gq_start", false) )
+  end
   phelper:set('started', true)
   if phelper.joined then
     gq_info['starttime'] = GetInfo(304)
@@ -338,7 +425,12 @@ function gq_start (name, line, wildcards)
 end
 
 function gq_item (name, line, wildcards)
-  if name == "finishgqcheck" and trim(line) == "" then
+  if name == 'notstarted' then
+    phelper:enabletriggroup("gqcheck", false)
+    check( EnableTrigger ("finishgqcheck", false) )
+    check( EnableTrigger ("gq_start", true) )
+    return
+  elseif name == "finishgqcheck" and trim(line) == "" then
     if not next(gq_info['mobs']) then
       gq_info['mobs'] = copytable.deep(mobsleft)
       SaveState()
@@ -396,6 +488,7 @@ function gq_reward (name, line, wildcards)
 end
 
 function gq_complete(name, line, wildcards)
+  --print('setting won')
   gq_info['won'] = 1
   phelper:enabletriggroup("gqrew", true)
 end
@@ -418,8 +511,10 @@ function gq_none( name, line, wildcards)
   phelper:enabletriggroup("gqin", false)
   phelper:enabletriggroup("gqrew", false)
   phelper:enabletriggroup("gqdone", false)
-  phelper.joined = false
-  phelper.started = false
+  phelper:enabletriggroup("gqext", false)
+  phelper:set('joined', false, {silent=true})
+  phelper:set('started', false, {silent=true})
+  phelper:set('declared', false, {silent=true})
 end
 
 function gq_quit()
@@ -519,6 +614,7 @@ phelper:set_default('plugin_colour', 'orange')
 
 phelper:add_setting('started', {help="true if a gquest has started, false otherwise", type="bool", default=false, readonly=false})
 phelper:add_setting('joined', {help="true if joined a gquest, false otherwise", type="bool", default=false, readonly=true})
+phelper:add_setting('declared', {help="true if a gquest has been declared, false otherwise", type="bool", default=false, readonly=true})
 
 phelper:enable()
 
