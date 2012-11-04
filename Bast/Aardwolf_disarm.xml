@@ -146,7 +146,11 @@ db = EQdb:new{}
 fromscript = false
 
 function OnPluginBroadcast (msg, id, name, text)
-
+  if id == "aaa56faed92ffc6146964abc" and msg == -2 then
+    local id = GetPluginID()
+    local cmd = 'CallPlugin("aaa56faed92ffc6146964abc", "registerevent", "' .. tostring(id) .. '", "wearlocchange", "onwearlocchange")'
+    DoAfterSpecial(2, cmd, 12)
+  end
 end
 
 function OnPluginInstall()
@@ -164,9 +168,11 @@ end
 
 function OnPluginEnable()
   print('Enabling')
-  ldplugin ('eqdb')
+  ldplugin ("eqDB", "aaa56faed92ffc6146964abc")
 
-  CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "wearlocchange", "onwearlocchange")
+  local id = GetPluginID()
+  local cmd = 'CallPlugin("aaa56faed92ffc6146964abc", "registerevent", "' .. tostring(id) .. '", "wearlocchange", "onwearlocchange")'
+  --DoAfterSpecial(2, cmd, 12)
 
 end
 
@@ -180,9 +186,10 @@ function onwearlocchange(stuff)
   local wearloc = stuff.wearloc
   local action = stuff.action
   local sitem = stuff.item
+  --print("disarm: onwearlocchange")
+  --tprint(stuff)
   if wearloc ~= 'All' then
     local item = db:getitem(stuff.item.serial)
-    --print('onwearlocchange')
     if tonumber(action) == 2 then
       if sitem.placestr == 'wielded' then
         --phelper:set('weapon1', item.serial, {silent=true})
