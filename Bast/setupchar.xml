@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="SetupChar"
+   author="Bast"
+   id="bbba331cd7dacff665e2a23d"
+   language="Lua"
+   purpose="setup a character when first logging in"
+   date_written="2008-10-15 07:35"
+   requires="4.30"
+   version="2.01"
+   >
+<description trim="y">
+<![CDATA[
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Triggers  -->
+
+<triggers>
+
+</triggers>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "var"
+require "pluginhelper"
+require 'ldplugin'
+
+function creategroup()
+  if char and char.base then
+    SendNoEcho('group create ' .. char.base.name .. "!")
+  else
+     phelper:mebug('did not have char before creating group, trying again in 2 seconds')
+     DoAfterSpecial(2, 'creategroup()', 12)
+  end
+end
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  if id == 'aaa9e381c5408278ccda7100' then
+    if msg == 1 then
+      if phelper.dtrackskill ~= "" then
+        SendNoEcho('dtrack skill ' .. phelper.dtrackskill)
+      end
+      if phelper.creategroup then
+        creategroup()
+      end
+    end
+  elseif id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char.base") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+    end
+  end
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin ("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
+  ldplugin ("broadcast_state", "aaa9e381c5408278ccda7100")
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'bsetup')
+phelper:set_default('plugin_colour', 'orange')
+
+phelper:add_setting('dtrackskill', {help="the skill to set dtrack to upon login", type="string", default="", sortlev=20})
+phelper:add_setting('creategroup', {help="create a group upon login (will be your character named followed by !)", type="bool", default="false", sortlev=20})
+
+phelper:enable()
+
+]]>
+</script>
+</muclient>
