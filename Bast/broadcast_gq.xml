@@ -175,7 +175,7 @@ Global Quest: No active players remaining, global quest is now over.
 
  <trigger
    enabled="n"
-   match="^Global Quest: The global quest for levels (.*) to (.*) has now started\.$"
+   match="^Global Quest: The global quest for levels (.*) to (.*) has now started.$"
    name="gq_start"
    script="gq_start"
    group="gq_start"
@@ -365,7 +365,7 @@ gq_info = {}
 enemy = ""
 
 function getnextline(name, line, wildcards)
-  --print('getting next line')
+  --print('in getnextline')
   if not phelper.joined then
     --print('I never joined')
     gq_none()
@@ -396,6 +396,7 @@ end
 function gq_declared (name, line, wildcards)
   check( EnableTrigger ("gq_join", true) )
   phelper:enabletriggroup("gqdone", true)
+  phelper:enabletriggroup("gq_start", true)
   phelper.declared = true
   phelper:broadcast(1)
 end
@@ -403,10 +404,11 @@ end
 function gq_join (name, line, wildcards)
   phelper:enabletriggroup("gq_start", true)
   phelper:set('joined', true)
+  phelper:enabletriggroup("gqdone", true)
   mobsleft = {}
   gq_new()
   phelper:broadcast(2)
-  if not phelper.declared then
+  if phelper.started or not phelper.declared  then
     gq_start()
   end
 end
