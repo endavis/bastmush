@@ -1,5 +1,23 @@
 Bastmush Changes List
 
+r1872 snapshot
+ *** This includes some bugfixes from Huan ***
+  - eqDB.xml
+     - bug fix: sanitize serial #s (from Huan)
+  - sqlitedb.lua
+     - bug fix: fix errors in connection tracking (from Huan)
+  - Aardwolf_disarm
+     - bug fix: uses eqDB now
+  - pluginhelper.lua
+     - bug fix: format_time will look correct no matter what is missing
+  - broadcast_gq
+     - new: now works with new extended gq system
+  - broadast_state
+     - new: new plugin to track some mud states, like ice age and first
+         active
+  - setupchar
+     - new: new plugin to setup group and dtrack on first login
+
 r1844 snapshot
  *** NOTE FOR PLUGIN AUTHORS THAT USE BROADCAST PLUGINS ***:
      This upgrade changes the format of some broadcasts:
