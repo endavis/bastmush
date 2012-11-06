@@ -315,6 +315,16 @@ Global Quest: No active players remaining, global quest is now over.
   >
   </trigger>
 
+ <trigger
+   enabled="n"
+   match="^You have finished this global quest.$"
+   sequence="100"
+   script="gq_none"
+   group="gqext"
+   regexp="y"
+  >
+  </trigger>
+
 </triggers>
 
 
@@ -366,10 +376,7 @@ enemy = ""
 
 function getnextline(name, line, wildcards)
   --print('in getnextline')
-  if not phelper.joined then
-    --print('I never joined')
-    gq_none()
-  elseif gq_info['won'] == 1 then
+  if gq_info['won'] == 1 then
     --print('I won, so no extra!')
     gq_none()
   else
