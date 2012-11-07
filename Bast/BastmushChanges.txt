@@ -1,5 +1,11 @@
 Bastmush Changes List
 
+r1874 snapshot
+  - bug fix: will now work if you finish an extended gquest, but not all
+      others do
+  - bug fix: will now work if you join during the extended part of a
+      gquest
+
 r1872 snapshot
  *** This includes some bugfixes from Huan ***
   - eqDB.xml
