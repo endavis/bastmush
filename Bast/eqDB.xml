@@ -560,10 +560,33 @@ function builditem(wildcards)
   return item
 end
 
+delayed_actions = {}
+
+function process_delayed()
+  if (not table.getn(delayed_actions)) then
+    return
+  end
+
+  if (db:open("process_delayed")) then
+    db.db:exec("BEGIN TRANSACTION;")
+    for k,v in pairs(delayed_actions) do
+      checkaction(v.action, v.item)
+    end
+    delayed_actions = {}
+    db.db:exec("COMMIT;")
+    db:close("process_delayed")
+  end
+end
+
 function invmon ( name, line, wildcards )
   phelper:mdebug(line)
   item = builditem(wildcards)
-  checkaction(tonumber(wildcards.action), item)
+  -- checkaction(tonumber(  wildcards.action), item)
+  table.insert(delayed_actions, {
+    action = tonumber(wildcards.action),
+    item = item
+  })
+  DoAfterSpecial(0.1, "process_delayed()", 12)
 end
 
 function invitem( name, line, wildcards)
@@ -611,7 +634,7 @@ end
 
 function initinv(char)
 
-  if char.status and char.status.state and tonumber(char.status.state) == 3 and db:checkfortable('items') == false then
+  if char.status and char.status.state and tonumber(char.status.state) == 3 and db:getlastrowid('items') <= 0 then
     getdata('Worn')
     getdata('Inventory')
     initdb = true
