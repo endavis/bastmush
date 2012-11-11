@@ -91,9 +91,11 @@ function Phelpobject:initialize(args)
   self:mdebug('phelpobject __init self.cname', self.cname)
   self.cmds_table = {}
   self.events = {}
+  self.registered_events = {}
 
   self:add_setting( 'tdebug', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1})
   self:add_setting( 'ignorebsetting', {type="bool", help="ignore setting of options through broadcast", default=verify_bool(false), sortlev=1, longname="Ignore Broadcast Settings"})
+  self:add_setting( 'showevents', {type="bool", help="show events", default=verify_bool(false), sortlev=1, longname="Show events"})
 
   self:add_cmd('help', {func="cmd_help", help="show help", prio=99})
   self:add_cmd('debug', {func="cmd_debug", help="toggle debugging", prio=99})
@@ -105,6 +107,31 @@ function Phelpobject:initialize(args)
 
 end
 
+-- "registerevent", "' .. tostring(id) .. '", "wearlocchange", "onwearlocchange")'
+function Phelpobject:register_remote(id, eventname, callback)
+  if id ~= GetPluginID() then
+    if not self.registered_events[id] then
+      self.registered_events[id] = {}
+    end
+    self.registered_events[id][eventname] = callback
+    local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback .. '")'
+    DoAfterSpecial(2, cmd, 12)
+  else
+    print('use registerevent for local registration', id, eventname, callback)
+  end
+end
+
+function Phelpobject:unregister_remote(id, eventname, callback, removeevent)
+  if id ~= GetPluginID() then
+    if removeevent then
+      self.registered_events[id][eventname] = nil
+    end
+
+    CallPlugin(id, "unregisterevent", GetPluginID(), eventname, callback)
+  else
+
+  end
+end
 
 function Phelpobject:registerevent(tevent, object, tfunction, plugin)
   if not tfunction then
@@ -118,6 +145,9 @@ function Phelpobject:registerevent(tevent, object, tfunction, plugin)
 end
 
 function Phelpobject:processevent(tevent, args)
+  if self.showevents then
+    print(GetPluginInfo(GetPluginID (),1), ' - Processing event: ', tevent)
+  end
   if self.events[tevent] == nil then
     return
   end
@@ -129,6 +159,9 @@ function Phelpobject:processevent(tevent, args)
       --print('calling', v.plugin, v.func, targs)
       local funcstr = string.format("CallPlugin('%s', '%s', [[%s]])", tostring(v.plugin) ,tostring(v.func), targs)
       --print(funcstr)
+      if self.showevents then
+        print('Callback: ', funcstr)
+      end
       DoAfterSpecial(.1, funcstr, sendto.script)
     else
       if v.func then
