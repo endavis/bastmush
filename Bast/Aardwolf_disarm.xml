@@ -172,7 +172,9 @@ function OnPluginEnable()
 
   local id = GetPluginID()
   local cmd = 'CallPlugin("aaa56faed92ffc6146964abc", "registerevent", "' .. tostring(id) .. '", "wearlocchange", "onwearlocchange")'
-  --DoAfterSpecial(2, cmd, 12)
+  DoAfterSpecial(2, cmd, 12)
+
+  --phelper:register_remote("aaa56faed92ffc6146964abc", "wearlocchange", "onwearlocchange")
 
 end
 
@@ -196,7 +198,7 @@ function onwearlocchange(stuff)
         --phelper:set('weapon', item.serial, {silent=true})
         SetVariable("weapon1",  item.serial)
         SetVariable("weapon",  item.serial)
-        print("weapon1 set to", item.serial)
+        --print("weapon1 set to", item.serial)
       elseif sitem.placestr == 'second' then
 --        phelper:set('secondsn', item.serial, {silent=true})
       end
@@ -212,9 +214,11 @@ function onwearlocchange(stuff)
     -- get wielded and second from db
     local witem = db:getitembywearslot(24)
     local sitem = db:getitembywearslot(25)
-    SetVariable("weapon1",  witem.serial)
-    SetVariable("weapon",  witem.serial)
-    print("weapon1 set to", witem.serial)
+    if witem.serial then
+      SetVariable("weapon1",  witem.serial)
+      SetVariable("weapon",  witem.serial)
+      --print("weapon1 set to", witem.serial)
+    end
   end
 end
 
