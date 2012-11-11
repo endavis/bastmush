@@ -333,6 +333,12 @@ function Pluginhelper:OnPluginBroadcast(msg, id, name, text)
     v:OnPluginBroadcast(msg, id, name, text)
   end
 
+  if self.registered_events[id] ~= nil and tonumber(msg) == -2 then
+    for event,callback in pairs(self.registered_events[id]) do
+      self:register_remote(id, event, callback)
+    end
+  end
+
 end
 
 --function Pluginhelper:__newindex(name, val)
@@ -396,6 +402,12 @@ function Pluginhelper:OnPluginDisable()
 
   if IsConnected() then
     OnPluginDisconnect()
+  end
+
+  for id, v in pairs(self.registered_events) do
+    for event, callback in pairs(v) do
+      self:unregister_remote(id, event, callback)
+    end
   end
 
   self:broadcast(-1)
@@ -885,7 +897,7 @@ function SecondsToDHMS(sSeconds)
   end
 end
 
-function format_time(length)
+function format_time(length, nosec)
   -- returns time in the format 10d:3h:4m:3s
   local tmsg = {}
   local years, days, hours, mins, secs = SecondsToDHMS(length)
@@ -914,7 +926,7 @@ function format_time(length)
     table.insert( tmsg, string.format( "%02d", mins or 0 ) )
     table.insert( tmsg, "m" )
   end
-  if secs > 0 or #tmsg == 0 then
+  if (secs > 0 or #tmsg == 0) and nosec == nil then
     if years > 0 or days > 0 or hours > 0 or mins > 0 then
       table.insert( tmsg, string.format( ":" ) )
     end
@@ -1018,6 +1030,9 @@ function registerevent(pluginid, event, func)
     return
   end
   phelper:mdebug(GetPluginInfo(GetPluginID(), 1), "registered", pluginid, event, func)
+  if phelper.showevents then
+    print(GetPluginInfo(GetPluginID(), 1), "registered", pluginid, event, func)
+  end
   phelper:registerevent(event, {}, func, pluginid)
 end
 
@@ -1027,6 +1042,9 @@ function unregisterevent(pluginid, event, func)
     return
   end
   phelper:mdebug(GetPluginInfo(GetPluginID(), 1), "unregistered", pluginid, event, func)
+  if phelper.showevents then
+    print(GetPluginInfo(GetPluginID(), 1), "unregistered", pluginid, event, func)
+  end
   phelper:unregisterevent(event, {}, func, pluginid)
 end
 
