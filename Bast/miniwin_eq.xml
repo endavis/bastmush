@@ -988,10 +988,6 @@ end
 function OnPluginBroadcast (msg, id, name, text)
   phelper:OnPluginBroadcast(msg, id, name, text)
 
-  if id == "aaa56faed92ffc6146964abc" and tonumber(msg) == -2 then
-    CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "container_change", "oncontainerchange")
-    CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "itemchange", "onitemchange")
-  end
 end
 
 function OnPluginInstall ()
@@ -1011,8 +1007,8 @@ function OnPluginEnable ()
   ldplugin ("eqDB", "aaa56faed92ffc6146964abc")
   ldplugin ("broadcast_spellsskills", "aaa72f3b5453567e2bba9d50")
 
-  CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "container_change", "oncontainerchange")
-  CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "itemchange", "onitemchange")
+  phelper:register_remote("aaa56faed92ffc6146964abc", "container_change", "oncontainerchange")
+  phelper:register_remote("aaa56faed92ffc6146964abc", "itemchange", "onitemchange")
 
   phelper:OnPluginEnable()
   -- always create windows after OnPluginEnable due to default variable handling
@@ -1024,8 +1020,6 @@ function OnPluginEnable ()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
-  CallPlugin("aaa56faed92ffc6146964abc", 'unregisterevent', GetPluginID(), "container_change", "oncontainerchange")
-  CallPlugin("aaa56faed92ffc6146964abc", 'unregisterevent', GetPluginID(), "itemchange", "onitemchange")
 
   phelper:OnPluginDisable()
 end -- OnPluginDisable
