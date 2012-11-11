@@ -151,10 +151,10 @@ function build_level_window()
   local stats = {}
   stats['levels'] = {}
   stats['pups'] = {}
-  if not db:checkfortable('stats') then
+  if db:getlastrowid('stats') <= 0 then
     return
   end
-  if not db:checkfortable('levels') then
+  if db:getlastrowid('levels') <= 0 then
     return
   end
   if db:open() then
@@ -490,10 +490,10 @@ end
 function build_quest_window()
   local styles = {}
   local stats = {}
-  if not db:checkfortable('stats') then
+  if db:getlastrowid('stats') <= 0 then
     return
   end
-  if not db:checkfortable('quests') then
+  if db:getlastrowid('quests') <= 0 then
     return
   end
   if db:open() then
@@ -868,10 +868,10 @@ end
 function build_cp_window()
   local styles = {}
   local stats = {}
-  if not db:checkfortable('stats') then
+  if db:getlastrowid('stats') <= 0 then
     return
   end
-  if not db:checkfortable('campaigns') then
+  if db:getlastrowid('campaigns') <= 0 then
     return
   end
   if db:open() then
@@ -1175,10 +1175,10 @@ function build_gq_window()
 
   local styles = {}
   local stats = {}
-  if not db:checkfortable('stats') then
+  if db:getlastrowid('stats') <= 0 then
     return
   end
-  if not db:checkfortable('gquests') then
+  if db:getlastrowid('gquests') <= 0 then
     return
   end
   if db:open() then
@@ -1580,10 +1580,10 @@ end
 function build_kills_window()
   local styles = {}
   local stats = {}
-  if not db:checkfortable('stats') then
+  if db:getlastrowid('stats') <= 0 then
     return
   end
-  if not db:checkfortable('mobkills') then
+  if db:getlastrowid('mobkills') <= 0 then
     return
   end
   if db:open() then
@@ -2010,27 +2010,27 @@ function OnPluginBroadcast (msg, id, name, text)
         build_stat_window()
         if IsPluginInstalled("a749d26f1cb3e00282727e55") and GetPluginInfo("a749d26f1cb3e00282727e55", 17) then
           if not statwin:hastab('Levels') then
-            if db:checkfortable('stats') then
+            if db:getlastrowid('stats') > 0 then
               build_level_window()
             end
           end
           if not statwin:hastab('Quests') then
-            if db:checkfortable('stats') then
+            if db:getlastrowid('stats') > 0 then
               build_quest_window()
             end
           end
           if not statwin:hastab('CPs') then
-            if db:checkfortable('stats') then
+            if db:getlastrowid('stats') > 0 then
               build_cp_window()
             end
           end
           if not statwin:hastab('GQs') then
-            if db:checkfortable('stats') then
+            if db:getlastrowid('stats') > 0 then
               build_gq_window()
             end
           end
           if not statwin:hastab('Kills') then
-            if db:checkfortable('stats') then
+            if db:getlastrowid('stats') > 0 then
               build_kills_window()
             end
           end
@@ -2040,23 +2040,23 @@ function OnPluginBroadcast (msg, id, name, text)
   else
     if IsPluginInstalled("a749d26f1cb3e00282727e55") and GetPluginInfo("a749d26f1cb3e00282727e55", 17) then
       if id == "aaa0ab9ed92f8fc614664bd1" and msg == 1 then
-        if db:checkfortable('stats') then
+        if db:getlastrowid('stats') > 0 then
           DoAfterSpecial(.2, 'build_level_window()', 12)
         end
       elseif id == "aaa8a9eda20fa11787c6b438" and (msg == 6 or msg == 8) then
-        if db:checkfortable('stats') then
+        if db:getlastrowid('stats') > 0 then
           DoAfterSpecial(.2, 'build_quest_window()', 12)
         end
       elseif id == "aaa66f81c50828bbbfda7100" and (msg == 3 or msg == 4) then
-        if db:checkfortable('stats') then
+        if db:getlastrowid('stats') > 0 then
           DoAfterSpecial(.2, 'build_cp_window()', 12)
         end
       elseif id == "aaa77f81c5408278ccda7100" and msg == 4 then
-        if db:checkfortable('stats') then
+        if db:getlastrowid('stats') > 0 then
           DoAfterSpecial(.2, 'build_gq_window()', 12)
         end
       elseif id == "aaa61c4570508448e19c7c14" and msg == 1 then
-        if db:checkfortable('stats') then
+        if db:getlastrowid('stats') > 0 then
           DoAfterSpecial(.2, 'build_kills_window()', 12)
         end
       end
