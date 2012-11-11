@@ -31,7 +31,7 @@ Statdb = Sqlitedb:subclass()
 function Statdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "\\stats.db"
-  self.version = 9
+  self.version = 10
   self.versionfuncs[2] = self.updatedblqp -- update double qp flag
   self.versionfuncs[3] = self.updatemobkills -- slit, assassinate, etc..
   self.versionfuncs[4] = self.addmobsblessing -- add blessing xp to mobs table
@@ -40,19 +40,9 @@ function Statdb:initialize(args)
   self.versionfuncs[7] = self.addclanskill -- add
   self.versionfuncs[8] = self.updatecpmobfields
   self.versionfuncs[9] = self.updategqmobfields
-  self:checkversion()
+  self.versionfuncs[10] = self.updategqcomplete
 
-  self.tableids = {
-    levels = 'level_id',
-    stats = 'stat_id',
-    quests = 'quest_id',
-    campaigns = 'cp_id',
-    gquests = 'gq_id',
-    mobkills = 'mk_id',
-    skills = 'sn',
-  }
-
-  self.createtablesql['stats'] = [[CREATE TABLE stats(
+  self:addtable('stats', [[CREATE TABLE stats(
           stat_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           name TEXT NOT NULL,
           level INT default 1,
@@ -78,9 +68,9 @@ function Statdb:initialize(args)
           totaltrivia INT default 0,
           time INT default 0,
           milestone TEXT
-        )]]
+        )]], nil, nil, 'stat_id')
 
-  self.createtablesql['quests'] = [[CREATE TABLE quests(
+  self:addtable('quests', [[CREATE TABLE quests(
           quest_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           starttime INT default 0,
           finishtime INT default 0,
@@ -100,9 +90,9 @@ function Statdb:initialize(args)
           pracs INT default 0,
           level INT default -1,
           failed INT default 0
-        )]]
+        )]], nil, nil, 'quest_id')
 
-  self.createtablesql['campaigns'] = [[CREATE TABLE campaigns(
+  self:addtable('campaigns', [[CREATE TABLE campaigns(
           cp_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           starttime INT default 0,
           finishtime INT default 0,
@@ -113,16 +103,16 @@ function Statdb:initialize(args)
           pracs INT default 0,
           level INT default -1,
           failed INT default 0
-        )]]
+        )]], nil, nil, 'cp_id')
 
-  self.createtablesql['cpmobs'] = [[CREATE TABLE cpmobs(
+  self:addtable('cpmobs', [[CREATE TABLE cpmobs(
           cpmob_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           cp_id INT NOT NULL,
           name TEXT default "Unknown",
           location TEXT default "Unknown"
-        )]]
+        )]], nil, nil, 'cpmod_id')
 
-  self.createtablesql['levels'] = [[CREATE TABLE levels(
+  self:addtable('levels', [[CREATE TABLE levels(
           level_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           type TEXT default "level",
           level INT default -1,
@@ -141,9 +131,9 @@ function Statdb:initialize(args)
           trains INT default 0,
           bonustrains INT default 0,
           blessingtrains INT default 0
-        )]]
+        )]], nil, nil, 'level_id')
 
-  self.createtablesql['mobkills'] = [[CREATE TABLE mobkills(
+  self:addtable('mobkills', [[CREATE TABLE mobkills(
           mk_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           name TEXT default "Unknown",
           xp INT default 0,
@@ -163,9 +153,9 @@ function Statdb:initialize(args)
           second_weapon TEXT default '',
           room_id INT default 0,
           level INT default -1
-        )]]
+        )]], nil, nil, 'mk_id')
 
-  self.createtablesql['gquests'] = [[CREATE TABLE gquests(
+  self:addtable('gquests', [[CREATE TABLE gquests(
           gq_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           starttime INT default 0,
           finishtime INT default 0,
@@ -176,24 +166,25 @@ function Statdb:initialize(args)
           trains INT default 0,
           pracs INT default 0,
           level INT default -1,
-          won INT default 0
-        )]]
+          won INT default 0,
+          completed INT default 0
+        )]], nil, nil, 'gq_id')
 
 
-  self.createtablesql['gqmobs'] = [[CREATE TABLE gqmobs(
+  self:addtable('gqmobs', [[CREATE TABLE gqmobs(
           gqmob_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           gq_id INT NOT NULL,
           num INT,
           name TEXT default "Unknown",
           location TEXT default "Unknown"
-        )]]
+        )]], nil, nil, 'gqmod_id')
 
-  self.createtablesql['classes'] = [[CREATE TABLE classes(
+  self:addtable('classes', [[CREATE TABLE classes(
           class TEXT NOT NULL PRIMARY KEY,
           remort INTEGER
-        )]]
+        )]], nil, nil, 'class')
 
-  self.createtablesql['skills'] = [[CREATE TABLE skills(
+  self:addtable('skills', [[CREATE TABLE skills(
           sn INTEGER NOT NULL PRIMARY KEY,
           name TEXT default "Unknown",
           percent INT default 0,
@@ -210,16 +201,17 @@ function Statdb:initialize(args)
           psi INT default -1,
           ran INT default -1,
           pal INT default -1
-        )]]
+        )]], nil, nil, 'sn')
 
-  self.createtablesql['recoveries'] = [[CREATE TABLE recoveries(
+  self:addtable('recoveries', [[CREATE TABLE recoveries(
           sn INTEGER NOT NULL PRIMARY KEY,
           name TEXT default "Unknown"
-        )]]
+        )]], nil, nil, 'sn')
+
+  self:postinit() -- this is defined in sqlitedb.lua, it checks for upgrades and creates all tables
 end
 
 function Statdb:getstat(stat)
-  self:checktable('stats')
   local tstat = nil
   if self:open('getstat') then
     for a in self.db:nrows('SELECT * FROM stats WHERE milestone = "current"') do
@@ -231,7 +223,6 @@ function Statdb:getstat(stat)
 end
 
 function Statdb:setstat(stat, value)
-  self:checktable('stats')
   if self:open('setstat') then
     self.db:exec(string.format('update stats set %s=%s where milestone = "current"', stat, value))
     self:close('setstat')
@@ -240,7 +231,6 @@ function Statdb:setstat(stat, value)
 end
 
 function Statdb:addtostat(stat, add)
-  self:checktable('stats')
   if tonumber(add) == 0 then
     return true
   end
@@ -264,7 +254,6 @@ function Statdb:addtostat(stat, add)
 end
 
 function Statdb:savewhois(whoisinfo)
-  self:checktable('stats')
   local name = self:getstat('name')
   local oldtlevel = self:getstat('totallevels')
   local oldlevel = self:getstat('level')
@@ -308,7 +297,6 @@ function Statdb:savewhois(whoisinfo)
 end
 
 function Statdb:addmilestone(milestone)
-  self:checktable('stats')
   if not milestone or milestone == '' or milestone == 'nil' then
     return
   end
@@ -350,7 +338,6 @@ function Statdb:addmilestone(milestone)
 end
 
 function Statdb:savequest( questinfo )
-  self:checktable('quests')
   if self:open('savequest') then
     questinfo['level'] = db:getstat('totallevels')
     if questinfo.failed == 1 then
@@ -378,8 +365,6 @@ function Statdb:savequest( questinfo )
 end
 
 function Statdb:savecp( cpinfo )
-  self:checktable('campaigns')
-  self:checktable('cpmobs')
   if self:open('savecp') then
     if cpinfo.failed == 1 then
       self:addtostat('campaignsfld', 1)
@@ -418,7 +403,6 @@ function Statdb:savecp( cpinfo )
 end
 
 function Statdb:countlevels()
-  self:checktable('levels')
   local numlevels = -1
   if self:open('countlevels') then
     for a in db.db:rows("SELECT COUNT(*) FROM levels where type = 'level'") do
@@ -431,7 +415,6 @@ end
 
 function Statdb:savelevel( levelinfo, first )
   local first = first or false
-  self:checktable('levels')
   if self:open('savelevel') then
     if not first then
       if levelinfo['type'] == 'level' then
@@ -478,7 +461,6 @@ function Statdb:getmobstime(starttime, finishtime)
   local mobs = {}
   local mobskilled = -1
   local mobsavexp = -1
-  self:checktable('mobkills')
   if self:open('getmobstime') then
     for a in self.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where time > %d and time < %d and xp > 0", starttime, finishtime)) do
       mobskilled = a[1]
@@ -492,9 +474,8 @@ end
 function Statdb:getmobs(etype, eid)
   local mobs = {}
   if self.createtablesql[etype] then
-    self:checktable(etype)
     if self:open('getmobs') then
-      for a in self.db:nrows("SELECT * FROM " .. etype ..  " WHERE " .. self.tableids[etype] .. " = " .. eid) do
+      for a in self.db:nrows("SELECT * FROM " .. etype ..  " WHERE " .. self.tables[etype].keyfield .. " = " .. eid) do
         table.insert(mobs, a)
       end
       self:close('getmobs')
@@ -504,7 +485,6 @@ function Statdb:getmobs(etype, eid)
 end
 
 function Statdb:savemobkill( killinfo )
-  self:checktable('mobkills')
   if self:open('savemobkill') then
     self:addtostat('totaltrivia', killinfo.tp)
     self:addtostat('monsterskilled', 1)
@@ -525,8 +505,6 @@ function Statdb:savemobkill( killinfo )
 end
 
 function Statdb:savegq( gqinfo )
-  self:checktable('gquests')
-  self:checktable('gqmobs')
   if self:open('savegq') then
     self:addtostat('questpoints', gqinfo.qp)
     self:addtostat('questpoints', gqinfo.qpmobs)
@@ -565,7 +543,6 @@ end
 
 function Statdb:resetclasses()
   local stmt2 = nil
-  self:checktable('classes')
   local classes = self:getclasses()
   if self:open('resetclasses') then
     assert (self.db:exec("BEGIN TRANSACTION"))
@@ -629,7 +606,6 @@ function Statdb:getclasses()
 end
 
 function Statdb:addclasses(classes)
-  self:checktable('classes')
   if self:open('addclasses') then
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt2 = self.db:prepare[[ UPDATE classes SET remort = :remort
@@ -645,44 +621,7 @@ function Statdb:addclasses(classes)
   end
 end
 
-function Statdb:getlast(ttable, num, where)
-  local colid = self.tableids[ttable]
-  local tstring = ''
-  if where then
-    tstring = string.format("SELECT * FROM %s WHERE %s ORDER by %s desc limit %d", ttable, where, colid, num)
-  else
-    tstring = string.format("SELECT * FROM %s ORDER by %s desc limit %d", ttable, colid, num)
-  end
-
-  local items = {}
-  if self:open('getlast') then
-    if colid then
-      for a in self.db:nrows(tstring) do
-        items[a[colid]] = a
-      end
-    end
-    self:close('getlast')
-  end
-  return items
-end
-
-function Statdb:getlastrow(ttable)
-  local colid = self.tableids[ttable]
-  local lastid = nil
-  if self:open('getlastrow') then
-    if colid then
-      local tstring = 'SELECT MAX(' .. colid .. ') AS MAX FROM ' .. ttable
-      for a in self.db:nrows(tstring) do
-        lastid = a['MAX']
-      end
-    end
-    self:close('getlastrow')
-  end
-  return lastid
-end
-
 function Statdb:updateskills(skills)
-  self:checktable('skills')
   if self:open('updateskills') then
     local numskills = 0
     for a in db.db:rows("SELECT COUNT(*) FROM skills") do
@@ -724,7 +663,6 @@ function Statdb:updateskills(skills)
 end
 
 function Statdb:countskills()
-  self:checktable('skills')
   local numskills = 0
   if self:open('countskills') then
     for a in self.db:rows("SELECT COUNT(*) FROM skills") do
@@ -736,7 +674,6 @@ function Statdb:countskills()
 end
 
 function Statdb:updatespellup(spellups)
-  self:checktable('skills')
   if self:open('updatespellup') then
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[[ UPDATE skills set spellup = 1 where sn = :sn ]]
@@ -756,7 +693,6 @@ function Statdb:updatespellup(spellups)
 end
 
 function Statdb:updateclientspellups(spellups)
-  self:checktable('skills')
   if self:open('updateclientspellups') then
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[[ UPDATE skills set clientspellup = :clientspellup where sn = :sn ]]
@@ -776,7 +712,6 @@ function Statdb:updateclientspellups(spellups)
 end
 
 function Statdb:updateclanskills(spellups)
-  self:checktable('skills')
   if self:open('updateclanskills') then
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[[ UPDATE skills set clanskill = :clanskill where sn = :sn ]]
@@ -796,7 +731,6 @@ function Statdb:updateclanskills(spellups)
 end
 
 function Statdb:lookupskillbysn(sn)
-  self:checktable('skills')
   local spell = {}
   if self:open('lookupskillbysn') then
     for a in self.db:nrows('SELECT * FROM skills WHERE sn = ' .. tostring(sn)) do
@@ -811,7 +745,6 @@ function Statdb:lookupskillbysn(sn)
 end
 
 function Statdb:lookupskillbyname(name)
-  self:checktable('skills')
   local spells = {}
   if self:open('lookupskillbyname') then
     for a in self.db:nrows("SELECT * FROM skills WHERE name LIKE '%" .. tostring(name) .. "%'") do
@@ -832,7 +765,6 @@ function Statdb:lookupskillbyname(name)
 end
 
 function Statdb:getlearnedskills()
-  self:checktable('skills')
   local spells = {}
   if self:open('getlearnedskills') then
     for a in self.db:nrows("SELECT * FROM skills WHERE percent > 1 or clanskill == 1") do
@@ -844,7 +776,6 @@ function Statdb:getlearnedskills()
 end
 
 function Statdb:getnotlearnedskills()
-  self:checktable('skills')
   local spells = {}
   if self:open('getnotlearnedskills') then
     for a in self.db:nrows("SELECT * FROM skills WHERE percent == 0 and clanskill != 1") do
@@ -856,7 +787,6 @@ function Statdb:getnotlearnedskills()
 end
 
 function Statdb:getnotpracticedskills()
-  self:checktable('skills')
   local spells = {}
   if self:open('getnotpracticedskills') then
     for a in self.db:nrows("SELECT * FROM skills WHERE percent == 1 and clanskill != 1") do
@@ -869,7 +799,6 @@ end
 
 
 function Statdb:getcombatskills()
-  self:checktable('skills')
   local spells = {}
   if self:open('getcombatskills') then
     for a in self.db:nrows("SELECT * FROM skills WHERE target = 2") do
@@ -882,7 +811,6 @@ function Statdb:getcombatskills()
 end
 
 function Statdb:getspellupskills(client)
-  self:checktable('skills')
   local spells = {}
   if self:open('getspellupskills') then
     local tstring = "SELECT * FROM skills WHERE spellup = 1"
@@ -898,7 +826,6 @@ function Statdb:getspellupskills(client)
 end
 
 function Statdb:getallskills()
-  self:checktable('skills')
   local spells = {}
   if self:open('getallskills') then
     for a in self.db:nrows("SELECT * FROM skills") do
@@ -910,7 +837,6 @@ function Statdb:getallskills()
 end
 
 function Statdb:updaterecoveries(recoveries)
-  self:checktable('recoveries')
   if self:open('updaterecoveries') then
     local numrecs = 0
     for a in db.db:rows("SELECT COUNT(*) FROM recoveries") do
@@ -937,7 +863,6 @@ function Statdb:updaterecoveries(recoveries)
 end
 
 function Statdb:countrecoveries()
-  self:checktable('recoveries')
   local numskills = 0
   if self:open('countrecoveries') then
     for a in db.db:rows("SELECT COUNT(*) FROM recoveries") do
@@ -949,7 +874,6 @@ function Statdb:countrecoveries()
 end
 
 function Statdb:getallrecoveries()
-  self:checktable('recoveries')
   local spells = {}
   if self:open('getallrecoveries') then
     for a in self.db:nrows("SELECT * FROM recoveries") do
@@ -961,7 +885,6 @@ function Statdb:getallrecoveries()
 end
 
 function Statdb:lookuprecoverybysn(sn)
-  self:checktable('recoveries')
   local recovery = {}
   if self:open('lookuprecoverybysn') then
     for a in self.db:nrows('SELECT * FROM recoveries WHERE sn = ' .. tostring(sn)) do
@@ -976,7 +899,6 @@ function Statdb:lookuprecoverybysn(sn)
 end
 
 function Statdb:lookuprecoverybyname(name)
-  self:checktable('recoveries')
   local recoveries = {}
   if self:open('lookuprecoverybyname') then
     for a in self.db:nrows("SELECT * FROM recoveries WHERE name LIKE %'" .. tostring(name) .. "'%") do
@@ -998,7 +920,7 @@ end
 
 function Statdb:fixtable(tablename)
   self:backupdb('fix' .. tablename)
-  if self:checkfortable(tablename) and self:open('fixtable1:' .. tablename) then
+  if self:open('fixtable1:' .. tablename) then
     local insertstr = self:converttoinsert(tablename)
     local oldstuff = {}
     for a in self.db:rows(string.format("SELECT * FROM %s", tablename)) do
@@ -1009,18 +931,13 @@ function Statdb:fixtable(tablename)
     --self.db:exec(string.format('DROP TABLE IF EXISTS %s;', tablename))
     self:close('fixtable2:' .. tablename, true)
     self.checktable(tablename)
-    if self:checkfortable(tablename) then
-      self:open('fixtable3:' .. tablename)
-      --check for = '' and set key to nil
-    end
+    self:open('fixtable3:' .. tablename)
+    --check for = '' and set key to nil
     self:close()
   end
 end
 
 function Statdb:updatedblqp()
-  if not self:checkfortable('quests') then
-    return
-  end
   if self:open('updatedblqp') then
     local oldquests = {}
     for a in self.db:nrows("SELECT * FROM quests") do
@@ -1069,9 +986,6 @@ function Statdb:updatedblqp()
 end
 
 function Statdb:updatemobkills()
-  if not self:checkfortable('mobkills') then
-    return
-  end
   if self:open('updatemobkills') then
     local oldkills = {}
     for a in self.db:nrows("SELECT * FROM mobkills") do
@@ -1135,9 +1049,6 @@ function Statdb:updatemobkills()
 end
 
 function Statdb:addmobsblessing()
-  if not self:checkfortable('mobkills') then
-    return
-  end
   if self:open('addmobsblessing') then
     local oldkills = {}
     for a in self.db:nrows("SELECT * FROM mobkills") do
@@ -1205,9 +1116,6 @@ function Statdb:addmobsblessing()
 end
 
 function Statdb:addquestblessing()
-  if not self:checkfortable('quests') then
-    return
-  end
   if self:open('addquestblessing1') then
     local oldquests = {}
     for a in self.db:nrows("SELECT * FROM quests") do
@@ -1263,9 +1171,6 @@ function Statdb:addquestblessing()
 end
 
 function Statdb:addleveltrainblessing()
-  if not self:checkfortable('levels') then
-    return
-  end
   if self:open('addleveltrainblessing') then
     self.db:exec([[ALTER TABLE levels ADD COLUMN blessingtrains INT DEFAULT 0;]])
     self.db:exec([[UPDATE levels SET blessingtrains = 0;]])
@@ -1275,9 +1180,6 @@ function Statdb:addleveltrainblessing()
 end
 
 function Statdb:addclanskill()
-  if not self:checkfortable('skills') then
-    return
-  end
   if self:open('addclanskill') then
     local oldskills = {}
     for a in self.db:nrows("SELECT * FROM skills") do
@@ -1327,9 +1229,6 @@ function Statdb:addclanskill()
 end
 
 function Statdb:updatecpmobfields()
-  if not self:checkfortable('cpmobs') then
-    return
-  end
   if self:open('updatecpmobfields') then
     local oldcpmobs = {}
     for a in self.db:nrows("SELECT * FROM cpmobs") do
@@ -1362,9 +1261,6 @@ function Statdb:updatecpmobfields()
 end
 
 function Statdb:updategqmobfields()
-  if not self:checkfortable('gqmobs') then
-    return
-  end
   if self:open('updategqmobfields') then
     local oldgqmobs = {}
     for a in self.db:nrows("SELECT * FROM gqmobs") do
@@ -1395,4 +1291,14 @@ function Statdb:updategqmobfields()
     assert (self.db:exec("COMMIT"))
     self:close('updategqmobfields3')
   end
+end
+
+function Statdb:updategqcomplete()
+  if self:open('updategqcomplete') then
+    self.db:exec([[ALTER TABLE gquests ADD COLUMN completed INT DEFAULT 0;]])
+    self.db:exec([[UPDATE levels SET completed = 0;]])
+    --assert (self.db:exec("BEGIN TRANSACTION"))
+    self:close('updategqcomplete', true)
+  end
+
 end
