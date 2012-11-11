@@ -167,6 +167,7 @@ else
 end
 
 wasdisconnected = false
+gettingslist = false
 spells = {}
 spells['affected'] = {}
 recoveries = {}
@@ -290,8 +291,12 @@ end
 
 function request_slist()
    --print("called request slist")
-   SendNoEcho("slist noprompt")
-   SendNoEcho("slist spellup noprompt")
+   if not gettingslist then
+     gettingslist = true
+     --print('requesting slist')
+     SendNoEcho("slist noprompt")
+     SendNoEcho("slist spellup noprompt")
+   end
    --SendNoEcho("slist affected noprompt")
 end
 
@@ -402,6 +407,7 @@ function spellheaders_redirect (name, line, wildcards, styles)
       broadcast_slist(slisttype)
     end
 
+    gettingslist = false
     SaveState ()
     return
   end -- if
