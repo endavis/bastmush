@@ -321,6 +321,7 @@ Global Quest: No active players remaining, global quest is now over.
    sequence="100"
    script="gq_none"
    group="gqext"
+   name="completed"
    regexp="y"
   >
   </trigger>
@@ -509,6 +510,9 @@ end -- cp_check
 
 function gq_none( name, line, wildcards)
   gq_info['finishtime'] = GetInfo(304)
+  if name == 'completed' then
+    gq_info['completed'] = 1
+  end
   var.gq_info = serialize.save( "gq_info", gq_info )
   SaveState()
   if phelper.joined then
@@ -546,6 +550,7 @@ function gq_new()
   gq_info['finishtime'] = 0
   gq_info['length'] = 0
   gq_info['won'] = 0
+  gq_info['completed'] = 0
   SaveState()
 end
 
@@ -621,7 +626,7 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'bgq')
 phelper:set_default('plugin_colour', 'orange')
 
-phelper:add_setting('started', {help="true if a gquest has started, false otherwise", type="bool", default=false, readonly=false})
+phelper:add_setting('started', {help="true if a gquest has started, false otherwise", type="bool", default=false, readonly=true})
 phelper:add_setting('joined', {help="true if joined a gquest, false otherwise", type="bool", default=false, readonly=true})
 phelper:add_setting('declared', {help="true if a gquest has been declared, false otherwise", type="bool", default=false, readonly=true})
 
