@@ -49,20 +49,8 @@ function EQdb:initialize(args)
   self.version = 3
   self.versionfuncs[2] = self.updatenamecolumn
   self.versionfuncs[3] = self.addleadsto
-  self:checkversion()
-end
 
-function EQdb:turnonpragmas()
-  -- PRAGMA foreign_keys = ON;
-  self.db:exec("PRAGMA foreign_keys=1;")
-  -- PRAGMA journal_mode=WAL
-  self.db:exec("PRAGMA journal_mode=WAL;")
-end
-
-function EQdb:checkitemstable()
-  if not self:checkfortable('items') then
-    if self:open('checkitemstable') then
-      self.db:exec([[CREATE TABLE items(
+  self:addtable('items', [[CREATE TABLE items(
         serial INTEGER NOT NULL,
         shortflags TEXT,
         level NUMBER,
@@ -74,100 +62,68 @@ function EQdb:checkitemstable()
         place INTEGER,
         UNIQUE(serial),
         PRIMARY KEY(serial, containerid));
-      )]])
-      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
-      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
-      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
-      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
-    end
-    self:close('checkitemstable')
-  end
-end
+      )]], nil, self.additemindexes, 'serial')
 
-function EQdb:checkidentifiertable()
-  if not self:checkfortable('identifier') then
-    if self:open('checkidentifiertable') then
-      self.db:exec([[CREATE TABLE identifier(
+  self:addtable('identifier', [[CREATE TABLE identifier(
         serial INTEGER NOT NULL,
         identifier TEXT,
         UNIQUE(identifier),
         PRIMARY KEY(serial, identifier));
       )]])
-    end
-    self:close('checkidentifiertable')
-  end
-end
 
-function EQdb:checknotetable()
-  if not self:checkfortable('note') then
-    if self:open('checknotetable') then
-      local retval = self.db:exec([[CREATE TABLE note(
+  self:addtable('note', [[CREATE TABLE note(
         nid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         note TEXT,
         fromident INTEGER default 0);
-      )]])
-    end
-    self:close('checknotetable')
-  end
-end
+      )]], nil, nil, nid)
 
-function EQdb:checkitemdetailstable()
-  if self:open('checkitemdetailstable') then
-    if not self:checkfortable('itemdetails') then
-      self.db:exec([[
-        CREATE TABLE itemdetails(
-          serial INTEGER NOT NULL,
-          keywords TEXT,
-          cname TEXT,
-          name TEXT,
-          level NUMBER default 0,
-          type NUMBER default 0,
-          worth NUMBER default 0,
-          weight NUMBER default 0,
-          wearable TEXT,
-          material NUMBER default 0,
-          score NUMBER default 0,
-          flags TEXT,
-          foundat TEXT,
-          fromclan TEXT,
-          owner TEXT,
-          leadsto TEXT,
-          UNIQUE(serial),
-          PRIMARY KEY(serial));)]])
-    end
-    if not self:checkfortable('resistmod') then
-      self.db:exec([[
-        CREATE TABLE resistmod(
+  self:addtable('itemdetails', [[CREATE TABLE itemdetails(
+        serial INTEGER NOT NULL,
+        keywords TEXT,
+        cname TEXT,
+        name TEXT,
+        level NUMBER default 0,
+        type NUMBER default 0,
+        worth NUMBER default 0,
+        weight NUMBER default 0,
+        wearable TEXT,
+        material NUMBER default 0,
+        score NUMBER default 0,
+        flags TEXT,
+        foundat TEXT,
+        fromclan TEXT,
+        owner TEXT,
+        leadsto TEXT,
+        UNIQUE(serial),
+        PRIMARY KEY(serial));
+      )]], nil, nil, 'serial')
+
+  self:addtable('resistmod', [[CREATE TABLE resistmod(
         rid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         type TEXT,
         amount NUMBER default 0,
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('statmod') then
-      self.db:exec([[
-        CREATE TABLE statmod(
+      )]], nil, nil, 'rid')
+
+  self:addtable('statmod', [[CREATE TABLE statmod(
         sid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         type TEXT,
         amount NUMBER default 0,
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('affectmod') then
-      self.db:exec([[
-        CREATE TABLE affectmod(
+      )]], nil, nil, sid)
+
+
+  self:addtable('affectmod', [[CREATE TABLE affectmod(
         aid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         type TEXT,
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('weapon') then
-      self.db:exec([[
-        CREATE TABLE weapon(
+      )]], nil, nil, 'aid')
+
+  self:addtable('weapon', [[CREATE TABLE weapon(
         wid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         wtype TEXT,
@@ -177,11 +133,9 @@ function EQdb:checkitemdetailstable()
         avedam NUMBER,
         UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('container') then
-      self.db:exec([[
-        CREATE TABLE container(
+      )]], nil, nil, 'wid')
+
+  self:addtable('container', [[CREATE TABLE container(
         cid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         itemweightpercent NUMBER,
@@ -193,21 +147,18 @@ function EQdb:checkitemdetailstable()
         itemburden NUMBER,
         UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('skillmod') then
-      self.db:exec([[
-        CREATE TABLE skillmod(
+      )]], nil, nil, 'cid')
+
+
+  self:addtable('skillmod', [[CREATE TABLE skillmod(
         skid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         skillnum NUMBER,
         amount NUMBER default 0,
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('spells') then
-      self.db:exec([[
-        CREATE TABLE spells(
+      )]], nil, nil, 'skid')
+
+  self:addtable('spells', [[CREATE TABLE spells(
         spid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         uses NUMBER,
@@ -219,21 +170,17 @@ function EQdb:checkitemdetailstable()
         u1 NUMBER,
         UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('food') then
-      self.db:exec([[
-        CREATE TABLE food(
+      )]], nil, nil, 'spid')
+
+  self:addtable('food', [[CREATE TABLE food(
         fid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         percent NUMBER,
         UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('drink') then
-      self.db:exec([[
-        CREATE TABLE drink(
+      )]], nil, nil, 'fid')
+
+  self:addtable('drink', [[CREATE TABLE drink(
         did INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         servings NUMBER,
@@ -245,11 +192,9 @@ function EQdb:checkitemdetailstable()
         u1 NUMBER,
         UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('furniture') then
-      self.db:exec([[
-        CREATE TABLE furniture(
+      )]], nil, nil, 'did')
+
+  self:addtable('furniture', [[CREATE TABLE furniture(
         fuid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         hpregen NUMBER,
@@ -257,29 +202,43 @@ function EQdb:checkitemdetailstable()
         u1 NUMBER,
         UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('light') then
-      self.db:exec([[
-        CREATE TABLE light(
+      )]], nil, nil, 'fuid')
+
+  self:addtable('light', [[CREATE TABLE light(
         lid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         duration NUMBER,
         UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    if not self:checkfortable('portal') then
-      self.db:exec([[
+      )]], nil, nil, 'lid')
+
+  self:addtable('portal', [[
         CREATE TABLE portal(
         portid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         uses NUMBER,
         UNIQUE(serial),
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
-      )]])
-    end
-    self:close('checkitemdetailstable')
+      )]], nil, nil, 'portid')
+
+
+  self:postinit() -- this is defined in sqlitedb.lua, it checks for upgrades and creates all tables
+end
+
+function EQdb:turnonpragmas()
+  -- PRAGMA foreign_keys = ON;
+  self.db:exec("PRAGMA foreign_keys=1;")
+  -- PRAGMA journal_mode=WAL
+  self.db:exec("PRAGMA journal_mode=WAL;")
+end
+
+function EQdb:additemindexes()
+  if self:open('checkitemstable') then
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
+    self:close('checkitemstable')
   end
 end
 
@@ -298,9 +257,6 @@ end
 function EQdb:getitemdetails(serial)
   timer_start('EQdb:getitemdetails')
   local titem = nil
-  self:checkitemdetailstable()
-  self:checkidentifiertable()
-  self:checknotetable()
   local fixed = fixsql(tostring(serial))
   if self:open('getitemdetails') then
     for a in self.db:nrows("SELECT * FROM itemdetails WHERE serial = " .. fixed) do
@@ -400,7 +356,6 @@ function EQdb:getitemdetails(serial)
 end
 
 function EQdb:addnote(serial, notes, fromident)
-  self:checknotetable()
   local fixed = fixsql(tostring(serial))
   if self:open('addnote') then
     if fromident then
@@ -443,7 +398,6 @@ end
 function EQdb:removenote(notenum)
   timer_start('EQdb:removeidentifier')
   --tprint(item)
-  self:checknotetable()
   local tchanges = 0
   if self:open('removenote') then
     tchanges = self.db:total_changes()
@@ -691,7 +645,6 @@ end
 function EQdb:additemdetail(item)
   timer_start('EQdb:additemdetail')
   --tprint(item)
-  self:checkitemdetailstable()
   if self:open('additemdetail') then
     local titem = self:getitemdetails(tonumber(item.serial))
     local tchanges = self.db:total_changes()
@@ -799,7 +752,6 @@ function EQdb:addaffectmods(serial, affectmods)
 end
 
 function EQdb:updateitemident(item)
-  self:checkitemdetailstable()
   if self:open('additemdetail') then
     local titem = self:getitemdetails(tonumber(item.id))
     local tchanges = self.db:total_changes()
@@ -833,7 +785,6 @@ end
 
 function EQdb:additems(items)
   timer_start('EQdb:additems')
-  self:checkitemstable()
   for i,v in pairs(items) do
     --print(v.containerid)
     break
@@ -871,7 +822,6 @@ end
 
 function EQdb:clearcontainer(containerid)
   timer_start('EQdb:clearcontainer')
-  self:checkitemstable()
   --print('clearing container', containerid)
   if self:open('clearcontainer') then
     --assert (self.db:exec("BEGIN TRANSACTION"))
@@ -884,7 +834,6 @@ end
 
 function EQdb:moveitem(item, container)
   timer_start('EQdb:moveitem')
-  self:checkitemstable()
   if self:open('moveitem') then
     assert (self.db:exec("BEGIN TRANSACTION"))
     self.db:exec(string.format("UPDATE items SET containerid = '%s', wearslot = %d, place = (SELECT MIN(place) - 1 from items where containerid = '%s') where serial = %d;",
@@ -898,7 +847,6 @@ end
 
 function EQdb:wearitem(item, wearloc)
   timer_start('EQdb:wearitem')
-  self:checkitemstable()
   if self:open('wearitem') then
     assert (self.db:exec("BEGIN TRANSACTION"))
     self.db:exec(string.format("UPDATE items SET containerid = 'Worn', wearslot = %d, place = -2 where serial = %d;",
@@ -911,7 +859,6 @@ end
 
 function EQdb:updateitem(item)
   timer_start('EQdb:updateitem')
-  self:checkitemstable()
   local tchanges = 0
   if self:open('updateitem') then
     tchanges = self.db:total_changes()
@@ -940,7 +887,6 @@ function EQdb:getitembyserial(serial)
   --print('getitembyserial', serial)
   timer_start('EQdb:getitembyserial')
   local item = nil
-  self:checkitemstable()
   if self:open('getitembyserial') then
     --print('getitembyserial:tonumber', tonumber(serial))
     if tonumber(serial) ~= nil  then
@@ -972,7 +918,6 @@ end
 function EQdb:getitembywearslot(wearslot)
   timer_start('EQdb:getitemsbywearslot')
   local item = {}
-  self:checkitemstable()
   if self:open('getitemsbywearslot') then
     for a in self.db:nrows("SELECT * FROM items WHERE wearslot=" .. tostring(wearslot) ..";") do
       item = a
@@ -1001,7 +946,6 @@ function EQdb:getcontainercontents(containerid, sortkey, reverse, itype)
   end
   sqlstr = sqlstr .. ";"
   local items = {}
-  self:checkitemstable()
   if self:open('getcontainercontents') then
     for a in self.db:nrows(string.format(sqlstr, containerid)) do
       table.insert(items, a)
@@ -1014,7 +958,6 @@ end
 
 function EQdb:removeitems(items)
   timer_start('EQdb:removeitems')
-  self:checkitemstable()
   if self:open('removeitems') then
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[[ DELETE from items where serial = :serial; ]]
@@ -1034,7 +977,6 @@ end
 function EQdb:getcontainers()
   timer_start('EQdb:getcontainers')
   containers = {}
-  self:checkitemstable()
   if self:open('getcontainers') then
     for a in self.db:nrows("SELECT * FROM items WHERE type = 11") do
       table.insert(containers, a)
@@ -1049,7 +991,6 @@ end
 function EQdb:addidentifier(itemsn, identifier)
   timer_start('EQdb:addidentifier')
   --tprint(item)
-  self:checkidentifiertable()
   local titem = self:getitembyidentifier(identifier)
   local item = self:getitembyserial(itemsn)
   local tchanges = 0
@@ -1079,7 +1020,6 @@ end
 function EQdb:getitembyidentifier(identifier)
   timer_start('EQdb:getitembyidentifier')
   --print('getitembyidentifier', identifier)
-  self:checkidentifiertable()
   local item = nil
   if self:open('getitembyidentifier') then
     for a in self.db:nrows("SELECT * FROM identifier WHERE identifier=" .. fixsql(tostring(identifier)) ..";") do
@@ -1098,7 +1038,6 @@ end
 function EQdb:removeidentifier(identifier)
   timer_start('EQdb:removeidentifier')
   --tprint(item)
-  self:checkidentifiertable()
   local tchanges = 0
   if self:open('removeidentifier') then
     tchanges = self.db:total_changes()
@@ -1113,7 +1052,6 @@ end
 function EQdb:getidentifiers(wearslot)
   timer_start('EQdb:getidentifiers')
   local items = {}
-  self:checkitemstable()
   if self:open('getidentifiers') then
     for a in self.db:nrows("SELECT identifier.identifier as identifier, items.cname as cname, items.name as name, items.serial as serial FROM items,identifier WHERE identifier.serial=items.serial ORDER BY serial;") do
       if items[a.serial] then
@@ -1148,34 +1086,86 @@ end
 
 --- version updates
 function EQdb:updatenamecolumn()
-  if self:checkfortable('items') then
-    if self:open('updatenamecolumn') then
-      local olditems = {}
-      for a in self.db:nrows("SELECT * FROM items") do
-        table.insert(olditems, a)
-      end
-      self:close('updatenamecolumn', true)
-      self:open('updatenamecolumn2')
-      self.db:exec([[DROP TABLE IF EXISTS items;]])
-      self:close('updatenamecolumn2', true)
+  if self:open('updatenamecolumn') then
+    local olditems = {}
+    for a in self.db:nrows("SELECT * FROM items") do
+      table.insert(olditems, a)
+    end
+    self:close('updatenamecolumn', true)
+    self:open('updatenamecolumn2')
+    self.db:exec([[DROP TABLE IF EXISTS items;]])
+    self:close('updatenamecolumn2', true)
+    self:open('updatenamecolumn3')
+    local retval = self.db:exec([[CREATE TABLE items(
+        serial INTEGER NOT NULL,
+        shortflags TEXT,
+        level NUMBER,
+        cname TEXT,
+        name TEXT,
+        type NUMBER,
+        containerid TEXT NOT NULL,
+        wearslot INTEGER,
+        place INTEGER,
+        UNIQUE(serial),
+        PRIMARY KEY(serial, containerid));
+      )]])
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare[[ INSERT INTO items VALUES (:serial, :shortflags, :level,
+                                                          :cname, :name, :type, :containerid,
+                                                          :wearslot, :place) ]]
+
+    for i,v in ipairs(olditems) do
+      v.cname = v.name
+      v.name = v.plainname
+      stmt:bind_names(v)
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    assert (self.db:exec("COMMIT"))
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
+    self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
+    self.db:exec("PRAGMA foreign_keys=1;")
+
+    self:close('updatenamecolumn3')
+  end
+  if self:open('updatenamecolumn') then
+    local olditems = {}
+    for a in self.db:nrows("SELECT * FROM itemdetails") do
+      table.insert(olditems, a)
+    end
+    self:close('updatenamecolumn', true)
+    self:open('updatenamecolumn2')
+    local retval = self.db:exec([[ALTER TABLE itemdetails RENAME TO itemdetails_bak;]])
+    self:close('updatenamecolumn2', true)
+    if retval == 0 then
       self:open('updatenamecolumn3')
-      local retval = self.db:exec([[CREATE TABLE items(
-          serial INTEGER NOT NULL,
-          shortflags TEXT,
-          level NUMBER,
-          cname TEXT,
-          name TEXT,
-          type NUMBER,
-          containerid TEXT NOT NULL,
-          wearslot INTEGER,
-          place INTEGER,
-          UNIQUE(serial),
-          PRIMARY KEY(serial, containerid));
-        )]])
-      assert (self.db:exec("BEGIN TRANSACTION"))
-      local stmt = self.db:prepare[[ INSERT INTO items VALUES (:serial, :shortflags, :level,
-                                                            :cname, :name, :type, :containerid,
-                                                            :wearslot, :place) ]]
+      local retval =  self.db:exec([[
+      CREATE TABLE itemdetails(
+        serial INTEGER NOT NULL,
+        keywords TEXT,
+        cname TEXT,
+        name TEXT,
+        level NUMBER default 0,
+        type NUMBER default 0,
+        worth NUMBER default 0,
+        weight NUMBER default 0,
+        wearable TEXT,
+        material NUMBER default 0,
+        score NUMBER default 0,
+        flags TEXT,
+        foundat TEXT,
+        fromclan TEXT,
+        owner TEXT,
+        UNIQUE(serial),
+        PRIMARY KEY(serial));)]])
+      local stmt = self.db:prepare[[ INSERT INTO itemdetails VALUES (:serial, :keywords,
+                                                            :cname, :name, :level, :type, :worth,
+                                                            :weight, :wearable, :material,
+                                                            :score, :flags, :foundat, :fromclan,
+                                                            :owner) ]]
 
       for i,v in ipairs(olditems) do
         v.cname = v.name
@@ -1186,74 +1176,15 @@ function EQdb:updatenamecolumn()
       end
       stmt:finalize()
       assert (self.db:exec("COMMIT"))
-      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_containerid ON items(containerid);]])
-      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_name ON items (name);]])
-      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_level ON items(level);]])
-      self.db:exec([[CREATE INDEX IF NOT EXISTS xref_items_place ON items(place);]])
-      self.db:exec("PRAGMA foreign_keys=1;")
 
+      self.db:exec("PRAGMA foreign_keys=0;")
+      local retval = self.db:exec([[DROP TABLE itemdetails_bak;]])
       self:close('updatenamecolumn3')
-    end
-  end
-  if self:checkfortable('itemdetails') then
-    if self:open('updatenamecolumn') then
-      local olditems = {}
-      for a in self.db:nrows("SELECT * FROM itemdetails") do
-        table.insert(olditems, a)
-      end
-      self:close('updatenamecolumn', true)
-      self:open('updatenamecolumn2')
-      local retval = self.db:exec([[ALTER TABLE itemdetails RENAME TO itemdetails_bak;]])
-      self:close('updatenamecolumn2', true)
-      if retval == 0 then
-        self:open('updatenamecolumn3')
-        local retval =  self.db:exec([[
-        CREATE TABLE itemdetails(
-          serial INTEGER NOT NULL,
-          keywords TEXT,
-          cname TEXT,
-          name TEXT,
-          level NUMBER default 0,
-          type NUMBER default 0,
-          worth NUMBER default 0,
-          weight NUMBER default 0,
-          wearable TEXT,
-          material NUMBER default 0,
-          score NUMBER default 0,
-          flags TEXT,
-          foundat TEXT,
-          fromclan TEXT,
-          owner TEXT,
-          UNIQUE(serial),
-          PRIMARY KEY(serial));)]])
-        local stmt = self.db:prepare[[ INSERT INTO itemdetails VALUES (:serial, :keywords,
-                                                              :cname, :name, :level, :type, :worth,
-                                                              :weight, :wearable, :material,
-                                                              :score, :flags, :foundat, :fromclan,
-                                                              :owner) ]]
-
-        for i,v in ipairs(olditems) do
-          v.cname = v.name
-          v.name = v.plainname
-          stmt:bind_names(v)
-          stmt:step()
-          stmt:reset()
-        end
-        stmt:finalize()
-        assert (self.db:exec("COMMIT"))
-
-        self.db:exec("PRAGMA foreign_keys=0;")
-        local retval = self.db:exec([[DROP TABLE itemdetails_bak;]])
-        self:close('updatenamecolumn3')
-      end
     end
   end
 end
 
 function EQdb:addleadsto()
-  if not self:checkfortable('itemdetails') then
-    return
-  end
   if self:open('addleadsto') then
     self.db:exec([[ALTER TABLE itemdetails ADD COLUMN leadsto TEXT;]])
     --self.db:exec([[UPDATE itemdetails SET blessingtrains = 0;]])
