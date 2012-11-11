@@ -12,84 +12,86 @@ function Aarddb:initialize(args)
   self.dbname = "/aardinfo.db"
   self.version = 2
   self.versionfuncs[2] = self.resetplanestable
-  if not self:checkplanespoolstable() then
-    self:createplanespoolstable(planespools)
-  end
-  if not self:checkplanesmobstable() then
-    self:createplanesmobstable(planesmobs)
-  end
-  self:checkversion()
+
+  self:addtable('planespools',[[CREATE TABLE planespools(
+      pool_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      poollayer TEXT NOT NULL,
+      poolnum INT NOT NULL
+        )]], nil, self.createplanespoolstable, 'pool_id')
+
+  self:addtable('planesmobs', [[CREATE TABLE planesmobs(
+      mob_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      mobname TEXT NOT NULL,
+      poolnum INT NOT NULL
+        )]], nil, self.createplanesmobstable, 'mob_id')
+
+
+  self:addtable('areas', [[CREATE TABLE areas(
+      area_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      keyword TEXT UNIQUE NOT NULL,
+      name TEXT UNIQUE NOT NULL,
+      afrom INT default 1,
+      ato INT default 1,
+      alock INT default 0,
+      builder TEXT,
+      speedwalk TEXT
+        )]], nil, nil, 'area_id')
+
+  self:addtable('helplookup', [[CREATE TABLE helplookup(
+      lookup_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      lookup TEXT UNIQUE NOT NULL,
+      topic TEXT
+        )]], nil, nil, 'lookup_id')
+
+  self:addtable('helps', [[CREATE TABLE helps(
+      help_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      keyword TEXT UNIQUE NOT NULL,
+      helptext TEXT,
+      added INT
+        )]], nil, nil, 'help_id')
+
+  self:postinit() -- this is defined in sqlitedb.lua, it checks for upgrades and creates all tables
 end
 
 function Aarddb:resetplanestable()
   if self:open() then
     self.db:exec([[DROP TABLE IF EXISTS planespools;]])
     self.db:exec([[DROP TABLE IF EXISTS planesmobs;]])
-    self:createplanespoolstable(planespools)
-    self:createplanesmobstable(planesmobs)
+    self:checktable('planespools')
+    self:checktable('planesmobs')
+  end
+end
+
+function Aarddb:createplanespoolstable()
+  if self:open() then
+    self.db:exec([[BEGIN TRANSACTION;]])
+    local stmt = self.db:prepare[[ INSERT INTO planespools VALUES (NULL, :poolname,
+                                                            :poolnum) ]]
+    for _,item in pairs(planespools) do
+      stmt:bind_names(  item  )
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    self.db:exec([[COMMIT;]])
     self:close()
   end
 end
 
-function Aarddb:checkplanespoolstable()
-  if not self:checkfortable('planespools') then
-    self:open()
-    self.db:exec([[CREATE TABLE planespools(
-      pool_id INTEGER NOT NULL PRIMARY KEY autoincrement,
-      poollayer TEXT NOT NULL,
-      poolnum INT NOT NULL
-     )]])
+function Aarddb:createplanesmobstable()
+  if self:open() then
+    self.db:exec([[BEGIN TRANSACTION;]])
+    local stmt = self.db:prepare[[ INSERT INTO planesmobs VALUES (NULL, :name,
+                                                            :pool) ]]
+    for _,item in pairs(planesmobs) do
+      stmt:bind_names(  item  )
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    self.db:exec([[COMMIT;]])
     self:close()
-    return false
   end
-  return true
-end
-
-function Aarddb:checkplanesmobstable()
-  if not self:checkfortable('planesmobs') then
-    self:open()
-    self.db:exec([[CREATE TABLE planesmobs(
-      mob_id INTEGER NOT NULL PRIMARY KEY autoincrement,
-      mobname TEXT NOT NULL,
-      poolnum INT NOT NULL
-     )]])
-    self:close()
-    return false
-  end
-  return true
-end
-
-function Aarddb:createplanespoolstable(pools)
-  self:checkplanespoolstable()
-  self:open()
-  self.db:exec([[BEGIN TRANSACTION;]])
-  local stmt = self.db:prepare[[ INSERT INTO planespools VALUES (NULL, :poolname,
-                                                          :poolnum) ]]
-  for _,item in pairs(pools) do
-    stmt:bind_names(  item  )
-    stmt:step()
-    stmt:reset()
-  end
-  stmt:finalize()
-  self.db:exec([[COMMIT;]])
-  self:close()
-
-end
-
-function Aarddb:createplanesmobstable(mobs)
-  self:checkplanesmobstable()
-  self:open()
-  self.db:exec([[BEGIN TRANSACTION;]])
-  local stmt = self.db:prepare[[ INSERT INTO planesmobs VALUES (NULL, :name,
-                                                          :pool) ]]
-  for _,item in pairs(mobs) do
-    stmt:bind_names(  item  )
-    stmt:step()
-    stmt:reset()
-  end
-  stmt:finalize()
-  self.db:exec([[COMMIT;]])
-  self:close()
 
 end
 
@@ -104,26 +106,8 @@ function Aarddb:planeslookup(mob)
   return tmobs
 end
 
-function Aarddb:checkareastable()
-  self:open()
-  if not self:checkfortable('areas') then
-    self.db:exec([[CREATE TABLE areas(
-      area_id INTEGER NOT NULL PRIMARY KEY autoincrement,
-      keyword TEXT UNIQUE NOT NULL,
-      name TEXT UNIQUE NOT NULL,
-      afrom INT default 1,
-      ato INT default 1,
-      alock INT default 0,
-      builder TEXT,
-      speedwalk TEXT
-     )]])
-  end
-  self:close()
-end
-
 function Aarddb:getallareas()
   local areasbykeyword = {}
-  self:checkareastable()
   if self:open() then
     for a in self.db:nrows( "SELECT * FROM areas" ) do
       areasbykeyword[a.keyword] = a
@@ -135,7 +119,6 @@ end
 
 function Aarddb:getallareasbyname()
   local areas = {}
-  self:checkareastable()
   if self:open() then
     for a in self.db:nrows( "SELECT * FROM areas" ) do
       areas[a.name] = a
@@ -148,7 +131,7 @@ end
 function Aarddb:lookupareasbyname(area)
   local areas = {}
   local area = fixsql(area, true)
-  if self:open() and self:checkfortable('areas')  then
+  if self:open() and self:checktable('areas')  then
     for a in self.db:nrows( "SELECT * FROM areas WHERE name LIKE " .. area ) do
       table.insert(areas, a)
     end
@@ -160,7 +143,7 @@ end
 function Aarddb:lookupareasbyexactname(area)
   local areas = {}
   local area = fixsql(area)
-  if self:open() and self:checkfortable('areas')  then
+  if self:open() and self:checktable('areas')  then
     for a in self.db:nrows( "SELECT * FROM areas WHERE LOWER(name) = LOWER(" .. area ..  ")") do
       table.insert(areas, a)
     end
@@ -172,7 +155,7 @@ end
 function Aarddb:lookupareasbykeyword(keyword)
   local areas = {}
   local keyword = fixsql(keyword, true)
-  if self:open() and self:checkfortable('areas')  then
+  if self:open() and self:checktable('areas')  then
     for a in self.db:nrows( "SELECT * FROM areas WHERE keyword LIKE " .. keyword ) do
       table.insert(areas, a)
     end
@@ -183,7 +166,7 @@ end
 
 function Aarddb:lookupareasbylevel(level)
   local areas = {}
-  if self:open() and self:checkfortable('areas') then
+  if self:open() then
     for a in self.db:nrows( "SELECT * FROM areas WHERE afrom < " .. level .. " and ato > " .. level .. ";" ) do
       table.insert(areas, a)
     end
@@ -193,7 +176,6 @@ function Aarddb:lookupareasbylevel(level)
 end
 
 function Aarddb:addareas(area_list)
-  self:checkareastable()
   if self:open() then
     local allareas = self:getallareas()
 
@@ -223,7 +205,6 @@ function Aarddb:addareas(area_list)
 end
 
 function Aarddb:updatebuilders(area_list)
-  self:checkareastable()
   if self:open() then
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[['update areas set author=:author where keyword=:keyword;']]
@@ -239,7 +220,6 @@ function Aarddb:updatebuilders(area_list)
 end
 
 function Aarddb:updatespeedwalks(area_list)
-  self:checkareastable()
   if self:open() then
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[['update areas set speedwalk=:speedwalk where keyword=:keyword;']]
@@ -254,34 +234,8 @@ function Aarddb:updatespeedwalks(area_list)
   end
 end
 
-function Aarddb:checkhelpstable()
-  self:open()
-  if not self:checkfortable('helps') then
-    self.db:exec([[CREATE TABLE helps(
-      help_id INTEGER NOT NULL PRIMARY KEY autoincrement,
-      keyword TEXT UNIQUE NOT NULL,
-      helptext TEXT,
-      added INT
-     )]])
-  end
-  self:close()
-end
-
-function Aarddb:checkhelplookuptable()
-  self:open()
-  if not self:checkfortable('helplookup') then
-
-    self.db:exec([[CREATE TABLE helplookup(
-      lookup_id INTEGER NOT NULL PRIMARY KEY autoincrement,
-      lookup TEXT UNIQUE NOT NULL,
-      topic TEXT
-     )]])
-  end
-  self:close()
-end
 
 function Aarddb:addhelplookup(lookup)
-  self:checkhelplookuptable()
   if self:open() then
     local stmt = self.db:prepare[[ INSERT INTO helplookup VALUES (NULL, :lookup,
                                                           :topic) ]]
@@ -299,7 +253,6 @@ end
 
 
 function Aarddb:addhelp(help)
-  self:checkhelpstable()
   if self:open() then
     help.helptext = serialize.save("thelptext", help.helptext)
     local hashelp = self:hashelp(help.keyword)
@@ -324,7 +277,6 @@ end
 
 
 function Aarddb:hashelp(keyword)
-  self:checkhelpstable()
   local thelp = nil
   if self:open() then
     for a in self.db:nrows('SELECT * FROM helps WHERE keyword = "' .. keyword .. '"' ) do
@@ -339,9 +291,6 @@ function Aarddb:hashelp(keyword)
 end
 
 function Aarddb:gethelp(thelp)
-  if not self:checkfortable('helplookup') then
-     return false
-  end
   local help = {}
   if self:open() then
     for a in self.db:nrows('SELECT * FROM helplookup where lookup == "' .. thelp ..'"') do
@@ -368,17 +317,13 @@ function Aarddb:gethelp(thelp)
 end
 
 function Aarddb:clearhelptable()
-  if self:checkfortable('helplookup') then
-    if self:open() then
-      self.db:exec([[DROP TABLE IF EXISTS helplookup;]])
-      self:close()
-    end
+  if self:open() then
+    self.db:exec([[DROP TABLE IF EXISTS helplookup;]])
+    self:close(true)
   end
-  if self:checkfortable('helps') then
-    if self:open() then
-      self.db:exec([[DROP TABLE IF EXISTS helps;]])
-      self:close()
-    end
+  if self:open() then
+    self.db:exec([[DROP TABLE IF EXISTS helps;]])
+    self:close(true)
   end
 end
 
