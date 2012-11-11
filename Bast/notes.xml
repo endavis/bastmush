@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="Notes"
+   author="Bast"
+   id="eeec8781c5408278ccda7100"
+   language="Lua"
+   purpose="a plugin to create notes and do lookups on those notes"
+   date_written="2008-10-15 07:35"
+   requires="4.30"
+   version="2.01"
+   >
+<description trim="y">
+<![CDATA[
+
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Triggers  -->
+
+<triggers>
+
+</triggers>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "var"
+require "pluginhelper"
+require "ldplugin"
+require "tprint"
+require "aarddb"
+
+aarddb = Aarddb:new{}
+
+function cmd_notelookup(cmddict)
+  if cmddict['args'] then
+    local stuff = aarddb:lookupnotes(cmddict['args'])
+    for i,v in pairs(stuff) do
+      local tstr = string.format('---------------------- Note: %d ----------------------', v.note_id)
+      ColourNote("orange", "", tstr)
+      ColourNote("silver", "", string.format('Area     : %s', v.area))
+      ColourNote("silver", "", string.format('Keywords : %s', v.keywords))
+      ColourNote("silver", "", "----------------------")
+      TextToColourTell(v.note)
+      ColourNote("orange", "", string.rep("-", #tstr))
+    end
+  end
+end
+
+function cmd_addnote(cmddict)
+  local note = {}
+  if not (cmddict[1] and cmddict[2] and cmddict[3]) then
+    --print('didnt get anything')
+    local bareas = aarddb:getallareas()
+    local ttable = {}
+    for i,v in pairs(bareas) do
+      ttable[i] = v.name
+    end
+    ttable['none'] = '1 - None'
+    note['area'] = utils.filterpicker (ttable, 'Pick the area')
+    note['keywords'] = utils.inputbox ( 'Add keywords for this note', 'Keywords')
+    note['note'] = utils.editbox ( 'Enter the note\nYou can use color codes', 'Note')
+  else
+    note['area'] = cmddict[1]
+    note['keyword'] = cmddict[2]
+    note['note'] = cmddict[3]
+  end
+  if note['area'] and note['keywords'] and note['note'] then
+    print('added note')
+    aarddb:addnote(note)
+  else
+    print('missing info for the note')
+  end
+end
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+
+  phelper:OnPluginBroadcast(msg, id, name, text)
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin ("areaDB")
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'bn')
+phelper:set_default('plugin_colour', 'orange')
+
+phelper:add_cmd('lu', {func=cmd_notelookup, help="lookup notes"})
+phelper:add_cmd('add', {func=cmd_addnote, help="add notes"})
+
+phelper:enable()
+
+]]>
+</script>
+</muclient>
