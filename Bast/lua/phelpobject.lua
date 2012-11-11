@@ -411,7 +411,7 @@ function Phelpobject:set_external(option, value, args)
               colourname, "black", colourname)
       else
         local colourname = RGBColourToName(var.plugin_colour)
-        local cvalue = value
+        --local cvalue = value
         if tvarstuff.formatfunc then
           cvalue = formatfunc(cvalue)
         elseif tvarstuff.istable then
