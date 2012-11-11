@@ -269,6 +269,9 @@ function activatespell(sn, fast)
     v = phelper.askedself[askedself_xref[sn]]
     if not spells['affected'][sn] then
       local cast = true
+      if not spells['all'] or not spells['all'][sn] then
+        return false
+      end
       local recov = spells['all'][sn].recovery
       if recov and recoveries['affected'][recov] then
         cast = false
