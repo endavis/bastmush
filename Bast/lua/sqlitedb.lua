@@ -31,24 +31,49 @@ function Sqlitedb:initialize(args)
   self.version = 1
   self.versionfuncs = {}
   self.tableids = {}
-  self.createtablesql = {}
-  self.createtablesql['version'] = [[CREATE TABLE version(
+  self.tables = {}
+
+  self:addtable('version', [[CREATE TABLE version(
         version_id INTEGER NOT NULL PRIMARY KEY autoincrement,
         version INT default 1
-      )]]
+      )]])
+end
+
+function Sqlitedb:addtable(tablename, sql, prefunc, postfunc, keyfield)
+ self.tables[tablename] = {}
+ self.tables[tablename]['createsql'] = sql
+ self.tables[tablename]['precreate'] = prefunc
+ self.tables[tablename]['postcreate'] = postfunc
+ self.tables[tablename]['keyfield'] = keyfield
 end
 
 function Sqlitedb:turnonpragmas()
 
 end
 
+function Sqlitedb:postinit()
+  self:checkversion()
+
+  for i,v in pairs(self.tables) do
+    self:checktable(i)
+  end
+
+end
+
 function Sqlitedb:checktable(tablename)
-  if self.createtablesql[tablename] and  self:open('checktable:' .. tablename) then
-    if not self:checkfortable(tablename) then
-      self.db:exec(self.createtablesql[tablename])
+  if self.tables[tablename] and  self:open('checktable:' .. tablename) then
+    if not self:checktableexists(tablename) then
+      if self.tables[tablename]['precreate'] then
+        self.tables[tablename]['precreate'](self)
+      end
+      self.db:exec(self.tables[tablename]['createsql'])
+      if self.tables[tablename]['postcreate'] then
+        self.tables[tablename]['postcreate'](self)
+      end
     end
     self:close('checktable:' .. tablename)
   end
+  return true
 end
 
 function Sqlitedb:checkversion(args)
@@ -64,8 +89,8 @@ end
 
 function Sqlitedb:checkversiontable()
   if self:open('checkversiontable') then
-    if not self:checkfortable('version') then
-      self.db:exec(self.createtablesql['version'])
+    if not self:checktableexists('version') then
+      self.db:exec(self.tables['version']['createsql'])
       assert (self.db:exec("BEGIN TRANSACTION"))
       local stmt = self.db:exec(string.format('INSERT INTO version VALUES (NULL, %d)', self.version))
       assert (self.db:exec("COMMIT"))
@@ -94,7 +119,7 @@ function Sqlitedb:updateversion(oldversion, newversion)
       print('finished updating to version', i)
     end
     if self:open('updateversion2') then
-      if self:checkfortable('version') then
+      if self:checktableexists('version') then
         self.db:exec(string.format('update version set version=%s where version_id = 1', newversion))
       end
       self:close('updateversion2')
@@ -135,15 +160,15 @@ function Sqlitedb:close(from, force)
   end
 end
 
-function Sqlitedb:checkfortable(tablename)
+function Sqlitedb:checktableexists(tablename)
   local rv = false
-  if self:open('checkfortable') then
+  if self:open('checktableexists') then
     for a in self.db:nrows('SELECT * FROM sqlite_master WHERE name = "' .. tablename .. '" AND type = "table"') do
       if a['name'] == tablename then
         rv = true
       end
     end
-    self:close('checkfortable')
+    self:close('checktableexists')
   end
   return rv
 end
@@ -223,8 +248,8 @@ end
 function Sqlitedb:getcolumnsfromsql(tablename)
   local columns = {}
   local columnsbykeys = {}
-  if self.createtablesql[tablename] then
-    local tlist = utils.split(self.createtablesql[tablename], '\n')
+  if self.tables[tablename] then
+    local tlist = utils.split(self.tables[tablename]['createsql'], '\n')
     for i,v in ipairs(tlist) do
       v = trim(v)
       if v:find('CREATE') == nil and v:find(')') == nil then
@@ -240,11 +265,50 @@ end
 function Sqlitedb:converttoinsert(tablename)
   local execstr = nil
   local columns = {}
-  if self.createtablesql[tablename] then
+  if self.tables[tablename] then
     local columns, columnsbykeys = self:getcolumnsfromsql(tablename)
     local colstring = strjoin(', :', columns)
     colstring = ':' .. colstring
     execstr = string.format("INSERT INTO %s VALUES (%s)", tablename, colstring)
   end
   return execstr
+end
+
+function Sqlitedb:getlastrowid(ttable)
+  local colid = self.tables[ttable].keyfield
+  local lastid = 0
+  if self:open('getlastrow') then
+    if colid then
+      local tstring = 'SELECT MAX(' .. colid .. ') AS MAX FROM ' .. ttable
+      for a in self.db:nrows(tstring) do
+        lastid = a['MAX']
+      end
+    end
+    self:close('getlastrow')
+  end
+  if lastid == nil then
+    lastid = 0
+  end
+  return lastid
+end
+
+function Sqlitedb:getlast(ttable, num, where)
+  local colid = self.tables[ttable].keyfield
+  local tstring = ''
+  if where then
+    tstring = string.format("SELECT * FROM %s WHERE %s ORDER by %s desc limit %d", ttable, where, colid, num)
+  else
+    tstring = string.format("SELECT * FROM %s ORDER by %s desc limit %d", ttable, colid, num)
+  end
+
+  local items = {}
+  if self:open('getlast') then
+    if colid then
+      for a in self.db:nrows(tstring) do
+        items[a[colid]] = a
+      end
+    end
+    self:close('getlast')
+  end
+  return items
 end
