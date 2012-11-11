@@ -1086,7 +1086,7 @@ end
 
 --- version updates
 function EQdb:updatenamecolumn()
-  if self:open('updatenamecolumn') then
+  if self:open('updatenamecolumn') and self:checktableexists('items') then
     local olditems = {}
     for a in self.db:nrows("SELECT * FROM items") do
       table.insert(olditems, a)
@@ -1131,7 +1131,7 @@ function EQdb:updatenamecolumn()
 
     self:close('updatenamecolumn3')
   end
-  if self:open('updatenamecolumn') then
+  if self:open('updatenamecolumn')  and self:checktableexists('itemdetails') then
     local olditems = {}
     for a in self.db:nrows("SELECT * FROM itemdetails") do
       table.insert(olditems, a)
@@ -1185,6 +1185,9 @@ function EQdb:updatenamecolumn()
 end
 
 function EQdb:addleadsto()
+  if not self:checktableexists('itemdetails') then
+    return
+  end
   if self:open('addleadsto') then
     self.db:exec([[ALTER TABLE itemdetails ADD COLUMN leadsto TEXT;]])
     --self.db:exec([[UPDATE itemdetails SET blessingtrains = 0;]])
