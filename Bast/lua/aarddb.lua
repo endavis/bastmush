@@ -50,7 +50,46 @@ function Aarddb:initialize(args)
       added INT
         )]], nil, nil, 'help_id')
 
+  self:addtable('notes', [[CREATE TABLE notes(
+      note_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      area TEXT NOT NULL,
+      keywords TEXT NOT NULL,
+      note TEXT NOT NULL
+        )]], nil, nil, 'note_id')
+
   self:postinit() -- this is defined in sqlitedb.lua, it checks for upgrades and creates all tables
+end
+
+function Aarddb:addnote(note)
+  if self:open() then
+    local stmt = self.db:prepare[[ INSERT INTO notes VALUES (NULL, :area,
+                                                          :keywords, :note) ]]
+    stmt:bind_names(  note  )
+    stmt:step()
+    stmt:finalize()
+    local rowid = self.db:last_insert_rowid()
+    phelper:mdebug('added note', rowid)
+    self:close()
+    return rowid
+  end
+end
+
+function Aarddb:lookupnotes(notestr)
+  local results = {}
+  local sqlcmd = 'SELECT * FROM notes WHERE ' .. notestr
+  if self:open('lookupnotes') then
+    local stmt = self.db:prepare(sqlcmd)
+    if not stmt then
+      phelper:plugin_header('Note Lookup')
+      print('The lookup arguments do not create a valid sql statement to get notes')
+    else
+      for a in stmt:nrows() do
+        table.insert(results, a)
+      end
+    end
+    self:close()
+  end
+  return results
 end
 
 function Aarddb:resetplanestable()
@@ -274,7 +313,6 @@ function Aarddb:addhelp(help)
     return rowid
   end
 end
-
 
 function Aarddb:hashelp(keyword)
   local thelp = nil
