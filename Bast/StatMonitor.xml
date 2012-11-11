@@ -85,21 +85,6 @@ function DisplayInfo( info, type )
   end
 end
 
---function DisplayInfo(info, type)
---  local typechan = phelper[type..'chan']
---  tprint(info)
---  local tline = StylesToColoursOneLine(info)
---  print(tline)
---  if typechan == 'None' or typechan == 'commlog' or not typechan then
---    TextToColourTell(tline)
---    if typechan == "commlog" and IsPluginInstalled("b555825a4a5700c35fa80780") and GetPluginInfo("b555825a4a5700c35fa80780", 17) then
---      CallPlugin("b555825a4a5700c35fa80780","storeFromOutside",tline)
---    end
---  else
---    SendNoEcho(typechan .. ' ' .. strjoin('', tline))
---  end
---end
-
 function colourwrap(tstr, wtype)
   if wtype == 'stat' then
     local statcolour = phelper.statcolour
@@ -117,18 +102,6 @@ function colourwrap(tstr, wtype)
     end
   end
 end
-
---function colourwrap(tstr, wtype)
---   local style = {}
---   style.text = tostring(tstr)
---   style.length = #style.text
---   if wtype == 'stat' then
---     style.textcolour = verify_colour(phelper.statcolour)
---   else
---     style.textcolour = verify_colour(phelper.infocolour)
---   end
---   return style
---end
 
 function formatpup()
   local starttime = 0
