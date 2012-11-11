@@ -871,6 +871,26 @@ function cmd_listnote(cmddict)
   end
 end
 
+function cmd_getcolourname(cmddict)
+  if cmddict[1] and tonumber(cmddict[1]) then
+    local sqlcmd = 'SELECT * FROM items WHERE serial=' .. cmddict[1]
+    if db:open('cmd_getcolourname') then
+      local stmt = db.db:prepare(sqlcmd)
+      if not stmt then
+        db:close('cmd_getcolourname')
+        return
+      end
+      local item = {}
+      for a in stmt:nrows() do
+        item = a.cname
+      end
+      db:close('cmd_getcolourname')
+      ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%s: %s", cmddict[1], item))
+    end
+    ColourNote("", "", "")
+  end
+end
+
 function checkaction(action, item, afterwait)
   if action == 1 and removingall == false then
     timer_start('EQdb:action1')
@@ -1207,6 +1227,7 @@ phelper:add_cmd('idinv', {func=cmd_idinv, help="identify all items in inventory 
 phelper:add_cmd('addnote', {func=cmd_addnote, help="add a note to an item, first arg is serial, the rest will be the note"})
 phelper:add_cmd('remnote', {func=cmd_remnote, help="remove a note from an item, only arg is note number"})
 phelper:add_cmd('listnote', {func=cmd_listnote, help="list notes for an item, only arg is item serial"})
+phelper:add_cmd('getcolourname', {func=cmd_getcolourname, help="return the name of the item with embedded color codes"})
 
 phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 
