@@ -477,10 +477,7 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
 
-
-  if id == "aaa56faed92ffc6146964abc" and tonumber(msg) == -2 then
-    CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "wearlocchange", "onwearlocchange")
-  elseif id == '3e7dedbe37e44942dd46d264' then
+  if id == '3e7dedbe37e44942dd46d264' then
     if text:find("char.status") then
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval", "char")
       tt = assert (loadstring ('return ' .. gmcparg or ""))()
@@ -525,13 +522,12 @@ function OnPluginEnable ()
   ldplugin("aard_GMCP_handler", "3e7dedbe37e44942dd46d264")
   ldplugin ('eqdb', 'aaa56faed92ffc6146964abc')
 
-  CallPlugin("aaa56faed92ffc6146964abc", 'registerevent', GetPluginID(), "wearlocchange", "onwearlocchange")
+  phelper:register_remote("aaa56faed92ffc6146964abc", "wearlocchange", "onwearlocchange")
 
   phelper:OnPluginEnable()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
-  CallPlugin("aaa56faed92ffc6146964abc", 'unregisterevent', GetPluginID(), "wearlocchange", "onwearlocchange")
 
   phelper:OnPluginDisable()
 end -- OnPluginDisable
