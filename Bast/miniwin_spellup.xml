@@ -1708,16 +1708,6 @@ function cmd_refresh(cmddict)
     end
 end
 
-function fixevents(rtype)
-    local action = "registerevent"
-    if rtype == "unregister" then
-      action = "unregisterevent"
-    end
-    CallPlugin("aaaf0c555a44169e0f1d9674", action, GetPluginID(), "askedself_change", "onspellschange")
-    CallPlugin("aaaf0c555a44169e0f1d9674", action, GetPluginID(), "askedother_change", "onotherchange")
-    CallPlugin("aaaf0c555a44169e0f1d9674", action, GetPluginID(), "status_change", "onstatuschange")
-    CallPlugin("aaaf0c555a44169e0f1d9674", action, GetPluginID(), "waiting_change", "onwaitingchange")
-end
 
 ]]>
 </script>
@@ -1728,9 +1718,7 @@ end
 function OnPluginBroadcast (msg, id, name, text)
   phelper:OnPluginBroadcast(msg, id, name, text)
 
-  if id == "aaaf0c555a44169e0f1d9674" and msg == -2 then
-    fixevents("register")
-  elseif id == 'aaa72f3b5453567e2bba9d50' then
+  if id == 'aaa72f3b5453567e2bba9d50' then
     if msg == 7 then
       -- slist all
       load_spells('all')
@@ -1782,7 +1770,10 @@ function OnPluginEnable ()
   ldplugin ("broadcast_spellsskills", "aaa72f3b5453567e2bba9d50")
   ldplugin ("bast_spellup", "aaaf0c555a44169e0f1d9674")
 
-  fixevents("register")
+  phelper:register_remote("aaaf0c555a44169e0f1d9674", "askedself_change", "onspellschange")
+  phelper:register_remote("aaaf0c555a44169e0f1d9674", "askedother_change", "onotherchange")
+  phelper:register_remote("aaaf0c555a44169e0f1d9674", "status_change", "onstatuschange")
+  phelper:register_remote("aaaf0c555a44169e0f1d9674", "waiting_change", "onwaitingchange")
 
   if IsConnected() then
     if GetPluginInfo("aaaf0c555a44169e0f1d9674", 17) then
@@ -1811,7 +1802,6 @@ function OnPluginEnable ()
 end -- OnPluginEnable
 
 function OnPluginDisable ()
-  fixevents("unregister")
 
   phelper:OnPluginDisable()
 end -- OnPluginDisable
