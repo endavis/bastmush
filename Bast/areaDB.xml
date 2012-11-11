@@ -140,6 +140,17 @@ function areas_done(name, line, wildcards)
   gettingareas = false
 end
 
+function print_area_header()
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-15s %s",
+                         'Keyword', 'Name'))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", '---------------------------------------------------------------')
+end
+
+function print_area(area)
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-15s %s",
+                         area.keyword, area.name))
+end
+
 function new_area()
   local tarea = {}
   tarea['name'] = ""
@@ -184,6 +195,21 @@ function parsearea (name, line, wildcards)
   if area.keyword ~= '' then
     areas[area.keyword] = area
   end
+end
+
+function cmd_arealookup(cmddict)
+  if cmddict['args'] then
+    local stuff = aarddb:lookupareasbyname(cmddict['args'])
+    print_area_header()
+    if next(stuff) then
+      for i,v in pairs(stuff) do
+        print_area(v)
+      end
+    else
+      ColourNote("red", "black", 'None')
+    end
+  end
+  ColourNote("", "", "")
 end
 
 ]]>
@@ -261,6 +287,7 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'ardb')
 phelper:set_default('plugin_colour', 'cyan')
 
+phelper:add_cmd('lu', {func=cmd_arealookup, help="refresh areas"})
 phelper:add_cmd('refresh', {func=get_areas, help="refresh areas"})
 
 phelper:enable()
