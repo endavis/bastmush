@@ -938,6 +938,9 @@ function Statdb:fixtable(tablename)
 end
 
 function Statdb:updatedblqp()
+  if not self:checktableexists('quests') then
+    return
+  end
   if self:open('updatedblqp') then
     local oldquests = {}
     for a in self.db:nrows("SELECT * FROM quests") do
@@ -986,6 +989,9 @@ function Statdb:updatedblqp()
 end
 
 function Statdb:updatemobkills()
+  if not self:checktableexists('mobkills') then
+    return
+  end
   if self:open('updatemobkills') then
     local oldkills = {}
     for a in self.db:nrows("SELECT * FROM mobkills") do
@@ -1049,6 +1055,9 @@ function Statdb:updatemobkills()
 end
 
 function Statdb:addmobsblessing()
+  if not self:checktableexists('mobkills') then
+    return
+  end
   if self:open('addmobsblessing') then
     local oldkills = {}
     for a in self.db:nrows("SELECT * FROM mobkills") do
@@ -1116,6 +1125,9 @@ function Statdb:addmobsblessing()
 end
 
 function Statdb:addquestblessing()
+  if not self:checktableexists('quests') then
+    return
+  end
   if self:open('addquestblessing1') then
     local oldquests = {}
     for a in self.db:nrows("SELECT * FROM quests") do
@@ -1171,6 +1183,9 @@ function Statdb:addquestblessing()
 end
 
 function Statdb:addleveltrainblessing()
+  if not self:checktableexists('levels') then
+    return
+  end
   if self:open('addleveltrainblessing') then
     self.db:exec([[ALTER TABLE levels ADD COLUMN blessingtrains INT DEFAULT 0;]])
     self.db:exec([[UPDATE levels SET blessingtrains = 0;]])
@@ -1180,6 +1195,9 @@ function Statdb:addleveltrainblessing()
 end
 
 function Statdb:addclanskill()
+  if not self:checktableexists('skills') then
+    return
+  end
   if self:open('addclanskill') then
     local oldskills = {}
     for a in self.db:nrows("SELECT * FROM skills") do
@@ -1229,6 +1247,9 @@ function Statdb:addclanskill()
 end
 
 function Statdb:updatecpmobfields()
+  if not self:checktableexists('cpmobs') then
+    return
+  end
   if self:open('updatecpmobfields') then
     local oldcpmobs = {}
     for a in self.db:nrows("SELECT * FROM cpmobs") do
@@ -1261,6 +1282,9 @@ function Statdb:updatecpmobfields()
 end
 
 function Statdb:updategqmobfields()
+  if not self:checktableexists('gqmobs') then
+    return
+  end
   if self:open('updategqmobfields') then
     local oldgqmobs = {}
     for a in self.db:nrows("SELECT * FROM gqmobs") do
@@ -1294,6 +1318,9 @@ function Statdb:updategqmobfields()
 end
 
 function Statdb:updategqcomplete()
+  if not self:checktableexists('gquests') then
+    return
+  end
   if self:open('updategqcomplete') then
     self.db:exec([[ALTER TABLE gquests ADD COLUMN completed INT DEFAULT 0;]])
     self.db:exec([[UPDATE levels SET completed = 0;]])
