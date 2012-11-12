@@ -219,6 +219,7 @@ require "verify"
 require "aardutils"
 require 'colours'
 require "eqdb"
+require "formatitem"
 
 db = EQdb:new{}
 
@@ -891,6 +892,112 @@ function cmd_getcolourname(cmddict)
   end
 end
 
+function print_item(item)
+  Hyperlink(phelper.cmd .. " getitem " .. tostring(item.serial), string.format('%-15s', tostring(item.serial)), "Lookup details", 0xE16941, GetInfo(271), false)
+  ColourTell(RGBColourToName(var.plugin_colour), "black", string.format(" %-15s %-5s %-5s ",
+                         tostring(item.containerid), tostring(item.level), tostring(item.score or '')))
+  TextToColourTell(item.cname)
+  ColourNote("", "", "")
+end
+
+function print_itemheader()
+  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-15s %-15s %-5s %-5s %s",
+                         'Serial', 'Container', 'Level', 'Score', 'Name'))
+  ColourNote(RGBColourToName(var.plugin_colour), "black", '---------------------------------------------------------------')
+end
+
+function cmd_eqlookup(cmddict)
+  --print('eqlookup')
+  --tprint(cmddict)
+  if cmddict[1] then
+    local sqllu = strjoin(' ', cmddict)
+    --local sqlcmd = 'SELECT * FROM items WHERE ' .. cmddict.args .. ' LEFT JOIN on items.serial = itemdetails.serial'
+    --local sqlcmd = 'SELECT * FROM items LEFT JOIN itemdetails on items.serial = itemdetails.serial WHERE ' .. cmddict.args
+    --local sqlcmd = 'SELECT items.serial, containerid, shortflags, items.name, items.cname, score, flags FROM items LEFT JOIN itemdetails on items.serial = itemdetails.serial WHERE ' .. cmddict.args'
+    local sqlcmd = 'SELECT * FROM items WHERE ' .. cmddict.args
+    print(sqlcmd)
+    if db:open('cmd_eqlookup') then
+      local stmt = db.db:prepare(sqlcmd)
+      if not stmt then
+        phelper:plugin_header('EQ Lookup')
+        print('The lookup arguments do not create a valid sql statement')
+        db:close()
+        return
+      end
+      print_itemheader()
+      for a in stmt:nrows() do
+        local titem = db:getitemdetails(a.serial)
+        if titem then
+          a.score = titem.score
+        end
+        print_item(a)
+      end
+      db:close()
+    end
+    ColourNote("", "", "")
+  end
+end
+
+function cmd_eqprintitem(cmddict)
+  --print('showitem')
+  --tprint(cmddict)
+  if cmddict[1] then
+    for i,v in ipairs(cmddict) do
+      local titem = db:getitemdetails(v)
+      if titem then
+        local fitem = formatitem(titem)
+        for i,v in ipairs(fitem) do
+          TextToColourTell(v)
+          ColourNote("", "", "")
+        end
+        ColourNote("", "", "")
+      else
+        ColourNote(RGBColourToName(var.plugin_colour), "black", "There is no info for that id in the database")
+      end
+    end
+  end
+end
+
+function cmd_eqcomp(cmddict)
+  if cmddict[1] then
+    local tstyle = string.format('%-15s', 'Name') .. string.format(' %-5s ', 'Score') .. formatstatsheader()
+    TextToColourTell(tstyle)
+    ColourNote("", "", "")
+    ColourNote("", "", string.rep('-', 89))
+    for i,v in ipairs(cmddict) do
+      local titem = db:getitemdetails(v)
+      local tstyle = string.format('%-15s', string.sub(titem.name, 1, 15)) .. string.format(' @C%-5s@w ', titem.score)
+      tstyle = tstyle .. formatstats(titem.statmod)
+      TextToColourTell(tstyle)
+      ColourNote("", "", "")
+    end
+  end
+  ColourNote("", "", "")
+end
+
+function cmd_translate(cmddict)
+  --print('eqlookup')
+  --tprint(cmddict)
+  if cmddict[1] then
+    local ttype = cmddict[1]:lower()
+    if ttype == 'wear' or ttype == 'wearlocs' then
+      ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", 'Num', 'String'))
+      for i,v in ipairs(wearlocs) do
+        ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", i-1, v))
+      end
+    elseif ttype == 'objecttypes' or ttype == 'object' then
+      ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", 'Num', 'String'))
+      for i,v in ipairs(objecttypes) do
+        ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", i, v))
+      end
+    end
+  else
+    phelper:plugin_header('EQ Lookup')
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "The following flags can be translated")
+    ColourNote(RGBColourToName(var.plugin_colour), "black", 'wearlocs (wear) and objecttypes (object)')
+  end
+end
+
 function checkaction(action, item, afterwait)
   if action == 1 and removingall == false then
     timer_start('EQdb:action1')
@@ -1228,6 +1335,10 @@ phelper:add_cmd('addnote', {func=cmd_addnote, help="add a note to an item, first
 phelper:add_cmd('remnote', {func=cmd_remnote, help="remove a note from an item, only arg is note number"})
 phelper:add_cmd('listnote', {func=cmd_listnote, help="list notes for an item, only arg is item serial"})
 phelper:add_cmd('getcolourname', {func=cmd_getcolourname, help="return the name of the item with embedded color codes"})
+phelper:add_cmd('lu', {func=cmd_eqlookup, help="lookup stuff in the db"})
+phelper:add_cmd('getitem', {func=cmd_eqprintitem, help="print info on item with id"})
+phelper:add_cmd('comp', {func=cmd_eqcomp, help="compare items,args = list of serials"})
+phelper:add_cmd('translate', {func=cmd_translate, help="show what strings mean for certain types of flags"})
 
 phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 
