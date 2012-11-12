@@ -140,17 +140,6 @@ function areas_done(name, line, wildcards)
   gettingareas = false
 end
 
-function print_area_header()
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-15s %s",
-                         'Keyword', 'Name'))
-  ColourNote(RGBColourToName(var.plugin_colour), "black", '---------------------------------------------------------------')
-end
-
-function print_area(area)
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-15s %s",
-                         area.keyword, area.name))
-end
-
 function new_area()
   local tarea = {}
   tarea['name'] = ""
@@ -197,10 +186,21 @@ function parsearea (name, line, wildcards)
   end
 end
 
+function print_area(area)
+  ColourNote("orange", "black", string.format("%-5d %-5d %-15s %-30s", area.afrom, area.ato, area.keyword, area.name))
+end
+
+function print_area_header()
+  ColourNote("orange", "black", string.format("%-5s %-5s %-15s %-30s", "From", "To", "Keyword", "Name"))
+  ColourNote("orange", "black", string.rep('-', 50))
+
+end
+
 function cmd_arealookup(cmddict)
   if cmddict['args'] then
-    local stuff = aarddb:lookupareasbyname(cmddict['args'])
+    local stuff = aarddb:lookupareas(cmddict['args'])
     print_area_header()
+    tprint(stuff)
     if next(stuff) then
       for i,v in pairs(stuff) do
         print_area(v)
@@ -212,6 +212,64 @@ function cmd_arealookup(cmddict)
   ColourNote("", "", "")
 end
 
+function get_areabykeyword(cmddict)
+  if #cmddict == 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a keyword to lookup")
+    return true
+  end
+  local keyword = cmddict[1]
+  local tareas = aarddb:lookupareasbykeyword(keyword)
+
+  print_area_header()
+  for i,v in tableSort(tareas, "afrom") do
+    print_area(v)
+  end
+
+  ColourNote("", "", "")
+end
+
+function get_areabyname(cmddict)
+  if #cmddict == 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a name to lookup")
+    return true
+  end
+  local name = strjoin(' ', cmddict)
+  local tareas = aarddb:lookupareasbyname(name)
+
+  print_area_header()
+  for i,v in tableSort(tareas, "afrom") do
+    print_area(v)
+  end
+
+  ColourNote("", "", "")
+end
+
+function get_areabylevel(cmddict)
+  if #cmddict == 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a name to lookup")
+    return true
+  end
+  local level = cmddict[1]
+  local tareas = aarddb:lookupareasbylevel(level)
+
+  print_area_header()
+  for i,v in tableSort(tareas, "afrom") do
+    print_area(v)
+  end
+
+  ColourNote("", "", "")
+end
+
+function get_allareas(cmddict)
+  local tareas = aarddb:getallareas()
+
+  print_area_header()
+  for i,v in tableSort(tareas, "afrom") do
+    print_area(v)
+  end
+
+  ColourNote("", "", "")
+end
 ]]>
 </script>
 
@@ -287,8 +345,12 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'ardb')
 phelper:set_default('plugin_colour', 'cyan')
 
-phelper:add_cmd('lu', {func=cmd_arealookup, help="refresh areas"})
+phelper:add_cmd('lu', {func=cmd_arealookup, help="lookup areas"})
 phelper:add_cmd('refresh', {func=get_areas, help="refresh areas"})
+phelper:add_cmd('keyword', {func=get_areabykeyword, help="get areas by keyword"})
+phelper:add_cmd('name', {func=get_areabyname, help="get areas by name"})
+phelper:add_cmd('level', {func=get_areabylevel, help="get areas by level"})
+phelper:add_cmd('all', {func=get_allareas, help="get all areas"})
 
 phelper:enable()
 
