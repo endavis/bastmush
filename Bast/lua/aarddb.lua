@@ -167,6 +167,25 @@ function Aarddb:getallareasbyname()
   return areas
 end
 
+
+function Aarddb:lookupareas(areastr)
+  local results = {}
+  local sqlcmd = 'SELECT * FROM areas WHERE ' .. areastr
+  if self:open('lookupareas') then
+    local stmt = self.db:prepare(sqlcmd)
+    if not stmt then
+      phelper:plugin_header('Area Lookup')
+      print('The lookup arguments do not create a valid sql statement to get areas')
+    else
+      for a in stmt:nrows() do
+        table.insert(results, a)
+      end
+    end
+    self:close('lookupareas')
+  end
+  return results
+end
+
 function Aarddb:lookupareasbyname(area)
   local areas = {}
   local area = fixsql(area, true)
