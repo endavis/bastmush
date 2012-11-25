@@ -113,9 +113,11 @@ function Phelpobject:register_remote(id, eventname, callback)
     if not self.registered_events[id] then
       self.registered_events[id] = {}
     end
+    if not self.registered_events[id][eventname] then
+      local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback .. '")'
+      DoAfterSpecial(2, cmd, 12)
+    end
     self.registered_events[id][eventname] = callback
-    local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback .. '")'
-    DoAfterSpecial(2, cmd, 12)
   else
     print('use registerevent for local registration', id, eventname, callback)
   end
