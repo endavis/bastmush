@@ -43,7 +43,7 @@ function creategroup()
   if char and char.base then
     SendNoEcho('group create ' .. char.base.name .. "!")
   else
-     phelper:mebug('did not have char before creating group, trying again in 2 seconds')
+     phelper:mdebug('did not have char before creating group, trying again in 2 seconds')
      DoAfterSpecial(2, 'creategroup()', 12)
   end
 end
