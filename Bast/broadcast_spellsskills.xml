@@ -336,6 +336,12 @@ function broadcast_recovery(slisttype)
     end
 end
 
+function event_skillgain(sn, percent)
+  timer_start('event_skillgain')
+  phelper:processevent('skillprac', {sn=sn, percent=percent})
+  timer_end('event_skillgain')
+end
+
 function skillgain (name, line, wildcards)
   local sn = tonumber (wildcards.sn)
   local percent = tonumber (wildcards.percent)
@@ -348,6 +354,7 @@ function skillgain (name, line, wildcards)
     tspell[sn] = spells['all'][sn]
     db:updateskills(tspell)
     broadcast_slist('learned')
+    event_skillgain(sn, percent)
   end
 
 end -- skillgain
