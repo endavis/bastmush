@@ -66,6 +66,7 @@ end
 
 function plugins_list_helper(header, type, search)
   local pluginsall = {}
+  local memusage = 0
   if search == nil then
     search = '.*'
   end
@@ -85,6 +86,7 @@ function plugins_list_helper(header, type, search)
     if GetPluginInfo(pdict.id, 17) and PluginSupports(pdict.id, "getmemoryusage") == error_code.eOK then
       local throwaway, tmem = CallPlugin(pdict.id, "getmemoryusage")
       pluginsall[GetPluginInfo(pdict.id, 1)].memusage = string.format("%0d", tonumber(tmem))
+      memusage = memusage + tonumber(pluginsall[GetPluginInfo(pdict.id, 1)].memusage)
     else
       pluginsall[GetPluginInfo(pdict.id, 1)].memusage = ""
     end
@@ -101,6 +103,14 @@ function plugins_list_helper(header, type, search)
       format_plugin(v)
     end
   end
+  ColourNote("white", "black", "-----------------------------------------------------------------------")
+  local hname = string.format("%-30s", "Totals")
+  local hver = string.format("%-6s", "" )
+  local hcmd = string.format("%-10s", "")
+  local hdeb = string.format("%-8s", "")
+  local hena = string.format("%-10s", "")
+  local hmem = string.format("%-10s", tostring(memusage))
+  ColourNote(RGBColourToName(var.plugin_colour),  "black",  hname .. hver .. hcmd .. hdeb .. hena .. hmem)
   ColourNote("", "", "")
 end
 
