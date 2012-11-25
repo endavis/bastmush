@@ -53,6 +53,7 @@ function Aarddb:initialize(args)
   self:addtable('notes', [[CREATE TABLE notes(
       note_id INTEGER NOT NULL PRIMARY KEY autoincrement,
       area TEXT NOT NULL,
+      room INT default -1,
       keywords TEXT NOT NULL,
       note TEXT NOT NULL
         )]], nil, nil, 'note_id')
@@ -61,17 +62,34 @@ function Aarddb:initialize(args)
 end
 
 function Aarddb:addnote(note)
-  if self:open() then
-    local stmt = self.db:prepare[[ INSERT INTO notes VALUES (NULL, :area,
-                                                          :keywords, :note) ]]
-    stmt:bind_names(  note  )
+  if self:open('addnote') then
+    local stmt = self.db:prepare(self:converttoinsert('notes'))
+    stmt:bind_names( note )
     stmt:step()
-    stmt:finalize()
+    local retval = stmt:finalize()
     local rowid = self.db:last_insert_rowid()
     phelper:mdebug('added note', rowid)
-    self:close()
+    self:close('addnote')
     return rowid
   end
+end
+
+function Aarddb:getallnotes()
+  local results = {}
+  local sqlcmd = 'SELECT * FROM notes'
+  if self:open('getallnotes') then
+    local stmt = self.db:prepare(sqlcmd)
+    if not stmt then
+      phelper:plugin_header('Note Lookup')
+      print('Get All Notes: The lookup arguments do not create a valid sql statement to get notes')
+    else
+      for a in stmt:nrows() do
+        table.insert(results, a)
+      end
+    end
+    self:close('getallnotes')
+  end
+  return results
 end
 
 function Aarddb:lookupnotes(notestr)
@@ -87,7 +105,7 @@ function Aarddb:lookupnotes(notestr)
         table.insert(results, a)
       end
     end
-    self:close()
+    self:close('lookupnotes')
   end
   return results
 end
