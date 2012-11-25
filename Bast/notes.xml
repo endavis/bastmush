@@ -44,24 +44,42 @@ require "aarddb"
 
 aarddb = Aarddb:new{}
 
+roomnotes = {}
+
+function format_note(tnote)
+  local tstr = string.format('---------------------- Note: %d ----------------------', tnote.note_id)
+  ColourNote("orange", "", tstr)
+  ColourNote("silver", "", string.format('Area     : %s', tnote.area))
+  if tnote.room and tnote.room ~= -1 and tnote.room ~= "" then
+    ColourNote("silver", "", string.format('Room     : %s', tnote.room))
+  end
+  ColourNote("silver", "", string.format('Keywords : %s', tnote.keywords))
+  ColourNote("silver", "", "----------------------")
+  TextToColourTell(tnote.note)
+  ColourNote("","","")
+  ColourNote("orange", "", string.rep("-", #tstr))
+end
+
 function cmd_notelookup(cmddict)
-  if cmddict['args'] then
-    local stuff = aarddb:lookupnotes(cmddict['args'])
+  local stuff = {}
+  if cmddict['args'] ~= "" then
+    stuff = aarddb:lookupnotes(cmddict['args'])
+  else
+    stuff = aarddb:getallnotes()
+  end
+
+  if next(stuff) then
     for i,v in pairs(stuff) do
-      local tstr = string.format('---------------------- Note: %d ----------------------', v.note_id)
-      ColourNote("orange", "", tstr)
-      ColourNote("silver", "", string.format('Area     : %s', v.area))
-      ColourNote("silver", "", string.format('Keywords : %s', v.keywords))
-      ColourNote("silver", "", "----------------------")
-      TextToColourTell(v.note)
-      ColourNote("orange", "", string.rep("-", #tstr))
+      format_note(v)
     end
+  else
+    ColourNote("orange", "", "Nothing found")
   end
 end
 
 function cmd_addnote(cmddict)
   local note = {}
-  if not (cmddict[1] and cmddict[2] and cmddict[3]) then
+  if not (cmddict[1] and cmddict[2] and cmddict[3] and cmddict[4]) then
     --print('didnt get anything')
     local bareas = aarddb:getallareas()
     local ttable = {}
@@ -72,18 +90,50 @@ function cmd_addnote(cmddict)
     note['area'] = utils.filterpicker (ttable, 'Pick the area')
     note['keywords'] = utils.inputbox ( 'Add keywords for this note', 'Keywords')
     note['note'] = utils.editbox ( 'Enter the note\nYou can use color codes', 'Note')
+    note['room'] = utils.inputbox ( 'Enter the room\nenter "here" for the current room', 'Note')
+    if note['room'] == 'here' then
+      note['room'] = room.num
+    end
   else
     note['area'] = cmddict[1]
     note['keyword'] = cmddict[2]
     note['note'] = cmddict[3]
+    note['room'] = cmddict[4]
   end
   if note['area'] and note['keywords'] and note['note'] then
-    print('added note')
-    aarddb:addnote(note)
+    local rowid = aarddb:addnote(note)
+    print('added note', rowid)
+    if note['room'] ~= nil and note['room'] ~= -1 and note['room'] ~= "" then
+      roomnotes[note['room']] = nil
+    end
   else
     print('missing info for the note')
   end
 end
+
+function checkroomnotes(room)
+  local roomstuff = {}
+  if char and char.status and tonumber(char.status.state) == 3 then
+    if roomnotes[room] then
+      roomstuff = roomnotes[room]
+    else
+      local stuff = aarddb:lookupnotes('room = ' .. tostring(room))
+      if next(stuff) then
+        roomnotes[room] = {}
+        for i,v in pairs(stuff) do
+          roomnotes[room][v.note_id] = v
+        end
+        roomstuff = roomnotes[room]
+      end
+    end
+    if roomnotes[room] and next(roomnotes[room]) then
+      for i,note in pairs(roomnotes[room]) do
+        format_note(note)
+      end
+    end
+  end
+end
+
 ]]>
 </script>
 
@@ -91,6 +141,19 @@ end
 <![CDATA[
 
 function OnPluginBroadcast (msg, id, name, text)
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char.status") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+
+    elseif text:find("room.info") then
+      res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
+      room = assert (loadstring ('return ' .. gmcparg or ""))()
+
+      checkroomnotes(tonumber(room.num))
+
+    end
+  end
 
   phelper:OnPluginBroadcast(msg, id, name, text)
 end
@@ -110,6 +173,12 @@ function OnPluginEnable ()
   ldplugin ("areaDB")
 
   phelper:OnPluginEnable()
+
+  if IsConnected() then
+    CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request char")
+    CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request room")
+  end
+
 end -- OnPluginEnable
 
 function OnPluginDisable ()
