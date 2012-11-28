@@ -302,6 +302,12 @@ function OnPluginInstall ()
     return
   end
 
+  if IsPluginInstalled("aaa3cbbce15fa11787c6b438") then
+    ColourNote("red", "black", "AreaDB_lookup will nolonger be needed, please use " .. phelper.cmd .. " instead")
+    DoAfterSpecial(2, "plugins unload aaa3cbbce15fa11787c6b438", 10)
+    return
+  end
+  
   phelper:OnPluginInstall()
 end -- OnPluginInstall
 
