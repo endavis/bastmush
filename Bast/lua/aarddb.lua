@@ -74,6 +74,20 @@ function Aarddb:addnote(note)
   end
 end
 
+function Aarddb:removenote(notenum)
+  timer_start('Aarddb:removenote')
+  --tprint(item)
+  local tchanges = 0
+  if self:open('removenote') then
+    tchanges = self.db:total_changes()
+    self.db:exec("DELETE FROM notes WHERE note_id= " .. tostring(notenum))
+    tchanges = self.db:total_changes() - tchanges
+    self:close('removenote')
+  end
+  timer_end('Aarddb:removenote')
+  return tchanges
+end
+
 function Aarddb:getallnotes()
   local results = {}
   local sqlcmd = 'SELECT * FROM notes'
@@ -122,8 +136,7 @@ end
 function Aarddb:createplanespoolstable()
   if self:open() then
     self.db:exec([[BEGIN TRANSACTION;]])
-    local stmt = self.db:prepare[[ INSERT INTO planespools VALUES (NULL, :poolname,
-                                                            :poolnum) ]]
+    local stmt = self.db:prepare(self:converttoinsert('planespools'))
     for _,item in pairs(planespools) do
       stmt:bind_names(  item  )
       stmt:step()
@@ -138,8 +151,7 @@ end
 function Aarddb:createplanesmobstable()
   if self:open() then
     self.db:exec([[BEGIN TRANSACTION;]])
-    local stmt = self.db:prepare[[ INSERT INTO planesmobs VALUES (NULL, :name,
-                                                            :pool) ]]
+    local stmt = self.db:prepare(self:converttoinsert('planesmobs'))
     for _,item in pairs(planesmobs) do
       stmt:bind_names(  item  )
       stmt:step()
@@ -256,11 +268,8 @@ function Aarddb:addareas(area_list)
     local allareas = self:getallareas()
 
     assert (self.db:exec("BEGIN TRANSACTION"))
-    local stmt = self.db:prepare[[ INSERT INTO areas VALUES (NULL, :keyword, :name, :afrom,
-                                                          :ato, :alock, :builder, :speedwalk) ]]
-    local stmtupd = self.db:prepare[[ UPDATE areas set name = :name, afrom = :afrom,
-                                                          ato = :ato, alock = :alock, builder = :builder,
-                                                          speedwalk = :speedwalk where keyword = :keyword]]
+    local stmt = self.db:prepare(self:converttoinsert('areas'))
+    local stmtupd = self.db:prepare(self:converttoupdate('areas', 'keyword'))
 
     for i,v in pairs(area_list) do
       if v.keyword ~= nil and allareas[v.keyword] == nil then
@@ -313,9 +322,7 @@ end
 
 function Aarddb:addhelplookup(lookup)
   if self:open() then
-    local stmt = self.db:prepare[[ INSERT INTO helplookup VALUES (NULL, :lookup,
-                                                          :topic) ]]
-
+    local stmt = self.db:prepare(self:converttoinsert('helplookup'))
     stmt:bind_names(  lookup  )
     stmt:step()
     stmt:finalize()
@@ -400,6 +407,8 @@ function Aarddb:clearhelptable()
     self.db:exec([[DROP TABLE IF EXISTS helps;]])
     self:close(true)
   end
+  self:checktable('helps')
+  self:checktable('helplookup')
 end
 
 planespools = {
