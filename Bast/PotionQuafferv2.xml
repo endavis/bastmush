@@ -704,6 +704,10 @@ function pquaff_list(sName,sLine,wildcards)
   ColourNote("blue","black","PotionQuaffer:","lightblue","black"," Group Alert      = ","darkblue","black",GetVariable("alert"))
   Note("")
 end -- pquaff_list
+
+function getmemoryusage()
+  return collectgarbage('count')
+end
 ]]>
 </script>
 
