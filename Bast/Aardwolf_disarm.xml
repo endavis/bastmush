@@ -382,7 +382,9 @@ function WeaponLister()
   Note("")
 end
 
-
+function getmemoryusage()
+  return collectgarbage('count')
+end
 ]]>
 </script>
 
