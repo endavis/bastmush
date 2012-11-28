@@ -483,11 +483,19 @@ function Pluginhelper:showhelptext()
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Mem Usage (KB)'),
              RGBColourToName(var.plugin_colour), "black", string.format('%0d KB', collectgarbage('count')))
 
-  ColourNote(RGBColourToName(var.plugin_colour), "black", "")
-  ColourNote(RGBColourToName(var.plugin_colour), "black", "Commands")
+  if tableCountKeys(self.cmds_table, 'prio', 99, true) > 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "")
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Specific commands for this plugin")
+  end
 
-  for i,v in tableSort(self.cmds_table) do
+  local defhelp = false
+  for i,v in tableSort(self.cmds_table, 'prio', 50) do
     if v.help ~= '' then
+      if v.prio == 99 and not defhelp then
+        defhelp = true
+        ColourNote("", "", "")
+        ColourNote(RGBColourToName(var.plugin_colour), "black", "Generic commands for this plugin")
+      end
       ColourNote("white", "black", string.format("%-15s : ", i),
                  RGBColourToName(var.plugin_colour), "black", v.help)
     end
@@ -618,12 +626,24 @@ function Pluginhelper:createhelp()
   style.text = '  '
   table.insert(ttext, {style})
 
-  local style = {}
-  style.text = 'Commands '
-  table.insert(ttext, {style})
+  if tableCountKeys(self.cmds_table, 'prio', 99, true) > 0 then
+    local style = {}
+    style.text = 'Specific commands for this plugin'
+    table.insert(ttext, {style})
+  end
 
-  for i,v in tableSort(self.cmds_table) do
+  local defhelp = false  
+  for i,v in tableSort(self.cmds_table, 'prio', 50) do
     if v.help ~= '' then
+      if v.prio == 99 and not defhelp then
+        defhelp = true
+        local style = {}
+        style.text = ''
+        table.insert(ttext, {style})        
+        local style = {}
+        style.text = 'Generic commands for this plugin'
+        table.insert(ttext, {style})
+      end      
       local tline = {}
       local style2 = {}
       style2.text = string.format("%-15s", i)
