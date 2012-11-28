@@ -75,7 +75,7 @@ function EQdb:initialize(args)
         nid INTEGER NOT NULL PRIMARY KEY,
         serial INTEGER NOT NULL,
         note TEXT,
-        fromident INTEGER default 0);
+        fromident INTEGER default 0
       )]], nil, nil, nid)
 
   self:addtable('itemdetails', [[CREATE TABLE itemdetails(
@@ -257,6 +257,12 @@ end
 function EQdb:getitemdetails(serial)
   timer_start('EQdb:getitemdetails')
   local titem = nil
+  if tonumber(serial) == nil then
+    local nitem = self:getitem(serial)
+    if next(nitem) then
+      serial = nitem.serial
+    end
+  end
   local fixed = fixsql(tostring(serial))
   if self:open('getitemdetails') then
     for a in self.db:nrows("SELECT * FROM itemdetails WHERE serial = " .. fixed) do
@@ -364,12 +370,7 @@ function EQdb:addnote(serial, notes, fromident)
       assert (self.db:exec("BEGIN TRANSACTION"))
     end
     tchanges = self.db:total_changes()
-    local stmt = self.db:prepare[[
-      INSERT into note VALUES (
-        NULL,
-        :serial,
-        :note,
-        :fromident);]]
+    local stmt = self.db:prepare(self:converttoinsert('note', true))
     for i,v in pairs(notes) do
       local notem = {}
       notem['serial'] = serial
@@ -412,17 +413,7 @@ end
 function EQdb:adddrink(item)
   timer_start('EQdb:adddrink')
   if item.drink and next(item.drink) then
-    local stmt = self.db:prepare[[
-      INSERT or REPLACE into drink VALUES (
-        NULL,
-        :serial,
-        :servings,
-        :liquid,
-        :liquidmax,
-        :liquidleft,
-        :thirstpercent,
-        :hungerpercent,
-        :u1);]]
+    local stmt = self.db:prepare(self:converttoinsert('drink', true, true))
     local drinkm = copytable.deep(item.drink)
     drinkm['serial'] = item.serial
     stmt:bind_names( drinkm )
@@ -435,11 +426,7 @@ end
 function EQdb:addlight(item)
   timer_start('EQdb:addlight')
   if item.light and next(item.light) then
-    local stmt = self.db:prepare[[
-      INSERT or REPLACE into light VALUES (
-        NULL,
-        :serial,
-        :duration);]]
+    local stmt = self.db:prepare(self:converttoinsert('light', true, true))
     local lightm = copytable.deep(item.light)
     lightm['serial'] = item.serial
     stmt:bind_names( lightm )
@@ -452,11 +439,7 @@ end
 function EQdb:addportal(item)
   timer_start('EQdb:addportal')
   if item.portal and next(item.portal) then
-    local stmt = self.db:prepare[[
-      INSERT or REPLACE into portal VALUES (
-        NULL,
-        :serial,
-        :uses);]]
+    local stmt = self.db:prepare(self:converttoinsert('portal', true, true))
     local portalm = copytable.deep(item.portal)
     portalm['serial'] = item.serial
     stmt:bind_names( portalm )
@@ -469,13 +452,7 @@ end
 function EQdb:addfurniture(item)
   timer_start('EQdb:addfurniture')
   if item.furniture and next(item.furniture) then
-    local stmt = self.db:prepare[[
-      INSERT or REPLACE into furniture VALUES (
-        NULL,
-        :serial,
-        :hpregen,
-        :manaregen,
-        :u1);]]
+    local stmt = self.db:prepare(self:converttoinsert('furniture', true, true))
     local furniturem = copytable.deep(item.furniture)
     furniturem['serial'] = item.serial
     stmt:bind_names( furniturem )
@@ -488,11 +465,7 @@ end
 function EQdb:addfood(item)
   timer_start('EQdb:addfood')
   if item.food and next(item.food) then
-    local stmt = self.db:prepare[[
-      INSERT or REPLACE into food VALUES (
-        NULL,
-        :serial,
-        :percent);]]
+    local stmt = self.db:prepare(self:converttoinsert('food', true, true))
     local foodm = copytable.deep(item.food)
     foodm['serial'] = item.serial
     stmt:bind_names( foodm )
@@ -505,17 +478,7 @@ end
 function EQdb:addspells(item)
   timer_start('EQdb:addspell')
   if item.spells and next(item.spells) then
-    local stmt = self.db:prepare[[
-      INSERT or REPLACE into spells VALUES (
-        NULL,
-        :serial,
-        :uses,
-        :level,
-        :sn1,
-        :sn2,
-        :sn3,
-        :sn4,
-        :u1);]]
+    local stmt = self.db:prepare(self:converttoinsert('spells', true, true))
     local spellm = copytable.deep(item.spells)
     spellm['serial'] = item.serial
     stmt:bind_names( spellm )
@@ -529,12 +492,7 @@ function EQdb:addskillmod(item)
   timer_start('EQdb:addskillmod')
   if item.skillmod and next(item.skillmod) then
     self.db:exec("DELETE from skillmod where serial = " .. tostring(item.serial))
-    local stmt = self.db:prepare[[
-      INSERT into skillmod VALUES (
-        NULL,
-        :serial,
-        :skillnum,
-        :value);]]
+    local stmt = self.db:prepare(self:converttoinsert('skillmod', true, true))
     for i,v in pairs(item.skillmod) do
       local skillm = {}
       skillm['serial'] = item.serial
@@ -552,17 +510,7 @@ end
 function EQdb:addcontainer(item)
   timer_start('EQdb:addcontainer')
   if item.container and next(item.container) then
-    local stmt = self.db:prepare[[
-      INSERT OR REPLACE into container VALUES (
-        NULL,
-        :serial,
-        :itemweightpercent,
-        :heaviestitem,
-        :capacity,
-        :holding,
-        :itemsinside,
-        :totalweight,
-        :itemburden);]]
+    local stmt = self.db:prepare(self:converttoinsert('container', true, true))
     local containerm = copytable.deep(item.container)
     containerm['serial'] = item.serial
     stmt:bind_names( containerm )
@@ -576,15 +524,7 @@ end
 function EQdb:addweapon(item)
   timer_start('EQdb:addweapon')
   if item.weapon and next(item.weapon) then
-    local stmt = self.db:prepare[[
-      INSERT or REPLACE into weapon VALUES (
-        NULL,
-        :serial,
-        :wtype,
-        :damtype,
-        :special,
-        :inflicts,
-        :avedam);]]
+    local stmt = self.db:prepare(self:converttoinsert('weapon', true, true))
     local weaponm = copytable.deep(item.weapon)
     weaponm['serial'] = item.serial
     stmt:bind_names( weaponm )
@@ -598,12 +538,7 @@ function EQdb:addresists(item)
   timer_start('EQdb:addresists')
   if item.resistmod and next(item.resistmod) then
     self.db:exec("DELETE from resistmod where serial = " .. tostring(item.serial))
-    local stmt = self.db:prepare[[
-      INSERT into resistmod VALUES (
-        NULL,
-        :serial,
-        :type,
-        :amount);]]
+    local stmt = self.db:prepare(self:converttoinsert('resistmod', true, true))
     for i,v in pairs(item.resistmod) do
       local resistm = {}
       resistm['serial'] = item.serial
@@ -622,12 +557,7 @@ function EQdb:addstats(item)
   timer_start('EQdb:addstats')
   if item.statmod and next(item.statmod) then
     self.db:exec("DELETE from statmod where serial = " .. tostring(item.serial))
-    local stmt = self.db:prepare[[
-      INSERT into statmod VALUES (
-        NULL,
-        :serial,
-        :type,
-        :amount);]]
+    local stmt = self.db:prepare(self:converttoinsert('statmod', true, true))
     for i,v in pairs(item.statmod) do
       local statm = {}
       statm['serial'] = item.serial
@@ -650,45 +580,14 @@ function EQdb:additemdetail(item)
     local tchanges = self.db:total_changes()
     assert (self.db:exec("BEGIN TRANSACTION"))
     if titem then
-      local stmtupd = self.db:prepare[[ UPDATE itemdetails SET
-                                                  cname = :cname,
-                                                  name = :name,
-                                                  level = :level,
-                                                  type = :type,
-                                                  worth = :worth,
-                                                  weight = :weight,
-                                                  wearable = :wearable,
-                                                  score = :score,
-                                                  flags = :flags,
-                                                  fromclan = :fromclan,
-                                                  owner = :owner
-                                                  WHERE serial = :serial;
-                                                            ]]
-
+      local stmtupd = self.db:prepare(self:converttoupdate('itemdetails', 'serial'))
       stmtupd:bind_names( item )
       stmtupd:step()
       stmtupd:reset()
       stmtupd:finalize()
       --local retval self.db:exec(tsql)
     else
-      local stmt = self.db:prepare[[ INSERT INTO itemdetails VALUES (
-                                           :serial,
-                                           :keywords,
-                                           :cname,
-                                           :name,
-                                           :level,
-                                           :type,
-                                           :worth,
-                                           :weight,
-                                           :wearable,
-                                           :material,
-                                           :score,
-                                           :flags,
-                                           :foundat,
-                                           :fromclan,
-                                           :owner,
-                                           :leadsto); ]]
-
+      local stmt = self.db:prepare(self:converttoinsert('itemdetails'))
       stmt:bind_names(item)
       local stepret = stmt:step()
       local resetret = stmt:reset()
@@ -733,11 +632,7 @@ function EQdb:addaffectmods(serial, affectmods)
   local fixed = fixsql(tostring(serial))
   if serial and next(affectmods) then
     self.db:exec("DELETE from affectmod where serial = " .. fixed)
-    local stmt = self.db:prepare[[
-      INSERT into affectmod VALUES (
-        NULL,
-        :serial,
-        :type);]]
+    local stmt = self.db:prepare(self:converttoinsert('affectmod', true, true))
     for i,v in pairs(affectmods) do
       local affectm = {}
       affectm['serial'] = serial
@@ -793,16 +688,7 @@ function EQdb:additems(items)
   if self:open('additems') then
     local tchanges = self.db:total_changes()
     assert (self.db:exec("BEGIN TRANSACTION"))
-    local stmt = self.db:prepare[[ INSERT INTO items VALUES (
-                                           :serial,
-                                           :shortflags,
-                                           :level,
-                                           :cname,
-                                           :name,
-                                           :type,
-                                           :containerid,
-                                           :wearslot,
-                                           :place) ]]
+    local stmt = self.db:prepare(self:converttoinsert('items'))
     for i,v in pairs(items) do
       stmt:bind_names(v)
       local stepret = stmt:step()
