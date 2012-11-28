@@ -262,17 +262,42 @@ function Sqlitedb:getcolumnsfromsql(tablename)
   return columns, columnsbykeys
 end
 
-function Sqlitedb:converttoinsert(tablename)
+function Sqlitedb:converttoinsert(tablename, keynull, replace)
   local execstr = nil
   local columns = {}
   if self.tables[tablename] then
     local columns, columnsbykeys = self:getcolumnsfromsql(tablename)
     local colstring = strjoin(', :', columns)
     colstring = ':' .. colstring
-    execstr = string.format("INSERT INTO %s VALUES (%s)", tablename, colstring)
+    if replace then
+      execstr = string.format("INSERT OR REPLACE INTO %s VALUES (%s)", tablename, colstring)
+    else
+      execstr = string.format("INSERT INTO %s VALUES (%s)", tablename, colstring)
+    end
+    if keynull and self.tables[tablename]['keyfield'] then
+      execstr = string.gsub(execstr, ':' .. self.tables[tablename]['keyfield'], 'NULL')
+    end
   end
   return execstr
 end
+
+function Sqlitedb:converttoupdate(tablename, wherekey)
+  local execstr = nil
+  local columns = {}
+  if self.tables[tablename] then
+    local columns, columnsbykeys = self:getcolumnsfromsql(tablename)
+    local sqlstr = {}
+    for i,v in pairs(columns) do
+       if v ~= wherekey then
+         table.insert(sqlstr, v .. ' = :' .. v)
+       end
+    end
+    colstring = strjoin(',', sqlstr)
+    execstr = string.format("UPDATE %s SET %s WHERE %s = :%s;", tablename, colstring, wherekey, wherekey)
+  end
+  return execstr
+end
+
 
 function Sqlitedb:getlastrowid(ttable)
   local colid = self.tables[ttable].keyfield
