@@ -206,6 +206,9 @@ function adapt_consider (name, line, wildcards)
   end -- if
 end -- adapt_consider
 
+function getmemoryusage()
+  return collectgarbage('count')
+end
 ]]>
 </script>
 
