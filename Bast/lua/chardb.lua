@@ -271,20 +271,8 @@ function Statdb:savewhois(whoisinfo)
       phelper:mdebug("no previous stats, created new")
     else
       assert (self.db:exec("BEGIN TRANSACTION"))
-      local stmt = self.db:prepare[[ UPDATE stats set level = :level, totallevels = :totallevels,
-                                            remorts = :remorts, tiers = :tiers, race = :race,
-                                            sex = :sex, subclass = :subclass, qpearned = :qpearned,
-                                            questscomplete = :questscomplete,
-                                            questsfailed = :questsfailed,
-                                            campaignsdone = :campaignsdone,
-                                            campaignsfld = :campaignsfld,
-                                            gquestswon = :gquestswon, duelswon = :duelswon,
-                                            duelslost = :duelslost, timeskilled = :timeskilled,
-                                            monsterskilled = :monsterskilled,
-                                            combatmazewins = :combatmazewins,
-                                            combatmazedeaths = :combatmazedeaths,
-                                            powerupsall = :powerupsall WHERE milestone = 'current';]]
-
+      whoisinfo['milestone'] = 'current'
+      local stmt = self.db:prepare(self:converttoupdate('stats', 'milestone'))
       stmt:bind_names(  whoisinfo  )
       stmt:step()
       stmt:finalize()
