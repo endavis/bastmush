@@ -1127,7 +1127,12 @@ end
 
 function OnPluginInstall ()
   --OnPluginEnable is automatically called by pluginhelper
-
+  if IsPluginInstalled("aaa66caed92ffc6146964abc") then
+    ColourNote("red", "black", "eqLookup will nolonger be needed, please use " .. phelper.cmd .. " instead")
+    DoAfterSpecial(2, "plugins unload aaa66caed92ffc6146964abc", 10)
+    return
+  end
+  
   phelper:OnPluginInstall()
 end -- OnPluginInstall
 
