@@ -104,11 +104,26 @@ function cmd_addnote(cmddict)
     local rowid = aarddb:addnote(note)
     print('added note', rowid)
     if note['room'] ~= nil and note['room'] ~= -1 and note['room'] ~= "" then
-      roomnotes[note['room']] = nil
+      roomnotes[tonumber(note['room'])] = nil
     end
   else
     print('missing info for the note')
   end
+end
+
+function cmd_removenote(cmddict)
+ if not cmddict[1] then
+  ColourNote("orange", "", "You did not supply a note id")
+ else
+  local changes = aarddb:removenote(cmddict[1])
+  if changes > 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Note " .. tostring(cmddict[1]) .. " was deleted.")
+    roomnotes = {}
+  else
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Nothing was deleted, please check your note id")
+  end
+ end
+
 end
 
 function checkroomnotes(room)
@@ -150,7 +165,9 @@ function OnPluginBroadcast (msg, id, name, text)
       res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","room.info")
       room = assert (loadstring ('return ' .. gmcparg or ""))()
 
-      checkroomnotes(tonumber(room.num))
+      if phelper.roomnotes then
+        checkroomnotes(tonumber(room.num))
+      end
 
     end
   end
@@ -213,6 +230,9 @@ phelper:set_default('plugin_colour', 'orange')
 
 phelper:add_cmd('lu', {func=cmd_notelookup, help="lookup notes"})
 phelper:add_cmd('add', {func=cmd_addnote, help="add notes"})
+phelper:add_cmd('remove', {func=cmd_removenote, help="remove a note, use note id"})
+
+phelper:add_setting('roomnotes', {help="show notes in rooms", type="bool", default=verify_bool(true)})
 
 phelper:enable()
 
