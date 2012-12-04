@@ -93,9 +93,9 @@ function Phelpobject:initialize(args)
   self.events = {}
   self.registered_events = {}
 
-  self:add_setting( 'tdebug', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=1})
-  self:add_setting( 'ignorebsetting', {type="bool", help="ignore setting of options through broadcast", default=verify_bool(false), sortlev=1, longname="Ignore Broadcast Settings"})
-  self:add_setting( 'showevents', {type="bool", help="show events", default=verify_bool(false), sortlev=1, longname="Show events"})
+  self:add_setting( 'tdebug', {type="bool", help="show debugging info for this option", default=verify_bool(false), sortlev=99})
+  self:add_setting( 'ignorebsetting', {type="bool", help="ignore setting of options through broadcast", default=verify_bool(false), sortlev=1, longname="Ignore Broadcast Settings", sortlev=99})
+  self:add_setting( 'showevents', {type="bool", help="show events", default=verify_bool(false), sortlev=1, longname="Show events", sortlev=99})
 
   self:add_cmd('help', {func="cmd_help", help="show help", prio=99})
   self:add_cmd('debug', {func="cmd_debug", help="toggle debugging", prio=99})
@@ -437,7 +437,20 @@ function Phelpobject:print_settings_helper(ttype)
     this function goes through the setoptions table and the window and prints each setting
   --]]
   self:plugin_header("Settings")
+
+  if tableCountKeys(self.set_options, 'sortlev', 99, true) > 0 then
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "")
+    ColourNote(RGBColourToName(var.plugin_colour), "black", "Specific settings for this plugin")
+  end
+  
+  local defhelp = false
   for v,t in tableSort(self.set_options, 'sortlev', 50) do
+
+    if t.sortlev == 99 and not defhelp then
+      defhelp = true
+      ColourNote("", "", "")
+      ColourNote(RGBColourToName(var.plugin_colour), "black", "Generic settings for this plugin")
+    end    
     self:print_setting_helper(v, self[v], t.help, t.type, t.readonly, t.istable, t.formatfunc)
   end
   ColourNote("", "", "")
