@@ -304,15 +304,7 @@ function Statdb:addmilestone(milestone)
     stats['milestone'] = milestone
     stats['time'] = GetInfo(304)
     assert (self.db:exec("BEGIN TRANSACTION"))
-    local stmt = self.db:prepare[[ INSERT INTO stats VALUES (NULL, :name, :level, :totallevels,
-                                                          :remorts, :tiers,:race, :sex,
-                                                          :subclass, :qpearned, :questscomplete,
-                                                          :questsfailed, :campaignsdone, :campaignsfld,
-                                                          :gquestswon, :duelswon, :duelslost,
-                                                          :timeskilled, :monsterskilled,
-                                                          :combatmazewins, :combatmazedeaths,
-                                                          :powerupsall, :totaltrivia, :time, :milestone) ]]
-
+    local stmt = self.db:prepare(self:converttoinsert('stats', true))    
     stmt:bind_names(  stats  )
     stmt:step()
     stmt:finalize()
