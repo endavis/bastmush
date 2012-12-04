@@ -464,7 +464,7 @@ end
 
 function builditem(wildcards)
   local item = {}
-  item.placestr = wearlocs[tonumber(wildcards.location) + 1] or -1
+  item.placestr = wearlocs[tonumber(wildcards.location)] or -1
   item.wearloc = wildcards.location
   item.objectid = wildcards.objectid
   item.container = wildcards.container
