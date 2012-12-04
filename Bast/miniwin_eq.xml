@@ -381,8 +381,8 @@ function buildwornitem(item)
   table.insert(lstyles, style)
 
   local style = {}
-  style.text = string.format(' %-8s ', wearlocs[item.wearslot + 1])
-  if wearlocs[item.wearslot + 1] == 'wielded' or wearlocs[item.wearslot + 1] == 'second' then
+  style.text = string.format(' %-8s ', wearlocs[item.wearslot])
+  if wearlocs[item.wearslot] == 'wield' or wearlocs[item.wearslot] == 'second' then
     style.textcolour = 'red'
   else
     style.textcolour = 'steelblue'
@@ -593,30 +593,30 @@ function buildworn(container)
     end
   end
 
-  for i,v in ipairs(wearlocs) do
-      local actualslot = i - 1
-      local titem = itemsbywearloc[actualslot]
-      local lstyles = {}
-      if titem then
-        lstyles = buildwornitem(titem)
-      else
-        --local slotitems = db:getitemsbywearslot(actualslot)
-        --print('slot', actualslot)
-        --tprint(slotitems)
-        local doit = true
-        if optionallocs[actualslot] then
-          doit = false
-        end
-        if ((actualslot == 23 or actualslot == 26) and itemsbywearloc[25]) then
-          doit = false
-        end
-        if doit then
-          lstyles = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=actualslot})
-        end
+  for i=0,#wearlocs do
+    actualslot = i
+    local titem = itemsbywearloc[actualslot]
+    local lstyles = {}
+    if titem then
+      lstyles = buildwornitem(titem)
+    else
+      --local slotitems = db:getitemsbywearslot(actualslot)
+      --print('slot', actualslot)
+      --tprint(slotitems)
+      local doit = true
+      if optionallocs[actualslot] then
+        doit = false
       end
-      if next(lstyles) then
-        table.insert(styles, lstyles)
+      if ((actualslot == 23 or actualslot == 26) and itemsbywearloc[25]) then
+        doit = false
       end
+      if doit then
+        lstyles = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=actualslot})
+      end
+    end
+    if next(lstyles) then
+      table.insert(styles, lstyles)
+    end
   end
   return header, styles
 
