@@ -1,6 +1,14 @@
 require "findfile"
 
 DEFAULT_COLOUR = "@w"
+BLACK = 1
+RED = 2
+GREEN = 3
+YELLOW = 4
+BLUE = 5
+MAGENTA = 6
+CYAN = 7
+WHITE = 8
 
 nfile = scan_dir_for_file (GetInfo(60), "aardwolf_colors.lua")
 if nfile then
