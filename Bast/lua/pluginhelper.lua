@@ -83,9 +83,9 @@ function Pluginhelper:initialize(args)
   self:add_cmd('windows', {func="cmd_windows", help="list windows and some info associated with this plugin", prio=99})
   --self:add_cmd('info',  {func="cmd_sinfo", help="list some info about the plugin", prio=99})
 
-  self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1, longname="Plugin Colour"})
-  self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb", longname="Plugin Command"})
-  self:add_setting('time', {help="show function timers", type="bool", default=false})
+  self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1, longname="Plugin Colour", sortlev=99})
+  self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb", longname="Plugin Command", sortlev=99})
+  self:add_setting('time', {help="show function timers", type="bool", default=false, sortlev=99})
 
   self:addlink('Plugin', "Bast's MUSHclient plugins homepage", "http://code.google.com/p/bastmush",
                         "Go to Bast's MUSHclient plugins homepage")
