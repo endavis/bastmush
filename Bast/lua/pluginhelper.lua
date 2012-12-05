@@ -79,8 +79,8 @@ function Pluginhelper:initialize(args)
   self.aardcmds = {}
   self.links = {}
 
-  self:add_cmd('objects', {func="cmd_objects", help="list objects associated with this plugin", prio=99})
-  self:add_cmd('windows', {func="cmd_windows", help="list windows and some info associated with this plugin", prio=99})
+  self:add_cmd('objects', {func="cmd_objects", help="list objects associated with this plugin", sortgroup='Default', prio=99})
+  self:add_cmd('windows', {func="cmd_windows", help="list windows and some info associated with this plugin", sortgroup='Default', prio=99})
   --self:add_cmd('info',  {func="cmd_sinfo", help="list some info about the plugin", prio=99})
 
   self:add_setting('plugin_colour', {help="set the plugin colour", type="colour", default="lime", sortlev=1, longname="Plugin Colour", sortlev=99})
@@ -483,24 +483,15 @@ function Pluginhelper:showhelptext()
   ColourNote(RGBColourToName(var.plugin_colour), "black", string.format('%-20s : ', 'Mem Usage (KB)'),
              RGBColourToName(var.plugin_colour), "black", string.format('%0d KB', collectgarbage('count')))
 
-  if tableCountKeys(self.cmds_table, 'prio', 99, true) > 0 then
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "")
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Specific commands for this plugin")
-  end
-
-  local defhelp = false
-  for i,v in tableSort(self.cmds_table, 'prio', 50) do
-    if v.help ~= '' then
-      if v.prio == 99 and not defhelp then
-        defhelp = true
-        ColourNote("", "", "")
-        ColourNote(RGBColourToName(var.plugin_colour), "black", "Generic commands for this plugin")
-      end
-      ColourNote("white", "black", string.format("%-15s : ", i),
-                 RGBColourToName(var.plugin_colour), "black", v.help)
+  for i,v in tableSort(self.cmds_groups_sequence) do
+    ColourNote("", "", "")
+    ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("------- %s -------", v))
+    for cmd,cmdgt in tableSort(self.cmds_groups[v], 'prio', 50) do
+      ColourNote("white", "black", string.format("%-15s : ", cmd),
+             RGBColourToName(var.plugin_colour), "black", self.cmds_table[cmd].help)
     end
   end
-
+  
   ColourNote("white", "black", "")
   ColourTell(RGBColourToName(var.plugin_colour), "black", 'Objects: ')
   for i,v in pairs(self.pobjects) do
@@ -626,42 +617,34 @@ function Pluginhelper:createhelp()
   style.text = '  '
   table.insert(ttext, {style})
 
-  if tableCountKeys(self.cmds_table, 'prio', 99, true) > 0 then
+  for i,v in tableSort(self.cmds_groups_sequence) do
     local style = {}
-    style.text = 'Specific commands for this plugin'
-    table.insert(ttext, {style})
-  end
+    style.text = ''
+    table.insert(ttext, {style})        
+    local style = {}
+    style.text = string.format("------- %s -------", v)
+    table.insert(ttext, {style})    
+    for cmd,cmdgt in tableSort(self.cmds_groups[v], 'prio', 50) do
+      if self.cmds_table[cmd].help ~= '' then  
+        local tline = {}
+        local style2 = {}
+        style2.text = string.format("%-15s", cmd)
+        style2.textcolour = 'white'
+        style2.mouseup = function ()
+                          Execute(self.cmd .. ' ' .. cmd)
+                        end
+        table.insert(tline, style2)
 
-  local defhelp = false  
-  for i,v in tableSort(self.cmds_table, 'prio', 50) do
-    if v.help ~= '' then
-      if v.prio == 99 and not defhelp then
-        defhelp = true
-        local style = {}
-        style.text = ''
-        table.insert(ttext, {style})        
-        local style = {}
-        style.text = 'Generic commands for this plugin'
-        table.insert(ttext, {style})
-      end      
-      local tline = {}
-      local style2 = {}
-      style2.text = string.format("%-15s", i)
-      style2.textcolour = 'white'
-      style2.mouseup = function ()
-                        Execute(self.cmd .. ' ' .. i)
-                       end
-      table.insert(tline, style2)
+        local style2 = {}
+        style2.text = self.cmds_table[cmd].help
+        style2.textcolour = phelper.plugin_colour
+        table.insert(tline, style2)
 
-      local style2 = {}
-      style2.text = v.help
-      style2.textcolour = var.plugin_colour
-      table.insert(tline, style2)
-
-      table.insert(ttext, tline)
+        table.insert(ttext, tline)
+      end
     end
   end
-
+  
   local style = {}
   style.text = '  '
   table.insert(ttext, {style})
