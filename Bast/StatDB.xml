@@ -160,6 +160,11 @@ function AddMilestone(cmddict)
       ColourNote(RGBColourToName(phelper.plugin_colour), "black", "added milestone " .. cmddict[1])
       ColourNote( "", "", "")
     end
+  else
+    phelper:plugin_header('compare')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " addmilestone <milestonename>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add a milestone to the database")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the name of the milestone to add")  
   end
 end
 
@@ -234,6 +239,14 @@ function formatCompMile(milestone1, milestone2)
 end
 
 function CompareMilestones(cmddict)
+  if cmddict[1] == 'help' then
+    phelper:plugin_header('compare')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " compareamilestone <milestone1> <milestone2>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "compare two milestones in the database")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the first milestone to compare")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 2 is the second milestone to compare")    
+    return
+  end
   local milestone1 = {}
   local milestone2 = {}
   if #cmddict == 0 then
@@ -265,6 +278,12 @@ function CompareMilestones(cmddict)
 end
 
 function ListMilestones(cmddict)
+  if cmddict[1] == 'help' then
+    phelper:plugin_header('list')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " listmilestones")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "list all milestones in the database")
+    return
+  end
   if cmddict[1] then
     findstr, n = string.gsub(cmddict[1], "*", "%%")
     findstr, n = string.gsub(findstr, "?", "_")
@@ -305,8 +324,10 @@ end
 
 function cmdBackup(cmddict)
   if #cmddict == 0 then
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify an extension")
-    return true
+    phelper:plugin_header('backup')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " backup <extension>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "backup the database")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the extension to use")
   end
   db:backupdb(cmddict[1])
 end
@@ -322,7 +343,10 @@ end
 function cmdCampaignxp(cmddict)
   phelper:plugin_header("Campaign XP")
   if #cmddict == 0 then
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a xp amount")
+    phelper:plugin_header('campaignxp')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " campaignxp <tnlxp>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "this sets noexp to come on when your exp to next level is less than the argument")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is threshhold for exp tnl, use 'off' to remove")    
     return true
   end
   if cmddict[1] == 'off' then
@@ -511,12 +535,14 @@ end -- function OnPluginSaveState
 <script>
 <![CDATA[
 
-phelper:add_cmd('addmilestone', {func=AddMilestone, help="add a milestone"})
-phelper:add_cmd('comparemilstone', {func=CompareMilestones, help="compare two milestones"})
-phelper:add_cmd('listmilestones', {func=ListMilestones, help="list all milestones"})
-phelper:add_cmd('backup', {func=cmdBackup, help="backup the database, the only argument is the extension"})
-phelper:add_cmd('campaignxp', {func=cmdCampaignxp, help="set noexp if a campaign hasn't been taken and tnl is less than the argument to this function, use 'off' (no quotes) disable"})
-phelper:add_cmd('fixtable', {func=cmdFixTable, help="fix a table"})
+phelper:add_cmd('listmilestones', {func=ListMilestones, help="list all milestones", sortgroup="Milestones", prio=40})
+phelper:add_cmd('addmilestone', {func=AddMilestone, help="add a milestone", sortgroup="Milestones", prio=41})
+phelper:add_cmd('comparemilstone', {func=CompareMilestones, help="compare two milestones", sortgroup="Milestones", prio=42})
+
+phelper:add_cmd('campaignxp', {func=cmdCampaignxp, help="set noexp if a campaign hasn't been taken and tnl is less than the argument to this function, use 'off' (no quotes) disable", sortgroup="Campaign", prio=43})
+
+phelper:add_cmd('backup', {func=cmdBackup, help="backup the database, the only argument is the extension", sortgroup="Database", prio=44})
+--phelper:add_cmd('fixtable', {func=cmdFixTable, help="fix a table", sortgroup="Database", prio=45})
 
 phelper:set_default('cmd', 'statdb')
 phelper:set_default('plugin_colour', 'orange')
