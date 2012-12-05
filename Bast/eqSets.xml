@@ -1,0 +1,862 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="eqSets"
+   author="Bast"
+   id="aaa22efed92ffc6146964abc"
+   language="Lua"
+   purpose="create sets of eq"
+   save_state="y"
+   date_written="2009-02-22 14:20:07"
+   requires="4.73"
+   version="6.1"
+   >
+
+<description trim="y">
+<![CDATA[
+[FOR PLUGIN AUTHORS ONLY]
+
+]]>
+</description>
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<triggers>
+</triggers>
+
+<script>
+<![CDATA[
+internalrevision = "$Rev$"
+
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require "var"
+require "serialize"
+require "commas"
+require "pluginhelper"
+require "verify"
+require "aardutils"
+require "chardb"
+require 'colours'
+require "eqdb"
+require "formatitem"
+
+eqdb = EQdb:new{}
+
+char = nil
+
+olddict = {}
+olditem = {}
+
+flags = {'K', 'G', 'H', 'I'}
+
+flagcolours = {
+ K = 'red',
+-- M = 'blue',
+ G = 'white',
+ H = 'cyan',
+ I = 'lightgray',
+}
+
+flagname = {
+ K = 'kept',
+-- M = 'magic',
+ G = 'glow',
+ H = 'hum',
+ I = 'invis',
+}
+
+function cmd_close(cmddict)
+  eqdb:close('cmd_close', true)
+end
+
+function cmd_list(cmddict)
+  phelper:plugin_header('List')
+  local sets = eqdb:getsetnames()
+  if next(sets) then
+    for i,v in pairs(sets) do
+      print(v.eqsetname)
+    end
+  else
+    print('no eqsets')
+  end
+end
+
+function figureaddtosetargs(args)
+  local targs = {}
+  for i,v in ipairs(args) do
+    local titem = eqdb:getitem(tonumber(v))
+    local found = false
+    if i == 1 and titem then
+      targs['serial'] = v
+      found = true
+    elseif i == 1 and not titem then
+      print('argument 1 is not a valid serial')
+      return nil
+    else
+      local targ = tonumber(v)
+      if not targ then
+        -- either container keyword or wearloc, or setname (for now wearloc)
+        local titem = eqdb:getitem(v)
+        if titem then
+          targs['container'] = tonumber(v)
+          found = true
+        elseif wearlocreverse[v] then
+          --print('wearloc for arg ' .. tostring(v))      
+          targs['wearloc'] = v
+          found = true
+        else
+          --print('setname for arg ' .. tostring(v))      
+          targs['setname'] = v
+          found = true
+        end
+      else
+        if targ < 211 then
+          --print('level for arg ' .. tostring(v))      
+          targs['level'] = tonumber(v)
+          found = true
+        elseif eqdb:getitem(v) then    
+          --print('got an item, so container for arg' .. tostring(v))
+          targs['container'] = tonumber(v)
+          found = true      
+        end
+      end
+    end
+    if not found then
+      print('Could not find what ' .. v .. ' is, please try different arguments')
+      return nil
+    end
+  end
+  return targs
+end
+
+function cmd_add(cmddict)
+  olddict = cmddict
+  -- need serial, wearloc, container, level|setname (optional)
+  local serial = nil
+  local wearloc = nil
+  local container = nil
+  local level = nil
+  if cmddict[1] then
+    local args = figureaddtosetargs(cmddict)
+    if args == nil then
+      phelper:plugin_header('Add')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not figure out one of the arguments, please try with other arguments")     
+      return    
+    end
+    local titem = eqdb:getitem(args['serial'])
+    local ditem = eqdb:getitemdetails(args['serial'])
+    if not ditem then
+      olditem = titem
+      -- we don't have the score
+      -- get the item from containers
+      phelper:register_remote("aaa56faed92ffc6146964abc", "itemchange", "onitemchange", true)
+      if titem.containerid ~= 'Inventory' then
+        putobjectininv(titem.serial)
+      else
+        SendNoEcho('identify ' .. tostring(titem.serial))
+      end
+      phelper:register_remote("aaa56faed92ffc6146964abc", "itemchange", "onitemchange")
+      return
+    end
+    if not args['level'] and not args['setname'] then
+      -- get level of item by serial
+      args['level'] = titem.level
+    end
+    if not args['container'] then
+      -- get current container of item by serial
+      args['container'] = titem.containerid
+    end
+    if not args['wearloc'] and ditem.score then
+      args['wearloc'] = ditem.wearable
+    end
+    if not wearlocreverse[args['wearloc']] then
+      phelper:plugin_header('Add')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "not a valid wearloc")
+      return
+    end      
+    if args['serial'] and args['wearloc'] and args['container'] and args['level'] then
+      if ditem.level > args['level'] then
+        phelper:plugin_header('Add')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", "This item is too high a level for set " .. tostring(args['level']))
+        return
+      elseif eqdb:checklevelsetitem(args['serial']) then
+        phelper:plugin_header('Add')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", "This item has already been set to be worn")
+        return     
+      elseif eqdb:checklevelsetwearloc(args['level'], args['wearloc']) then
+        phelper:plugin_header('Add')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("There is already an item set at level %s for wearloc %s", args['level'], args['wearloc']))      
+        return
+      end
+      eqdb:addsetitem(args['serial'], args['wearloc'], args['container'], args['level'])
+      phelper:plugin_header('Add')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Item: %d will now be set to wear at level %d at location %s", args['serial'], args['level'], args['wearloc']))   
+      return
+    elseif args['serial'] and args['wearloc'] and args['container'] and args['setname'] then
+      if eqdb:checknamesetitem(args['serial'], args['wearloc'], args['setname']) then
+        phelper:plugin_header('Add')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("There is already an item in set %s for wearloc %s", args['setname'], args['wearloc']))      
+        return      
+      end
+      local changes = eqdb:addsetitem(args['serial'], args['wearloc'], args['container'], args['setname'])
+      --print('changes', changes)
+      if changes > 0 then
+        phelper:plugin_header('Add')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Item: %d will now be set to wear at location %s for eqset %s", args['serial'], args['wearloc'], args['setname']))   
+        return
+      else
+        phelper:plugin_header('Add')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not add this to a set")   
+        return      
+      end
+    else
+      phelper:plugin_header('Add')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not figure out one of the arguments, please try with other arguments")     
+      return
+    end
+  else
+    phelper:plugin_header('Add')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " add <serial> <location> <container (optional)> <level|setname (optional)>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add an item to autowear")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "location is the keyword for the location from 'wearable', it will default to the item location")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "container is the container to place it in when removing it")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  and defaults to the current container that the item is in")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "level is the level to wear the eq, which is defaulted to the level of the item")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "setname is the set name")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "if both level and setname are not included, the command will default to the level of the item")  
+  end
+end
+
+function showsetstats(set)
+  local fitem = formatitem(set)
+  for i,v in ipairs(fitem) do
+    TextToColourTell(v)
+    ColourNote("", "", "")
+  end
+  ColourNote("", "", "")
+end
+
+function getsetstats(setn)
+  local stats = {}
+  stats['resistmod'] = {}
+  stats['statmod'] = {}
+  stats['affectmod'] = {}
+  stats['skillmods'] = {}
+  local level = tonumber(setn)
+  local titems = eqdb:getset(setn)
+  for i,v in pairs(titems) do
+    local ditem = eqdb:getitemdetails(v.serial)
+    if ditem then
+      stats['score'] = (stats['score'] or 0) + ditem['score']
+      stats['weight'] = (stats['weight'] or 0) + ditem['weight']            
+      if ditem['statmod'] then
+        for key,mod in pairs(ditem['statmod']) do
+          stats['statmod'][key] = (stats['statmod'][key] or 0) + tonumber(mod)
+        end
+      end
+      if ditem['resistmod'] then
+        for key,mod in pairs(ditem['resistmod']) do
+          stats['resistmod'][key] = (stats['resistmod'][key] or 0) + tonumber(mod)
+        end
+      end
+      if ditem['affectmod'] then
+        for key,mod in ipairs(ditem['affectmod']) do
+          table.insert(stats['affectmod'], mod)
+        end
+      end
+    else
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Do not have stats for " .. tostring(v.serial))
+    end
+  end
+  if stats then
+    if level then
+      stats['cname'] = 'Level @r' .. tostring(level) .. '@w set'
+      stats['name'] = 'Level ' .. tostring(level) .. ' set'
+    else
+      stats['cname'] = '@r' .. tostring(setn) .. ' @w set'
+      stats['name'] = tostring(setn) .. ' set'
+    end
+    --tprint(stats)
+    return stats  
+  else
+    return nil
+  end
+end
+
+function cmd_getstats(cmddict)
+  if not cmddict[1] then
+    phelper:plugin_header('getstats')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " stats <eqset>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get the stats for an eqset")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "eqset is the eqset name or the level")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "multiple eqset arguments will show a compare of the eqsets")
+  else
+    if #cmddict == 1 then
+      local sets = getsetstats(cmddict[1])
+      if sets then
+        showsetstats(sets)
+      else
+        print('no data for set: ' .. tostring(cmddict[1]))
+      end
+    else
+      local sets = {}
+      local tstyle = string.format('%-15s', 'Name') .. string.format(' %-5s ', 'Score') .. formatstatsheader()
+      TextToColourTell(tstyle)
+      ColourNote("", "", "")
+      ColourNote("", "", string.rep('-', 89))      
+      for i,v in ipairs(cmddict) do
+        local stats = getsetstats(v)
+        if stats then
+          local tstyle = string.format('%-15s', string.sub(stats.name, 1, 15)) .. string.format(' @C%-5s@w ', stats.score)
+          tstyle = tstyle .. formatstats(stats.statmod)
+          TextToColourTell(tstyle)
+          ColourNote("", "", "")        
+        else
+          ColourNote(RGBColourToName(phelper.plugin_colour), "black", "no data for set: " .. tostring(v))
+        end
+      end   
+      ColourNote("", "", "")      
+    end
+  end
+end
+
+function putitem(item)
+  local container = eqdb:getolditemcontainer(item.serial)
+  if container then
+    putobjectincontainer(item.serial, container)
+  end
+end
+
+function wearitem(item, sitem, shitem, hitem)
+  if item and item.containerid ~= 'Worn' then
+    local ditem = eqdb:getitemdetails(item.serial)
+    if ditem.level > (tonumber(char.status.level) + (char.base.tier * 10)) then
+      TextToColourTell('Will not wear ' .. ditem.cname .. ' at location ' .. item.wearloc .. ' because of level restriction')
+      ColourNote("", "", "")
+      return
+    end
+    local olditem = eqdb:getitembywearslot(wearlocreverse[item.wearloc])
+    if olditem.serial ~= item.serial then
+      putobjectininv(item.serial)
+      SendNoEcho('wear ' .. tostring(item.serial) .. ' ' .. item.wearloc)
+      if next(olditem) then
+        local container = eqdb:getolditemcontainer(olditem.serial)
+        if container then
+          putobjectincontainer(olditem.serial, container)
+        end
+      end          
+    end
+    if item.wearloc == 'second' and (shitem or hitem) then
+      if shitem then
+        putitem(shitem)
+      end
+      if hitem then
+        putitem(hitem)
+      end
+    elseif (item.wearloc == 'shield' or item.wearloc == 'hold') and sitem then
+      putitem(sitem)
+    end
+  end
+end
+
+function wearset(setname, wtype)
+  local sitem = eqdb:getitembywearslot(wearlocreverse['second'])
+  local shitem = eqdb:getitembywearslot(wearlocreverse['shield'])
+  local hitem = eqdb:getitembywearslot(wearlocreverse['hold'])    
+  local defloc = 'second'
+  local dont = {}
+  if wtype then
+    defloc = 'shield'
+  end
+  if defloc == 'second' then
+    dont['shield'] = 1
+    dont['hold'] = 1
+  else
+    dont['second'] = 1
+  end
+  for i,v in pairs(eqdb:getset(setname)) do
+    if not dont[v.wearloc] then
+      wearitem(v, sitem, shitem, hitem)
+    end
+  end
+end
+
+function cmd_wearset(cmddict)
+  if cmddict[1] then
+    local setname = cmddict[1]
+    if tonumber(setname) then
+      local level = tonumber(char.status.level) + (char.base.tier * 10)
+      if tonumber(setname) > level then
+        phelper:plugin_header('wearset')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", "You are not a high enough level to wear this set")    
+        return
+      end
+    end
+    local wtype = nil
+    local wearloc = nil
+    if cmddict[2] == 'alt' or cmddict[3] == 'alt' then
+      wtype = 'alt'
+    end
+    if wearlocreverse[cmddict[2]] then
+      wearloc = cmddict[2]
+    elseif wearlocreverse[cmddict[3]] then
+      wearloc = cmddict[3]
+    end
+    if not wearloc then
+      wearset(setname, wtype)
+    else
+      local sitem = eqdb:getitembywearslot(wearlocreverse['second'])
+      local shitem = eqdb:getitembywearslot(wearlocreverse['shield'])
+      local hitem = eqdb:getitembywearslot(wearlocreverse['hold'])
+      item = eqdb:getsetwearloc(wearloc, setname)
+      if item then
+        wearitem(item, sitem, shitem, hitem)
+      else
+        print(string.format('no item to wear for set %s in wearloc %s', setname, wearloc))
+      end
+    end
+  else
+    phelper:plugin_header('wearset')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " wearset <setname|level> <wearloc> 'alt'")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "check and equip items that are not worn for a set`")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "location is the keyword for the location from 'wearable', or 'all' for all locations")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "the alt keyword will equip the shield/hold items instead of a second weapon") 
+  end
+end
+
+function cmd_checklevel(cmddict)
+  local level = tonumber(char.status.level) + (char.base.tier * 10)
+  if cmddict[1] then
+    if cmddict[1] == 'all'  then
+      local wtype = nil
+      if cmddict[2] then
+        wtype = 'alt'
+      end
+      wearset(level, wtype)
+    else
+      wearloc = cmddict[1]
+      if not wearlocreverse[wearloc] then
+        phelper:plugin_header('checklevel')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", "not a valid wearloc")
+        return      
+      end
+      local sitem = eqdb:getitembywearslot(wearlocreverse['second'])
+      local shitem = eqdb:getitembywearslot(wearlocreverse['shield'])
+      local hitem = eqdb:getitembywearslot(wearlocreverse['hold'])        
+      item = eqdb:getsetwearloc(wearloc, level)
+      if item then
+        wearitem(item, sitem, shitem, hitem)
+      end
+    end
+  else
+    phelper:plugin_header('checklevel')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " checklevel <location|'all'> 'alt'")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "check and equip items that are not worn for your level")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "location is the keyword for the location from 'wearable', or 'all' for all locations")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "the 'alt' keyword will equip a shield and/or held item instead of a dual weapon when using 'all'")
+  end
+end
+
+function cmd_remove(cmddict)
+  if cmddict[1] and cmddict[2] then
+    setname = cmddict[1]
+    wearloc = cmddict[2]  
+    if eqdb:removesetitem(setname, wearloc) == 1 then
+      phelper:plugin_header('Remove')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Item for %s and wearloc %s was removed", tostring(setname), wearloc))      
+    else
+      phelper:plugin_header('Remove')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "There was nothing to remove")        
+    end
+  else
+    phelper:plugin_header('Remove')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " remove <setname|level> <location> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove an item from autowear for level and location")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "level is the level to remove")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "location is the keyword for the location from 'wearable'")  
+  end
+end
+
+function cmd_getset(cmddict)
+  if cmddict[1] then
+    local titems = eqdb:getset(cmddict[1])
+    for i,v in pairs(titems) do
+      putobjectininv(v.serial, true)
+    end
+  else
+    phelper:plugin_header('getset')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " getset <level>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get all items for the levelset <level> and put them in inventory (or leave them worn if already worn)")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "level is the level to get")   
+  end
+end
+
+function cmd_putset(cmddict)
+  if cmddict[1] then
+    local titems = eqdb:getset(cmddict[1])
+    for i,v in pairs(titems) do
+      putobjectininv(v.serial)
+      putobjectincontainer(v.serial, v.containerid) 
+    end
+  else
+    phelper:plugin_header('getset')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " putset <level>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "put all items for the levelset <level> and put them in inventory (or leave them worn if already worn)")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "level is the level to get")   
+  end
+end
+
+function cmd_diff(cmddict)
+  if cmddict[1] and cmddict[2] then
+    local set1 = cmddict[1]
+    local set2 = cmddict[2]
+    local tset1 = eqdb:getset(set1)
+    local tset2 = eqdb:getset(set2)
+    local header = false
+    local format = "%-10s %-10s %-5s %-12s %5s %s"
+    if not next(tset1) then
+      phelper:plugin_header('Diff')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "No items in " .. tostring(set1))
+      return
+    end
+    if not next(tset2) then
+      phelper:plugin_header('Diff')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "No items in " .. tostring(set2))
+      return
+    end
+    for i=0,#wearlocs do
+      wearloc = wearlocs[i]
+      if tset1[wearloc] and tset2[wearloc] then
+        if not header then
+          header = true
+          ColourNote( "", "", string.rep('-', 80))
+          ColourNote("red", "black", string.format(format, 'Name', 'Wearloc', 'Score', 'Serial', 'Level', 'Name'))          
+          ColourNote( "", "", string.rep('-', 80))
+        end
+        if tonumber(tset1[wearloc].serial) == tonumber(tset2[wearloc].serial) then
+          -- same
+        else
+          --ColourNote("red", "black", string.format("wearloc: " .. tostring(wearloc)))
+          local eq1 = eqdb:getitemdetails(tset1[wearloc].serial)
+          local eq2 = eqdb:getitemdetails(tset2[wearloc].serial)
+          TextToColourTell(string.format(format, set1, wearloc, eq1.score, eq1.serial, eq1.level, eq1.cname))
+          ColourNote( "", "", "" )           
+          TextToColourTell(string.format(format, set2, wearloc, eq2.score, eq2.serial, eq2.level, eq2.cname))
+          ColourNote( "", "", "" )
+          ColourNote( "", "", string.rep('-', 80))
+        end
+      elseif tset1[wearloc] then
+        if not header then
+          header = true
+          ColourNote( "", "", string.rep('-', 80))
+          ColourNote("red", "black", string.format(format, 'Name', 'Wearloc', 'Score', 'Serial', 'Level', 'Name'))          
+          ColourNote( "", "", string.rep('-', 80))
+        end      
+        local eq1 = eqdb:getitemdetails(tset1[wearloc].serial)
+        TextToColourTell(string.format(format, set1, wearloc, eq1.score, eq1.serial, eq1.level, eq1.cname))
+        ColourNote( "", "", "" )         
+        TextToColourTell(string.format(format, set1, wearloc, "None", "", "", ""))
+        ColourNote( "", "", "" )           
+        ColourNote( "", "", string.rep('-', 80))
+      elseif tset2[wearloc] then
+        if not header then
+          header = true
+          ColourNote( "", "", string.rep('-', 80))
+          ColourNote("red", "black", string.format(format, 'Name', 'Wearloc', 'Score', 'Serial', 'Level', 'Name'))          
+          ColourNote( "", "", string.rep('-', 80))
+        end      
+        local eq2 = eqdb:getitemdetails(tset2[wearloc].serial)
+        TextToColourTell(string.format(format, set1, wearloc, "None", "", "", ""))
+        ColourNote( "", "", "" )           
+        TextToColourTell(string.format(format, set2, wearloc, eq2.score, eq2.serial, eq2.level, eq2.cname))
+        ColourNote( "", "", "" )           
+        ColourNote( "", "", string.rep('-', 80))        
+      end
+    end
+    ColourNote("", "", "")
+  else
+    phelper:plugin_header('Diff')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " diff <set1> <set2>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show differences between two sets, can be level or named")  
+  end
+end
+
+function cmd_show(cmddict)
+  local msg = {}
+  if cmddict[1] then
+    local items = eqdb:getset(cmddict[1])
+    for i=0,#wearlocs do
+      actualslot = i
+      local aitem = items[wearlocs[i]]
+      local titem = nil
+      if aitem then
+        titem = eqdb:getitem(aitem.serial)
+      end
+      local lstyles = {}
+      if titem then
+        if titem.wearslot == -1 then
+          titem.wearslot = i
+        end
+        lstyles = buildwornitem(titem)
+      else
+        local doit = true
+        if optionallocs[actualslot] then
+          doit = false
+        end
+        if ((actualslot == 23 or actualslot == 26) and items[wearlocs[25]]) then
+          doit = false
+        end
+        if doit then
+          lstyles = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=actualslot})
+        end
+      end
+      if next(lstyles) then
+        table.insert(msg, StylesToColoursOneLine(lstyles))
+      end      
+    end
+    display(msg)    
+  else
+    phelper:plugin_header('show')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " show <level|setname> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show all items for a set")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "level is the level set to show") 
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "setname is the set to show") 
+  end
+end
+
+function display( msg )
+  for i,v in ipairs(msg) do
+    TextToColourTell(v)
+    ColourNote( "", "", "" )    
+  end
+  ColourNote( "", "", "" )
+end
+
+function buildwornitem(item)
+  local lstyles = {}
+
+  local style = {}
+  style.text = '['
+  style.textcolour = GetBoldColour (GREEN)
+  style.length = #style.text
+  table.insert(lstyles, style)
+
+  local ditem = eqdb:getitemdetails(item.serial)
+  
+  local style = {}
+  style.text = string.format(' %-8s ', wearlocs[item.wearslot])
+  if wearlocs[item.wearslot] == 'wield' or wearlocs[item.wearslot] == 'second' then
+    style.textcolour = GetNormalColour (RED)
+  else
+    style.textcolour = GetNormalColour (CYAN)
+  end
+  style.length = #style.text
+  table.insert(lstyles, style)
+
+  local style = {}
+  style.text = '] '
+  style.textcolour = GetBoldColour (GREEN)
+  style.length = #style.text
+  table.insert(lstyles, style)
+
+  -- Serial
+  local style = {}
+  style.text = '('
+  style.textcolour = GetBoldColour (WHITE)  
+  style.length = #style.text
+  table.insert(lstyles, style)
+
+  local style = {}
+  style.text = string.format("%11s", tostring(item.serial or ""))
+  style.textcolour = GetBoldColour (GREEN)
+  style.length = #style.text
+  table.insert(lstyles, style)
+
+  local style = {}
+  style.text = ') '
+  style.textcolour = GetBoldColour (WHITE)  
+  style.length = #style.text
+  table.insert(lstyles, style)
+
+  -- Level
+  local style = {}
+  style.text = '('
+  style.textcolour = GetBoldColour (WHITE)  
+  style.length = #style.text
+  table.insert(lstyles, style)
+
+  local style = {}
+  style.text = string.format("%3s", tostring(item.level or ""))
+  style.textcolour = GetBoldColour (WHITE)
+  style.length = #style.text
+  table.insert(lstyles, style)
+
+  local style = {}
+  style.text = ') '
+  style.textcolour = GetBoldColour (WHITE)  
+  style.length = #style.text
+  table.insert(lstyles, style)
+  
+  -- Score
+  local style = {}
+  style.text = '('
+  style.textcolour = GetBoldColour (WHITE)  
+  style.length = #style.text
+  table.insert(lstyles, style)
+
+  if ditem and ditem.score then
+    local style = {}
+    style.text = string.format("%4s", tostring(ditem.score or ""))
+    style.textcolour = GetBoldColour (CYAN)
+    style.length = #style.text
+    table.insert(lstyles, style)
+  else
+    local style = {}
+    style.text = string.format("%4s", "Unkn")
+    style.textcolour = GetBoldColour (CYAN)
+    style.length = #style.text
+    table.insert(lstyles, style)  
+  end
+
+  local style = {}
+  style.text = ') '
+  style.textcolour = GetBoldColour (WHITE)  
+  style.length = #style.text
+  table.insert(lstyles, style)  
+  
+  -- Name
+  local style = {}
+  local newstyles = ColoursToStyles(item.cname)
+  local length = 0
+  local itemlength = 47
+  --print(item.name)
+  for i=1,#newstyles do
+    local tstyle = newstyles[i]
+    local style = copytable.shallow(tstyle)
+    style.backcolour = tstyle.backcolour
+    --print(length, #style.text, style.text)
+    if length + #style.text >= itemlength and i ~= 1 then
+      local tl = itemlength - length
+      if tl < 1 then
+        break
+      else
+        style.text = string.sub(style.text, 1, tl)
+      end
+    else
+      style.text = string.sub(style.text, 1, itemlength)
+    end
+    length = length + #style.text
+    
+    style.length = #style.text
+    --tprint(style)
+    table.insert(lstyles, style)
+  end
+
+  return lstyles
+end
+
+function onitemchange(stuff)
+  local stuff = assert (loadstring ('return ' .. stuff or ""))()
+  if stuff.serial == olditem.serial then
+    if not stuff.score then
+      SendNoEcho('identify ' .. stuff.serial)
+    elseif stuff.score and not olditem.moved then
+      olditem.moved = true    
+      putobjectincontainer(olditem.serial, olditem.containerid)
+    end
+  elseif stuff.serial == tonumber(olditem.containerid) and olditem.moved then
+    phelper:unregister_remote("aaa56faed92ffc6146964abc", "itemchange", "onitemchange")
+    olditem = {}
+    cmd_autowear(olddict)    
+  end
+end
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+  if id == '3e7dedbe37e44942dd46d264' then
+    if text:find("char") then
+      local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
+      char = assert (loadstring ('return ' .. gmcparg or ""))()
+    end
+  end
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+  
+  if IsConnected() then
+    CallPlugin("3e7dedbe37e44942dd46d264","Send_GMCP_Packet","request char")
+  end
+
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+
+phelper:set_default('plugin_colour', 'orange')
+phelper:set_default('cmd', 'eqs')
+
+phelper:add_cmd('close', {func=cmd_close, help="close the db"})
+phelper:add_cmd('list', {func=cmd_list, help="list eqsets"})
+phelper:add_cmd('add', {func=cmd_add, help="add an item to an eqset"})
+phelper:add_cmd('remove', {func=cmd_remove, help="remove an item from an eqset"})
+--phelper:add_cmd('clear', {func=cmd_clear, help="clear an eqset, either named or level"})
+phelper:add_cmd('checklevel', {func=cmd_checklevel, help="check to see if wearing all items your current level"})
+phelper:add_cmd('wearset', {func=cmd_wearset, help="wear a set"})
+phelper:add_cmd('show', {func=cmd_show, help="show the eq for a set"})
+phelper:add_cmd('getset', {func=cmd_getset, help="get all items for a set and put them in inventory (or leave them worn if already worn)"})
+phelper:add_cmd('putset', {func=cmd_putset, help="put all items for a set into their targetted container"})
+phelper:add_cmd('stats', {func=cmd_getstats, help="get the stats for a set"})
+phelper:add_cmd('diff', {func=cmd_diff, help="diff two sets"})
+
+phelper:enable()
+]]>
+</script>
+</muclient>
