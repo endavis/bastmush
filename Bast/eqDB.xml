@@ -732,7 +732,12 @@ function cmd_lget(cmddict)
     leq_helper(cmddict[1], cmddict[2], cmddict[3], 'get')
   else
     phelper:plugin_header('lget')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: lget <container> <level1> <level2(optional)>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " lget <container> <level1> <level2>")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get all items of a level in a container")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the container, can be serial or an identifier you have assigned to the container")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 2 is the lower threshhold level of the items")       
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 3 is the higher threshhold level of the items")       
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if no higher threshhold then it will only get items that are equal to the lower threshhold")    
   end
 end
 
@@ -741,7 +746,12 @@ function cmd_lput(cmddict)
     leq_helper(cmddict[1], cmddict[2], cmddict[3], 'put')
   else
     phelper:plugin_header('lput')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: lput <container> <level1> <level2(optional)>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " lput <container> <level1> <level2>")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "put all items of a level in a container")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the container, can be serial or an identifier you have assigned to the container")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 2 is the lower threshhold level of the items")       
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 3 is the higher threshhold level of the items")       
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if no higher threshhold then it will only put items that are equal to the lower threshhold")       
   end
 end
 
@@ -762,6 +772,12 @@ function cmd_addid(cmddict)
       phelper:plugin_header('Add Identifier')
       ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Item " .. cmddict[1] .. " does not exist!")
     end
+  else
+    phelper:plugin_header('addid')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " addid <serial> <identifier>")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add an identifier to an item")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 2 is the identifier to add")   
   end
 end
 
@@ -775,6 +791,11 @@ function cmd_remid(cmddict)
         ColourNote("red", "black", "Identifier " .. v .. " was not found")
       end
     end
+  else
+    phelper:plugin_header('remid')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " remid <identifier>")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove an identifier")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the identifier to remove, can be multiple")        
   end
 end
 
@@ -832,8 +853,11 @@ function cmd_addnote(cmddict)
       end
     end
   else
-    phelper:plugin_header('Add Note')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: note <serial> \"the note you want to add\"")
+    phelper:plugin_header('addnote')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " addnote <serial> <note>")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add notes to an item")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 2 note to add")       
   end
 end
 
@@ -851,11 +875,21 @@ function cmd_remnote(cmddict)
         ColourNote("red", "black", "Note " .. v .. " was not found")
       end
     end
+  else
+    phelper:plugin_header('remnote')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " remnote <serial> <notenum>")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove notes from an item")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 2 is the id of the note, can have more than 1 of these")        
   end
 end
 
 function cmd_listnote(cmddict)
   if (not cmddict[1]) then
+    phelper:plugin_header('listnote')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " listnote <serial> ")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "list notes for an item")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item")      
     return
   end
   local titem = db:getitemdetails(cmddict[1])
@@ -889,6 +923,11 @@ function cmd_getcolourname(cmddict)
       ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%s: %s", cmddict[1], item))
     end
     ColourNote("", "", "")
+  else
+    phelper:plugin_header('getcolourname')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " getcolourname <serial> ")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get the coloured name of an item")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item")      
   end
 end
 
@@ -935,6 +974,14 @@ function cmd_eqlookup(cmddict)
       db:close()
     end
     ColourNote("", "", "")
+  else
+    phelper:plugin_header('lu')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " lu <statement> ")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "lookup items in the database")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 sql statement to use for lookups")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Examples: 'level between 1 and 100' - all items between levels 1 and 100")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "          'containerid = \"Worn\"' - all worn items")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "          'type = 5' - all weapons")  
   end
 end
 
@@ -955,6 +1002,11 @@ function cmd_eqprintitem(cmddict)
         ColourNote(RGBColourToName(var.plugin_colour), "black", "There is no info for that id in the database")
       end
     end
+  else
+    phelper:plugin_header('getitem')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " getitem <serial> ")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get item details from the database")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item, can be multipe of these arguments")  
   end
 end
 
@@ -971,6 +1023,11 @@ function cmd_eqcomp(cmddict)
       TextToColourTell(tstyle)
       ColourNote("", "", "")
     end
+  else
+    phelper:plugin_header('comp')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " comp <serial>")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "compare items")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item, can be multiple")    
   end
   ColourNote("", "", "")
 end
@@ -992,9 +1049,12 @@ function cmd_translate(cmddict)
       end
     end
   else
-    phelper:plugin_header('EQ Lookup')
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "The following flags can be translated")
-    ColourNote(RGBColourToName(var.plugin_colour), "black", 'wearlocs (wear) and objecttypes (object)')
+    phelper:plugin_header('translate')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " translate <info> ")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "translate flags for items")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the type of info to translate")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  The following flags can be translated")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", '    wearlocs (wear) and objecttypes (object)')
   end
 end
 
@@ -1334,23 +1394,28 @@ end
 phelper:set_default('plugin_colour', 'orange')
 phelper:set_default('cmd', 'eqdb')
 
-phelper:add_cmd('refresh', {func=cmd_refresh, help="refresh the db"})
-phelper:add_cmd('close', {func=cmd_close, help="close the db"})
-phelper:add_cmd('addid', {func=cmd_addid, help="add an identifier to an item"})
-phelper:add_cmd('remid', {func=cmd_remid, help="remove an identifier from an item"})
-phelper:add_cmd('listid', {func=cmd_listid, help="list items with identifiers"})
-phelper:add_cmd('lget', {func=cmd_lget, help="get items from container between level1 and level2"})
-phelper:add_cmd('lput', {func=cmd_lput, help="put items in container between level1 and level2"})
-phelper:add_cmd('clean', {func=cmd_clean, help="clean the db of stale items"})
-phelper:add_cmd('idinv', {func=cmd_idinv, help="identify all items in inventory (does not include Worn or items in bags)"})
-phelper:add_cmd('addnote', {func=cmd_addnote, help="add a note to an item, first arg is serial, the rest will be the note"})
-phelper:add_cmd('remnote', {func=cmd_remnote, help="remove a note from an item, only arg is note number"})
-phelper:add_cmd('listnote', {func=cmd_listnote, help="list notes for an item, only arg is item serial"})
-phelper:add_cmd('getcolourname', {func=cmd_getcolourname, help="return the name of the item with embedded color codes"})
-phelper:add_cmd('lu', {func=cmd_eqlookup, help="lookup stuff in the db"})
-phelper:add_cmd('getitem', {func=cmd_eqprintitem, help="print info on item with id"})
-phelper:add_cmd('comp', {func=cmd_eqcomp, help="compare items,args = list of serials"})
-phelper:add_cmd('translate', {func=cmd_translate, help="show what strings mean for certain types of flags"})
+phelper:add_cmd('lu', {func=cmd_eqlookup, help="lookup stuff in the db", sortgroup='Obtaining information on items', prio = 30})
+phelper:add_cmd('getitem', {func=cmd_eqprintitem, help="print info on item with id", sortgroup='Obtaining information on items', prio = 31})
+phelper:add_cmd('comp', {func=cmd_eqcomp, help="compare items,args = list of serials", sortgroup='Obtaining information on items', prio = 32})
+phelper:add_cmd('getcolourname', {func=cmd_getcolourname, help="return the name of the item with embedded color codes", sortgroup='Obtaining information on items', prio = 33})
+
+phelper:add_cmd('addid', {func=cmd_addid, help="add an identifier to an item", sortgroup='Manipulating identifiers on items', prio = 34})
+phelper:add_cmd('remid', {func=cmd_remid, help="remove an identifier from an item", sortgroup='Manipulating identifiers on items', prio = 35})
+phelper:add_cmd('listid', {func=cmd_listid, help="list items with identifiers", sortgroup='Manipulating identifiers on items', prio = 36})
+
+phelper:add_cmd('addnote', {func=cmd_addnote, help="add a note to an item, first arg is serial, the rest will be the note", sortgroup='Manipulating notes on items', prio = 37})
+phelper:add_cmd('remnote', {func=cmd_remnote, help="remove a note from an item, only arg is note number", sortgroup='Manipulating notes on items', prio = 38})
+phelper:add_cmd('listnote', {func=cmd_listnote, help="list notes for an item, only arg is item serial", sortgroup='Manipulating notes on items', prio = 39})
+
+phelper:add_cmd('lget', {func=cmd_lget, help="get items from container between level1 and level2", sortgroup='Manipulating items', prio = 40})
+phelper:add_cmd('lput', {func=cmd_lput, help="put items in container between level1 and level2", sortgroup='Manipulating items', prio = 41})
+
+phelper:add_cmd('clean', {func=cmd_clean, help="clean the db of stale items", sortgroup='Database commands', prio = 42})
+phelper:add_cmd('idinv', {func=cmd_idinv, help="identify all items in inventory (does not include Worn or items in bags)", sortgroup='Database commands', prio = 43})
+phelper:add_cmd('refresh', {func=cmd_refresh, help="refresh the db", sortgroup='Database commands', prio = 44})
+phelper:add_cmd('close', {func=cmd_close, help="close the db", sortgroup='Database commands', prio = 45})
+
+phelper:add_cmd('translate', {func=cmd_translate, help="show what strings mean for certain types of flags", sortgroup='Misc', prio = 42})
 
 phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 
