@@ -465,21 +465,32 @@ end
 
 function cmd_remove(cmddict)
   if cmddict[1] and cmddict[2] then
-    setname = cmddict[1]
-    wearloc = cmddict[2]  
-    if eqdb:removesetitem(setname, wearloc) == 1 then
-      phelper:plugin_header('Remove')
-      ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Item for %s and wearloc %s was removed", tostring(setname), wearloc))      
+    local setname = cmddict[1]
+    local removed = false
+    if wearlocreverse[cmddict[2]] then
+      wearloc = cmddict[2]
+    else
+      local ditem = eqdb:getsetitem(cmddict[2], setname)
+      if ditem then
+        wearloc = ditem.wearloc
+      end
+    end
+    if wearloc then  
+      if eqdb:removesetitem(setname, wearloc) == 1 then
+        phelper:plugin_header('Remove')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Item for %s and wearloc %s was removed", tostring(setname), wearloc))      
+        removed = true
+      end    
     else
       phelper:plugin_header('Remove')
       ColourNote(RGBColourToName(phelper.plugin_colour), "black", "There was nothing to remove")        
     end
   else
     phelper:plugin_header('Remove')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " remove <setname|level> <location> ")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove an item from autowear for level and location")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "level is the level to remove")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "location is the keyword for the location from 'wearable'")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " remove <setname|level> <location|item> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove an item from a set and location")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "argument 1 is the setname or level")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "argument 2 is the location or the item serial")  
   end
 end
 
@@ -491,9 +502,9 @@ function cmd_getset(cmddict)
     end
   else
     phelper:plugin_header('getset')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " getset <level>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " getset <setname|level>")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get all items for the levelset <level> and put them in inventory (or leave them worn if already worn)")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "level is the level to get")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "needs 1 argument, level or setname")     
   end
 end
 
@@ -506,9 +517,27 @@ function cmd_putset(cmddict)
     end
   else
     phelper:plugin_header('getset')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " putset <level>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " putset <setname|level>")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "put all items for the levelset <level> and put them in inventory (or leave them worn if already worn)")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "level is the level to get")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "needs 1 argument, level or setname")
+   end
+end
+
+function cmd_clear(cmddict)
+  if cmddict[1] then
+    if eqdb:clearset(cmddict[1]) > 0 then
+      phelper:plugin_header('clear')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "cleared set " .. tostring(cmddict[1]))  
+    else
+      phelper:plugin_header('clear')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Nothing to clear for set " .. tostring(cmddict[1]))  
+    end
+  else
+    phelper:plugin_header('clear')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " clear <setname|level>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "clear a set, for a level set will only clear items that are the same level, it will not clear")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "items that are carryovers from earlier levels")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "needs 1 argument, level or setname")   
   end
 end
 
@@ -847,7 +876,7 @@ phelper:add_cmd('close', {func=cmd_close, help="close the db"})
 phelper:add_cmd('list', {func=cmd_list, help="list eqsets"})
 phelper:add_cmd('add', {func=cmd_add, help="add an item to an eqset"})
 phelper:add_cmd('remove', {func=cmd_remove, help="remove an item from an eqset"})
---phelper:add_cmd('clear', {func=cmd_clear, help="clear an eqset, either named or level"})
+phelper:add_cmd('clear', {func=cmd_clear, help="clear an eqset, either named or level"})
 phelper:add_cmd('checklevel', {func=cmd_checklevel, help="check to see if wearing all items your current level"})
 phelper:add_cmd('wearset', {func=cmd_wearset, help="wear a set"})
 phelper:add_cmd('show', {func=cmd_show, help="show the eq for a set"})
