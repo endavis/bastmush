@@ -59,6 +59,11 @@ function cmd_find(cmddict)
       ColourNote(RGBColourToName(var.plugin_colour), "black", 'None')
     end
     Note("")
+  else
+    phelper:plugin_header('find')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " find mob")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "lookup mobs in the planes")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the mob to find")    
   end
 end
 ]]>
