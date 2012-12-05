@@ -876,18 +876,22 @@ end -- function OnPluginSaveState
 phelper:set_default('plugin_colour', 'orange')
 phelper:set_default('cmd', 'eqs')
 
-phelper:add_cmd('close', {func=cmd_close, help="close the db"})
-phelper:add_cmd('list', {func=cmd_list, help="list eqsets"})
-phelper:add_cmd('add', {func=cmd_add, help="add an item to an eqset"})
-phelper:add_cmd('remove', {func=cmd_remove, help="remove an item from an eqset"})
-phelper:add_cmd('clear', {func=cmd_clear, help="clear an eqset, either named or level"})
-phelper:add_cmd('checklevel', {func=cmd_checklevel, help="check to see if wearing all items your current level"})
-phelper:add_cmd('wearset', {func=cmd_wearset, help="wear a set"})
-phelper:add_cmd('show', {func=cmd_show, help="show the eq for a set"})
-phelper:add_cmd('getset', {func=cmd_getset, help="get all items for a set and put them in inventory (or leave them worn if already worn)"})
-phelper:add_cmd('putset', {func=cmd_putset, help="put all items for a set into their targetted container"})
-phelper:add_cmd('stats', {func=cmd_getstats, help="get the stats for a set"})
-phelper:add_cmd('diff', {func=cmd_diff, help="diff two sets"})
+phelper:add_cmd('list', {func=cmd_list, help="list eqsets", sortgroup="Creating, Modifying and Deleting", prio=40})
+phelper:add_cmd('add', {func=cmd_add, help="add an item to an eqset", sortgroup="Creating, Modifying and Deleting", prio=41})
+phelper:add_cmd('remove', {func=cmd_remove, help="remove an item from an eqset", sortgroup="Creating, Modifying and Deleting", prio=42})
+phelper:add_cmd('clear', {func=cmd_clear, help="clear an eqset, either named or level", sortgroup="Creating, Modifying and Deleting", prio=43})
+
+phelper:add_cmd('checklevel', {func=cmd_checklevel, help="check to see if wearing all items your current level", sortgroup="Wearing a set", prio=44})
+phelper:add_cmd('wearset', {func=cmd_wearset, help="wear a set", sortgroup="Wearing a set", prio=45})
+
+phelper:add_cmd('show', {func=cmd_show, help="show the eq for a set", sortgroup="Obtaining info about a set", prio=46})
+phelper:add_cmd('stats', {func=cmd_getstats, help="get the stats for a set", sortgroup="Obtaining info about a set", prio=47})
+phelper:add_cmd('diff', {func=cmd_diff, help="diff two sets", sortgroup="Obtaining info about a set", prio=48})
+
+phelper:add_cmd('getset', {func=cmd_getset, help="get all items for a set and put them in inventory (or leave them worn if already worn)", sortgroup="Manipulating items in a set", prio=49})
+phelper:add_cmd('putset', {func=cmd_putset, help="put all items for a set into their targetted container", sortgroup="Manipulating items in a set", prio=50})
+
+phelper:add_cmd('close', {func=cmd_close, help="close the db", sortgroup="Misc", prio=51})
 
 phelper:enable()
 ]]>
