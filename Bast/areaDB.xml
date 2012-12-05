@@ -197,10 +197,18 @@ function print_area_header()
 end
 
 function cmd_arealookup(cmddict)
+  if #cmddict == 0 or cmddict[1] == 'help' then
+    phelper:plugin_header('translate')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " lu <sqlst> ")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "lookup areas")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a sql statement") 
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Examples: name like '%lake%' - all areas with the word lake in the name")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "          keyword like '%death%' - all areas with death in the keyword")  
+    return true
+  end
   if cmddict['args'] then
     local stuff = aarddb:lookupareas(cmddict['args'])
     print_area_header()
-    tprint(stuff)
     if next(stuff) then
       for i,v in pairs(stuff) do
         print_area(v)
@@ -213,8 +221,11 @@ function cmd_arealookup(cmddict)
 end
 
 function get_areabykeyword(cmddict)
-  if #cmddict == 0 then
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a keyword to lookup")
+  if #cmddict == 0 or cmddict[1] == 'help' then
+    phelper:plugin_header('keyword')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " key <keyword> ")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show areas by keyword")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the keyword of the areas to show") 
     return true
   end
   local keyword = cmddict[1]
@@ -229,8 +240,11 @@ function get_areabykeyword(cmddict)
 end
 
 function get_areabyname(cmddict)
-  if #cmddict == 0 then
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a name to lookup")
+  if #cmddict == 0 or cmddict[1] == 'help' then
+    phelper:plugin_header('name')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " name <name> ")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show areas by name")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the name of the areas to show") 
     return true
   end
   local name = strjoin(' ', cmddict)
@@ -245,8 +259,11 @@ function get_areabyname(cmddict)
 end
 
 function get_areabylevel(cmddict)
-  if #cmddict == 0 then
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Please specify a name to lookup")
+  if #cmddict == 0 or cmddict[1] == 'help' then
+    phelper:plugin_header('level')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " level <level> ")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show areas by level")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level of the areas to show") 
     return true
   end
   local level = cmddict[1]
@@ -261,6 +278,11 @@ function get_areabylevel(cmddict)
 end
 
 function get_allareas(cmddict)
+  if cmddict[1] == 'help' then
+    phelper:plugin_header('translate')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " all")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get all areas")   
+  end
   local tareas = aarddb:getallareas()
 
   print_area_header()
@@ -351,12 +373,13 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'ardb')
 phelper:set_default('plugin_colour', 'cyan')
 
-phelper:add_cmd('lu', {func=cmd_arealookup, help="lookup areas"})
-phelper:add_cmd('refresh', {func=get_areas, help="refresh areas"})
-phelper:add_cmd('keyword', {func=get_areabykeyword, help="get areas by keyword"})
-phelper:add_cmd('name', {func=get_areabyname, help="get areas by name"})
-phelper:add_cmd('level', {func=get_areabylevel, help="get areas by level"})
-phelper:add_cmd('all', {func=get_allareas, help="get all areas"})
+phelper:add_cmd('lu', {func=cmd_arealookup, help="lookup areas", sortgroup='Obtaining information on areas', prio = 30})
+phelper:add_cmd('keyword', {func=get_areabykeyword, help="get areas by keyword", sortgroup='Obtaining information on areas', prio = 31})
+phelper:add_cmd('name', {func=get_areabyname, help="get areas by name", sortgroup='Obtaining information on areas', prio = 32})
+phelper:add_cmd('level', {func=get_areabylevel, help="get areas by level", sortgroup='Obtaining information on areas', prio = 33})
+phelper:add_cmd('all', {func=get_allareas, help="get all areas", sortgroup='Obtaining information on areas', prio = 34})
+
+phelper:add_cmd('refresh', {func=get_areas, help="refresh areas", sortgroup='Gather info on areas', prio = 40})
 
 phelper:enable()
 
