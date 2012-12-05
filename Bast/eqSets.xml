@@ -222,14 +222,16 @@ function cmd_add(cmddict)
     end
   else
     phelper:plugin_header('Add')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " add <serial> <location> <container (optional)> <level|setname (optional)>")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add an item to autowear")        
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "location is the keyword for the location from 'wearable', it will default to the item location")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "container is the container to place it in when removing it")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " add <serial> <location> <container> <level|setname>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add an item to a set")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) location is the wearable location, this will default to wherever the item is wearable")       
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) container is the container to place it in when removing the item")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  and defaults to the current container that the item is in")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "level is the level to wear the eq, which is defaulted to the level of the item")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "setname is the set name")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "if both level and setname are not included, the command will default to the level of the item")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) level or setname")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  level is the level to wear the eq, which is defaulted to the level of the item")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  setname is the set name")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if both level and setname are not included, the command will default to the level of the item")  
   end
 end
 
@@ -294,7 +296,7 @@ function cmd_getstats(cmddict)
     phelper:plugin_header('getstats')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " stats <eqset>")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get the stats for an eqset")        
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "eqset is the eqset name or the level")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the setname or level")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "multiple eqset arguments will show a compare of the eqsets")
   else
     if #cmddict == 1 then
@@ -425,8 +427,9 @@ function cmd_wearset(cmddict)
     phelper:plugin_header('wearset')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " wearset <setname|level> <wearloc> 'alt'")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "check and equip items that are not worn for a set`")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "location is the keyword for the location from 'wearable', or 'all' for all locations")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "the alt keyword will equip the shield/hold items instead of a second weapon") 
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the setname or level")     
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) wearloc is the keyword for the location from 'wearable', or 'all' for all locations")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) the alt keyword will equip the shield/hold items instead of a second weapon") 
   end
 end
 
@@ -458,8 +461,8 @@ function cmd_checklevel(cmddict)
     phelper:plugin_header('checklevel')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " checklevel <location|'all'> 'alt'")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "check and equip items that are not worn for your level")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "location is the keyword for the location from 'wearable', or 'all' for all locations")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "the 'alt' keyword will equip a shield and/or held item instead of a dual weapon when using 'all'")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) location is the keyword for the location from 'wearable', or 'all' for all locations")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) the 'alt' keyword will equip a shield and/or held item instead of a dual weapon when using 'all'")
   end
 end
 
@@ -489,8 +492,8 @@ function cmd_remove(cmddict)
     phelper:plugin_header('Remove')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " remove <setname|level> <location|item> ")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove an item from a set and location")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "argument 1 is the setname or level")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "argument 2 is the location or the item serial")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the setname or level")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 2 is the location or the item serial")  
   end
 end
 
@@ -504,7 +507,7 @@ function cmd_getset(cmddict)
     phelper:plugin_header('getset')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " getset <setname|level>")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get all items for the levelset <level> and put them in inventory (or leave them worn if already worn)")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "needs 1 argument, level or setname")     
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level or setname")     
   end
 end
 
@@ -518,8 +521,8 @@ function cmd_putset(cmddict)
   else
     phelper:plugin_header('getset')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " putset <setname|level>")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "put all items for the levelset <level> and put them in inventory (or leave them worn if already worn)")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "needs 1 argument, level or setname")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "put all items for the levelset <level> into their containers")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level or setname")     
    end
 end
 
@@ -537,7 +540,7 @@ function cmd_clear(cmddict)
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " clear <setname|level>")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "clear a set, for a level set will only clear items that are the same level, it will not clear")  
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "items that are carryovers from earlier levels")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "needs 1 argument, level or setname")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level or setname")     
   end
 end
 
@@ -613,6 +616,8 @@ function cmd_diff(cmddict)
     phelper:plugin_header('Diff')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " diff <set1> <set2>")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show differences between two sets, can be level or named")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level or setname")     
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 2 is the level or setname to compare")     
   end
 end
 
@@ -654,8 +659,7 @@ function cmd_show(cmddict)
     phelper:plugin_header('show')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " show <level|setname> ")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show all items for a set")        
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "level is the level set to show") 
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "setname is the set to show") 
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level or setname")
   end
 end
 
@@ -802,7 +806,7 @@ function onitemchange(stuff)
   elseif stuff.serial == tonumber(olditem.containerid) and olditem.moved then
     phelper:unregister_remote("aaa56faed92ffc6146964abc", "itemchange", "onitemchange")
     olditem = {}
-    cmd_autowear(olddict)    
+    cmd_add(olddict)    
   end
 end
 ]]>
