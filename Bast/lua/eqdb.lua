@@ -1008,11 +1008,10 @@ end
 
 function EQdb:getset(setn)
   local items = {}
-  level = tonumber(setn)
-  if level then
-    items = self:getlevelset(level)
+  if tonumber(setn) then
+    items = self:getlevelset(tonumber(setn))
   else
-    items= self:getnameset(setn)
+    items= self:getnameset(tostring(setn))
   end
   return items
 end
@@ -1051,7 +1050,7 @@ function EQdb:removesetitem(setname, wearloc)
   if tonumber(setname) then
     tchanges = self:removelevelsetitem(tonumber(setname), wearloc)
   else
-    tchanges = self:removenamesetitem(setname, wearloc)
+    tchanges = self:removenamesetitem(tostring(setname), wearloc)
   end
   timer_end('EQdb:removesetitem') 
   return tchanges
@@ -1169,8 +1168,7 @@ function EQdb:getsetwearloc(wearloc, setname)
   if tonumber(setname) then
     item = self:getlevelsetwearloc(wearloc, tonumber(setname))
   else
-    item = self:getnamesetwearloc(wearloc, setname)
-    print(item)
+    item = self:getnamesetwearloc(wearloc, tostring(setname))
   end
   timer_end('EQdb:getsetwearloc') 
   return item 
@@ -1200,6 +1198,82 @@ function EQdb:getnamesetwearloc(wearloc, eqsetname)
   end
   timer_end('EQdb:getnamesetwearloc')  
   return items[1]
+end
+
+function EQdb:getsetitem(serial, setname)
+  timer_start('EQdb:getsetitem')
+  local item = nil
+  if tonumber(setname) then
+    item = self:getlevelsetitem(serial, tonumber(setname))
+  else
+    item = self:getnamesetitem(serial, tostring(setname))
+  end
+  timer_end('EQdb:getsetitem') 
+  return item 
+end
+
+function EQdb:getlevelsetitem(serial, level)
+  timer_start('EQdb:getlevelsetitem')
+  local items = {}
+  if self:open('getlevelsetitem') then  
+    for a in self.db:nrows("SELECT * FROM eqsets where serial = " .. serial .. " and level <= " .. level .. " and eqsetname = 'auto' ORDER BY level DESC limit 1;" ) do
+      table.insert(items, a)
+    end
+    self:close('getlevelsetitem')
+  end
+  timer_end('EQdb:getlevelsetitem')  
+  return items[1]
+end
+
+function EQdb:getnamesetitem(serial, eqsetname)
+  timer_start('EQdb:getnamesetitem')
+  local items = {}
+  if self:open('getnamesetitem') then  
+    for a in self.db:nrows("SELECT * FROM eqsets where serial = " .. serial .. " and eqsetname = '" .. eqsetname .. "';" ) do
+      table.insert(items, a)
+    end
+    self:close('getnamesetitem')
+  end
+  timer_end('EQdb:getnamesetitem')  
+  return items[1]
+end
+
+function EQdb:clearset(setname)
+  timer_start('EQdb:clearset')
+  local tchanges = 0
+  if tonumber(setname) then
+    tchanges = self:clearlevelset(tonumber(setname))
+  else
+    tchanges = self:clearnameset(tostring(setname))
+  end
+  timer_end('EQdb:clearset') 
+  return tchanges 
+end
+
+function EQdb:clearlevelset(level)
+  timer_start('EQdb:clearlevelset')
+  local tchanges = 0
+  if self:open('clearlevelset') then  
+    tchanges = self.db:total_changes()    
+    self.db:exec("DELETE from eqsets where level = " .. tostring(level) .. " and eqsetname = 'auto';")
+    tchanges = self.db:total_changes() - tchanges    
+    self:close('clearlevelset')
+  end
+  timer_end('clearlevelset')  
+  return tchanges
+end
+
+function EQdb:clearnameset(eqsetname)
+  timer_start('EQdb:clearlevelset')
+  local tchanges = 0
+  if self:open('clearlevelset') then  
+    tchanges = self.db:total_changes()    
+    self.db:exec("DELETE from eqsets where eqsetname = '" .. eqsetname .. "';")
+    tchanges = self.db:total_changes() - tchanges    
+    self:close('clearlevelset')
+  end
+  timer_end('clearlevelset')  
+  return tchanges
 end
 
 function EQdb:getolditemcontainer(serial, setname)
