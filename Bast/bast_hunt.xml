@@ -295,6 +295,14 @@ function huntnext(name, line, wildcards)
 end
 
 function cmd_auto(cmddict)
+  if cmddict[1] == 'help' then
+    phelper:plugin_header('trick')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " auto <mobname>")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "autohunt a mob")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 1 is the mob to hunt") 
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if no mob is specified, the plugin will hunt the last mob that was tried") 
+    return true
+  end
   mob = false
   if cmddict[1] == nil and mobinterrupted then
    mob = mobinterrupted
@@ -318,6 +326,14 @@ function cmd_auto(cmddict)
 end
 
 function cmd_trick(cmddict)
+  if #cmddict == 0 or cmddict[1] == 'help' then
+    phelper:plugin_header('trick')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " trick <mobname>")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "use the hunt trick to find the room a mob is in")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 1 is the mob to find") 
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if no mob is specified, the plugin will find the last mob that was tried") 
+    return true
+  end
   if cmddict[1] then
     mob = cmddict[1]
   elseif not mob then
@@ -424,10 +440,10 @@ phelper:set_default('plugin_colour', 'blue')
 
 phelper:add_setting( 'automapper', {type="bool", help="do an automatic 'mapper area (room)' when using hunttrick", default=false, sortlev=35})
 
-phelper:add_cmd('auto', {func=cmd_auto, help="autohunt a mob"})
-phelper:add_cmd('trick', {func=cmd_trick, help="use hunt trick on a mob"})
-phelper:add_cmd('stop', {func=cmd_stop, help="stop the autohunt"})
-phelper:add_cmd('off', {func=cmd_stop, help="stop the autohunt"})
+phelper:add_cmd('auto', {func=cmd_auto, help="autohunt a mob", sortgroup='Hunting', prio = 30})
+phelper:add_cmd('trick', {func=cmd_trick, help="use hunt trick on a mob", sortgroup='Hunting', prio = 31})
+phelper:add_cmd('stop', {func=cmd_stop, help="stop the hunt", sortgroup='Hunting', prio = 32})
+phelper:add_cmd('off', {func=cmd_stop, help="stop the hunt", sortgroup='Hunting', prio = 33})
 
 phelper:enable()
 
