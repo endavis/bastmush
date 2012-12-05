@@ -221,6 +221,17 @@ function EQdb:initialize(args)
         FOREIGN KEY(serial) REFERENCES itemdetails(serial));
       )]], nil, nil, 'portid')
 
+  self:addtable('eqsets', [[
+        CREATE TABLE eqsets(
+        eqsid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        wearloc TEXT,
+        eqsetname TEXT,
+        level INTEGER,
+        containerid INTEGER NOT NULL,
+        FOREIGN KEY(serial) REFERENCES itemdetails(serial));
+        FOREIGN KEY(container) REFERENCES itemdetails(serial));
+      )]], nil, nil, 'eqsid') 
 
   self:postinit() -- this is defined in sqlitedb.lua, it checks for upgrades and creates all tables
 end
@@ -259,7 +270,7 @@ function EQdb:getitemdetails(serial)
   local titem = nil
   if tonumber(serial) == nil then
     local nitem = self:getitem(serial)
-    if next(nitem) then
+    if nitem and next(nitem) then
       serial = nitem.serial
     end
   end
@@ -355,9 +366,6 @@ function EQdb:getitemdetails(serial)
     self:close('getitemdetails')
   end
   timer_end('EQdb:getitemdetails')
-  --if titem then
-  --  tprint(titem)
-  --end
   return titem
 end
 
@@ -805,7 +813,7 @@ function EQdb:getitembywearslot(wearslot)
   timer_start('EQdb:getitemsbywearslot')
   local item = {}
   if self:open('getitemsbywearslot') then
-    for a in self.db:nrows("SELECT * FROM items WHERE wearslot=" .. tostring(wearslot) ..";") do
+    for a in self.db:nrows("SELECT * FROM items WHERE wearslot='" .. tostring(wearslot) .."';") do
       item = a
     end
     self:close('getitemsbywearslot')
@@ -970,6 +978,309 @@ function EQdb:cleandb()
   end
 end
 
+--[[
+  self:addtable('eqsets', [[
+        CREATE TABLE eqsets(
+        eqsid INTEGER NOT NULL PRIMARY KEY,
+        serial INTEGER NOT NULL,
+        wearloc TEXT,
+        eqsetname TEXT,
+        level INTEGER,
+        container INTEGER NOT NULL,
+        FOREIGN KEY(serial) REFERENCES items(serial));
+        FOREIGN KEY(container) REFERENCES items(serial));
+      )]]
+--]]
+
+-- eqset stuff
+function EQdb:getsetnames()
+  timer_start('EQdb:geteqsetnames')
+  local sets = {}
+  if self:open('geteqsetnames') then
+    for a in self.db:nrows("SELECT DISTINCT(eqsetname) FROM eqsets WHERE eqsetname != 'auto';" ) do
+      table.insert(sets, a)
+    end      
+    self:close('geteqsetnames')
+  end
+  timer_end('EQdb:geteqsetnames') 
+  return sets
+end
+
+function EQdb:getset(setn)
+  local items = {}
+  level = tonumber(setn)
+  if level then
+    items = self:getlevelset(level)
+  else
+    items= self:getnameset(setn)
+  end
+  return items
+end
+
+function EQdb:getnameset(eqsetname)
+  timer_start('EQdb:getnameset')
+  local items = {}
+  if self:open('getnameset') then
+    for a in self.db:nrows("SELECT * FROM eqsets WHERE eqsetname = '" .. tostring(eqsetname) .. "';" ) do
+      items[a.wearloc] = a
+    end      
+    self:close('getnameset')
+  end
+  timer_end('EQdb:getnameset') 
+  return items
+end
+
+function EQdb:getlevelset(level)
+  timer_start('EQdb:getlevelset')
+  local items = {}
+  if self:open('getlevelset') then
+    for i,v in pairs(wearlocreverse) do
+      for a in self.db:nrows("SELECT * FROM eqsets where wearloc = '" .. i .. "' and level <= " .. tostring(level) .. " and eqsetname = 'auto' ORDER BY level DESC limit 1;" ) do
+        items[i] = a
+      end      
+    end
+    self:close('getlevelset')
+  end
+  timer_end('EQdb:getlevelset') 
+  return items
+end
+
+function EQdb:removesetitem(setname, wearloc)
+  timer_start('EQdb:removesetitem')
+  local tchanges = 0
+  if tonumber(setname) then
+    tchanges = self:removelevelsetitem(tonumber(setname), wearloc)
+  else
+    tchanges = self:removenamesetitem(setname, wearloc)
+  end
+  timer_end('EQdb:removesetitem') 
+  return tchanges
+end
+
+function EQdb:removelevelsetitem(level, wearloc)
+  timer_start('EQdb:removelevelsetitem')
+  local tchanges = 0
+  if self:open('removelevelsetitem') then
+    local delsql = "DELETE FROM eqsets WHERE level = " .. tostring(level) .. " AND wearloc = '" .. tostring(wearloc) .. "' and eqsetname = 'auto';"
+    local changes = self.db:total_changes()
+    local retval = self.db:exec(delsql)    
+    tchanges = self.db:total_changes() - changes 
+    self:close('removelevelsetitem')
+  end
+  timer_end('EQdb:removelevelsetitem') 
+  return tchanges
+end
+
+function EQdb:removenamesetitem(eqsetname, wearloc)
+  timer_start('EQdb:removenamesetitem')
+  local tchanges = 0
+  if self:open('removenamesetitem') then
+    local delsql = "DELETE FROM eqsets WHERE wearloc = '" .. tostring(wearloc) .. "' and eqsetname = '" .. eqsetname .. "';"
+    local changes = self.db:total_changes()
+    local retval = self.db:exec(delsql)    
+    tchanges = self.db:total_changes() - changes 
+    self:close('removenamesetitem')
+  end
+  timer_end('EQdb:removenamesetitem') 
+  return tchanges
+end
+
+function EQdb:addsetitem(serial, wearloc, container, setname)
+  timer_start('EQdb:removesetitem')
+  local tchanges = 0
+  if tonumber(setname) then
+    tchanges = self:addlevelsetitem(serial, wearloc, container, tonumber(setname))
+  else
+    tchanges = self:addnamesetitem(serial, wearloc, container, tostring(setname))
+  end
+  timer_end('EQdb:removesetitem') 
+  return tchanges  
+end
+
+function EQdb:addlevelsetitem(serial, wearloc, container, level)
+  timer_start('EQdb:addlevelsetitem')
+  local tdict = {}
+  tdict['serial'] = serial
+  tdict['wearloc'] = wearloc
+  tdict['level'] = level
+  tdict['container'] = container
+  local item = self:getitem(serial)
+  local tchanges = 0
+  if next(item) then
+    if self:open('addlevelsetitem') then
+      tchanges = self.db:total_changes()
+      assert (self.db:exec("BEGIN TRANSACTION"))
+      local stmt = self.db:prepare[[
+        INSERT into eqsets VALUES (
+        NULL,
+        :serial,
+        :wearloc,
+        'auto',
+        :level,
+        :container);]]
+      stmt:bind_names( tdict )
+      stmt:step()
+      stmt:finalize()
+      assert (self.db:exec("COMMIT"))
+      tchanges = self.db:total_changes() - tchanges
+      self:close('addlevelsetitem')
+    end
+  end
+  timer_end('EQdb:addlevelsetitem')
+  return tchanges
+end
+
+function EQdb:addnamesetitem(serial, wearloc, container, eqsetname)
+  timer_start('EQdb:addnamesetitem')
+  local tdict = {}
+  tdict['serial'] = serial
+  tdict['wearloc'] = wearloc
+  tdict['container'] = container
+  tdict['eqsetname'] = eqsetname
+  local item = self:getitem(serial)
+  local tchanges = 0
+  if next(item) then
+    if self:open('addnamesetitem') then
+      tchanges = self.db:total_changes()
+      assert (self.db:exec("BEGIN TRANSACTION"))
+      local stmt = self.db:prepare[[
+        INSERT into eqsets VALUES (
+        NULL,
+        :serial,
+        :wearloc,
+        :eqsetname,
+        -1,
+        :container);]]
+      stmt:bind_names( tdict )
+      stmt:step()
+      stmt:finalize()
+      assert (self.db:exec("COMMIT"))
+      tchanges = self.db:total_changes() - tchanges
+      self:close('addnamesetitem')
+    end
+  end
+  timer_end('EQdb:addnamesetitem')
+  return tchanges
+end
+
+function EQdb:getsetwearloc(wearloc, setname)
+  timer_start('EQdb:getsetwearloc')
+  local item = nil
+  if tonumber(setname) then
+    item = self:getlevelsetwearloc(wearloc, tonumber(setname))
+  else
+    item = self:getnamesetwearloc(wearloc, setname)
+    print(item)
+  end
+  timer_end('EQdb:getsetwearloc') 
+  return item 
+end
+
+function EQdb:getlevelsetwearloc(wearloc, level)
+  timer_start('EQdb:getlevelsetwearloc')
+  local items = {}
+  if self:open('getlevelsetwearloc') then  
+    for a in self.db:nrows("SELECT * FROM eqsets where wearloc = '" .. wearloc .. "' and level <= " .. level .. " and eqsetname = 'auto' ORDER BY level DESC limit 1;" ) do
+      table.insert(items, a)
+    end
+    self:close('getlevelsetwearloc')
+  end
+  timer_end('EQdb:getlevelsetwearloc')  
+  return items[1]
+end
+
+function EQdb:getnamesetwearloc(wearloc, eqsetname)
+  timer_start('EQdb:getnamesetwearloc')
+  local items = {}
+  if self:open('getnamesetwearloc') then  
+    for a in self.db:nrows("SELECT * FROM eqsets where wearloc = '" .. wearloc .. "' and eqsetname = '" .. eqsetname .. "';" ) do
+      table.insert(items, a)
+    end
+    self:close('getnamesetwearloc')
+  end
+  timer_end('EQdb:getnamesetwearloc')  
+  return items[1]
+end
+
+function EQdb:getolditemcontainer(serial, setname)
+  -- checks for a container for items that are in a level set, then checks for a named set
+  if not serial then
+    return nil
+  end
+  timer_start('EQdb:getolditemcontainer')
+  local items = {}
+  if self:open('getolditemcontainer') then  
+    for a in self.db:nrows("SELECT * FROM eqsets where serial = " .. serial .. " and eqsetname = 'auto';" ) do
+      table.insert(items, a)
+    end
+    if not items[1] then
+      local sqlstr = "SELECT * FROM eqsets where serial = " .. serial .. " and eqsetname != 'auto';" 
+      if setname then
+        sqlstr = "SELECT * FROM eqsets where serial = " .. serial .. " and eqsetname = '" .. tostring(setname) .. " ;" 
+      end
+      for a in self.db:nrows(sqlstr) do
+        table.insert(items, a)
+      end
+    end
+    self:close('getolditemcontainer')    
+  end
+  timer_end('EQdb:getolditemcontainer')  
+  return items[1].containerid
+end
+
+function EQdb:checklevelsetitem(serial)
+  timer_start('EQdb:checklevelitem')
+  local found = false
+  if self:open('checklevelitem') then
+    for a in self.db:nrows("SELECT * FROM eqsets where serial = " .. tostring(serial) .. " and eqsetname = 'auto';" ) do
+      found = true
+    end      
+    self:close('checklevelitem')
+  end
+  timer_end('EQdb:checklevelitem') 
+  return found
+end
+
+function EQdb:checknamesetitem(serial, wearloc, eqsetname)
+  timer_start('EQdb:checkeqsetitem')
+  local found = false
+  if self:open('checkeqsetitem') then
+    for a in self.db:nrows("SELECT * FROM eqsets where serial = " .. tostring(serial) .. " and eqsetname = '" .. tostring(eqsetname) .. "';" ) do
+      found = true
+    end      
+    self:close('checkeqsetitem')
+  end
+  timer_end('EQdb:checkeqsetitem') 
+  return found
+end
+
+function EQdb:checklevelsetwearloc(level, wearloc)
+  timer_start('EQdb:checklevelset')
+  local found = false
+  if self:open('checklevelset') then
+    for a in self.db:nrows("SELECT * FROM eqsets where level = " .. tostring(level) .. " AND wearloc = '" .. tostring(wearloc) .. "' and eqsetname = 'auto';" ) do
+      found = true
+    end      
+    self:close('checklevelset')
+  end
+  timer_end('EQdb:checklevelset') 
+  return found
+end
+
+function EQdb:checklevelsetconflict(level, wearloc)
+  timer_start('EQdb:checklevelsetconflict')
+  if wearloc == 'second' or wearloc == 'shield' or wearloc == 'hold' then
+    local aitems = self:getautowear(level)
+    if wearloc == 'second' and (aitems['shield'] or aitems['hold']) then
+      return true
+    elseif (wearloc == 'hold' or wearloc == 'shield') and aitems['second'] then
+      return true
+    end
+  end
+  timer_end('EQdb:checklevelsetconflict') 
+  return false
+end
+
 --- version updates
 function EQdb:updatenamecolumn()
   if self:open('updatenamecolumn') and self:checktableexists('items') then
@@ -1082,11 +1393,6 @@ function EQdb:addleadsto()
   end
 end
 
--- eqset stuff
-function EQdb:addeqset(item, eqsetname, wearloc)
-
-end
-
 -- helper functions
 function putobjectininv(item, noworn)
   local teqdb = EQdb:new{}
@@ -1098,7 +1404,7 @@ function putobjectininv(item, noworn)
     if item.containerid == 'Worn' and (noworn == false or noworn == nil) then
       SendNoEcho('remove ' .. item.serial)
       return true
-    elseif item.containerid ~= 'Inventory' then
+    elseif item.containerid ~= 'Inventory' and item.containerid ~= 'Worn' then
       SendNoEcho('get ' .. item.serial .. ' ' .. item.containerid)
       return true
     end
