@@ -108,14 +108,18 @@ function Phelpobject:initialize(args)
 end
 
 -- "registerevent", "' .. tostring(id) .. '", "wearlocchange", "onwearlocchange")'
-function Phelpobject:register_remote(id, eventname, callback)
+function Phelpobject:register_remote(id, eventname, callback, now)
   if id ~= GetPluginID() then
     if not self.registered_events[id] then
       self.registered_events[id] = {}
     end
     if not self.registered_events[id][eventname] then
-      local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback .. '")'
-      DoAfterSpecial(2, cmd, 12)
+      if now then
+        CallPlugin(id, "registerevent", GetPluginID(), eventname, callback)
+      else
+        local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback .. '")'
+        DoAfterSpecial(2, cmd, 12)
+      end
     end
     self.registered_events[id][eventname] = callback
   else
