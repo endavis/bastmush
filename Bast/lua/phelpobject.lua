@@ -90,6 +90,9 @@ function Phelpobject:initialize(args)
   self.id = GetPluginID() .. '_' .. self.cname
   self:mdebug('phelpobject __init self.cname', self.cname)
   self.cmds_table = {}
+  self.cmds_groups = {}
+  self.cmds_groups_sequence = {}
+  self.cmds_groups_sequence_lookup = {}
   self.events = {}
   self.registered_events = {}
 
@@ -97,13 +100,13 @@ function Phelpobject:initialize(args)
   self:add_setting( 'ignorebsetting', {type="bool", help="ignore setting of options through broadcast", default=verify_bool(false), sortlev=1, longname="Ignore Broadcast Settings", sortlev=99})
   self:add_setting( 'showevents', {type="bool", help="show events", default=verify_bool(false), sortlev=1, longname="Show events", sortlev=99})
 
-  self:add_cmd('help', {func="cmd_help", help="show help", prio=99})
-  self:add_cmd('debug', {func="cmd_debug", help="toggle debugging", prio=99})
-  self:add_cmd('set', {func="cmd_set", help="set settings", nomenu=true, prio=99})
-  self:add_cmd('reset', {func="cmd_reset", help="reset settings to default values", prio=99})
-  self:add_cmd('save', {func=SaveState, help="save plugin variables", prio=99})
-  self:add_cmd('showvars', {func="cmd_showvars", help="show plugin variables", prio=99})
-  self:add_cmd('showevents', {func="cmd_showevents", help="show functions registered for all events", prio=99})
+  self:add_cmd('help', {func="cmd_help", help="show help", sortgroup='Default', prio=99})
+  self:add_cmd('debug', {func="cmd_debug", help="toggle debugging", sortgroup='Default', prio=99})
+  self:add_cmd('set', {func="cmd_set", help="set settings", nomenu=true, sortgroup='Default', prio=99})
+  self:add_cmd('reset', {func="cmd_reset", help="reset settings to default values", sortgroup='Default', prio=99})
+  self:add_cmd('save', {func=SaveState, help="save plugin variables", sortgroup='Default', prio=99})
+  self:add_cmd('showvars', {func="cmd_showvars", help="show plugin variables", sortgroup='Default', prio=99})
+  self:add_cmd('showevents', {func="cmd_showevents", help="show functions registered for all events", sortgroup='Default', prio=99})
 
 end
 
@@ -541,7 +544,26 @@ end
 
 function Phelpobject:add_cmd(name, stuff)
   if not self.cmds_table[name] then
+    if not stuff.sortgroup then
+      stuff.sortgroup = 'Plugin'
+    end
+    if not stuff.prio then
+      stuff.prio = 50
+    end    
     self.cmds_table[name] = stuff
+    if not self.cmds_groups_sequence_lookup[stuff.sortgroup] then
+      if stuff.sortgroup == 'Default' then
+        self.cmds_groups_sequence[99] = 'Default'
+        self.cmds_groups_sequence_lookup['Default'] = 99
+      else
+        table.insert(self.cmds_groups_sequence, stuff.sortgroup)
+        self.cmds_groups_sequence_lookup[stuff.sortgroup] = #self.cmds_groups_sequence
+      end
+    end
+    if not self.cmds_groups[stuff.sortgroup] then
+      self.cmds_groups[stuff.sortgroup] = {}
+    end
+    self.cmds_groups[stuff.sortgroup][name] = {group=stuff.sortgroup, prio=stuff.prio}
     if self.cmds_table[name].func == nil then
       print("cmd", name, "function does not exist")
     end
