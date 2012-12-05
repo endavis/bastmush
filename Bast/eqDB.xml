@@ -363,7 +363,7 @@ function identify_redirect(name, line, wildcards, styles)
       table.insert(identdata['note'], strjoin(" ", notel))
     end
     db:updateitemident(identdata)
-    invdetails = db:getitemdetails(invdetails.serial)
+    invdetails = db:getitemdetails(identdata.id)
     phelper:processevent('itemchange', invdetails)
     phelper:processevent('oniddone')
     return
@@ -553,7 +553,7 @@ end
 
 function builditem(wildcards)
   local item = {}
-  item.placestr = wearlocs[tonumber(wildcards.location) + 1] or -1
+  item.placestr = wearlocs[tonumber(wildcards.location)] or -1
   item.wearslot = wildcards.location
   item.serial = wildcards.serial
   item.containerid = wildcards.container
@@ -633,7 +633,6 @@ function emptyline()
 end
 
 function initinv(char)
-
   if char.status and char.status.state and tonumber(char.status.state) == 3 and db:getlastrowid('items') <= 0 then
     getdata('Worn')
     getdata('Inventory')
@@ -676,7 +675,9 @@ function cmd_refresh(cmddict)
     db:close('cmd_refresh', true)
     db:open('cmd_refresh')
     local returnval = db.db:exec([[DROP TABLE IF EXISTS items;]])
+    --print('returnval', returnval)
     db:close('cmd_refresh', true)
+    db:checktable('items')
     local res, gmcparg = CallPlugin("3e7dedbe37e44942dd46d264","gmcpval","char")
     local char = assert (loadstring ('return ' .. gmcparg or ""))()
     initinv(char)
@@ -914,7 +915,7 @@ function cmd_eqlookup(cmddict)
     --local sqlcmd = 'SELECT * FROM items LEFT JOIN itemdetails on items.serial = itemdetails.serial WHERE ' .. cmddict.args
     --local sqlcmd = 'SELECT items.serial, containerid, shortflags, items.name, items.cname, score, flags FROM items LEFT JOIN itemdetails on items.serial = itemdetails.serial WHERE ' .. cmddict.args'
     local sqlcmd = 'SELECT * FROM items WHERE ' .. cmddict.args
-    print(sqlcmd)
+    --print(sqlcmd)
     if db:open('cmd_eqlookup') then
       local stmt = db.db:prepare(sqlcmd)
       if not stmt then
@@ -981,8 +982,8 @@ function cmd_translate(cmddict)
     local ttype = cmddict[1]:lower()
     if ttype == 'wear' or ttype == 'wearlocs' then
       ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", 'Num', 'String'))
-      for i,v in ipairs(wearlocs) do
-        ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", i-1, v))
+      for i=0,#wearlocs do
+        ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", i, wearlocs[i]))
       end
     elseif ttype == 'objecttypes' or ttype == 'object' then
       ColourNote(RGBColourToName(var.plugin_colour), "black", string.format("%-4s %-s", 'Num', 'String'))
@@ -1047,6 +1048,7 @@ function checkaction(action, item, afterwait)
     local olditem = db:getitem(item.serial)
     db:moveitem(item, 'Inventory')
     event_container_change('Inventory')
+    phelper:processevent('itemchange', db:getitem(item.serial))
     if olditem then
       event_container_change(olditem.containerid)
     end
@@ -1263,10 +1265,12 @@ function OnPluginSend (sText)
 
   local changed = false
   if getp or putp or lookp or wearp or removep or identp then
+    showoutput('Original Cmd: ' .. sText)  
     --print('looking for identifiers')
     local ncmd = cmd[1]
     local item = cmd[2]
     local cont = cmd[3]
+
     if item == 'all.' then
       item = 'all.' .. "'" .. tostring(cmd[3]) .. "'"
       cont = cmd[4]
@@ -1301,6 +1305,10 @@ function OnPluginSend (sText)
         if cont then
           ncmd = ncmd .. ' ' .. fixarg(cont)
         end
+      else
+        if cont then
+          ncmd = ncmd .. ' ' .. cont
+        end      
       end
     end
     if changed then
