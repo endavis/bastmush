@@ -158,6 +158,7 @@ function cmd_addnote(cmddict)
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 2 is the keywords to add to the note, if multiple keywords, surround with single or double quotes")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 3 is the note text, surround with single or double quotes")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 4 is the room for the note, use the keyword 'here' for the current room")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if the room is set for a note, the note will be automatically shown when walking into the room")
     return  
   end
 end
