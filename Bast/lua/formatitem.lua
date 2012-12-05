@@ -222,16 +222,26 @@ function formatitem(item)
     end
   end
 
-  table.insert(ltext, formatsingleline('Name', '@R', '@w' .. item.cname))
+  if item.cname and item.cname ~= '' then
+    table.insert(ltext, formatsingleline('Name', '@R', '@w' .. item.cname))
+  end
 
-  table.insert(ltext, formatsingleline('Id', '@R', item.serial))
+  if tonumber(item.serial) then
+    table.insert(ltext, formatsingleline('Id', '@R', item.serial))
+  end
 
   -- Worn here
   -- Type, Level here
-  table.insert(ltext, formatdoubleline('Type', '@c', objecttypes[item.type]:gsub("^%l", string.upper), 'Level', item.level))
+  if item.type and tonumber(item.level) then
+    table.insert(ltext, formatdoubleline('Type', '@c', objecttypes[item.type]:gsub("^%l", string.upper), 'Level', item.level))
+  elseif item.level then
+    table.insert(ltext, formatsingleline('Level', '@c', item.level))    
+  end
 
   -- Worth, Weight here
-  table.insert(ltext, formatdoubleline('Worth', '@c', commas(item.worth), 'Weight', item.weight))
+  if tonumber(item.worth) and tonumber(item.weight) then
+    table.insert(ltext, formatdoubleline('Worth', '@c', commas(item.worth), 'Weight', item.weight))
+  end
 
   if tonumber(item.type) == 1 then
     if item.light and next(item.light) then
@@ -241,17 +251,19 @@ function formatitem(item)
     end
   end
 
-  if item.wearable ~= "" then
+  if item.wearable and item.wearable ~= "" then
     table.insert(ltext, formatsingleline('Wearable', '@c', item.wearable))
   end
 
-  table.insert(ltext, formatsingleline('Score', '@c', item.score, '@Y'))
+  if tonumber(item.score) then
+    table.insert(ltext, formatsingleline('Score', '@c', item.score, '@Y'))
+  end
 
   if item.material and item.material ~= "" then
     table.insert(ltext, formatsingleline('Material', '@c', item.material))
   end
 
-  if item.flags ~= "" then
+  if item.flags and item.flags ~= "" then
     local flags = wrap(item.flags, 49)
     local t = 0
     for i,v in ipairs(flags) do
@@ -265,19 +277,19 @@ function formatitem(item)
     end
   end
 
-  if item.owner ~= "" and item.owner ~= nil then
+  if item.owner and item.owner ~= "" then
     table.insert(ltext, formatsingleline('Owned by', '@c', item.owner))
   end
 
-  if item.fromclan ~= '' and item.fromclan ~= nil then
+  if item.fromclan and item.fromclan ~= "" then
     table.insert(ltext, formatsingleline('Clan Item', '@G', "@M" .. item.fromclan .. "@w"))
   end
 
-  if item.foundat ~= '' and item.foundat ~= nil then
+  if item.foundat and item.foundat ~= "" then
     table.insert(ltext, formatsingleline('Found at', '@G', "@M" .. item.foundat .. "@w"))
   end
 
-  if item.leadsto ~= '' and item.leadsto ~= nil then
+  if item.leadsto and item.leadsto ~= "" then
     table.insert(ltext, formatsingleline('Leads to', '@G', "@M" .. item.leadsto .. "@w"))
   end
 
@@ -294,7 +306,7 @@ function formatitem(item)
     end
   end
 
-  if item.affectmod then
+  if item.affectmod and next(item.affectmod) then
     local amods = strjoin(', ', item.affectmod)
     local keyws = wrap(amods, 49)
     local header = 'Affect Mods'
@@ -304,7 +316,7 @@ function formatitem(item)
     end
   end
 
-  if item.container then
+  if item.container and next(item.container) then
     table.insert(ltext, divider)
     table.insert(ltext, formatspecialline('Capacity', '@c', item.container.capacity, 'Heaviest Item', item.container.heaviestitem))
     table.insert(ltext, formatspecialline('Holding', '@c', item.container.holding, 'Items Inside', item.container.itemsinside))
@@ -312,7 +324,7 @@ function formatitem(item)
     table.insert(ltext, formatspecialline('', '@c', string.format('@wItems inside weigh @Y%d@w%%@w of their usual weight', item.container.itemweightpercent)))
    end
 
-   if item.weapon then
+   if item.weapon and next(item.weapon) then
     table.insert(ltext, divider)
     table.insert(ltext, formatspecialline('Weapon Type', '@c', item.weapon.wtype, 'Average Dam', item.weapon.avedam))
     table.insert(ltext, formatspecialline('Inflicts', '@c', item.weapon.inflicts, 'Damage Type', item.weapon.damtype))
@@ -328,13 +340,13 @@ function formatitem(item)
     end
   end
 
-  if item.statmod then
+  if item.statmod and next(item.statmod) then
     table.insert(ltext, divider)
     table.insert(ltext, formatstatsheader())
     table.insert(ltext, formatstats(item.statmod))
   end
 
-  if item.resistmod then
+  if item.resistmod and next(item.resistmod) then
     table.insert(ltext, divider)
 
     for i,v in pairs(formatresist(item.resistmod)) do
@@ -342,7 +354,7 @@ function formatitem(item)
     end
   end
 
-  if item.skillmod then
+  if item.skillmod and next(item.skillmod) then
      table.insert(ltext, divider)
 
      local header = 'Skill Mods'
@@ -358,7 +370,7 @@ function formatitem(item)
      end
   end
 
-  if item.spells then
+  if item.spells and next(item.spells) then
      table.insert(ltext, divider)
 
     local header = 'Spells'
@@ -378,7 +390,7 @@ function formatitem(item)
     end
   end
 
-  if item.food then
+  if item.food and next(item.food) then
     table.insert(ltext, divider)
 
     local header = 'Food'
@@ -386,7 +398,7 @@ function formatitem(item)
                                 string.format("Will replenish hunger by %d%%", tonumber(item.food.percent))))
   end
 
-  if item.drink then
+  if item.drink and next(item.drink) then
     table.insert(ltext, divider)
 
     table.insert(ltext, formatspecialline('Drink', '@c',
@@ -400,7 +412,7 @@ function formatitem(item)
                                 string.format("Each serving replenishes hunger by %d%%.", tonumber(item.drink.hungerpercent))))
   end
 
-  if item.furniture then
+  if item.furniture and next(item.furniture) then
     table.insert(ltext, divider)
 
     local header = 'Heal Rate'
