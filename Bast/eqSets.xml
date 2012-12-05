@@ -881,7 +881,7 @@ phelper:add_cmd('add', {func=cmd_add, help="add an item to an eqset", sortgroup=
 phelper:add_cmd('remove', {func=cmd_remove, help="remove an item from an eqset", sortgroup="Creating, Modifying and Deleting", prio=42})
 phelper:add_cmd('clear', {func=cmd_clear, help="clear an eqset, either named or level", sortgroup="Creating, Modifying and Deleting", prio=43})
 
-phelper:add_cmd('checklevel', {func=cmd_checklevel, help="check to see if wearing all items your current level", sortgroup="Wearing a set", prio=44})
+phelper:add_cmd('checklevel', {func=cmd_checklevel, help="check to see if wearing all items of your current level", sortgroup="Wearing a set", prio=44})
 phelper:add_cmd('wearset', {func=cmd_wearset, help="wear a set", sortgroup="Wearing a set", prio=45})
 
 phelper:add_cmd('show', {func=cmd_show, help="show the eq for a set", sortgroup="Obtaining info about a set", prio=46})
