@@ -404,11 +404,12 @@ phelper:add_setting('reportchan', {help="the default channel to do a moons repor
 phelper:set_default('cmd', 'mb')
 phelper:set_default('plugin_colour', 'lime')
 
-phelper:add_cmd('plot', {func=plotdata, help="plot moons"})
-phelper:add_cmd('union', {func=moonbot_union, help="show next moons union"})
-phelper:add_cmd('print', {func=printmoons, help="print the current moon phase #s"})
-phelper:add_cmd('mreset', {func=moonbot_reset, help="reset the moons"})
-phelper:add_cmd('report', {func=moonbot_report, help="report the position of the moons"})
+phelper:add_cmd('plot', {func=plotdata, help="plot moons", sortgroup="Information for moons", prio=40})
+phelper:add_cmd('union', {func=moonbot_union, help="show next moons union", sortgroup="Information for moons", prio=41})
+phelper:add_cmd('print', {func=printmoons, help="print the current moon phase #s", sortgroup="Information for moons", prio=41})
+phelper:add_cmd('report', {func=moonbot_report, help="report the position of the moons", sortgroup="Information for moons", prio=41})
+
+phelper:add_cmd('mreset', {func=moonbot_reset, help="reset the moons", sortgroup="Manage moon data", prio=40})
 
 phelper:add_pobject('win', moonwin)
 
