@@ -333,17 +333,12 @@ function Pluginhelper:OnPluginBroadcast(msg, id, name, text)
     v:OnPluginBroadcast(msg, id, name, text)
   end
 
-  if self.registered_events[id] ~= nil and tonumber(msg) == -2 then
-    for event,callback in pairs(self.registered_events[id]) do
-      self:register_remote(id, event, callback)
-    end
+  if tonumber(msg) == -2 then
+    --print('got a -2')
+    self:reregister_remote(id)
   end
 
 end
-
---function Pluginhelper:__newindex(name, val)
---  super(self, name, val)
---end
 
 function Pluginhelper:OnPluginInstall()
   self:mdebug('OnPluginInstall')
