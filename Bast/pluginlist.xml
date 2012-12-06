@@ -196,7 +196,7 @@ function cmd_helper(type, tomatch, other)
 end
 
 function cmd_reload(cmddict)
-  if #cmddict < 1 or cmddict[1] = 'help' then
+  if #cmddict < 1 or cmddict[1] == 'help' then
     phelper:plugin_header('reload')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " reload <plugin>")    
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "reload a plugin")   
@@ -210,7 +210,7 @@ function cmd_reload(cmddict)
 end
 
 function cmd_enable(cmddict)
-  if #cmddict < 1 or cmddict[1] = 'help' then
+  if #cmddict < 1 or cmddict[1] == 'help' then
     phelper:plugin_header('enable')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " enable <plugin>")    
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "enable a plugin")   
@@ -224,7 +224,7 @@ function cmd_enable(cmddict)
 end
 
 function cmd_disable(cmddict)
-  if #cmddict < 1 or cmddict[1] = 'help' then
+  if #cmddict < 1 or cmddict[1] == 'help' then
     phelper:plugin_header('disable')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " disable <plugin>")    
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "disable a plugin")   
@@ -237,7 +237,7 @@ function cmd_disable(cmddict)
 end
 
 function cmd_unload(cmddict)
-  if #cmddict < 1 or cmddict[1] = 'help' then
+  if #cmddict < 1 or cmddict[1] == 'help' then
     phelper:plugin_header('unload')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " unload <plugin>")    
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "unload a plugin")   
@@ -251,7 +251,7 @@ function cmd_unload(cmddict)
 end
 
 function cmd_load(cmddict)
-  if #cmddict < 1 or cmddict[1] = 'help' then
+  if #cmddict < 1 or cmddict[1] == 'help' then
     phelper:plugin_header('load')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " load <plugin>")    
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "load a plugin")   
@@ -265,7 +265,7 @@ function cmd_load(cmddict)
 end
 
 function cmd_loaddir(cmddict)
-  if #cmddict < 1 or cmddict[1] = 'help' then
+  if #cmddict < 1 or cmddict[1] == 'help' then
     phelper:plugin_header('loaddir')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " loaddir <statement> ")    
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "load a directory of plugin")   
