@@ -1298,8 +1298,10 @@ function EQdb:getolditemcontainer(serial, setname)
     end
     self:close('getolditemcontainer')    
   end
-  timer_end('EQdb:getolditemcontainer')  
-  return items[1].containerid
+  timer_end('EQdb:getolditemcontainer') 
+  if items[1] then
+    return items[1].containerid
+  end
 end
 
 function EQdb:checklevelsetitem(serial)
