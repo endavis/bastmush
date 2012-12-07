@@ -1494,6 +1494,9 @@ function putobjectincontainer(item, container)
   if type(item) ~= 'table' then
     item = teqdb:getitem(item)
   end
+  if item.containerid ~= 'Inventory' then
+    return
+  end
   if tcontainer then
     local itcontainer = teqdb:getitem(tcontainer)
     if itcontainer and next(itcontainer) then
