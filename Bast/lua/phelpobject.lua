@@ -119,13 +119,11 @@ function Phelpobject:register_remote(id, eventname, callback, now)
     if not self.registered_events[id][eventname] then
       if now then
         CallPlugin(id, "registerevent", GetPluginID(), eventname, callback)
-      else
-        print('registering', id, eventname, callback, 'after 2 seconds')
-        local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback .. '")'
-        DoAfterSpecial(2, cmd, 12)
       end
     end
-    self.registered_events[id][eventname] = callback
+    self.registered_events[id][eventname] = {}
+    self.registered_events[id][eventname]['callback']= callback
+    self.registered_events[id][eventname]['first']= first
   else
     print('use registerevent for local registration', id, eventname, callback)
   end
@@ -147,10 +145,17 @@ function Phelpobject:reregister_remote(id)
    if self.registered_events[id] ~= nil then
      for eventname,callback in pairs(self.registered_events[id]) do
        --print('registering', id, eventname, callback, 'after 2 seconds')
-       local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback .. '")'
+       local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback.callback .. '")'
        DoAfterSpecial(2, cmd, 12)     
      end
    end
+end
+
+function Phelpobject:check_registration(id, event, callback)
+  if self.registered_events[id] and self.registered_events[id][eventname] then
+    return true
+  end
+  return false
 end
 
 function Phelpobject:registerevent(tevent, object, tfunction, plugin)
