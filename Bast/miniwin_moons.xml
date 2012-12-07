@@ -251,8 +251,8 @@ function ontick( tname, tstr, wildcards)
     countdown, countdowndur = nextunion()
     if countdown == 0 and countdowndur > 0 then
       local msg = "Three moons are up for "..countdowndur.." ticks!"
-      --DoAfterSpecial(.1, "printmessage(" .. msg ..")", 12)
-      printmessage(msg)
+      DoAfterSpecial(.1, "printmessage('" .. msg .."')", 12)
+      --printmessage(msg)
       --ColourNote("lime", "black", "Three moons are up for "..countdowndur.." ticks!" )
     end
   else
@@ -263,8 +263,8 @@ function ontick( tname, tstr, wildcards)
     end
     if countdown == 0 and countdowndur > 0 then
       local msg = "Three moons are up for "..countdowndur.." ticks!"
-      --DoAfterSpecial(.1, "printmessage(" .. msg ..")", 12)
-      printmessage(msg)
+      DoAfterSpecial(.1, "printmessage('" .. msg .."')", 12)
+      --printmessage(msg)
       --ColourNote("lime", "black", "Three moons are up for "..countdowndur.." ticks!" )
     elseif countdowndur == 0 then
       countdown, countdowndur = nextunion()
