@@ -1242,15 +1242,16 @@ function onskillgain(args)
   --tprint(targs)
   --print('pracs', tonumber(char.worth.pracs))
   spells['all'][tonumber(targs.sn)]['percent'] = tonumber(targs.percent)  
-  if (practicing == tonumber(targs.sn) and tonumber(targs.percent) > 84) or tonumber(char.worth.pracs) == 0 then
+  if (practicing == tonumber(targs.sn) and tonumber(targs.percent) >= tonumber(phelper.practo)) or char.worth and tonumber(char.worth.pracs) == 0 then
     practicing = -1
+    --print('unregistering because I am done practicing', targs.sn)
     phelper:unregister_remote("aaa72f3b5453567e2bba9d50", "skillprac", "onskillgain", true)
-  elseif practicing == tonumber(targs.sn) then
+  elseif practicing == tonumber(targs.sn) and char.worth then
     char.worth.pracs = tonumber(char.worth.pracs) - 1
     SendNoEcho('practice ' .. tostring(practicing))
     return
   end
-  if tonumber(char.worth.pracs) > 0 then
+  if char.worth and tonumber(char.worth.pracs) > 0 then
     pracskill()
   end
 end
@@ -1260,7 +1261,7 @@ function pracskill(sn)
   --print('char.status.state', char.status.state)
   --print('trainer room', string.find(room.details, "trainer"))  
   --print('practicing', practicing)
-  if tonumber(char.worth.pracs) == 0 then
+  if not char.worth or tonumber(char.worth.pracs) == 0 then
     return
   end
   if phelper.autoprac and tonumber(char.status.state) == 3 and string.find(room.details, "trainer") then
@@ -1274,7 +1275,7 @@ function pracskill(sn)
       for i,j in ipairs(phelper.askedself) do
         local sn = j['sn']
         --print(sn, spells['all'][sn]['percent'])
-        if tonumber(spells['all'][sn]['percent']) < 85 and not spells['notlearned'][sn] and practicing == -1 and spells['all'][sn].clanskill == 0 and tonumber(char.worth.pracs) > 0 then
+        if tonumber(spells['all'][sn]['percent']) < phelper.practo and not spells['notlearned'][sn] and practicing == -1 and spells['all'][sn].clanskill == 0 and tonumber(char.worth.pracs) > 0 then
           --print('practicing', sn)
           practicing = sn
           phelper:register_remote("aaa72f3b5453567e2bba9d50", "skillprac", "onskillgain", true)
@@ -1557,7 +1558,8 @@ phelper:add_setting( 'selfargs', {type="table", help="a table for spells that ne
 phelper:add_setting( 'askedother', {type="table", help="the list of spells to use on other", default=serialize.save_simple({}), sortlev=35, istable=true, formatfunc=formatother, readonly=true, after=make_askedother_xrefs})
 phelper:add_setting( 'nocast_rooms', {type="table", help="the list of rooms that are nocast", default=serialize.save_simple({}), sortlev=35, istable=true, readonly=true})
 phelper:add_setting( 'pause', {type="bool", help="pause spellup", default=false, sortlev=35, readonly=true})
-phelper:add_setting( 'autoprac', {type="bool", help="auto practice skills/spells in your spellup list", default=false, sortlev=35})
+phelper:add_setting( 'autoprac', {type="bool", help="auto practice skills/spells in your spellup list", default=false, sortlev=36})
+phelper:add_setting( 'practo', {type="number", help="the percentage to practice spells to", default=85, sortlev=36})
 
 
 phelper:add_cmd('slist', {func=cmd_slist, help="list requested spells for self", default=true, sortgroup='self', prio=10})
