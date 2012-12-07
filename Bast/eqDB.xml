@@ -238,6 +238,9 @@ silent = true
 
 allcontainer = -1
 
+itemstoprint = {}
+waitingforid = {}
+
 layout ={
 invheader = {"serial", "level", "type", "worth", "weight", "wearable", "flags", "owner", "fromclan", "timer", "u1", "u2", "u3", "score"},
 container = {"capacity", "heaviestitem", "holding", "itemsinside", "totalweight", "itemburden", "itemweightpercent"},
@@ -363,9 +366,16 @@ function identify_redirect(name, line, wildcards, styles)
       table.insert(identdata['note'], strjoin(" ", notel))
     end
     db:updateitemident(identdata)
-    invdetails = db:getitemdetails(identdata.id)
+    local invdetails = db:getitemdetails(identdata.id)
     phelper:processevent('itemchange', invdetails)
     phelper:processevent('oniddone')
+    if itemstoprint[invdetails.serial] then
+      itemstoprint[invdetails.serial] = nil
+      print_itemid(invdetails)
+    end
+    if waitingforid[invdetails.serial] then
+      waitingforid[invdetails.serial] = nil
+    end
     return
   end
   if line ~= "+-----------------------------------------------------------------+" then
@@ -648,7 +658,7 @@ function getcontainers()
  end
 end
 
-function getitemdetails(id, override)
+function getitemdetails(id, override, show)
   --print('getitemdetails', type(id), id)
   local titem = db:getitemdetails(id)
   if titem and not override and titem.keywords ~= nil and titem.keywords  ~= "" then
@@ -656,13 +666,23 @@ function getitemdetails(id, override)
   else
     local titem2 = db:getitem(id)
     if titem2 then
+      if show then
+        itemstoprint[id] = true
+      end
+      waitingforid[id] = true
       togglehideoutput("y")
       if titem2.containerid == 'Inventory' then
+        SendNoEcho('invdetails ' .. tostring(id))
+        phelper:enabletriggroup('identify', true)
         Execute('identify ' .. tostring(id))
       elseif titem2.containerid == 'Worn' then
+        SendNoEcho('invdetails ' .. tostring(id))
+        phelper:enabletriggroup('identify', true)
         Execute('identify ' .. tostring(id) .. ' worn')
       else
         putobjectininv(titem2)
+        phelper:enabletriggroup('identify', true)
+        SendNoEcho('invdetails ' .. tostring(id))
         Execute('identify ' .. tostring(id))
         putobjectincontainer(titem2, titem2.containerid)
       end
@@ -985,21 +1005,33 @@ function cmd_eqlookup(cmddict)
   end
 end
 
-function cmd_eqprintitem(cmddict)
+function print_itemid(item)
+  local fitem = formatitem(item)
+  for i,v in ipairs(fitem) do
+    TextToColourTell(v)
+    ColourNote("", "", "")
+  end
+  ColourNote("", "", "")
+end
+
+function cmd_eqgetitem(cmddict)
   --print('showitem')
   --tprint(cmddict)
   if cmddict[1] then
     for i,v in ipairs(cmddict) do
       local titem = db:getitemdetails(v)
-      if titem then
-        local fitem = formatitem(titem)
-        for i,v in ipairs(fitem) do
-          TextToColourTell(v)
-          ColourNote("", "", "")
-        end
-        ColourNote("", "", "")
+      if titem and titem.keywords then
+        print_itemid(titem)
       else
-        ColourNote(RGBColourToName(var.plugin_colour), "black", "There is no info for that id in the database")
+        local nitem = db:getitem(v)
+        if nitem then
+          itemstoprint[nitem.serial] = true
+          waitingforid[nitem.serial] = true
+          --print('getting an item')
+          getitemdetails(nitem.serial)
+        else
+          ColourNote(RGBColourToName(var.plugin_colour), "black", "You do not have that item")
+        end
       end
     end
   else
@@ -1324,6 +1356,7 @@ function OnPluginSend (sText)
   end
 
   local changed = false
+
   if getp or putp or lookp or wearp or removep or identp then
     showoutput('Original Cmd: ' .. sText)  
     --print('looking for identifiers')
@@ -1343,10 +1376,12 @@ function OnPluginSend (sText)
     if item and nitem then
       ncmd = ncmd .. ' ' .. tostring(nitem.serial)
       changed = true
-      if identp then
-        SendNoEcho('invdetails ' .. tostring(nitem.serial))
+      if identp and phelper.overloadid and not waitingforid[nitem.serial] then
+        cmd_eqgetitem({[1]=nitem.serial,fromid=true})
+        --SendNoEcho('invdetails ' .. tostring(nitem.serial))
         --print('enabling identify')
-        phelper:enabletriggroup('identify', true)
+        --phelper:enabletriggroup('identify', true)
+        return false
       end
     elseif item then
       ncmd = ncmd .. ' ' .. fixarg(item)
@@ -1367,7 +1402,7 @@ function OnPluginSend (sText)
         end
       else
         if cont then
-          ncmd = ncmd .. ' ' .. cont
+          ncmd = ncmd .. ' ' .. fixarg(cont)
         end      
       end
     end
@@ -1390,12 +1425,11 @@ end
 <script>
 <![CDATA[
 
-
 phelper:set_default('plugin_colour', 'orange')
 phelper:set_default('cmd', 'eqdb')
 
 phelper:add_cmd('lu', {func=cmd_eqlookup, help="lookup stuff in the db", sortgroup='Obtaining information on items', prio = 30})
-phelper:add_cmd('getitem', {func=cmd_eqprintitem, help="print info on item with id", sortgroup='Obtaining information on items', prio = 31})
+phelper:add_cmd('getitem', {func=cmd_eqgetitem, help="print info on item with id", sortgroup='Obtaining information on items', prio = 31})
 phelper:add_cmd('comp', {func=cmd_eqcomp, help="compare items,args = list of serials", sortgroup='Obtaining information on items', prio = 32})
 phelper:add_cmd('getcolourname', {func=cmd_getcolourname, help="return the name of the item with embedded color codes", sortgroup='Obtaining information on items', prio = 33})
 
@@ -1418,6 +1452,7 @@ phelper:add_cmd('close', {func=cmd_close, help="close the db", sortgroup='Databa
 phelper:add_cmd('translate', {func=cmd_translate, help="show what strings mean for certain types of flags", sortgroup='Misc', prio = 42})
 
 phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
+phelper:add_setting('overloadid', {help="overload the identify command to use getitem", type="bool", default=verify_bool(false)})
 
 phelper:enable()
 ]]>
