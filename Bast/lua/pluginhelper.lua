@@ -333,7 +333,7 @@ function Pluginhelper:OnPluginBroadcast(msg, id, name, text)
     v:OnPluginBroadcast(msg, id, name, text)
   end
 
-  if tonumber(msg) == -2 then
+  if tonumber(msg) == -2 and id ~= GetPluginID() then
     --print('got a -2')
     self:reregister_remote(id)
   end
