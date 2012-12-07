@@ -151,17 +151,12 @@ function cmd_add(cmddict)
     end
     local titem = eqdb:getitem(args['serial'])
     local ditem = eqdb:getitemdetails(args['serial'])
-    if not ditem then
+    if not ditem or ditem.keywords == '' or not ditem.keywords then
       olditem = titem
       -- we don't have the score
       -- get the item from containers
       phelper:register_remote("aaa56faed92ffc6146964abc", "itemchange", "onitemchange", true)
-      if titem.containerid ~= 'Inventory' then
-        putobjectininv(titem.serial)
-      else
-        SendNoEcho('identify ' .. tostring(titem.serial))
-      end
-      phelper:register_remote("aaa56faed92ffc6146964abc", "itemchange", "onitemchange")
+      CallPlugin("aaa56faed92ffc6146964abc", "getitemdetails", titem.serial, true, true)
       return
     end
     if not args['level'] and not args['setname'] then
@@ -498,32 +493,45 @@ function cmd_remove(cmddict)
 end
 
 function cmd_getset(cmddict)
+  if cmddict[1] == 'help' then
+    phelper:plugin_header('getset')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " getset <setname|level>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get all items for the set and put them in inventory (or leave them worn if already worn)")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 1 is the level or setname")       
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "If no argument is given, defaults to the set for your current level")       
+    return
+  end
+  local eqset = cmddict[1]
+  if not eqset then
+    eqset = (tonumber(char.status.level) + (char.base.tier * 10))
+  end
   if cmddict[1] then
-    local titems = eqdb:getset(cmddict[1])
+    local titems = eqdb:getset(eqset)
     for i,v in pairs(titems) do
       putobjectininv(v.serial, true)
     end
-  else
-    phelper:plugin_header('getset')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " getset <setname|level>")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get all items for the levelset <level> and put them in inventory (or leave them worn if already worn)")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level or setname")     
   end
 end
 
 function cmd_putset(cmddict)
-  if cmddict[1] then
-    local titems = eqdb:getset(cmddict[1])
-    for i,v in pairs(titems) do
-      putobjectininv(v.serial)
-      putobjectincontainer(v.serial, v.containerid) 
-    end
-  else
-    phelper:plugin_header('getset')
+  if cmddict[1] == 'help' then
+    phelper:plugin_header('putset')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " putset <setname|level>")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "put all items for the levelset <level> into their containers")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level or setname")     
-   end
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "put all items in Inventory (not worn) for the set into their containers")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 1 is the level or setname")      
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "If no argument is given, defaults to the set for your current level")       
+    return
+  end
+  local eqset = cmddict[1]
+  if not eqset then
+    eqset = (tonumber(char.status.level) + (char.base.tier * 10))
+  end
+  if cmddict[1] then
+    local titems = eqdb:getset(eqset)
+    for i,v in pairs(titems) do
+      putobjectincontainer(v.serial, v.containerid)
+    end
+  end   
 end
 
 function cmd_clear(cmddict)
@@ -624,6 +632,15 @@ end
 function cmd_show(cmddict)
   local msg = {}
   if cmddict[1] then
+    local only = false
+    for i,v in pairs(cmddict) do
+      if v == 'only' then
+        only = i
+      end
+    end
+    if only then
+      table.remove(cmddict, only)
+    end
     local items = eqdb:getset(cmddict[1])
     for i=0,#wearlocs do
       actualslot = i
@@ -637,8 +654,10 @@ function cmd_show(cmddict)
         if titem.wearslot == -1 then
           titem.wearslot = i
         end
-        lstyles = buildwornitem(titem)
-      else
+        if not only or (only and titem.level == tonumber(cmddict[1])) then
+          lstyles = buildwornitem(titem)
+        end
+      elseif not only then
         local doit = true
         if optionallocs[actualslot] then
           doit = false
@@ -659,7 +678,8 @@ function cmd_show(cmddict)
     phelper:plugin_header('show')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " show <level|setname> ")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show all items for a set")        
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level or setname")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level or setname, can be multiple")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) the keyword 'only', which will only show items of that level if a level set")
   end
 end
 
@@ -751,7 +771,7 @@ function buildwornitem(item)
     table.insert(lstyles, style)
   else
     local style = {}
-    style.text = string.format("%4s", "Unkn")
+    style.text = string.format("%4s", "")
     style.textcolour = GetBoldColour (CYAN)
     style.length = #style.text
     table.insert(lstyles, style)  
@@ -796,15 +816,13 @@ end
 
 function onitemchange(stuff)
   local stuff = assert (loadstring ('return ' .. stuff or ""))()
-  if stuff.serial == olditem.serial then
-    if not stuff.score then
-      SendNoEcho('identify ' .. stuff.serial)
-    elseif stuff.score and not olditem.moved then
-      olditem.moved = true    
-      putobjectincontainer(olditem.serial, olditem.containerid)
-    end
-  elseif stuff.serial == tonumber(olditem.containerid) and olditem.moved then
-    phelper:unregister_remote("aaa56faed92ffc6146964abc", "itemchange", "onitemchange")
+  if stuff.serial == olditem.serial and stuff.keywords then
+    --print('setting gotscore')
+    --tprint(stuff)
+    olditem.gotscore = true
+  elseif stuff.serial == tonumber(olditem.containerid) and olditem.gotscore then
+    --print('onitemchange: have gotscore and containerid')
+    phelper:unregister_remote("aaa56faed92ffc6146964abc", "itemchange", "onitemchange", true)
     olditem = {}
     cmd_add(olddict)    
   end
