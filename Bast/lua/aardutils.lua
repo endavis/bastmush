@@ -454,7 +454,7 @@ damtypes = {
   'stab',    
   'sting',
   'suction', 
-  'Thrust',  
+  'thrust',  
   'thwack',  
   'wail',    
   'water blast',     
