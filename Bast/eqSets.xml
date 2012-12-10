@@ -495,7 +495,10 @@ function cmd_remove(cmddict)
         phelper:plugin_header('Remove')
         ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Item for %s and wearloc %s was removed", tostring(setname), wearloc))      
         removed = true
-      end    
+      else
+        phelper:plugin_header('Remove')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Could not remove %s from %s", wearloc, setname))
+      end
     else
       phelper:plugin_header('Remove')
       ColourNote(RGBColourToName(phelper.plugin_colour), "black", "There was nothing to remove")        
