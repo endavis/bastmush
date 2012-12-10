@@ -182,11 +182,14 @@ xBroadcast_Kills : Broadcast 1
   </trigger>
 
   <trigger
+   custom_colour="17"
    enabled="y"
    regexp="y"
    match="^Deep magic stirs within your weapon. It seems to have a life of its own.$"
    name="vorpmob"
    script="vorpmob"
+   other_back_colour="red"
+   other_text_colour="black"   
    sequence="100"
   >
   </trigger>
@@ -339,8 +342,11 @@ require "verify"
 require "ldplugin"
 require "eqdb"
 require "colours"
+require "aardutils"
 
 db = EQdb:new{}
+
+mobdamcache = {}
 
 function damagedef()
   local tdamage = {}
@@ -381,7 +387,6 @@ var.cur_weapon = ''
 lastroom = -1
 
 function incombat(name, line, wildcards)
-  print('setting in-combat')
   if not kill_info.damage['backstab'] then
     kill_info.damage['backstab'] = damagedef()
   end
@@ -391,48 +396,56 @@ end
 function immunity(name, line, wildcards)
   local immunity = wildcards[2]
   if not kill_info.immunities[immunity] and kill_info.name == wildcards[1] then
-    print('setting immunity', immunity)
+    --print('setting immunity', immunity)
     kill_info.immunities[immunity] = true
   end
 end
 
-function damage(name, line, wildcards)
-  -- check to see if blankline is not enabled, if so, then we are starting a new backstab
-  local tstuff = {}
-  if name == 'damage2' then
-    tstuff = utils.split(wildcards[1], " ")
-  else
-    tstuff = utils.split(wildcards[2], " ")
+function addtodamage(tdam, damtable)
+  local damtype = tdam['damtype']
+  if not damtype then
+    damtype = 'Unknown'
   end
-  local damtype = tstuff[1]
+  if not damtable[damtype] then
+    damtable[damtype] = damagedef()
+  end
+  
+  if tdam['damverb'] == 'misses' then
+    damtable[damtype]['misses'] = damtable[damtype]['misses'] + tdam['hits']
+  else
+    damtable[damtype]['hits'] = damtable[damtype]['hits'] + tdam['hits']
+    damtable[damtype]['damage'] = damtable[damtype]['damage'] + tdam['damage']
+  end  
+  return damtable
+end
+
+function damage(name, line, wildcards)
+  
+  local tdam = parsedamageline(line)
+  local damtype = tdam['damtype']
+  
   if not kill_info['starttime'] then
     kill_info['starttime'] = GetInfo(304)  
   end
-  if not kill_info.damage[damtype] then
-    print('resetting', damtype)
-    kill_info.damage[damtype] = damagedef()
+  if tdam['enemy'] and  tdam['enemy'] ~= kill_info.name then
+    if not mobdamcache[tdam['enemy']] then
+      mobdamcache[tdam['enemy']] = {}
+    end
+    addtodamage(tdam, mobdamcache[tdam['enemy']])
+    return
   end
-  local hits = 0
-  local damage = 0
-  if name == 'damage2' then
-    hits = 1
-    damage = tonumber(wildcards[2])
-  else
-    hits = tonumber(wildcards[1])
-    damage = tonumber(wildcards[3])
+  
+  if mobdamcache[tdam['enemy']] then
+      kill_info.damage = mobdamcache[tdam['enemy']]
+      mobdamcache[tdam['enemy']] = nil
   end
-
-  if damage == 0 then
-    kill_info.damage[damtype]['misses'] = kill_info.damage[damtype]['misses'] + hits
-  else
-    kill_info.damage[damtype]['hits'] = kill_info.damage[damtype]['hits'] + hits
-    kill_info.damage[damtype]['damage'] = kill_info.damage[damtype]['damage'] + damage
-  end
+  addtodamage(tdam, kill_info.damage)
 end
 
 function mobnone(name, line, wildcards)
   --print('setting name to none')
   kill_info.name = ""
+  kill_info.damage = {}
 end
 
 function mobname(name, line, wildcards)
@@ -480,6 +493,7 @@ end
 
 function mobswitch( name, line, wildcards)
   kill_info.name = strip_colours(wildcards[1])
+  kill_info.damage = {}
 end
 
 function assassinatemob( name, line, wildcards)
@@ -579,7 +593,7 @@ function onwearlocchange(stuff)
   end
 end
 
-instatriggers = {"assassinate", "deathblow", "slit", "disintegrate", "banish"}
+instatriggers = {"assassinate", "deathblow", "slit", "disintegrate", "banish", "vorpmob"}
 
 function oninstacolourchange(stuff)
   for i,v in ipairs(instatriggers) do
@@ -603,8 +617,8 @@ function OnPluginBroadcast (msg, id, name, text)
       if tt['status'] then
         kill_info.level = tonumber(tt.status.level)
         if tt.status.enemy ~= "" and kill_info.name == "" then
-          --print('setting name to', tt.status.enemy)
           kill_info.name = strip_colours(tt.status.enemy)
+          kill_info.damage = {}
         end
       end
     elseif text:find('room.info') then
