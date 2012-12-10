@@ -240,6 +240,7 @@ allcontainer = -1
 
 itemstoprint = {}
 waitingforid = {}
+putincontainer = {}
 
 layout ={
 invheader = {"serial", "level", "type", "worth", "weight", "wearable", "flags", "owner", "fromclan", "timer", "u1", "u2", "u3", "score"},
@@ -375,6 +376,10 @@ function identify_redirect(name, line, wildcards, styles)
     end
     if waitingforid[invdetails.serial] then
       waitingforid[invdetails.serial] = nil
+    end
+    if putincontainer[invdetails.serial] then
+      putobjectincontainer(invdetails.serial, putincontainer[tonumber(invdetails.serial)])
+      putincontainer[tonumber(invdetails.serial)] = nil
     end
     return
   end
@@ -591,12 +596,12 @@ end
 function invmon ( name, line, wildcards )
   phelper:mdebug(line)
   item = builditem(wildcards)
-  -- checkaction(tonumber(  wildcards.action), item)
-  table.insert(delayed_actions, {
-    action = tonumber(wildcards.action),
-    item = item
-  })
-  DoAfterSpecial(0.1, "process_delayed()", 12)
+  checkaction(tonumber(  wildcards.action), item)
+  --table.insert(delayed_actions, {
+  --  action = tonumber(wildcards.action),
+  --  item = item
+  --})
+  --DoAfterSpecial(0.1, "process_delayed()", 12)
 end
 
 function invitem( name, line, wildcards)
@@ -684,7 +689,7 @@ function getitemdetails(id, override, show)
         phelper:enabletriggroup('identify', true)
         SendNoEcho('invdetails ' .. tostring(id))
         Execute('identify ' .. tostring(id))
-        putobjectincontainer(titem2, titem2.containerid)
+        putincontainer[tonumber(titem2.serial)] = titem2.containerid
       end
     end
   end
