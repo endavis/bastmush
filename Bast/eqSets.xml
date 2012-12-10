@@ -136,6 +136,21 @@ function figureaddtosetargs(args)
 end
 
 function cmd_add(cmddict)
+  if cmddict[1] == 'help' or not cmddict[1] then
+    phelper:plugin_header('Add')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " add <serial> <location> <container> <level|setname>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add an item to a set")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Note: do not create named sets that are only numbers, as they will be treated as level sets")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) location is the wearable location, this will default to wherever the item is wearable")       
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) container is the container to place it in when removing the item")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  and defaults to the current container that the item is in")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) level or setname")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  level is the level to wear the eq, which is defaulted to the level of the item")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  setname is the set name")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if both level and setname are not included, the command will default to the level of the item")    
+    return
+  end
   olddict = cmddict
   -- need serial, wearloc, container, level|setname (optional)
   local serial = nil
@@ -180,7 +195,7 @@ function cmd_add(cmddict)
         phelper:plugin_header('Add')
         ColourNote(RGBColourToName(phelper.plugin_colour), "black", "This item is too high a level for set " .. tostring(args['level']))
         return
-      elseif eqdb:checklevelsetitem(args['serial']) then
+      elseif eqdb:checklevelsetitem(args['serial'], args['level']) then
         phelper:plugin_header('Add')
         ColourNote(RGBColourToName(phelper.plugin_colour), "black", "This item has already been set to be worn")
         return     
@@ -188,13 +203,21 @@ function cmd_add(cmddict)
         phelper:plugin_header('Add')
         ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("There is already an item set at level %s for wearloc %s", args['level'], args['wearloc']))      
         return
+      elseif not checkcorrectwearlocation(ditem.wearable, args['wearloc']) then
+        phelper:plugin_header('Add')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Cannot wear this item at the wear location %s", args['wearloc']))      
+        return      
       end
       eqdb:addsetitem(args['serial'], args['wearloc'], args['container'], args['level'])
       phelper:plugin_header('Add')
       ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Item: %d will now be set to wear at level %d at location %s", args['serial'], args['level'], args['wearloc']))   
       return
     elseif args['serial'] and args['wearloc'] and args['container'] and args['setname'] then
-      if eqdb:checknamesetitem(args['serial'], args['wearloc'], args['setname']) then
+      if not checkcorrectwearlocation(ditem.wearable, args['wearloc']) then
+        phelper:plugin_header('Add')
+        ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Cannot wear this item at the wear location %s", args['wearloc']))      
+        return      
+      elseif eqdb:checknamesetitem(args['serial'], args['wearloc'], args['setname']) then
         phelper:plugin_header('Add')
         ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("There is already an item in set %s for wearloc %s", args['setname'], args['wearloc']))      
         return      
@@ -215,18 +238,6 @@ function cmd_add(cmddict)
       ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not figure out one of the arguments, please try with other arguments")     
       return
     end
-  else
-    phelper:plugin_header('Add')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " add <serial> <location> <container> <level|setname>")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add an item to a set")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) location is the wearable location, this will default to wherever the item is wearable")       
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) container is the container to place it in when removing the item")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  and defaults to the current container that the item is in")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) level or setname")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  level is the level to wear the eq, which is defaulted to the level of the item")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  setname is the set name")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if both level and setname are not included, the command will default to the level of the item")  
   end
 end
 
@@ -429,35 +440,41 @@ function cmd_wearset(cmddict)
 end
 
 function cmd_checklevel(cmddict)
+  if cmddict[1] == 'help' then
+    phelper:plugin_header('checklevel')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " checklevel <location> 'alt'")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "check and equip items that are not worn for your level")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) location is the keyword for the location from 'wearable'")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) the 'alt' keyword will equip a shield and/or held item instead of a dual weapon when using 'all'")  
+  end
+  local ti = nil
+  local wtype = nil
+  for i,v in ipairs(cmddict) do
+    if v == 'alt' then
+      ti = i
+      wtype = 'alt'
+    end
+  end
+  if ti then
+    table.remove(cmddict, ti)
+  end
   local level = tonumber(char.status.level) + (char.base.tier * 10)
   if cmddict[1] then
-    if cmddict[1] == 'all'  then
-      local wtype = nil
-      if cmddict[2] then
-        wtype = 'alt'
-      end
-      wearset(level, wtype)
-    else
-      wearloc = cmddict[1]
-      if not wearlocreverse[wearloc] then
-        phelper:plugin_header('checklevel')
-        ColourNote(RGBColourToName(phelper.plugin_colour), "black", "not a valid wearloc")
-        return      
-      end
-      local sitem = eqdb:getitembywearslot(wearlocreverse['second'])
-      local shitem = eqdb:getitembywearslot(wearlocreverse['shield'])
-      local hitem = eqdb:getitembywearslot(wearlocreverse['hold'])        
-      item = eqdb:getsetwearloc(wearloc, level)
-      if item then
-        wearitem(item, sitem, shitem, hitem)
-      end
+    wearloc = cmddict[1]
+    if not wearlocreverse[wearloc] then
+      phelper:plugin_header('checklevel')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "not a valid wearloc")
+      return      
+    end
+    local sitem = eqdb:getitembywearslot(wearlocreverse['second'])
+    local shitem = eqdb:getitembywearslot(wearlocreverse['shield'])
+    local hitem = eqdb:getitembywearslot(wearlocreverse['hold'])        
+    item = eqdb:getsetwearloc(wearloc, level)
+    if item then
+      wearitem(item, sitem, shitem, hitem)
     end
   else
-    phelper:plugin_header('checklevel')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " checklevel <location|'all'> 'alt'")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "check and equip items that are not worn for your level")  
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) location is the keyword for the location from 'wearable', or 'all' for all locations")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) the 'alt' keyword will equip a shield and/or held item instead of a dual weapon when using 'all'")
+    wearset(level, wtype)
   end
 end
 
@@ -659,10 +676,7 @@ function cmd_show(cmddict)
         end
       elseif not only then
         local doit = true
-        if optionallocs[actualslot] then
-          doit = false
-        end
-        if ((actualslot == 23 or actualslot == 26) and items[wearlocs[25]]) then
+        if actualslot == 28 or actualslot == 29 or actualslot == 8 or actualslot == 9 or actualslot == 10 or actualslot == 11 then
           doit = false
         end
         if doit then
