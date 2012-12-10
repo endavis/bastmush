@@ -376,6 +376,7 @@ for i,v in ipairs(damages) do
 end
 
 function parsedamageline(line)
+  timer_start('aardutils:parsedamageline')
   local ddict = {}
   tsplit = utils.split(line, ' ')
   ddict['hits'] = 1
@@ -405,6 +406,7 @@ function parsedamageline(line)
         break
       end
   end
+  timer_end('aardutils:parsedamageline')
   return ddict
 end
 
