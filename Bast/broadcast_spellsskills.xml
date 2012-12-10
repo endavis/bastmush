@@ -228,7 +228,7 @@ function spelltag_on (name, line, wildcards)
   spelltag.duration = tonumber (wildcards.time)
   spelltags = serialize.save_simple( spelltag )
   local bcastnum = -1
-  if name == 'affon' then
+  if name == 'affon' and spells['all'] then
     spells['affected'][tonumber(spelltag.sn)] = copytable.shallow(spells['all'][tonumber(spelltag.sn)])
     spells['affected'][tonumber(spelltag.sn)].duration = tonumber(spelltag.duration)
     spells['affected'][tonumber(spelltag.sn)].finish = GetInfo(304) + tonumber(spelltag.duration)
@@ -236,7 +236,7 @@ function spelltag_on (name, line, wildcards)
     local sliststr = serialize.save_simple( spells['affected'] )
     phelper:broadcast(bcastnum, sliststr, sliststr)
     bcastnum = 1
-  elseif name == 'recon' then
+  elseif name == 'recon' and recoveries['all'] then
     recoveries['affected'][tonumber(spelltag.sn)] = copytable.shallow(recoveries['all'][tonumber(spelltag.sn)])
     recoveries['affected'][tonumber(spelltag.sn)].duration = tonumber(spelltag.duration)
     recoveries['affected'][tonumber(spelltag.sn)].finish = GetInfo(304) + tonumber(spelltag.duration)
