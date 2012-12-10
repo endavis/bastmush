@@ -1304,14 +1304,14 @@ function EQdb:getolditemcontainer(serial, setname)
   end
 end
 
-function EQdb:checklevelsetitem(serial)
+function EQdb:checklevelsetitem(serial, level)
   timer_start('EQdb:checklevelitem')
   local found = false
-  if self:open('checklevelitem') then
-    for a in self.db:nrows("SELECT * FROM eqsets where serial = " .. tostring(serial) .. " and eqsetname = 'auto';" ) do
+  local titems = self:getlevelset(level)
+  for i,v in pairs(titems) do
+    if v.serial == serial then
       found = true
-    end      
-    self:close('checklevelitem')
+    end
   end
   timer_end('EQdb:checklevelitem') 
   return found
