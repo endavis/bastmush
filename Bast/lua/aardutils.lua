@@ -301,7 +301,8 @@ statabb = {
 }
 
   
-damage = {
+damages = {
+'misses',
 'tickles',
 'bruises',
 'scratches',
@@ -359,3 +360,120 @@ damage = {
 'does UNBELIEVABLE things to',
 }  
 
+local damagerev = {}
+for i,v in ipairs(damages) do
+  damagerev[v] = true
+end
+
+local damageforregex = {}
+for i,v in ipairs(damages) do
+  local dam = v
+  local chars = {'%', '[', '(', ')', '.', '+', '-', '*', '?', '^', '$'}
+  for cin,char in ipairs(chars) do
+    dam = string.gsub(dam, "%" .. char, "%%" .. char)
+  end 
+  damageforregex[dam] = i  
+end
+
+function parsedamageline(line)
+  local ddict = {}
+  tsplit = utils.split(line, ' ')
+  ddict['hits'] = 1
+  local thits = string.match(tsplit[1], '^%[(%d*)%]')
+  if thits then
+    ddict['hits'] = thits
+    table.remove(tsplit, 1)
+  end
+  if tsplit[1] == 'Your' then
+    table.remove(tsplit,1)
+  end
+  ddict['damage'] = 0
+  local tdam = string.match(tsplit[#tsplit], '^%[(%d*)%]')
+  if tdam then
+    ddict['damage'] = tdam
+    table.remove(tsplit, #tsplit)
+  end
+  local nline = strjoin(' ', tsplit)
+  for i,v in pairs(damageforregex) do
+      local regex = string.format('^(.*) (%s) (.*).', i)
+      local damtype, verb, enemy = string.match(nline, regex)
+      if damtype and verb and enemy then
+        found = true
+        ddict['damtype'] = damtype
+        ddict['damverb'] = damages[v]
+        ddict['enemy'] = enemy
+        break
+      end
+  end
+  return ddict
+end
+
+
+damtypes = {
+  'acidic bite',      
+  'air',     
+  'beating', 
+  'bite',    
+  'blast',   
+  'charge',  
+  'chill',
+  'chomp',   
+  'chop',    
+  'claw',    
+  'cleave',  
+  'crush',   
+  'decaying touch',  
+  'digestion',
+  'divine power',    
+  'drain',   
+  'earth',   
+  'flame',   
+  'flaming bite',    
+  'freezing bite',   
+  'friction',
+  'grep',    
+  'hit',
+  'light',
+  'life drain',
+  'magic',   
+  'mental energy',   
+  'mind force',       
+  'peck',
+  'pierce',  
+  'pound',   
+  'punch',   
+  'scratch', 
+  'shock',   
+  'shadow',  
+  'shocking bite',
+  'slap',    
+  'slash',   
+  'slice',   
+  'slime',   
+  'smash',   
+  'stab',    
+  'sting',
+  'suction', 
+  'Thrust',  
+  'thwack',  
+  'wail',    
+  'water blast',     
+  'whip',    
+  'wrath',
+}
+ 
+damtypesrev = {}
+for i,v in ipairs(damtypes) do
+  damtypesrev[v] = true
+end
+
+function checkcorrectwearlocation(itemwearloc, where)
+  if itemwearloc == where then
+    return true
+  elseif (where == 'second' or where == 'wielded') and itemwearloc == 'wield' then
+    return true
+  elseif string.find(where, itemwearloc) then
+    return true
+  end
+  return false
+end
