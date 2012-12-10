@@ -298,6 +298,21 @@ function Sqlitedb:converttoupdate(tablename, wherekey)
   return execstr
 end
 
+function Sqlitedb:runselect(selectstmt)
+  local result = {}
+  if self:open('runselect') then
+    local stmt = self.db:prepare(selectstmt)
+    if stmt then
+      for row in stmt:nrows() do
+        table.insert(result, row)
+      end
+    else
+      print('not valid', selectstmt)
+    end
+    self:close('runselect')
+  end
+  return result
+end
 
 function Sqlitedb:getlastrowid(ttable)
   local colid = self.tables[ttable].keyfield
