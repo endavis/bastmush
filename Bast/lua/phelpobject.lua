@@ -119,11 +119,13 @@ function Phelpobject:register_remote(id, eventname, callback, now)
     if not self.registered_events[id][eventname] then
       if now then
         CallPlugin(id, "registerevent", GetPluginID(), eventname, callback)
+      else
+       local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback .. '")'
+       DoAfterSpecial(2, cmd, 12)         
       end
     end
     self.registered_events[id][eventname] = {}
     self.registered_events[id][eventname]['callback']= callback
-    self.registered_events[id][eventname]['first']= first
   else
     print('use registerevent for local registration', id, eventname, callback)
   end
@@ -166,7 +168,16 @@ function Phelpobject:registerevent(tevent, object, tfunction, plugin)
   if self.events[tevent] == nil then
     self.events[tevent] = {}
   end
-  table.insert(self.events[tevent], {object=object, func=tfunction, plugin=plugin})
+  local found = false
+  for i,v in ipairs(self.events[tevent]) do
+    if v.object == object and v.func == tfunction and v.plugin == plugin then
+      print('found an event that already exists')
+      found = true
+    end
+  end
+  if not found then
+    table.insert(self.events[tevent], {object=object, func=tfunction, plugin=plugin})
+  end
 end
 
 function Phelpobject:processevent(tevent, args)
