@@ -349,14 +349,15 @@ function wearitem(item, sitem, shitem, hitem)
       ColourNote("", "", "")
       return
     end
-    local olditem = eqdb:getitembywearslot(wearlocreverse[item.wearloc])
+    local olditem = eqdb:getitembywearslot(wearlocreverse[item.wearloc])    
     if olditem.serial ~= item.serial then
       putobjectininv(item.serial)
       SendNoEcho('wear ' .. tostring(item.serial) .. ' ' .. item.wearloc)
       if next(olditem) then
         local container = eqdb:getolditemcontainer(olditem.serial)
         if container then
-          putobjectincontainer(olditem.serial, container)
+          olditem.containerid = 'Inventory'
+          putobjectincontainer(olditem, container)
         end
       end          
     end
