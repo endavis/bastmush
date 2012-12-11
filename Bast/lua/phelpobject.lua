@@ -169,14 +169,15 @@ function Phelpobject:registerevent(tevent, object, tfunction, plugin)
     self.events[tevent] = {}
   end
   local found = false
+  --print('registering', tevent, object, tfunction, plugin)
   for i,v in ipairs(self.events[tevent]) do
-    if v.object == object and v.func == tfunction and v.plugin == plugin then
-      print('found an event that already exists')
+    if not object and v.func == tfunction and v.plugin == plugin then
+      --print('found an event that already exists')
       found = true
     end
   end
   if not found then
-    table.insert(self.events[tevent], {object=object, func=tfunction, plugin=plugin})
+    table.insert(self.events[tevent], {object=object or {}, func=tfunction, plugin=plugin})
   end
 end
 

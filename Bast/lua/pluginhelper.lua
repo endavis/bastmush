@@ -1031,7 +1031,7 @@ function registerevent(pluginid, event, func)
   if phelper.showevents then
     print(GetPluginInfo(GetPluginID(), 1), "registered", pluginid, event, func)
   end
-  phelper:registerevent(event, {}, func, pluginid)
+  phelper:registerevent(event, nil, func, pluginid)
 end
 
 function unregisterevent(pluginid, event, func)
