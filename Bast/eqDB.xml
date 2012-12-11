@@ -200,7 +200,16 @@
 </timers>
 
 <aliases>
-
+  <alias
+   name="cpm"
+   match="^eqlu (.+)$"
+   enabled="y"
+   regexp="y"
+   sequence="100"
+   send_to="12"
+  >
+  <send>Execute(phelper.cmd .. " lu " .. "%1")</send>
+  </alias>
 </aliases>
 
 
@@ -361,11 +370,13 @@ function identify_redirect(name, line, wildcards, styles)
     --print('disabling identify')
     phelper:enabletriggroup('identify', false)
     togglehideoutput("n")
+    tprint(identdata)
     if identdata['note'] then
       local notel = identdata['note']
       identdata['note'] = {}
       table.insert(identdata['note'], strjoin(" ", notel))
     end
+    tprint(identdata)
     db:updateitemident(identdata)
     local invdetails = db:getitemdetails(identdata.id)
     phelper:processevent('itemchange', invdetails)
@@ -386,7 +397,11 @@ function identify_redirect(name, line, wildcards, styles)
   if line ~= "+-----------------------------------------------------------------+" then
     line = line:gsub("^| ", "")
     line = line:gsub(" |$", "")
-    if line:find(':') then
+    if line:match('^%s*Modifies (.*) by (.*)$') or line:match('^%s*Skill Mods : Modifies (.*) by (.*)$') then
+      --print('found skill mod')
+      -- Don't worry about skill mods, we get these from invdetails
+    
+    elseif line:find(':') then
       local tstuff = utils.split(line, ':')
       local tkey = trim(tstuff[1]:lower())
       local tkey = tkey:gsub(" ", "")
