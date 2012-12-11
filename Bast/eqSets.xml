@@ -336,8 +336,10 @@ end
 
 function putitem(item)
   local container = eqdb:getolditemcontainer(item.serial)
+  olditem = copytable.deep(item)
   if container then
-    putobjectincontainer(item.serial, container)
+    olditem.containerid = 'Inventory'
+    putobjectincontainer(olditem, container)
   end
 end
 
@@ -361,7 +363,12 @@ function wearitem(item, sitem, shitem, hitem)
         end
       end          
     end
+    --print('wearloc', item.wearloc)
+    --print('sitem', sitem)
+    --print('shitem', shitem)
+    --print('hitem', hitem)
     if item.wearloc == 'second' and (shitem or hitem) then
+      --print('wearloc second with shitem or hitem')
       if shitem then
         putitem(shitem)
       end
