@@ -501,11 +501,13 @@ function EQdb:addskillmod(item)
   if item.skillmod and next(item.skillmod) then
     self.db:exec("DELETE from skillmod where serial = " .. tostring(item.serial))
     local stmt = self.db:prepare(self:converttoinsert('skillmod', true, true))
+    --tprint(item.skillmod)
     for i,v in pairs(item.skillmod) do
+      --print('adding', i, v)
       local skillm = {}
       skillm['serial'] = item.serial
       skillm['skillnum'] = i
-      skillm['value'] = v
+      skillm['amount'] = v
       stmt:bind_names( skillm )
       stmt:step()
       stmt:reset()
