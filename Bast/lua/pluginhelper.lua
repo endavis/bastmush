@@ -1043,7 +1043,7 @@ function unregisterevent(pluginid, event, func)
   if phelper.showevents then
     print(GetPluginInfo(GetPluginID(), 1), "unregistered", pluginid, event, func)
   end
-  phelper:unregisterevent(event, {}, func, pluginid)
+  phelper:unregisterevent(event, nil, func, pluginid)
 end
 
 starttime = {}
