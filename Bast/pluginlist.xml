@@ -378,14 +378,15 @@ phelper:set_default('plugin_colour', 'red')
 
 phelper:add_setting("helpoutputtext", {help="true: all help text goes to output, false: opens miniwindow", type="bool", default=verify_bool("false"), sortlev=1, longname="All help goes to output window"})
 
-phelper:add_cmd('list', {func=cmd_list, help="list all plugins", default=true})
-phelper:add_cmd('phelp', {func=cmd_phelp, help="list plugins that are installed with pluginhelper"})
-phelper:add_cmd('reload', {func=cmd_reload, help='reload a plugin, "all" will reload all plugins, "<plugin> all" will reload all plugins that match <plugin>'})
-phelper:add_cmd('load', {func=cmd_load, help="load a plugin by name"})
-phelper:add_cmd('enable', {func=cmd_enable, help='enable a plugin, "all" will enable all plugins, "<plugin> all" will enable all plugins that match <plugin>'})
-phelper:add_cmd('disable', {func=cmd_disable, help='disable a plugin, "all" will disable all plugins, "<plugin> all" will disable all plugins that match <plugin>'})
-phelper:add_cmd('unload', {func=cmd_unload, help='unload a plugin'})
-phelper:add_cmd('loaddir', {func=cmd_loaddir, help="load all plugins in a specific dir"})
+phelper:add_cmd('list', {func=cmd_list, help="list all plugins", default=true, sortgroup="Obtaining information on plugins", prio=40})
+phelper:add_cmd('phelp', {func=cmd_phelp, help="list plugins that are installed with pluginhelper", sortgroup="Obtaining information on plugins", prio=40})
+
+phelper:add_cmd('reload', {func=cmd_reload, help='reload a plugin, "all" will reload all plugins, "<plugin> all" will reload all plugins that match <plugin>', sortgroup="Manipulating plugins", prio=50})
+phelper:add_cmd('load', {func=cmd_load, help="load a plugin by name, must match the exact case of the file without the .xml", sortgroup="Manipulating plugins", prio=51})
+phelper:add_cmd('unload', {func=cmd_unload, help='unload a plugin', sortgroup="Manipulating plugins", prio=52})
+phelper:add_cmd('enable', {func=cmd_enable, help='enable a plugin, "all" will enable all plugins, "<plugin> all" will enable all plugins that match <plugin>', sortgroup="Manipulating plugins", prio=53})
+phelper:add_cmd('disable', {func=cmd_disable, help='disable a plugin, "all" will disable all plugins, "<plugin> all" will disable all plugins that match <plugin>', sortgroup="Manipulating plugins", prio=54})
+phelper:add_cmd('loaddir', {func=cmd_loaddir, help="load all plugins in a specific dir", sortgroup="Manipulating plugins", prio=55})
 
 phelper:enable()
 
