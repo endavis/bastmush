@@ -190,8 +190,8 @@ function Phelpobject:processevent(tevent, args)
   for i,v in ipairs(self.events[tevent]) do
     if v.plugin then
       local targs = serialize.save_simple(args)
-      targs = string.gsub(targs, '%[%[', '\\[\\[')
-      targs = string.gsub(targs, '%]%]', '\\]\\]')
+      targs = string.gsub(targs, '%[%[', '[')
+      targs = string.gsub(targs, '%]%]', ']')
       --print('calling', v.plugin, v.func, targs)
       local funcstr = string.format("CallPlugin('%s', '%s', [[%s]])", tostring(v.plugin) ,tostring(v.func), targs)
       --print(funcstr)
