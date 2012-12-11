@@ -68,7 +68,7 @@ function formatdamage(damaget)
   local totald = 0
   local totalm = 0
   local totalh = 0
-  local bstring = "%-15s: Hits: %-4d  Damage: %-6d  Misses: %-4d  Per Hit: %-4.2f" 
+  local bstring = "%-20s: Hits: %-4d  Damage: %-6d  Misses: %-4d  Per Hit: %-4.2f" 
   for i,v in pairs(damaget['damage']) do
     if i ~= 'enemy' and i ~= 'starttime' and i ~= 'finishtime' then
       totald = totald + v['damage']
