@@ -370,13 +370,13 @@ function identify_redirect(name, line, wildcards, styles)
     --print('disabling identify')
     phelper:enabletriggroup('identify', false)
     togglehideoutput("n")
-    tprint(identdata)
+    --tprint(identdata)
     if identdata['note'] then
       local notel = identdata['note']
       identdata['note'] = {}
       table.insert(identdata['note'], strjoin(" ", notel))
     end
-    tprint(identdata)
+    --tprint(identdata)
     db:updateitemident(identdata)
     local invdetails = db:getitemdetails(identdata.id)
     phelper:processevent('itemchange', invdetails)
