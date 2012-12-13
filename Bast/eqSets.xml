@@ -580,6 +580,26 @@ function cmd_clear(cmddict)
   end
 end
 
+function cmd_noset(cmddict)
+  if cmddict[1] == 'help' then
+    phelper:plugin_header('noset')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " noset")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show items that are not in a set")  
+  end
+  local items = eqdb:runselect('select * from items where type = 1 or type = 5 or type = 7 ORDER by containerid')
+  local setitems = eqdb:runselect('select * from eqsets', 'serial')
+  local noset = {}
+  for i,v in pairs(items) do
+    if not setitems[v.serial] then
+      noset[v.serial] = v
+    end
+  end
+  for i,v in tableSort(noset, 'containerid', 'Inventory', true) do
+    TextToColourTell(string.format('[%-11s] [%-11s] %s', tostring(v.serial), v.containerid, v.cname))
+    ColourNote( "", "", "" )   
+  end
+end
+
 function cmd_diff(cmddict)
   if cmddict[1] and cmddict[2] then
     local set1 = cmddict[1]
@@ -930,6 +950,7 @@ phelper:add_cmd('wearset', {func=cmd_wearset, help="wear a set", sortgroup="Wear
 phelper:add_cmd('show', {func=cmd_show, help="show the eq for a set", sortgroup="Obtaining info about a set", prio=46})
 phelper:add_cmd('stats', {func=cmd_getstats, help="get the stats for a set", sortgroup="Obtaining info about a set", prio=47})
 phelper:add_cmd('diff', {func=cmd_diff, help="diff two sets", sortgroup="Obtaining info about a set", prio=48})
+phelper:add_cmd('noset', {func=cmd_noset, help="show items that are not in sets", sortgroup="Obtaining info about a set", prio=49})
 
 phelper:add_cmd('getset', {func=cmd_getset, help="get all items for a set and put them in inventory (or leave them worn if already worn)", sortgroup="Manipulating items in a set", prio=49})
 phelper:add_cmd('putset', {func=cmd_putset, help="put all items for a set into their targetted container", sortgroup="Manipulating items in a set", prio=50})
