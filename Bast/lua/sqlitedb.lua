@@ -298,13 +298,17 @@ function Sqlitedb:converttoupdate(tablename, wherekey)
   return execstr
 end
 
-function Sqlitedb:runselect(selectstmt)
+function Sqlitedb:runselect(selectstmt, keyword)
   local result = {}
   if self:open('runselect') then
     local stmt = self.db:prepare(selectstmt)
     if stmt then
       for row in stmt:nrows() do
-        table.insert(result, row)
+        if keyword then
+          result[row[keyword]] = row
+        else
+          table.insert(result, row)
+        end
       end
     else
       print('not valid', selectstmt)
