@@ -263,7 +263,7 @@ function Statdb:savewhois(whoisinfo)
       whoisinfo.milestone = 'current'
       whoisinfo.time = 0
       whoisinfo.totaltrivia = 0
-      local stmt = self.db:prepare(self:converttoinsert('stats'))
+      local stmt = self.db:prepare(self:converttoinsert('stats'), true)
       stmt:bind_names(  whoisinfo  )
       stmt:step()
       stmt:finalize()
@@ -272,7 +272,13 @@ function Statdb:savewhois(whoisinfo)
     else
       assert (self.db:exec("BEGIN TRANSACTION"))
       whoisinfo['milestone'] = 'current'
-      local stmt = self.db:prepare(self:converttoupdate('stats', 'milestone'))
+      whoisinfo['time'] = 0
+      local nokey = {}
+      nokey['stat_id'] = true
+      nokey['totaltrivia'] = true
+      local sqlstmt = self:converttoupdate('stats', 'milestone', nokey)
+      --print(sqlstmt)
+      local stmt = self.db:prepare(sqlstmt)
       stmt:bind_names(  whoisinfo  )
       stmt:step()
       stmt:finalize()
