@@ -281,16 +281,18 @@ function Sqlitedb:converttoinsert(tablename, keynull, replace)
   return execstr
 end
 
-function Sqlitedb:converttoupdate(tablename, wherekey)
+function Sqlitedb:converttoupdate(tablename, wherekey, nokey)
   local execstr = nil
   local columns = {}
   if self.tables[tablename] then
     local columns, columnsbykeys = self:getcolumnsfromsql(tablename)
     local sqlstr = {}
     for i,v in pairs(columns) do
-       if v ~= wherekey then
-         table.insert(sqlstr, v .. ' = :' .. v)
-       end
+      if v == wherekey or (nokey and nokey[v]) then
+        -- don't put anything into the table
+      else
+        table.insert(sqlstr, v .. ' = :' .. v)
+      end
     end
     colstring = strjoin(',', sqlstr)
     execstr = string.format("UPDATE %s SET %s WHERE %s = :%s;", tablename, colstring, wherekey, wherekey)
