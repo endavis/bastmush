@@ -1037,28 +1037,38 @@ end
 function cmd_eqgetitem(cmddict)
   --print('showitem')
   --tprint(cmddict)
-  if cmddict[1] then
-    for i,v in ipairs(cmddict) do
-      local titem = db:getitemdetails(v)
-      if titem and titem.keywords then
-        print_itemid(titem)
-      else
-        local nitem = db:getitem(v)
-        if nitem then
-          itemstoprint[nitem.serial] = true
-          waitingforid[nitem.serial] = true
-          --print('getting an item')
-          getitemdetails(nitem.serial)
-        else
-          ColourNote(RGBColourToName(var.plugin_colour), "black", "You do not have that item")
-        end
-      end
-    end
-  else
+  if cmddict[1] == help or not cmddict[1] then
     phelper:plugin_header('getitem')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " getitem <serial> ")    
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "get item details from the database")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item, can be multipe of these arguments")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the serial number of the item, can be multipe of these arguments")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) if the keyword 'nodb' is used, the item will be reidentified from the mud")    
+    return
+  end
+  local nodb = false
+  if string.match(cmddict.line, '.*nodb.*') then
+    --print('setting nodb to true')
+    nodb = true
+  end
+  if cmddict[1] then
+    for i,v in ipairs(cmddict) do
+      if v ~= 'nodb' then
+        local titem = db:getitemdetails(v)
+        if titem and titem.keywords and not nodb then
+          print_itemid(titem)
+        else
+          local nitem = db:getitem(v)
+          if nitem or nodb then
+            --itemstoprint[nitem.serial] = true
+            --waitingforid[nitem.serial] = true
+            --print('getting an item')
+            getitemdetails(nitem.serial, nodb, true)
+          else
+            ColourNote(RGBColourToName(var.plugin_colour), "black", "You do not have that item")
+          end
+        end
+      end
+    end
   end
 end
 
