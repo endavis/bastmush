@@ -62,24 +62,6 @@ idwin:set_default('maxlines', 30)
 idwin:set_default("maxtabs", 5)
 idwin:set_default("windowpos", 12)
 
-flags = {'K', 'G', 'H', 'I'}
-
-flagcolours = {
- K = 'red',
--- M = 'blue',
- G = 'white',
- H = 'cyan',
- I = 'lightgray',
-}
-
-flagname = {
- K = 'kept',
--- M = 'magic',
- G = 'glow',
- H = 'hum',
- I = 'invis',
-}
-
 eqdbcmd = nil
 detailswaiting = {}
 
