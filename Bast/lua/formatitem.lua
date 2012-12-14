@@ -4,6 +4,25 @@ require "colours"
 require "bastspell"
 require "aardutils"
 
+
+flags = {'K', 'G', 'H', 'I'}
+
+flagcolours = {
+ K = 'red',
+-- M = 'blue',
+ G = 'white',
+ H = 'cyan',
+ I = 'lightgray',
+}
+
+flagname = {
+ K = 'kept',
+-- M = 'magic',
+ G = 'glow',
+ H = 'hum',
+ I = 'invis',
+}
+
 local divider = '+-----------------------------------------------------------------+'
 
 function formatsingleline(linename, linecolour, data, datacolour)
