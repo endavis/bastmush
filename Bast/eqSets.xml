@@ -71,6 +71,15 @@ flagname = {
  I = 'invis',
 }
 
+eqdbcmd = nil
+
+function runeqdbcmd(cmd)
+  if eqdbcmd == nil or eqdbcmd == '' then
+    eqdbcmd = GetPluginVariable("aaa56faed92ffc6146964abc", 'cmd')
+  end
+  Execute(eqdbcmd .. " " .. cmd)
+end
+
 function cmd_close(cmddict)
   eqdb:close('cmd_close', true)
 end
@@ -101,14 +110,15 @@ function figureaddtosetargs(args)
     else
       local targ = tonumber(v)
       if not targ then
-        -- either container keyword or wearloc, or setname (for now wearloc)
+        --print('-- either container keyword or wearloc, or setname')
         local titem = eqdb:getitem(v)
-        if titem then
-          targs['container'] = tonumber(v)
-          found = true
-        elseif wearlocreverse[v] then
+        if wearlocreverse[v] then
           --print('wearloc for arg ' .. tostring(v))      
           targs['wearloc'] = v
+          found = true
+        elseif titem then
+          --print('container for arg', tostring(v))
+          targs['container'] = tonumber(v)
           found = true
         else
           --print('setname for arg ' .. tostring(v))      
@@ -396,7 +406,7 @@ function wearset(setname, wtype)
   else
     dont['second'] = 1
   end
-  for i,v in pairs(eqdb:getset(setname)) do
+  for i,v in tableSort(eqdb:getset(setname), nil, nil, true) do
     if not dont[v.wearloc] then
       wearitem(v, sitem, shitem, hitem)
     end
@@ -583,10 +593,16 @@ end
 function cmd_noset(cmddict)
   if cmddict[1] == 'help' then
     phelper:plugin_header('noset')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " noset")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " noset <containerid>")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show items that are not in a set")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) the container to check") 
   end
-  local items = eqdb:runselect('select * from items where type = 1 or type = 5 or type = 7 ORDER by containerid')
+  local sqlstmt = 'select * from items where type = 1 or type = 5 or type = 7 ORDER by containerid'
+  if cmddict[1] then
+    sqlstmt = string.format('select * from items where (type = 1 or type = 5 or type = 7) and containerid = "%s" ORDER by containerid', tostring(cmddict[1]))
+  end
+  print(sqlstmt)
+  local items = eqdb:runselect(sqlstmt)
   local setitems = eqdb:runselect('select * from eqsets', 'serial')
   local noset = {}
   for i,v in pairs(items) do
@@ -595,8 +611,86 @@ function cmd_noset(cmddict)
     end
   end
   for i,v in tableSort(noset, 'containerid', 'Inventory', true) do
-    TextToColourTell(string.format('[%-11s] [%-11s] %s', tostring(v.serial), v.containerid, v.cname))
+    TextToColourTell(string.format('[%-11s] [%-11s] [%4s] %s', tostring(v.serial), v.containerid, v.level, v.cname))
     ColourNote( "", "", "" )   
+  end
+end
+
+function compitem(item)
+  local ditem = eqdb:getitemdetails(item)
+  local set = eqdb:getset(ditem.level)
+  local item1 = nil
+  local item2 = nil
+  local lstyle1 = {}
+  local lstyle2 = {}
+  if set[ditem.wearable] then
+    item1 = set[ditem.wearable]
+  elseif ditem.wearable == 'ear' then
+    item1 = set['lear']
+    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['lear']})
+    item2 = set['rear']
+    lstyle2 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['rear']})
+  elseif ditem.wearable == 'neck' then
+    item1 = set['neck1']
+    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['neck1']})
+    item2 = set['neck2']
+    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['neck2']})
+  elseif ditem.wearable == 'wrist' then
+    item1 = set['lwrist']
+    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['lwrist']})
+    item2 = set['rwrist']
+    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['rwrist']})
+  elseif ditem.wearable == 'finger' then
+    item1 = set['lfinger']
+    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['lfinger']})
+    item2 = set['rfinger']
+    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['rfinger']})
+  elseif ditem.wearable == 'wield' then
+    item1 = set['wielded']
+    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['wielded']})
+    item2 = set['second']
+    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['second']})
+  end
+  if item1 or item2 then
+    local cmd = 'comp ' .. tostring(ditem.serial)
+    local msg = {}
+    print('Comparing')
+    if item1 then
+      local titem = eqdb:getitem(item1.serial)
+      titem.wearslot = wearlocreverse[item1.wearloc]
+      lstyle1 = buildwornitem(titem)
+      cmd = cmd .. ' ' .. item1.serial
+    end
+    table.insert(msg, StylesToColoursOneLine(lstyle1))
+    if item2 then
+      local titem = eqdb:getitem(item2.serial)
+      titem.wearslot = wearlocreverse[item2.wearloc]
+      lstyle2 = buildwornitem(titem)
+      cmd = cmd .. ' ' .. item2.serial
+    end
+    table.insert(msg, StylesToColoursOneLine(lstyle2))
+    display(msg)
+    runeqdbcmd(cmd)            
+  else
+    print('nothing in the set to compare to')
+  end
+end
+
+function cmd_compitem(cmddict)
+  if cmddict[1] == 'help' or not cmddict[1] then
+    phelper:plugin_header('compitem')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " compitem <serial>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "compare an item to what is worn in the level set for the wear location")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) the serial number of the item")  
+    return
+  end
+  local item = tonumber(cmddict[1])
+  local ditem = eqdb:getitemdetails(item)
+  if not ditem or (ditem and not ditem['score']) then
+    CallPlugin("aaa56faed92ffc6146964abc", "getitemdetails", item, true, true)    
+    DoAfterSpecial(5, 'compitem(' .. tostring(item) .. ')', 12)
+  else
+    compitem(ditem.serial)
   end
 end
 
@@ -951,9 +1045,10 @@ phelper:add_cmd('show', {func=cmd_show, help="show the eq for a set", sortgroup=
 phelper:add_cmd('stats', {func=cmd_getstats, help="get the stats for a set", sortgroup="Obtaining info about a set", prio=47})
 phelper:add_cmd('diff', {func=cmd_diff, help="diff two sets", sortgroup="Obtaining info about a set", prio=48})
 phelper:add_cmd('noset', {func=cmd_noset, help="show items that are not in sets", sortgroup="Obtaining info about a set", prio=49})
+phelper:add_cmd('compitem', {func=cmd_compitem, help="compare an item to a set", sortgroup="Obtaining info about a set", prio=50})
 
-phelper:add_cmd('getset', {func=cmd_getset, help="get all items for a set and put them in inventory (or leave them worn if already worn)", sortgroup="Manipulating items in a set", prio=49})
-phelper:add_cmd('putset', {func=cmd_putset, help="put all items for a set into their targetted container", sortgroup="Manipulating items in a set", prio=50})
+phelper:add_cmd('getset', {func=cmd_getset, help="get all items for a set and put them in inventory (or leave them worn if already worn)", sortgroup="Manipulating items in a set", prio=60})
+phelper:add_cmd('putset', {func=cmd_putset, help="put all items for a set into their targetted container", sortgroup="Manipulating items in a set", prio=61})
 
 phelper:add_cmd('close', {func=cmd_close, help="close the db", sortgroup="Misc", prio=51})
 
