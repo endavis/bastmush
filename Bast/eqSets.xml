@@ -53,24 +53,6 @@ char = nil
 olddict = {}
 olditem = {}
 
-flags = {'K', 'G', 'H', 'I'}
-
-flagcolours = {
- K = 'red',
--- M = 'blue',
- G = 'white',
- H = 'cyan',
- I = 'lightgray',
-}
-
-flagname = {
- K = 'kept',
--- M = 'magic',
- G = 'glow',
- H = 'hum',
- I = 'invis',
-}
-
 eqdbcmd = nil
 
 function runeqdbcmd(cmd)
@@ -1048,7 +1030,7 @@ phelper:add_cmd('noset', {func=cmd_noset, help="show items that are not in sets"
 phelper:add_cmd('compitem', {func=cmd_compitem, help="compare an item to a set", sortgroup="Obtaining info about a set", prio=50})
 
 phelper:add_cmd('getset', {func=cmd_getset, help="get all items for a set and put them in inventory (or leave them worn if already worn)", sortgroup="Manipulating items in a set", prio=60})
-phelper:add_cmd('putset', {func=cmd_putset, help="put all items for a set into their targetted container", sortgroup="Manipulating items in a set", prio=61})
+phelper:add_cmd('putset', {func=cmd_putset, help="put all items for a set into their target container", sortgroup="Manipulating items in a set", prio=61})
 
 phelper:add_cmd('close', {func=cmd_close, help="close the db", sortgroup="Misc", prio=51})
 
