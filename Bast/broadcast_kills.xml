@@ -59,7 +59,24 @@ xBroadcast_Kills : Broadcast 1
 
 
 <!--  Get our standard constants -->
+<!-- Dodges
+A beaver dodges your attack.
+A beaver parries your attack.
+Courtnay d'Assini counter-strikes your attack!
+A giant lizard blinks out of existence avoiding your attack.
+Ayla's holy rift protects a human prisoner from your attack.
+A large bat fiddles with time and your attack is just a few seconds slow.
+A ghoulish creature blends in perfectly causing you to hit nothing but air.
+The solemn knight blocks your attack with his shield.
 
+You dodge a beaver's attack.
+You misdirect a beaver's attack.
+You create a time shift and calmly step away from a beaver's attack.
+You get lucky and manage to escape a giant lizard's attack.
+Ayla's holy rift protects you from A mangled person's attack.
+You sense divine intervention as a Giant Shark's attack narrowly misses you.
+
+ -->
 <include name="constants.lua"/>
 
 <triggers>
@@ -434,7 +451,7 @@ function damage(name, line, wildcards)
   if not kill_info['starttime'] then
     kill_info['starttime'] = GetInfo(304)  
   end
-  if tdam['enemy'] and  tdam['enemy'] ~= kill_info.name then
+  if tdam['enemy'] and kill_info.name ~= '' and tdam['enemy'] ~= kill_info.name then
     if not mobdamcache[tdam['enemy']] then
       mobdamcache[tdam['enemy']] = {}
     end
