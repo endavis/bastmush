@@ -775,9 +775,7 @@ function cmd_show(cmddict)
       end
       local lstyles = {}
       if titem then
-        if titem.wearslot == -1 then
-          titem.wearslot = i
-        end
+        titem.wearslot = i
         if not only or (only and titem.level == tonumber(cmddict[1])) then
           lstyles = buildwornitem(titem)
         end
