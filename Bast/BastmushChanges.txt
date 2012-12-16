@@ -1,5 +1,37 @@
 Bastmush Changes List
 
+r2031 snapshot
+  - General
+     - new: sqlite changes to make sqlite3 databases easier to work with
+     - new: all commands are now sorted and grouped when looking at help
+  - notes.xml
+     - new: plugin to create notes, both for rooms, areas, keywords
+  - eqSets.xml
+     - new: plugin to create item sets by both level and names
+  - combattracker.xml
+     - new: plugin for a basic damage tracker per fight
+  - lua/chardb.lua+broadcast_gq.xml
+     - new: add completed column to gquests
+  - bast_spellup
+     - bug fix: don't try to cast spells when we haven't seen an slist
+     - new: auto practice spells in the list, look at "bsp set" for the two
+         variables to use
+  - areaDB.xml
+     - new: move all areaDB_lookup functions into areaDB
+  - eqDB.xml
+     - new: move all eqLookup functions into eqDB, look at "eqdb help"
+     - new: the identify command can be overloaded, look at "eqdb set"
+         and the overloadid variable
+  - pluginlist.xml
+     - new: show total memory used when printing plugins
+  - lua/aardutils.lua
+     - new: add damage verbs, and damagetypes
+  - miniwin_moons.xml
+     - bug fix: use DoAfterSpecial to print moons up message
+  - broadcast_kills.xml
+     - new: add damage to the broadcast
+     - new: ability to set colours for instakill spells, see "bkill set"
+
 r1874 snapshot
   - broadcast_gq
      - bug fix: will now work if you finish an extended gquest, but not all
