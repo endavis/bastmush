@@ -1256,6 +1256,12 @@ function OnPluginInstall ()
     DoAfterSpecial(2, "plugins unload aaa66caed92ffc6146964abc", 10)
     return
   end
+
+  if IsPluginInstalled("aaa7dc9ed92ffc6146964abc") then
+    ColourNote("red", "black", "broadcast_invmon will nolonger be needed")
+    DoAfterSpecial(2, "plugins unload aaa7dc9ed92ffc6146964abc", 10)
+    return
+  end
   
   phelper:OnPluginInstall()
 end -- OnPluginInstall
