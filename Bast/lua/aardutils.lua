@@ -358,6 +358,7 @@ damages = {
 'does UNTHINKABLE things to',
 'does UNIMAGINABLE things to',
 'does UNBELIEVABLE things to',
+'pimpslaps'
 }  
 
 local damagerev = {}
