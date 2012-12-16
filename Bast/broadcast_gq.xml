@@ -278,7 +278,7 @@ Global Quest: No active players remaining, global quest is now over.
   <trigger
    enabled="n"
    match="*"
-   name="nextaftercomp"
+   name="catchall"
    script="nextafterfinish"
    group="getnextline"
    sequence="101"

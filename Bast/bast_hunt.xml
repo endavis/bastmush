@@ -30,6 +30,7 @@
     script="where"
     group="where"
     regexp="n"
+    name="catchall"
     >
   </trigger>
 

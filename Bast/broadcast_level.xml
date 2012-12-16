@@ -142,7 +142,7 @@ Broadcasts
   <trigger
    enabled="n"
    match="*"
-   name="finishlevel"
+   name="catchall"
    script="levbonus"
    group="linfo"
    sequence="101"
@@ -312,7 +312,7 @@ function levbonus (name, line, wildcards)
     levelinfo.blessingtrains = tonumber(wildcards[1])
   elseif name == "bonusstat" then
     levelinfo[string.lower(string.sub(wildcards[1], 1, 3))] = 1
-  elseif name == "finishlevel" and trim(line) == "" and tonumber(levelinfo.trains) > 0 then
+  elseif name == "catchall" and trim(line) == "" and tonumber(levelinfo.trains) > 0 then
     phelper:enabletriggroup( "linfo", false )
     var.levelinfo = serialize.save( "levelinfo", levelinfo )
     phelper:broadcast(1, var.levelinfo)
