@@ -63,7 +63,17 @@ bsp help    --> this message
 
 <!--  Triggers  -->
 <triggers>
-
+  
+  <trigger
+   enabled="y"
+   match="^There is nobody here to help you practice.$"
+   name="lefttrainer"
+   script="notrainer"
+   sequence="100"
+   regexp="y"
+   omit_from_output="n"
+  >
+  </trigger>  
 
 </triggers>
 
@@ -1237,6 +1247,13 @@ function hasarg(spell)
   return false
 end
 
+function notrainer(name, line, wildcards)
+  if practicing ~= -1 then
+    practicing = -1
+    phelper:unregister_remote("aaa72f3b5453567e2bba9d50", "skillprac", "onskillgain", true)  
+  end
+end
+
 function onskillgain(args)
   local targs = assert (loadstring ('return ' .. args or ""))()
   --tprint(targs)
@@ -1246,6 +1263,7 @@ function onskillgain(args)
     practicing = -1
     --print('unregistering because I am done practicing', targs.sn)
     phelper:unregister_remote("aaa72f3b5453567e2bba9d50", "skillprac", "onskillgain", true)
+    nextspellup('skillprac')
   elseif practicing == tonumber(targs.sn) and char.worth then
     char.worth.pracs = tonumber(char.worth.pracs) - 1
     SendNoEcho('practice ' .. tostring(practicing))
