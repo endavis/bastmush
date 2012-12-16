@@ -49,6 +49,7 @@ end
    regexp="y"
    omit_from_output="y"
    group="areareg"
+   name="catchall"
   >
   </trigger>
   <trigger
