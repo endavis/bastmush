@@ -7,7 +7,7 @@
    author="Bast"
    id="aaa56faed92ffc6146964abc"
    language="Lua"
-   purpose="add eq to a database"
+   purpose="add eq to a database and manage inventory"
    save_state="y"
    date_written="2009-02-22 14:20:07"
    requires="4.73"
@@ -16,10 +16,16 @@
 
 <description trim="y">
 <![CDATA[
-[FOR PLUGIN AUTHORS ONLY]
-
-#TODO: container changes when getting/removing
-
+when you override the inventory command (also works with l i <container>)
+inv can have several arguments
+ : a single level (inv 100) - will show any items level 100 or above
+ : two levels (inv 1 100) - will show any items from level 1 to level 100
+ : "nog" - don't group items
+ : an item type: such as weapon, armor, container, food, etc see "eqdb translate objecttypes"
+ : a word: the items shortname will contain this word
+ : a sort field: +level, -level will sort by level
+ 
+If you override the inventory commands on the mud, you can type the full command to bypass eqdb
 ]]>
 </description>
 </plugin>
@@ -1046,7 +1052,7 @@ function cmd_eqgetitem(cmddict)
     return
   end
   local nodb = false
-  if string.match(cmddict.line, '.*nodb.*') then
+  if not cmddict.fromid and string.match(cmddict.line, '.*nodb.*') then
     --print('setting nodb to true')
     nodb = true
   end
@@ -1081,7 +1087,7 @@ function cmd_eqcomp(cmddict)
     for i,v in ipairs(cmddict) do
       local titem = db:getitemdetails(v)
       local tstyle = string.format('%-15s', string.sub(titem.name, 1, 15)) .. string.format(' @C%-5s@w ', titem.score)
-      tstyle = tstyle .. formatstats(titem.statmod)
+      tstyle = tstyle .. formatstats(titem.statmod or {})
       TextToColourTell(tstyle)
       ColourNote("", "", "")
     end
@@ -1224,6 +1230,81 @@ end
 function aftershowset()
   toggleoutput(phelper.showoutput)
 end
+
+function parse_inv_args(args)
+  local extras = {}
+  extras['levels'] = {}
+  extras['otype'] = {}
+  extras['name'] = {}
+  extras['sort'] = {}
+  extras['group'] = phelper.groupitems
+  extras['flags'] = true
+  extras['serial'] = false
+  extras['score'] = false
+  if not args then
+    return extras
+  end
+  for i,v in ipairs(args) do
+    if objecttypesrev[v] then
+      table.insert(extras['otype'], v)
+    elseif tonumber(v) then
+      table.insert(extras['levels'], v)
+    elseif string.find(v, '-') then
+      local field = string.sub(v, 2, #v)
+      if db.tables['items'].columnsbykeys[field] then
+        extras['sort']['dir'] = 'DESC'
+        extras['sort']['field'] = string.sub(v, 2, #v)
+      end
+    elseif string.find(v, '+') then
+      local field = string.sub(v, 2, #v)
+      if db.tables['items'].columnsbykeys[field] then
+        extras['sort']['dir'] = 'ASC'
+        extras['sort']['field'] = string.sub(v, 2, #v)
+      end
+    elseif v == 'nog' or v == 'nogroup' then
+      extras['group'] = false
+    elseif v == 'group' then
+      extras['group'] = true
+    elseif v == 'serial' then
+      extras['serial'] = true
+    elseif v == 'score' then
+      extras['score'] = true
+    elseif v == 'nof' or v == 'noflags' then
+      extras['flags'] = false
+    else
+      table.insert(extras['name'], v)
+    end
+  end
+  --tprint(extras)
+  return extras
+end
+
+--default_filter = {filtercol='place', reverse=false}
+function show_container(container, args)
+ 
+  local extras = parse_inv_args(args)
+  extras['table'] = 'items'
+  extras['containerid'] = container
+  extras['sql'] = db:buildsql(extras)
+  groupitems = extras['group']
+  local header = ''
+  local items = {}
+  if container == 'Worn' then
+    header, items = buildwornoutput(db, container, extras)  
+    ColourNote("white", "", "You are using:")
+  else
+    extras['serial'] = true
+    header, items = buildcontainer(db, container, extras)
+  end
+  TextToColourTell(header)
+  ColourNote("", "", "")
+  ColourNote("blue", "", string.rep('-', 80))
+  for i,v in ipairs(items) do
+    TextToColourTell(v)
+    ColourNote("", "", "")
+  end   
+  ColourNote("", "", "")  
+end
 ]]>
 </script>
 
@@ -1324,8 +1405,10 @@ wearpeg = (P("wea") * -P(1)) + (P("wear") * -P(1))
 getpeg = (P("g") * -P(1)) + (P("ge") * -P(1)) + (P("get") * -P(1))
 putpeg = (P("pu") * -P(1)) + (P("put") * -P(1))
 lookpeg = (P("l") * -P(1)) + (P("lo") * -P(1)) + (P("loo") * -P(1)) + (P("look") * -P(1))
-removepeg = (P("re") * -P(1)) + (P("rem") * -P(1)) + (P("remo") * -P(1)) + (P("remov") * -P(1)) + (P("remove") * -P(1))
-identpeg = (P("id") * -P(1)) + (P("ide") * -P(1)) + (P("iden") * -P(1)) + (P("ident") * -P(1)) + (P("identi") * -P(1)) + (P("identif") * -P(1)) + (P("identify") * -P(1))
+removepeg = (P("re") * -P(1)) + (P("rem") * -P(1)) + (P("remo") * -P(1)) + (P("remov") * -P(1))
+identpeg = (P("id") * -P(1)) + (P("ide") * -P(1)) + (P("iden") * -P(1)) + (P("ident") * -P(1)) + (P("identi") * -P(1)) + (P("identif") * -P(1))
+inventorypeg = (P("i") * -P(1)) + (P("in") * -P(1)) + (P("inv") * -P(1)) + (P("inve") * -P(1)) + (P("inven") * -P(1)) + (P("invent") * -P(1)) + (P("invento") * -P(1))  + (P("inventor") * -P(1))
+eqpeg = (P("eq") * -P(1)) + (P("equ") * -P(1)) + (P("equi") * -P(1)) + (P("equip") * -P(1)) + (P("equipm") * -P(1)) + (P("equipme") * -P(1)) + (P("equipmen") * -P(1))
 alldotpeg = (P("all") * P(".") * P(1)^1) + (P("all") * P(".") * -P(1))
 inpeg = (P("i") * -P(1)) + (P("in") * -P(1))
 
@@ -1333,7 +1416,7 @@ function OnPluginSend (sText)
   if char and char.status and tonumber(char.status.state) == 5 then
     return true
   end
-
+  showoutput('Original Cmd: ' .. sText) 
   timer_start('eqDB:OnPluginSend')
   local cmd = parse_cmdline(string.lower(sText))
   if not cmd[1] then
@@ -1346,7 +1429,9 @@ function OnPluginSend (sText)
   local wearp = false
   local lookp = false
   local identp = false
+  local inventoryp = false
   local inp = false
+  local eqp = false
   local alldotp = false
 
   if lpeg.match(getpeg, string.lower(cmd[1])) ~= nil then
@@ -1366,6 +1451,12 @@ function OnPluginSend (sText)
   elseif lpeg.match(lookpeg, string.lower(cmd[1])) ~= nil then
     --print('setting lookp')
     lookp = true
+  elseif lpeg.match(inventorypeg, string.lower(cmd[1])) ~= nil then
+    --print('setting inventoryp')
+    inventoryp = true    
+  elseif lpeg.match(eqpeg, string.lower(cmd[1])) ~= nil then
+    --print('setting eqp')
+    eqp = true 
   elseif lpeg.match(removepeg, string.lower(cmd[1])) ~= nil then
     --print('setting removep')
     removep = true
@@ -1392,67 +1483,118 @@ function OnPluginSend (sText)
   end
 
   local changed = false
-
-  if getp or putp or lookp or wearp or removep or identp then
-    showoutput('Original Cmd: ' .. sText)  
-    --print('looking for identifiers')
-    local ncmd = cmd[1]
-    local item = cmd[2]
-    local cont = cmd[3]
-
-    if item == 'all.' then
-      item = 'all.' .. "'" .. tostring(cmd[3]) .. "'"
-      cont = cmd[4]
-    end
+  local ncmd = cmd[1]
+  local item = cmd[2]
+  local cont = cmd[3]
+    
+  if inventoryp and item ~= 'filter' and phelper.overloadinventory then
+    table.remove(cmd, 1)
+    --print('overloading inventory')
+    show_container('Inventory', cmd)
+    return false
+  elseif eqp and phelper.overloadinventory then
+    --print('overloading equipment')
+    table.remove(cmd, 1)
+    show_container('Worn', cmd)
+    return false
+  -- wear and remove
+  elseif wearp or removep then
     local nitem = db:getitem(item)
-    local citem = nil
-    if cont then
-      citem = db:getitem(cont)
-    end
-    if item and nitem then
+    
+    if item and nitem and nitem.serial ~= tonumber(item) then
       ncmd = ncmd .. ' ' .. tostring(nitem.serial)
       changed = true
-      if identp and phelper.overloadid and not waitingforid[nitem.serial] then
+      if cmd[3] then
+        ncmd = ncmd .. ' ' .. fixarg(tostring(ncmd[3]))
+      end
+    end
+    
+  -- identify
+  elseif identp then  
+    local nitem = db:getitem(item)
+    
+    if item and nitem and phelper.overloadid and not waitingforid[nitem.serial] then
         cmd_eqgetitem({[1]=nitem.serial,fromid=true})
-        --SendNoEcho('invdetails ' .. tostring(nitem.serial))
-        --print('enabling identify')
-        --phelper:enabletriggroup('identify', true)
         return false
-      end
-    elseif item then
-      ncmd = ncmd .. ' ' .. fixarg(item)
-    end
-    if citem then
-      ncmd = ncmd .. ' ' .. tostring(citem.serial)
+    elseif item and nitem and nitem.serial ~= tonumber(item) then
+      ncmd = ncmd .. ' ' .. tostring(nitem.serial)
       changed = true
-    else
-      if not wearp and not removep then
-        if nitem then
-          if nitem.containerid ~= 'Worn' and nitem.containerid ~= 'Inventory' then
-            ncmd = ncmd .. ' ' .. tostring(nitem.containerid)
-            changed = true
-          end
-        end
-        if cont then
-          ncmd = ncmd .. ' ' .. fixarg(cont)
-        end
-      else
-        if cont then
-          ncmd = ncmd .. ' ' .. fixarg(cont)
-        end      
-      end
     end
-    if changed then
-      showoutput('I would send changed: ' ..  ncmd)
-      SendNoEcho(ncmd)
+    
+  -- look
+  elseif lookp then
+    if lpeg.match(inpeg, string.lower(tostring(item))) then
+      inp = true
+      ncmd = ncmd .. ' ' .. 'in'
+      item = cmd[3]
+    end
+    local nitem = db:getitem(item)
+    
+    if nitem and inp and phelper.overloadinventory and string.lower(cmd[1]) ~= 'look' then
+      local tstuff = copytable.shallow(cmd)
+      table.remove(tstuff, 3)
+      table.remove(tstuff, 2)
+      table.remove(tstuff, 1)
+      show_container(nitem.serial, tstuff)
+      return false
+    end
+      
+    if item and nitem and nitem.serial ~= tonumber(item) then
+      ncmd = ncmd .. ' ' .. tostring(nitem.serial)
+      changed = true
+    end
+    
+  -- get and put
+  elseif getp or putp then 
+
+    if item == 'all.' then
+      item = 'all.' .. fixarg(cmd[3])
+      cont = cmd[4]
+      
+      if cont then
+        local citem = db:getitem(cont)
+        if cont and citem and citem.serial ~= tonumber(cont) then
+          changed = true
+          ncmd = ncmd .. ' ' .. tostring(item) .. ' ' .. tostring(citem.serial)
+        end
+      end
     else
-      showoutput('I would send original: ' ..  cmd.args)
-      SendNoEcho(cmd.args)
+      local nitem = db:getitem(item)
+      local citem = nil
+      if cont then
+        citem = db:getitem(cont)
+      end
+      if item and nitem and nitem.serial ~= tonumber(item) then
+        ncmd = ncmd .. ' ' .. tostring(nitem.serial)
+        changed = true
+      elseif item and fixarg(item) ~= item then
+        ncmd = ncmd .. ' ' .. fixarg(item)
+        changed = true
+      else
+        ncmd = ncmd .. ' ' .. tostring(item)
+      end
+      if citem and citem.serial ~= tonumber(cont) then
+        ncmd = ncmd .. ' ' .. tostring(citem.serial)
+        changed = true
+      elseif cont and fixarg(cont) ~= cont then
+        ncmd = ncmd .. ' ' .. fixarg(cont)
+        changed = true
+      elseif nitem and nitem.containerid ~= 'Worn' and nitem.containerid ~= 'Inventory' then
+        ncmd = ncmd .. ' ' .. tostring(nitem.containerid)
+        changed = true
+      else
+        ncmd = ncmd .. ' ' .. tostring(cont)
+      end
     end
     timer_end('eqDB:OnPluginSend')
+  end
+  if changed and ncmd ~= string.lower(sText) then
+    showoutput('I would send changed: ' ..  ncmd)
+    SendNoEcho(ncmd)
     return false
   end
   timer_end('eqDB:OnPluginSend')
+  showoutput('I would send original: ' .. sText)
   return true
 end
 ]]>
@@ -1489,6 +1631,8 @@ phelper:add_cmd('translate', {func=cmd_translate, help="show what strings mean f
 
 phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 phelper:add_setting('overloadid', {help="overload the identify command to use getitem", type="bool", default=verify_bool(false)})
+phelper:add_setting('overloadinventory', {help="overload the inventory command", type="bool", default=verify_bool(false)})
+phelper:add_setting('groupitems', {help="groupitems that are the same when inventory is overloaded", type="bool", default=verify_bool(false)})
 
 phelper:enable()
 ]]>
