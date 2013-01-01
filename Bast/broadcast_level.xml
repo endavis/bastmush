@@ -227,7 +227,7 @@ end
 
 function superhero( name, line, wildcards )
   levelinfo.level = 201
-  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.level), char.base.remorts, char.base.tier)
+  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.level), char.base.remorts, char.base.tier, char.base.redos)
   phelper:broadcast(4)
 end
 
@@ -240,7 +240,7 @@ function remort(name, line, wildcards)
   levelinfo.level = 1
   levelinfo.type = 'level'
   levelinfo.starttime = GetInfo(304)
-  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.level), char.base.remorts + 1, char.base.tier)
+  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.level), char.base.remorts, char.base.tier, char.base.redos)
   var.levelinfo = serialize.save( "levelinfo", levelinfo )
   phelper:broadcast(6)
 end
@@ -288,7 +288,7 @@ function level ( name, line, wildcards )
       phelper:broadcast(4)
     end
   end
-  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.level), char.base.remorts, char.base.tier)
+  levelinfo.totallevels = getactuallevel(tonumber(levelinfo.level), char.base.remorts, char.base.tier, char.base.redos)
   levelinfo.starttime = GetInfo(304)
   phelper:enabletriggroup( "linfo", true )
 end
@@ -351,7 +351,7 @@ function OnPluginBroadcast (msg, id, name, text)
           levelinfo.level = 1
           levelinfo.type = 'level'
           levelinfo.starttime = GetInfo(304)
-          levelinfo.totallevels = getactuallevel(tonumber(1), char.base.remorts, char.base.tier)
+          levelinfo.totallevels = getactuallevel(tonumber(1), char.base.remorts, char.base.tier, char.base.redos)
           var.levelinfo = serialize.save( "levelinfo", levelinfo )
           phelper:broadcast(8)
         end
