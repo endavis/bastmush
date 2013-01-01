@@ -87,21 +87,22 @@ function findkeyword(item)
   return string.lower(name)
 end
 
-function getactuallevel(level, remorts, tier)
+function getactuallevel(level, remorts, tier, redos)
   if level == nil then
     return -1
   end
   local tier = tier or 0
-  return (tier * 7 * 201) + (remorts - 1) * 201 + level
+  local redos = redos or 0
+  return (tier * 7 * 201) + (redos - 1) * 7 * 201 + (remorts - 1) * 201 + level
 end
 
 function convertlevel(level)
   if (level == nil) then
-    return {tier = -1, remort = -1, level = -1}
+    return {tier = -1, redos = -1, remort = -1, level = -1}
   end
   local level = tonumber(level)
   if level < 1 then
-    return {tier = -1, remort = -1, level = -1}
+    return {tier = -1, redos = -1, remort = -1, level = -1}
   end
   local tier = math.floor(level / (7 * 201))
   if level % (7 * 201) == 0 then
@@ -112,7 +113,12 @@ function convertlevel(level)
   if level % 201 == 0 then
     alevel = 201
   end
-  return {tier = tier, remort = remort, level = alevel}
+  local redos = 0
+  if tier > 9 then
+        redos = tier - 9
+        tier = 9
+  end
+  return {tier = tier, redos = redos, remort = remort, level = alevel}
 end
 
 function printstyles(styles)
