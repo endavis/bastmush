@@ -1261,6 +1261,9 @@ function onskillgain(args)
   spells['all'][tonumber(targs.sn)]['percent'] = tonumber(targs.percent)  
   if (practicing == tonumber(targs.sn) and tonumber(targs.percent) >= tonumber(phelper.practo)) or char.worth and tonumber(char.worth.pracs) == 0 then
     practicing = -1
+    if not spells['learned'][tonumber(targs.sn)] then
+      spells['learned'][tonumber(targs.sn)] = copytable.deep(spells['all'][tonumber(targs.sn)])
+    end
     --print('unregistering because I am done practicing', targs.sn)
     phelper:unregister_remote("aaa72f3b5453567e2bba9d50", "skillprac", "onskillgain", true)
     nextspellup('skillprac')
