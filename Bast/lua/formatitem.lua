@@ -5,19 +5,27 @@ require "bastspell"
 require "aardutils"
 
 
-flags = {'K', 'G', 'H', 'I'}
+flags = {'K', 'G', 'H', 'I', 'M'}
 
 flagcolours = {
  K = 'red',
--- M = 'blue',
+ M = 'blue',
  G = 'white',
  H = 'cyan',
  I = 'lightgray',
 }
 
+flagaardcolours = {
+ K = 'R',
+ M = 'B',
+ G = 'W',
+ H = 'C',
+ I = 'w',
+}
+ 
 flagname = {
  K = 'kept',
--- M = 'magic',
+ M = 'magic',
  G = 'glow',
  H = 'hum',
  I = 'invis',
@@ -442,4 +450,355 @@ function formatitem(item)
   table.insert(ltext, divider)
 
   return ltext
+end
+
+function containerheader(extras)
+  if not extras then
+    extras = {}
+  end
+  local header = {}
+
+  -- # of items
+  if extras['group'] then
+    table.insert(header, string.format(" %3s  ", '#'))
+  end
+
+  if extras['flags'] then
+    table.insert(header, '(')
+    local count=0
+    for i,flag in pairs(flags) do
+      local colour = flagaardcolours[flag]
+      count = count + 1
+      if count == 1 then
+        table.insert(header, ' @' .. colour .. flag .. ' ')
+      else
+        table.insert(header, '@' .. colour .. flag .. ' ')
+      end
+    end
+  
+    table.insert(header, '@w) ')
+  end
+
+  -- Level
+  table.insert(header, '(@G')
+  table.insert(header, string.format("%3s", "Lvl"))
+  table.insert(header, '@w)  ')
+
+  if extras['serial'] then
+    table.insert(header, '(@x136')
+    table.insert(header, string.format("%-12s", "Serial"))
+    table.insert(header, '@w)  ')  
+  end
+
+  if extras['score'] then
+    table.insert(header, '(@x136')
+    table.insert(header, string.format("%5s", "Score"))
+    table.insert(header, '@w)  ')  
+  end
+  
+  table.insert(header, string.format("%s", 'Item Name'))
+  local hl = strjoin('', header)
+  
+  return hl
+end
+
+function buildcontainer(db, container, extras)
+  if not extras then
+    extras = {}
+  end
+  local contents = {}
+  if extras['sql'] then
+    contents = db:runselect(extras['sql'])
+  else
+    contents = db:getcontainercontents(container, 'place', false, nil)
+  end
+  
+  local titem = {}
+  if not next(contents) then
+    titem = {containerid=container}
+  else
+    titem = copytable.deep(contents[1])
+  end
+  
+  local hl = containerheader(extras)
+  
+  local items = {}
+  local numstyles = {}
+  local foundgroup = {}
+  
+  if not next(contents) then
+    table.insert(items, {'You have nothing in your inventory'})
+  else
+    for key,invitem in pairs(contents) do
+      local item = db:getitemdetails(invitem.serial)
+      if not item then
+        item = invitem
+      end
+      item.level = invitem.level
+      local stylekey = item.name .. item.shortflags .. tostring(item.level)
+      local doit = true
+      local sitem = {}
+      if extras['group'] and numstyles[stylekey] then
+        foundgroup[stylekey] = (foundgroup[stylekey] or 1) + 1
+        doit = false
+        table.remove(numstyles[stylekey].item, numstyles[stylekey].countcol)
+        table.insert(numstyles[stylekey].item, numstyles[stylekey].countcol, string.format("(%3d) ", foundgroup[stylekey]))
+        if extras['serial'] and foundgroup[stylekey] == 2 then
+          table.remove(numstyles[stylekey].item, numstyles[stylekey].serialcol)
+          table.insert(numstyles[stylekey].item, numstyles[stylekey].serialcol, string.format("%-12s", "Many"))
+        end
+      end
+      if doit then
+        if type(item) == 'table' then
+
+          -- # of items
+          if extras['group'] then
+            table.insert(sitem, string.format(" %3s  ", " "))
+            if not numstyles[stylekey] then
+              numstyles[stylekey] = {item=sitem,countcol=#sitem,serial=item.serial}
+            end
+          end
+
+          if extras['flags'] then
+            table.insert(sitem, '(')
+            count = 0
+            for i,flag in pairs(flags) do
+              local colour = flagaardcolours[flag]
+              count = count + 1
+              if string.find(item.shortflags, flag) then
+                if count == 1 then
+                  table.insert(sitem, ' @' .. colour .. flag .. ' ')
+                else
+                  table.insert(sitem, '@' .. colour .. flag .. ' ')
+                end
+              else
+                if count == 1 then
+                  table.insert(sitem, '   ')
+                else
+                  table.insert(sitem, '  ')
+                end
+              end
+            end
+            table.insert(sitem, '@w)')
+
+            table.insert(sitem, ' ')
+          end
+
+          -- Level
+          table.insert(sitem, '(@G')
+          table.insert(sitem, string.format("%3d", tonumber(item.level)))
+          table.insert(sitem, '@w)  ')
+
+          if extras['serial'] then
+            table.insert(sitem, '(@x136')
+            table.insert(sitem, string.format("%-12s", tostring(item.serial or '')))
+            if extras['group'] then
+              if numstyles[stylekey] then
+                numstyles[stylekey].serialcol = #sitem    
+              end
+            end
+            table.insert(sitem, '@w)  ')            
+          end
+          
+          if extras['score'] then
+            table.insert(sitem, '(@C')    
+            table.insert(sitem, string.format("%5s", tostring(item.score or 'Unkn')))
+            table.insert(sitem, '@w)  ')        
+          end  
+          
+          -- Name
+          table.insert(sitem, item.cname)
+
+          table.insert(items, sitem)
+        end
+      end
+    end
+  end
+  
+  -- leave this here because of the count
+  local titems = {}
+  for i,v in ipairs(items) do
+    table.insert(titems, strjoin('', v))
+  end
+ 
+  return hl, titems
+end
+
+function wornheader(extras)
+  if not extras then
+    extras = {}
+  end  
+  local header = {}
+
+  table.insert(header,  '@G[@w')
+  table.insert(header,  string.format(' %-8s ', 'Location'))
+  table.insert(header,  '@G]@w ')
+
+  if extras['flags'] then
+    table.insert(header,  '(')
+    local count=0
+    for i,flag in pairs(flags) do
+      local colour = flagaardcolours[flag]
+      count = count + 1
+      if count == 1 then
+        table.insert(header,  ' @' .. colour .. flag .. '@x ')
+      else
+        table.insert(header,  '@' .. colour .. flag .. '@x ')
+      end
+    end
+    table.insert(header,  '@w) ')
+  end
+  
+  -- Level
+  table.insert(header, '(')
+  table.insert(header,  string.format("@G%3s@w", 'Lvl'))
+  table.insert(header,  ') ')
+
+  if extras['serial'] then
+    table.insert(header, '(@x136')
+    table.insert(header, string.format("%-12s", "Serial"))
+    table.insert(header, '@w)  ')  
+  end
+  
+  if extras['score'] then
+    table.insert(header, '(@C')
+    table.insert(header, string.format("%-5s", 'Score'))
+    table.insert(header, '@w)  ')        
+  end 
+  
+  table.insert(header,  string.format("%s", 'Item Name'))
+
+  table.insert(header,  '  ')
+
+  return strjoin('', header)  
+end
+
+function buildwornoutput(db, container, extras)
+  if not extras then
+    extras = {}
+  end
+  local items = {}
+
+  local contents = {}
+  
+  if extras['sql'] then
+    contents = db:runselect(extras['sql'])
+  else
+    contents = db:getcontainercontents(container, 'place', false, nil)
+  end
+  local titem = {}
+
+  local hl = wornheader(extras)
+  
+  local item = {}
+
+  local itemsbywearloc = {}
+  if next(contents) then
+    for i,v in pairs(contents) do
+      itemsbywearloc[v.wearslot] = v
+    end
+  end
+
+  for i=0,#wearlocs do
+    actualslot = i
+    local invitem = itemsbywearloc[actualslot]
+    local item = nil
+    if invitem then
+      item = db:getitemdetails(invitem.serial)
+      if not item then
+        item = invitem
+      end
+      item.level = invitem.level
+    end
+    if item then
+      item.wearslot = actualslot
+      item = buildwornitemout(item, extras)
+    else
+      local doit = true
+      if optionallocs[actualslot] then
+        doit = false
+      end
+      if ((actualslot == 23 or actualslot == 26) and itemsbywearloc[25]) then
+        doit = false
+      end
+      if doit and not extras['sql'] then
+        item = buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=actualslot}, extras)
+      end
+    end
+    if item then
+      table.insert(items, strjoin('', item))
+    end
+  end
+  
+  return hl, items
+
+end
+
+function buildwornitemout(item, extras)
+  if not extras then
+    extras = {}
+  end
+    
+  local sitem = {}
+
+  table.insert(sitem, '@G[@w')
+
+  local colour = '@c'
+  if wearlocs[item.wearslot] == 'wielded' or wearlocs[item.wearslot] == 'second' then
+    colour = '@R'
+  elseif wearlocs[item.wearslot] == 'above' or wearlocs[item.wearslot] == 'light' then
+    colour = '@W'
+  elseif wearlocs[item.wearslot] == 'portal' or wearlocs[item.wearslot] == 'sleeping' then
+    colour = '@C'
+  end
+  table.insert(sitem, string.format(' %s%-8s@x ', colour, wearlocs[item.wearslot]))
+  table.insert(sitem, '@G]@w ') 
+  
+  if extras['flags'] then
+    table.insert(sitem, '(') 
+  
+    count = 0
+    for i,flag in pairs(flags) do
+      local aardcolour = flagaardcolours[flag]
+      count = count + 1
+      if string.find(item.shortflags, flag) then
+        if count == 1 then
+          table.insert(sitem, ' @' .. aardcolour .. flag .. ' ')
+        else
+          table.insert(sitem, '@' .. aardcolour .. flag .. ' ')
+        end
+      else
+        if count == 1 then
+          table.insert(sitem, '   ')
+        else
+          table.insert(sitem, '  ')
+        end
+      end
+    end
+    table.insert(sitem, '@w)')
+
+    table.insert(sitem, ' ')
+  end
+
+  -- Level
+  table.insert(sitem, '(')
+  table.insert(sitem, string.format("@G%3s@w", tostring(item.level or "")))
+  table.insert(sitem, ') ')
+
+  if extras['serial'] then
+    table.insert(sitem, '(@x136')
+    table.insert(sitem, string.format("%-12s", tostring(item.serial or '')))
+    table.insert(sitem, '@w)  ')        
+  end
+  
+  if extras['score'] then
+    table.insert(sitem, '(@C')    
+    table.insert(sitem, string.format("%5s", tostring(item.score or 'Unkn')))
+    table.insert(sitem, '@w)  ')        
+  end  
+  
+  -- Name
+  table.insert(sitem, item.cname)
+
+  return sitem
 end
