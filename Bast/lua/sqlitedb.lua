@@ -45,6 +45,9 @@ function Sqlitedb:addtable(tablename, sql, prefunc, postfunc, keyfield)
  self.tables[tablename]['precreate'] = prefunc
  self.tables[tablename]['postcreate'] = postfunc
  self.tables[tablename]['keyfield'] = keyfield
+ local columns, columnsbykeys = self:getcolumnsfromsql(tablename)
+ self.tables[tablename]['columns'] = columns
+ self.tables[tablename]['columnsbykeys'] = columnsbykeys
 end
 
 function Sqlitedb:turnonpragmas()
@@ -266,7 +269,8 @@ function Sqlitedb:converttoinsert(tablename, keynull, replace)
   local execstr = nil
   local columns = {}
   if self.tables[tablename] then
-    local columns, columnsbykeys = self:getcolumnsfromsql(tablename)
+    local columns = self.tables[tablename].columns
+    local columnsbykeys = self.tables[tablename].columnsbykeys
     local colstring = strjoin(', :', columns)
     colstring = ':' .. colstring
     if replace then
@@ -285,7 +289,8 @@ function Sqlitedb:converttoupdate(tablename, wherekey, nokey)
   local execstr = nil
   local columns = {}
   if self.tables[tablename] then
-    local columns, columnsbykeys = self:getcolumnsfromsql(tablename)
+    local columns = self.tables[tablename].columns
+    local columnsbykeys = self.tables[tablename].columnsbykeys
     local sqlstr = {}
     for i,v in pairs(columns) do
       if v == wherekey or (nokey and nokey[v]) then
