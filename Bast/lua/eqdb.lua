@@ -32,15 +32,6 @@ require 'copytable'
 
 EQdb = Sqlitedb:subclass()
 
-tableids = {
-  levels = 'level_id',
-  stats = 'stat_id',
-  quests = 'quest_id',
-  campaigns = 'cp_id',
-  gquests = 'gq_id',
-  mobkills = 'mk_id',
-  skills = 'sn',
-}
 
 --addleveltrainblessing
 function EQdb:initialize(args)
@@ -253,6 +244,67 @@ function EQdb:additemindexes()
   end
 end
 
+function EQdb:buildsql(tstuff)
+--[[
+"sort":
+  "field"="level"
+  "dir"="ASC"
+"otype":
+  1="weapon"
+"levels":
+  1="1"
+  2="100"
+"name":
+--]]  
+  local tstr = string.format('SELECT * from %s WHERE ', tstuff.table)
+  local found = false
+  local needand = false
+  if tstuff and tstuff['containerid'] then
+    needand = true
+    tstr = tstr .. string.format('containerid = %s', fixsql(tstuff['containerid']))     
+  end
+  if tstuff and tstuff['levels'] and next(tstuff['levels']) then
+    needand = true
+    found = true
+    if needand then
+      tstr = tstr .. 'and '
+    end    
+    if tstuff['levels'][1] and tstuff['levels'][2] then
+      tstr = tstr .. string.format('level between %s and %s ', tstuff['levels'][1], tstuff['levels'][2]) 
+    elseif tstuff['levels'][1] then
+      tstr = tstr .. string.format('level >= %s ', tstuff['levels'][1])       
+    end
+  end
+  if tstuff and tstuff['otype'] and next(tstuff['otype']) then
+    needand = true
+    found = true
+    if needand then
+      tstr = tstr .. 'and '
+    end
+    tstr = tstr .. string.format('type = %s ', objecttypesrev[tstuff['otype'][1]])
+  end
+  if tstuff and tstuff['name'] and next(tstuff['name']) then
+    needand = true
+    found = true
+    if needand then
+      tstr = tstr .. 'and '
+    end
+    tstr = tstr .. string.format("name like %s ", fixsql(tstuff['name'][1], true))
+  end  
+  if tstuff and tstuff['sort'] and next(tstuff['sort']) then
+    found = true
+    tstr = tstr .. string.format('ORDER BY %s %s', tstuff['sort']['field'], tstuff['sort']['dir'])
+  else
+    tstr = tstr .. 'ORDER BY place ASC'    
+  end
+  --print(tstr)
+  if found then
+    return tstr
+  else
+    return nil
+  end
+end
+
 function EQdb:countitems()
   local count = 0
   self:checkitemstable()
@@ -268,18 +320,17 @@ end
 function EQdb:getitemdetails(serial)
   timer_start('EQdb:getitemdetails')
   local titem = nil
-  if tonumber(serial) == nil then
-    local nitem = self:getitem(serial)
-    if nitem and next(nitem) then
-      serial = nitem.serial
-    end
+  local nitem = self:getitem(serial)
+  if not nitem then
+    return titem
   end
-  local fixed = fixsql(tostring(serial))
+  local fixed = fixsql(tostring(nitem.serial))
   if self:open('getitemdetails') then
     for a in self.db:nrows("SELECT * FROM itemdetails WHERE serial = " .. fixed) do
       titem = a
     end
     if titem then
+      titem.shortflags = nitem.shortflags      
       for a in self.db:nrows("SELECT * FROM identifier WHERE serial = " .. fixed) do
         if not titem['identifier'] then
           titem['identifier'] = {}
@@ -806,6 +857,9 @@ function EQdb:getitem(itemident)
   if item == nil then
     item = self:getitembyidentifier(itemident)
   end
+  if item == nil and wearlocreverse[itemident] then
+    item = self:getitembywearslot(wearlocreverse[itemident])
+  end
   --print('getitem', item)
   timer_end('EQdb:getitem')
   return item
@@ -813,7 +867,7 @@ end
 
 function EQdb:getitembywearslot(wearslot)
   timer_start('EQdb:getitemsbywearslot')
-  local item = {}
+  local item = nil
   if self:open('getitemsbywearslot') then
     for a in self.db:nrows("SELECT * FROM items WHERE wearslot='" .. tostring(wearslot) .."';") do
       item = a
@@ -825,7 +879,6 @@ function EQdb:getitembywearslot(wearslot)
   --tprint(items)
   return item
 end
-
 
 function EQdb:getcontainercontents(containerid, sortkey, reverse, itype)
   if not sortkey then
@@ -887,12 +940,10 @@ end
 function EQdb:addidentifier(itemsn, identifier)
   timer_start('EQdb:addidentifier')
   --tprint(item)
-  local titem = self:getitembyidentifier(identifier)
-  local item = self:getitembyserial(itemsn)
+  local item = self:getitem(itemsn)
   local tchanges = 0
   if next(item) then
     if self:open('addidentifier') then
-      local titem = self:getitemdetails(tonumber(item.serial))
       tchanges = self.db:total_changes()
       assert (self.db:exec("BEGIN TRANSACTION"))
       local stmt = self.db:prepare[[
@@ -979,20 +1030,6 @@ function EQdb:cleandb()
     self.db:exec('VACUUM;')
   end
 end
-
---[[
-  self:addtable('eqsets', [[
-        CREATE TABLE eqsets(
-        eqsid INTEGER NOT NULL PRIMARY KEY,
-        serial INTEGER NOT NULL,
-        wearloc TEXT,
-        eqsetname TEXT,
-        level INTEGER,
-        container INTEGER NOT NULL,
-        FOREIGN KEY(serial) REFERENCES items(serial));
-        FOREIGN KEY(container) REFERENCES items(serial));
-      )]]
---]]
 
 -- eqset stuff
 function EQdb:getsetnames()
