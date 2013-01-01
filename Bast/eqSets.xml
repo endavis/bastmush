@@ -344,8 +344,13 @@ function wearitem(item, sitem, shitem, hitem)
       return
     end
     local olditem = eqdb:getitembywearslot(wearlocreverse[item.wearloc])    
-    if olditem.serial ~= item.serial then
+    if not olditem then
       putobjectininv(item.serial)
+      local cmd = 'wear ' .. tostring(item.serial) .. ' ' .. item.wearloc
+      SendNoEcho('wear ' .. tostring(item.serial) .. ' ' .. item.wearloc)    
+    elseif olditem.serial ~= item.serial then
+      putobjectininv(item.serial)
+      local cmd = 'wear ' .. tostring(item.serial) .. ' ' .. item.wearloc
       SendNoEcho('wear ' .. tostring(item.serial) .. ' ' .. item.wearloc)
       if next(olditem) then
         local container = eqdb:getolditemcontainer(olditem.serial)
@@ -600,57 +605,62 @@ end
 
 function compitem(item)
   local ditem = eqdb:getitemdetails(item)
+  if not ditem then
+    print('You do not have item', item)
+    return
+  end
   local set = eqdb:getset(ditem.level)
   local item1 = nil
   local item2 = nil
   local lstyle1 = {}
   local lstyle2 = {}
+  local extras = {serial=true, score=true, noflags=true}
   if set[ditem.wearable] then
     item1 = set[ditem.wearable]
   elseif ditem.wearable == 'ear' then
     item1 = set['lear']
-    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['lear']})
+    lstyle1 = buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['lear']}, extras)
     item2 = set['rear']
-    lstyle2 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['rear']})
+    lstyle2 = buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['rear']}, extras)
   elseif ditem.wearable == 'neck' then
     item1 = set['neck1']
-    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['neck1']})
+    lstyle1 = buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['neck1']}, extras)
     item2 = set['neck2']
-    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['neck2']})
+    lstyle1 = buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['neck2']}, extras)
   elseif ditem.wearable == 'wrist' then
     item1 = set['lwrist']
-    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['lwrist']})
+    lstyle1 = buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['lwrist']}, extras)
     item2 = set['rwrist']
-    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['rwrist']})
+    lstyle1 = buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['rwrist']}, extras)
   elseif ditem.wearable == 'finger' then
     item1 = set['lfinger']
-    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['lfinger']})
+    lstyle1 = buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['lfinger']}, extras)
     item2 = set['rfinger']
-    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['rfinger']})
+    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['rfinger']}, extras)
   elseif ditem.wearable == 'wield' then
     item1 = set['wielded']
-    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['wielded']})
+    lstyle1 = buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['wielded']}, extras)
     item2 = set['second']
-    lstyle1 = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['second']})
+    lstyle1 = buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse['second']}, extras)
   end
   if item1 or item2 then
     local cmd = 'comp ' .. tostring(ditem.serial)
     local msg = {}
     print('Comparing')
     if item1 then
-      local titem = eqdb:getitem(item1.serial)
+      local titem = eqdb:getitemdetails(item1.serial)
       titem.wearslot = wearlocreverse[item1.wearloc]
-      lstyle1 = buildwornitem(titem)
+      lstyle1 = buildwornitemout(titem, extras)
       cmd = cmd .. ' ' .. item1.serial
     end
-    table.insert(msg, StylesToColoursOneLine(lstyle1))
+    table.insert(msg, strjoin('', lstyle1))
     if item2 then
-      local titem = eqdb:getitem(item2.serial)
+      local titem = eqdb:getitemdetails(item2.serial)
       titem.wearslot = wearlocreverse[item2.wearloc]
-      lstyle2 = buildwornitem(titem)
+      lstyle2 = buildwornitemout(titem, extras)
       cmd = cmd .. ' ' .. item2.serial
     end
-    table.insert(msg, StylesToColoursOneLine(lstyle2))
+    table.insert(msg, strjoin('', lstyle2))
     display(msg)
     runeqdbcmd(cmd)            
   else
@@ -683,7 +693,9 @@ function cmd_diff(cmddict)
     local tset1 = eqdb:getset(set1)
     local tset2 = eqdb:getset(set2)
     local header = false
-    local format = "%-10s %-10s %-5s %-12s %5s %s"
+    local max = math.max(#set1, #set2)
+    local format = "%-" .. tostring(max + 1) .. "s %s"
+    local msg = {}
     if not next(tset1) then
       phelper:plugin_header('Diff')
       ColourNote(RGBColourToName(phelper.plugin_colour), "black", "No items in " .. tostring(set1))
@@ -695,55 +707,53 @@ function cmd_diff(cmddict)
       return
     end
     for i=0,#wearlocs do
+      local extras = {serial=true, score=true, noflags=true}
       wearloc = wearlocs[i]
       if tset1[wearloc] and tset2[wearloc] then
         if not header then
           header = true
-          ColourNote( "", "", string.rep('-', 80))
-          ColourNote("red", "black", string.format(format, 'Name', 'Wearloc', 'Score', 'Serial', 'Level', 'Name'))          
-          ColourNote( "", "", string.rep('-', 80))
+          table.insert(msg, string.rep('-', 80))
+          table.insert(msg, string.format(format, 'Set', wornheader(extras)))
+          table.insert(msg, string.rep('-', 80))
         end
         if tonumber(tset1[wearloc].serial) == tonumber(tset2[wearloc].serial) then
           -- same
         else
-          --ColourNote("red", "black", string.format("wearloc: " .. tostring(wearloc)))
           local eq1 = eqdb:getitemdetails(tset1[wearloc].serial)
           local eq2 = eqdb:getitemdetails(tset2[wearloc].serial)
-          TextToColourTell(string.format(format, set1, wearloc, eq1.score, eq1.serial, eq1.level, eq1.cname))
-          ColourNote( "", "", "" )           
-          TextToColourTell(string.format(format, set2, wearloc, eq2.score, eq2.serial, eq2.level, eq2.cname))
-          ColourNote( "", "", "" )
-          ColourNote( "", "", string.rep('-', 80))
+          eq1.wearslot=i
+          table.insert(msg, string.format(format, set1, strjoin('', buildwornitemout(eq1, extras))))
+          eq2.wearslot=i
+          table.insert(msg, string.format(format, set2, strjoin('', buildwornitemout(eq2, extras))))
+          table.insert(msg, string.rep('-', 80))
         end
       elseif tset1[wearloc] then
         if not header then
           header = true
-          ColourNote( "", "", string.rep('-', 80))
-          ColourNote("red", "black", string.format(format, 'Name', 'Wearloc', 'Score', 'Serial', 'Level', 'Name'))          
-          ColourNote( "", "", string.rep('-', 80))
+          table.insert(msg, string.rep('-', 80))
+          table.insert(msg, string.format(format, 'Set', wornheader(extras)))            
+          table.insert(msg, string.rep('-', 80))
         end      
         local eq1 = eqdb:getitemdetails(tset1[wearloc].serial)
-        TextToColourTell(string.format(format, set1, wearloc, eq1.score, eq1.serial, eq1.level, eq1.cname))
-        ColourNote( "", "", "" )         
-        TextToColourTell(string.format(format, set1, wearloc, "None", "", "", ""))
-        ColourNote( "", "", "" )           
-        ColourNote( "", "", string.rep('-', 80))
+        eq1.wearslot=i
+        table.insert(msg, string.format(format, set1, strjoin('', buildwornitemout(eq1, extras))))
+        table.insert(msg, string.format(format, set2, strjoin('', buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=i}, extras))))
+        table.insert(msg, string.rep('-', 80))
       elseif tset2[wearloc] then
         if not header then
           header = true
-          ColourNote( "", "", string.rep('-', 80))
-          ColourNote("red", "black", string.format(format, 'Name', 'Wearloc', 'Score', 'Serial', 'Level', 'Name'))          
-          ColourNote( "", "", string.rep('-', 80))
+          table.insert(msg, string.rep('-', 80))
+          table.insert(msg, string.format(format, 'Set', wornheader(extras)))   
+          table.insert(msg, string.rep('-', 80))
         end      
         local eq2 = eqdb:getitemdetails(tset2[wearloc].serial)
-        TextToColourTell(string.format(format, set1, wearloc, "None", "", "", ""))
-        ColourNote( "", "", "" )           
-        TextToColourTell(string.format(format, set2, wearloc, eq2.score, eq2.serial, eq2.level, eq2.cname))
-        ColourNote( "", "", "" )           
-        ColourNote( "", "", string.rep('-', 80))        
+        eq2.wearslot=i
+        table.insert(msg, string.format(format, set1, strjoin('', buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=i}, extras))))
+        table.insert(msg, string.format(format, set2, strjoin('', buildwornitemout(eq2, extras))))
+        table.insert(msg, string.rep('-', 80))        
       end
     end
-    ColourNote("", "", "")
+    display(msg)
   else
     phelper:plugin_header('Diff')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " diff <set1> <set2>")
@@ -754,51 +764,95 @@ function cmd_diff(cmddict)
 end
 
 function cmd_show(cmddict)
-  local msg = {}
-  if cmddict[1] then
-    local only = false
-    for i,v in pairs(cmddict) do
-      if v == 'only' then
-        only = i
-      end
-    end
-    if only then
-      table.remove(cmddict, only)
-    end
-    local items = eqdb:getset(cmddict[1])
-    for i=0,#wearlocs do
-      actualslot = i
-      local aitem = items[wearlocs[i]]
-      local titem = nil
-      if aitem then
-        titem = eqdb:getitem(aitem.serial)
-      end
-      local lstyles = {}
-      if titem then
-        titem.wearslot = i
-        if not only or (only and titem.level == tonumber(cmddict[1])) then
-          lstyles = buildwornitem(titem)
-        end
-      elseif not only then
-        local doit = true
-        if actualslot == 28 or actualslot == 29 or actualslot == 8 or actualslot == 9 or actualslot == 10 or actualslot == 11 then
-          doit = false
-        end
-        if doit then
-          lstyles = buildwornitem({cname="@r< empty >@w", shortflags="", wearslot=actualslot})
-        end
-      end
-      if next(lstyles) then
-        table.insert(msg, StylesToColoursOneLine(lstyles))
-      end      
-    end
-    display(msg)    
-  else
+  if cmddict[1] == 'help' then
     phelper:plugin_header('show')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " show <level|setname> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " show <level|setname> <'only'> <wearloc>")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show all items for a set")        
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the level or setname, can be multiple")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) the keyword 'only', which will only show items of that level if a level set")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) wearloc, the wearloc to show, can be multiple")      
+    return
+  end
+  local msg = {}
+  local wearlocstoshow = {}
+  local removeindexes = {}
+  local itemstoshow = {}
+  local only = false
+  if not cmddict[1] then
+    cmddict[1] = tonumber(char.status.level) + (tonumber(char.base.tier) * 10) 
+  end
+  for i,v in ipairs(cmddict) do
+    if v == 'only' then
+      only = true
+      table.insert(removeindexes, i)
+    elseif wearlocreverse[v] then
+      --print('got a wearloc', v)
+      table.insert(wearlocstoshow, v)
+      table.insert(removeindexes, i)
+    end
+  end
+  if next(removeindexes) then
+    for i,v in tableSort(removeindexes, nil, nil, true) do
+      table.remove(cmddict, v)
+    end
+  end
+  if not cmddict[1] then
+    cmddict[1] = tonumber(char.status.level) + (tonumber(char.base.tier) * 10)
+  end
+  local extras = {serial=true, score=true, noflags=true} 
+  for _,v in ipairs(cmddict) do
+    local items = eqdb:getset(v)
+    table.insert(msg, 'Set ' .. tostring(v))
+    table.insert(msg, wornheader(extras))      
+    table.insert(msg, string.rep('-', 80))
+    if next(wearlocstoshow) then
+      for i2,wearloc in ipairs(wearlocstoshow) do
+        local aitem = items[wearloc]
+        local titem = nil
+        if aitem then
+          titem = eqdb:getitemdetails(aitem.serial)            
+        end
+        if titem then
+          titem.wearslot = wearlocreverse[wearloc]
+          table.insert(msg, strjoin('', buildwornitemout(titem, extras)))
+          table.insert(itemstoshow, aitem.serial)
+        else
+          table.insert(msg, strjoin('', buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=wearlocreverse[wearloc]}, extras)))
+        end
+      end
+    else
+      for i=0,#wearlocs do
+        actualslot = i
+        local aitem = items[wearlocs[i]]
+        local titem = nil
+        if aitem then
+          titem = eqdb:getitemdetails(aitem.serial)
+        end
+        local sitem = ''
+        if titem then
+          titem.wearslot = i
+          if not only or (only and titem.level == tonumber(v)) then
+            sitem = strjoin('', buildwornitemout(titem, extras))
+          end
+        elseif not only then
+          local doit = true
+          if actualslot == 28 or actualslot == 29 or actualslot == 8 or actualslot == 9 or actualslot == 10 or actualslot == 11 then
+            doit = false
+          end
+          if doit then
+            sitem = strjoin('', buildwornitemout({cname="@r< empty >@w", shortflags="", wearslot=actualslot}, extras))
+          end
+        end
+        if sitem ~= '' then
+          table.insert(msg, sitem)
+        end      
+      end
+    end
+    table.insert(msg, '')
+  end
+  display(msg)    
+  if next(itemstoshow) then
+    runeqdbcmd('getitem ' .. strjoin(' ', itemstoshow))    
   end
 end
 
@@ -808,129 +862,6 @@ function display( msg )
     ColourNote( "", "", "" )    
   end
   ColourNote( "", "", "" )
-end
-
-function buildwornitem(item)
-  local lstyles = {}
-
-  local style = {}
-  style.text = '['
-  style.textcolour = GetBoldColour (GREEN)
-  style.length = #style.text
-  table.insert(lstyles, style)
-
-  local ditem = eqdb:getitemdetails(item.serial)
-  
-  local style = {}
-  style.text = string.format(' %-8s ', wearlocs[item.wearslot])
-  if wearlocs[item.wearslot] == 'wield' or wearlocs[item.wearslot] == 'second' then
-    style.textcolour = GetNormalColour (RED)
-  else
-    style.textcolour = GetNormalColour (CYAN)
-  end
-  style.length = #style.text
-  table.insert(lstyles, style)
-
-  local style = {}
-  style.text = '] '
-  style.textcolour = GetBoldColour (GREEN)
-  style.length = #style.text
-  table.insert(lstyles, style)
-
-  -- Serial
-  local style = {}
-  style.text = '('
-  style.textcolour = GetBoldColour (WHITE)  
-  style.length = #style.text
-  table.insert(lstyles, style)
-
-  local style = {}
-  style.text = string.format("%11s", tostring(item.serial or ""))
-  style.textcolour = GetBoldColour (GREEN)
-  style.length = #style.text
-  table.insert(lstyles, style)
-
-  local style = {}
-  style.text = ') '
-  style.textcolour = GetBoldColour (WHITE)  
-  style.length = #style.text
-  table.insert(lstyles, style)
-
-  -- Level
-  local style = {}
-  style.text = '('
-  style.textcolour = GetBoldColour (WHITE)  
-  style.length = #style.text
-  table.insert(lstyles, style)
-
-  local style = {}
-  style.text = string.format("%3s", tostring(item.level or ""))
-  style.textcolour = GetBoldColour (WHITE)
-  style.length = #style.text
-  table.insert(lstyles, style)
-
-  local style = {}
-  style.text = ') '
-  style.textcolour = GetBoldColour (WHITE)  
-  style.length = #style.text
-  table.insert(lstyles, style)
-  
-  -- Score
-  local style = {}
-  style.text = '('
-  style.textcolour = GetBoldColour (WHITE)  
-  style.length = #style.text
-  table.insert(lstyles, style)
-
-  if ditem and ditem.score then
-    local style = {}
-    style.text = string.format("%4s", tostring(ditem.score or ""))
-    style.textcolour = GetBoldColour (CYAN)
-    style.length = #style.text
-    table.insert(lstyles, style)
-  else
-    local style = {}
-    style.text = string.format("%4s", "")
-    style.textcolour = GetBoldColour (CYAN)
-    style.length = #style.text
-    table.insert(lstyles, style)  
-  end
-
-  local style = {}
-  style.text = ') '
-  style.textcolour = GetBoldColour (WHITE)  
-  style.length = #style.text
-  table.insert(lstyles, style)  
-  
-  -- Name
-  local style = {}
-  local newstyles = ColoursToStyles(item.cname)
-  local length = 0
-  local itemlength = 47
-  --print(item.name)
-  for i=1,#newstyles do
-    local tstyle = newstyles[i]
-    local style = copytable.shallow(tstyle)
-    style.backcolour = tstyle.backcolour
-    --print(length, #style.text, style.text)
-    if length + #style.text >= itemlength and i ~= 1 then
-      local tl = itemlength - length
-      if tl < 1 then
-        break
-      else
-        style.text = string.sub(style.text, 1, tl)
-      end
-    else
-      style.text = string.sub(style.text, 1, itemlength)
-    end
-    length = length + #style.text
-    
-    style.length = #style.text
-    --tprint(style)
-    table.insert(lstyles, style)
-  end
-
-  return lstyles
 end
 
 function onitemchange(stuff)
