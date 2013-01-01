@@ -31,16 +31,17 @@ Statdb = Sqlitedb:subclass()
 function Statdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "\\stats.db"
-  self.version = 10
+  self.version = 11
   self.versionfuncs[2] = self.updatedblqp -- update double qp flag
   self.versionfuncs[3] = self.updatemobkills -- slit, assassinate, etc..
   self.versionfuncs[4] = self.addmobsblessing -- add blessing xp to mobs table
   self.versionfuncs[5] = self.addquestblessing -- add blessing qp to quest table
   self.versionfuncs[6] = self.addleveltrainblessing -- add blessing trains to level table
-  self.versionfuncs[7] = self.addclanskill -- add
+  self.versionfuncs[7] = self.addclanskill -- add clanskill
   self.versionfuncs[8] = self.updatecpmobfields
   self.versionfuncs[9] = self.updategqmobfields
   self.versionfuncs[10] = self.updategqcomplete
+  self.versionfuncs[11] = self.addstatsredos
 
   self:addtable('stats', [[CREATE TABLE stats(
           stat_id INTEGER NOT NULL PRIMARY KEY autoincrement,
@@ -67,7 +68,8 @@ function Statdb:initialize(args)
           powerupsall INT default 0,
           totaltrivia INT default 0,
           time INT default 0,
-          milestone TEXT
+          milestone TEXT,
+          redos INT default 0
         )]], nil, nil, 'stat_id')
 
   self:addtable('quests', [[CREATE TABLE quests(
@@ -362,7 +364,7 @@ function Statdb:savecp( cpinfo )
       self:addtostat('totaltrivia', cpinfo.tp)
     end
 
-    local newlevel = getactuallevel(cpinfo.level, db:getstat('remorts'), db:getstat('tiers'))
+    local newlevel = getactuallevel(cpinfo.level, db:getstat('remorts'), db:getstat('tiers'), db:getstat('redos'))
     cpinfo.level = newlevel
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare(self:converttoinsert('campaigns'))
@@ -501,7 +503,7 @@ function Statdb:savegq( gqinfo )
     if gqinfo.won == 1 then
       self:addtostat('gquestswon', 1)
     end
-    local newlevel = getactuallevel(gqinfo.level, db:getstat('remorts'), db:getstat('tiers'))
+    local newlevel = getactuallevel(gqinfo.level, db:getstat('remorts'), db:getstat('tiers'), db:getstat('redos'))
     gqinfo.level = newlevel
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare(self:converttoinsert('gquests'))
@@ -1314,4 +1316,15 @@ function Statdb:updategqcomplete()
     self:close('updategqcomplete', true)
   end
 
+end
+
+function Statdb:addstatsredos()
+  if not self:checktableexists('stats') then
+    return
+  end
+  if self:open('addstatsredos') then
+    self.db:exec([[ALTER TABLE stats ADD COLUMN redos INT DEFAULT 0;]])
+    self.db:exec([[UPDATE stats SET redos = 0;]])
+    self:close('addstatsredos', true)
+  end
 end

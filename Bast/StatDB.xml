@@ -149,7 +149,11 @@ end
 function aftermilestone()
   level = db:getstat('totallevels')
   tlist = convertlevel(level)
-  milestone = string.format("t%sr%sl%s", tlist.tier, tlist.remort, tlist.level)
+  if tlist.tier == 9 then
+    milestone = string.format("t%s+%sr%sl%s", tlist.tier, tlist.redos, tlist.remort, tlist.level)
+  else
+    milestone = string.format("t%sr%sl%s", tlist.tier, tlist.remort, tlist.level)
+  end
   db:addmilestone(milestone)
 end
 
