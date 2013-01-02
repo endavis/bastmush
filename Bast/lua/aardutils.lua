@@ -93,7 +93,11 @@ function getactuallevel(level, remorts, tier, redos)
   end
   local tier = tier or 0
   local redos = redos or 0
-  return (tier * 7 * 201) + (redos - 1) * 7 * 201 + (remorts - 1) * 201 + level
+  if redos == 0 then
+    return (tier * 7 * 201) + ((remorts - 1) * 201) + level
+  else
+    return (tier * 7 * 201) + (redos * 7 * 201) + ((remorts - 1) * 201) + level
+  end
 end
 
 function convertlevel(level)
