@@ -218,6 +218,7 @@ lastremort = -1
 function tier(name, line, wildcards)
   phelper:broadcast('7')
   lasttier = tonumber(char.base.tier)
+  lastredo = tonumber(char.base.redos)
   waittier = true
 end
 
@@ -341,7 +342,7 @@ function OnPluginBroadcast (msg, id, name, text)
           phelper:broadcast(2)
         end
         if statestring == 'active' and waittier and sawstate2 and
-           tonumber(char.base.tier) == lasttier + 1 and
+           (tonumber(char.base.tier) == lasttier + 1 or (tonumber(char.base.tier) == lasttier and tonumber(char.base.redos) == lastredo + 1)) and
            tonumber(char.base.remorts) == 1 then
           waittier = false
           sawstate2 = false
