@@ -451,6 +451,7 @@ function cmd_checklevel(cmddict)
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "check and equip items that are not worn for your level")  
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) location is the keyword for the location from 'wearable'")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) the 'alt' keyword will equip a shield and/or held item instead of a dual weapon when using 'all'")  
+    return
   end
   local ti = nil
   local wtype = nil
