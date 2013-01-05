@@ -41,17 +41,23 @@ require "pluginhelper"
 require "ldplugin"
 require "tprint"
 require "aarddb"
+require "qmapper"
 
 aarddb = Aarddb:new{}
 
 roomnotes = {}
 
 function format_note(tnote)
+  local rooms =  aarddb:getroomsfornote(tnote.note_id)
   local tstr = string.format('---------------------- Note: %d ----------------------', tnote.note_id)
   ColourNote("orange", "", tstr)
   ColourNote("silver", "", string.format('Area     : %s', tnote.area))
-  if tnote.room and tnote.room ~= -1 and tnote.room ~= "" then
-    ColourNote("silver", "", string.format('Room     : %s', tnote.room))
+  if rooms and next(rooms) then
+    local tstr = 'Rooms    :'
+    for i,v in ipairs(rooms) do
+      tstr = tstr .. ' ' .. tostring(v.room)
+    end
+    ColourNote("silver", "", tstr)    
   end
   ColourNote("silver", "", string.format('Keywords : %s', tnote.keywords))
   ColourNote("silver", "", "----------------------")
@@ -114,7 +120,7 @@ end
 function cmd_addnote(cmddict)
   local note = {}
   local printhelp = false
-  if not (cmddict[1] and cmddict[2] and cmddict[3] and cmddict[4]) and cmddict[1] ~= 'help' then
+  if not (cmddict[1] and cmddict[2] and cmddict[3]) and cmddict[1] ~= 'help' then
     --print('didnt get anything')
     local bareas = aarddb:getallareas()
     local ttable = {}
@@ -125,27 +131,16 @@ function cmd_addnote(cmddict)
     note['area'] = utils.filterpicker (ttable, 'Pick the area')
     note['keywords'] = utils.inputbox ( 'Add keywords for this note', 'Keywords')
     note['note'] = utils.editbox ( 'Enter the note\nYou can use color codes', 'Note')
-    note['room'] = utils.inputbox ( 'Enter the room\nenter "here" for the current room', 'Note')
-    if note['room'] == 'here' then
-      note['room'] = room.num
-    end
   elseif cmddict[1] ~= 'help' then
     note['area'] = cmddict[1]
     note['keyword'] = cmddict[2]
-    note['note'] = cmddict[3]
-    note['room'] = cmddict[4]
-    if note['room'] == 'here' then
-      note['room'] = room.num
-    end    
+    note['note'] = cmddict[3]  
   else
     printhelp = true
   end
   if note['area'] and note['keywords'] and note['note'] then
     local rowid = aarddb:addnote(note)
     print('added note', rowid)
-    if note['room'] ~= nil and note['room'] ~= -1 and note['room'] ~= "" then
-      roomnotes[tonumber(note['room'])] = nil
-    end
   else
     printhelp = true
   end
@@ -157,27 +152,87 @@ function cmd_addnote(cmddict)
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the area to add to the note, if no area use 'None'")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 2 is the keywords to add to the note, if multiple keywords, surround with single or double quotes")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 3 is the note text, surround with single or double quotes")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 4 is the room for the note, use the keyword 'here' for the current room")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if the room is set for a note, the note will be automatically shown when walking into the room")
     return  
   end
 end
 
-function cmd_removenote(cmddict)
- if cmddict[1] == 'help' or not cmddict[1] then
-    phelper:plugin_header('remove')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " remove <noteid> ")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove a note")        
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the id of the note to remove")
- else
-  local changes = aarddb:removenote(cmddict[1])
-  if changes > 0 then
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Note " .. tostring(cmddict[1]) .. " was deleted.")
-    roomnotes = {}
-  else
-    ColourNote(RGBColourToName(var.plugin_colour), "black", "Nothing was deleted, please check your note id")
+function cmd_addroom(cmddict)
+  if cmddict[1] == 'help' or not cmddict[1] then
+      phelper:plugin_header('room')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " room <noteid> ")
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add a note to a room")        
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the note number to add to the room you are currently in") 
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) if this argument is specified it is a room id from gmcp or the mapper") 
+      return
   end
- end
+  local note = tonumber(cmddict[1])
+  local room = room.num
+  if cmddict[2] and tonumber(cmddict[2]) then
+    room = tonumber(cmddict[2])
+  end
+  local notes = aarddb:lookupnotes('note_id = ' .. tostring(note))
+  if next(notes) then
+    local troom = querymapper('SELECT * from rooms where uid = ' .. tostring(room))
+    if next(troom) then
+      aarddb:addnotetoroom(room, note)
+      phelper:plugin_header('room')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Added Note: " .. tostring(note) .. " to Room: " .. tostring(room)) 
+    else
+      phelper:plugin_header('room')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "That room does not exist")    
+    end
+  else
+    phelper:plugin_header('room')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "That note does not exist")
+  end
+end
+
+function cmd_removeroom(cmddict)
+  if cmddict[1] == 'help' or not cmddict[1] then
+      phelper:plugin_header('rroom')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " rroom <noteid> ")
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove a note from a room")        
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the note number to add to the room you are currently in") 
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) if this argument is specified it is a room id from gmcp or the mapper") 
+      return
+  end
+  local note = tonumber(cmddict[1])
+  local room = room.num
+  if cmddict[2] and tonumber(cmddict[2]) then
+    room = tonumber(cmddict[2])
+  end
+  local notes = aarddb:lookupnotes('note_id = ' .. tostring(note))
+  if next(notes) then
+    local troom = querymapper('SELECT * from rooms where uid = ' .. tostring(room))
+    if next(troom) then
+      aarddb:removenotefromroom(room, note)
+      phelper:plugin_header('rroom')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Removed Note: " .. tostring(note) .. " from Room: " .. tostring(room)) 
+    else
+      phelper:plugin_header('rroom')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "That room does not exist")    
+    end
+  else
+    phelper:plugin_header('rroom')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "That note does not exist")
+  end
+end
+
+function cmd_removenote(cmddict)
+  if cmddict[1] == 'help' or not cmddict[1] then
+      phelper:plugin_header('remove')
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " remove <noteid> ")
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove a note")        
+      ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the id of the note to remove")
+  else
+    local changes = aarddb:removenote(cmddict[1])
+    if changes > 0 then
+      ColourNote(RGBColourToName(var.plugin_colour), "black", "Note " .. tostring(cmddict[1]) .. " was deleted.")
+      roomnotes = {}
+    else
+      ColourNote(RGBColourToName(var.plugin_colour), "black", "Nothing was deleted, please check your note id")
+    end
+  end
 
 end
 
@@ -187,7 +242,7 @@ function checkroomnotes(room)
     if roomnotes[room] then
       roomstuff = roomnotes[room]
     else
-      local stuff = aarddb:lookupnotes('room = ' .. tostring(room))
+      local stuff = aarddb:getnotesforroom(tonumber(room))
       if next(stuff) then
         roomnotes[room] = {}
         for i,v in pairs(stuff) do
@@ -197,6 +252,7 @@ function checkroomnotes(room)
       end
     end
     if roomnotes[room] and next(roomnotes[room]) then
+      ColourNote("","","")
       for i,note in pairs(roomnotes[room]) do
         format_note(note)
       end
@@ -284,11 +340,13 @@ phelper:set_default('cmd', 'bn')
 phelper:set_default('plugin_colour', 'orange')
 
 phelper:add_cmd('add', {func=cmd_addnote, help="add notes", sortgroup="Creating, Modifying and Deleting a note", prio=40})
-phelper:add_cmd('remove', {func=cmd_removenote, help="remove a note, use note id", sortgroup="Creating, Modifying and Deleting a note", prio=41})
+phelper:add_cmd('room', {func=cmd_addroom, help="add note to a room", sortgroup="Creating, Modifying and Deleting a note", prio=41})
+phelper:add_cmd('rroom', {func=cmd_removeroom, help="remove a note from a room", sortgroup="Creating, Modifying and Deleting a note", prio=42})
+phelper:add_cmd('remove', {func=cmd_removenote, help="remove a note, use note id", sortgroup="Creating, Modifying and Deleting a note", prio=43})
 
-phelper:add_cmd('lu', {func=cmd_notelookup, help="lookup notes", sortgroup="Getting information about a note", prio=42})
-phelper:add_cmd('area', {func=cmd_notearea, help="lookup notes by area", sortgroup="Getting information about a note", prio=43})
-phelper:add_cmd('keyword', {func=cmd_notekeyword, help="lookup notes by keyword", sortgroup="Getting information about a note", prio=44})
+phelper:add_cmd('lu', {func=cmd_notelookup, help="lookup notes", sortgroup="Getting information about a note", prio=46})
+phelper:add_cmd('area', {func=cmd_notearea, help="lookup notes by area", sortgroup="Getting information about a note", prio=47})
+phelper:add_cmd('keyword', {func=cmd_notekeyword, help="lookup notes by keyword", sortgroup="Getting information about a note", prio=48})
 
 phelper:add_setting('roomnotes', {help="show notes in rooms", type="bool", default=verify_bool(true)})
 
