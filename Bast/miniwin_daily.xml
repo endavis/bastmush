@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="miniwin_daily"
+   author="Bast"
+   id="eeef9e566a44169e0f1d9585"
+   language="Lua"
+   purpose="show a window when daily blessing is available"
+   date_written="2008-07-18"
+   requires="4.73"
+   version="6.1"
+   save_state="y"
+   >
+<description trim="y">
+
+</description>
+
+</plugin>
+
+<!--  Triggers  -->
+<triggers>
+
+
+</triggers>
+
+
+<timers>
+
+</timers>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+
+internalrevision = "$Rev$"
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require 'var'
+require 'pluginhelper'
+require "miniwin"
+require "tprint"
+require "commas"
+require "serialize"
+require "ldplugin"
+require "findfile"
+
+dailywin = Miniwin:new{name="Daily"}
+dailywin:set_default("textfont", {name='courier new', size=12})
+dailywin:set_default("windowpos", 12)
+
+
+function updatedaily(stuff)
+
+  local tstuff = assert (loadstring ('return ' .. stuff or ""))()
+  local tilldaily = tstuff.tilldaily
+  if tilldaily > 0 then
+    text = format_time(tilldaily, true)
+  else
+    text = 'Now'
+  end
+
+  local alines = {}
+  table.insert(alines, {{text=''}})
+
+  local style = {}
+  style.text = 'DB ' .. text
+  dailywin.tabcolour = dailywin:get_colour('bg_colour')
+  if text == 'Now' then
+    dailywin.tabcolour = 'red'
+    style.textcolour = 'black'
+  end
+  dailywin:addtab('Default', alines)
+  dailywin:tabbroadcast(true, {style})
+
+end
+
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  phelper:OnPluginBroadcast(msg, id, name, text)
+
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+  ldplugin ("broadcast_daily", "aaa66a81c5408278ccda7100")
+
+  phelper:register_remote("aaa66a81c5408278ccda7100", "dailytimechange", "updatedaily")
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'mdaily')
+phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:add_pobject('daily', dailywin)
+
+phelper:enable()
+
+phelper:addaardhelps{"daily"}
+
+]]>
+</script>
+</muclient>

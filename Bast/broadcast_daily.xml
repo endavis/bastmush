@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- $Id$ -->
+<muclient>
+<plugin
+   name="xBroadcast_daily"
+   author="Bast"
+   id="aaa66a81c5408278ccda7100"
+   language="Lua"
+   purpose="broadcast daily blessing events"
+   date_written="2008-07-18"
+   requires="4.73"
+   version="6.1"
+   save_state="y"
+   >
+<description trim="y">
+
+</description>
+
+</plugin>
+
+<!--  Triggers  -->
+<triggers>
+
+ <trigger
+   enabled="y"
+   match="^You can receive a new daily blessing in (?&lt;hours&gt;[\d]*) hour[s]*, (?&lt;minutes&gt;[\d]*) minute[s]* and (?&lt;seconds&gt;[\d]*) second[s]*.$"
+   sequence="100"
+   script="dailytime"
+   group="daily"
+   regexp="y"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="^You can receive a new daily blessing in (?&lt;minutes&gt;[\d]*) minute[s]* and (?&lt;seconds&gt;[\d]*) second[s]*.$"
+   sequence="100"
+   script="dailytime"
+   group="daily"
+   regexp="y"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="^You can receive a new daily blessing in (?&lt;seconds&gt;[\d]*) second[s]*.$"
+   sequence="100"
+   script="dailytime"
+   group="daily"
+   regexp="y"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="^You are ready to receive a new daily blessing.$"
+   sequence="100"
+   script="dailynow"
+   group="daily"
+   regexp="y"
+  >
+  </trigger>
+
+ <trigger
+   enabled="y"
+   match="^You bow your head to Ayla and receive your daily blessing.$"
+   sequence="100"
+   script="tookdaily"
+   group="daily"
+   regexp="y"
+  >
+  </trigger>
+
+</triggers>
+
+
+<timers>
+  <timer
+    enabled="y"
+    minute="1"
+    offset_second="0.00"
+    script="updatedaily"
+    active_closed="y"
+    name="dailyblessingtimer"
+    >
+  </timer>
+</timers>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+--You are ready to receive a new daily blessing.
+--You can receive a new daily blessing in 5 hours, 44 minutes and 54 seconds.
+--You have the following daily blessing active:
+--
+--Blessing                                                     Time Left
+-------------------------------------------------------------- ----------------
+--Next 51 mobs killed will reward bonus gold                   44:54
+--BLESSING: Your daily blessing is available.
+--You bow your head to Ayla and receive your daily blessing.
+
+--[[
+
+--Blessing                                                     Time Left
+-------------------------------------------------------------- ----------------
+Next 3 quests completed will reward double quest points      18:00:00
+Next quest completed will reward double quest points         18:00:00
+Next 42 mobs killed will reward double experience            18:00:00
+Next 93 mobs killed will reward bonus gold                   18:00:00
+Next 2 levels or powerups will add bonus trains              18:00:00
+Next campaign will include a trivia point reward             18:00:00
+Next 2 campaigns will include a trivia point reward          18:00:00
+10 minutes mud-wide double exp. Type 'double start' to use.  18:00:00
+2 instant levels or powerups. Type 'level up' to use.        18:00:00
+Instant level or powerup. Type 'level up' to use.            18:00:00
+Instant spellups (when using spellup command)                30:00
+Ayla blesses you with 3 free Aardwolf lottery tickets.
+Ayla blesses you with a Trivia Spell-up Potion.
+Ayla blesses you with 3 * Trivia Spell-up Potion.
+Ayla blesses you with a Trivia Incomplete Healing Potion.
+Ayla blesses you with 10 bonus quest points.
+Ayla blesses you with a Daily Blessing Reset Token.
+Ayla blesses you with a Daily Blessing Qreset Token.
+Ayla blesses you with a Daily Blessing Area Reset Token.
+Ayla blesses you with a Daily Blessing Campaign Reset Token.
+Ayla blesses you with 640,000 additional gold.
+Ayla blesses you with a trivia point!
+Ayla blesses you with 1 bonus training session.
+Ayla blesses you with 2 bonus training sessions.
+Ayla blesses you with a Trivia Point Token.
+Ayla blesses you with a free point of Intelligence.
+Ayla blesses you with a free point of potential.
+Ayla blesses you with a free point of mastery in mental damage.
+Ayla blesses you with a free point of mastery in sonic damage.
+Ayla blesses you with a free rebuild!
+Ayla blesses you with your next superhero free of charge.
+
+
+--]]
+
+internalrevision = "$Rev$"
+dofile (GetPluginInfo (GetPluginID (), 20) .. "luapath.lua")
+
+require 'var'
+require 'pluginhelper'
+require "miniwin"
+require "tprint"
+require "commas"
+require "serialize"
+require "ldplugin"
+require "findfile"
+
+justfound = false
+
+function dailytime(name, line, wildcards)
+  local tilldaily = (tonumber(wildcards.hours or 0) * 60 * 60) + (tonumber(wildcards.minutes or 0) * 60) + (tonumber(wildcards.seconds or 0))
+
+  phelper:set('nextdaily', GetInfo(304) + tilldaily, {silent=true})
+
+  updatedaily()
+end
+
+function dailynow(name, line, wildcards)
+  phelper:set('nextdaily', 0, {silent=true})
+
+  updatedaily()
+end
+
+function event_dailytime_change(time)
+  phelper:processevent('dailytimechange', {tilldaily=time})
+end
+
+function tookdaily(name, line, wildcards)
+  local tilldaily = 23 * 60 * 60
+
+  phelper:set('nextdaily', GetInfo(304) + tilldaily, {silent=true})
+
+  updatedaily()
+end
+
+function updatedaily()
+  tilldaily = 0
+  if phelper.nextdaily ~= 0 then
+    local ndaily = phelper.nextdaily
+    tilldaily = ndaily - GetInfo(304)
+
+  end
+
+  event_dailytime_change(tilldaily)
+end
+
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+function OnPluginBroadcast (msg, id, name, text)
+  if id == 'aaa9e381c5408278ccda7100' then
+    if msg == 1 then
+      SendNoEcho('daily')
+    end
+  end
+  phelper:OnPluginBroadcast(msg, id, name, text)
+
+end
+
+function OnPluginInstall ()
+  --OnPluginEnable is automatically called by pluginhelper
+
+  phelper:OnPluginInstall()
+end -- OnPluginInstall
+
+function OnPluginClose ()
+  --OnPluginDisable is automatically called by pluginhelper
+
+  phelper:OnPluginClose()
+end -- OnPluginClose
+
+function OnPluginEnable ()
+
+  phelper:OnPluginEnable()
+
+end -- OnPluginEnable
+
+function OnPluginDisable ()
+
+  phelper:OnPluginDisable()
+end -- OnPluginDisable
+
+function OnPluginConnect ()
+
+  phelper:OnPluginConnect()
+end -- function OnPluginConnect
+
+function OnPluginDisconnect ()
+
+  phelper:OnPluginDisconnect()
+end -- function OnPluginConnect
+
+function OnPluginSaveState ()
+
+  phelper:OnPluginSaveState()
+end -- function OnPluginSaveState
+
+]]>
+</script>
+
+<script>
+<![CDATA[
+
+phelper:set_default('cmd', 'bdaily')
+phelper:set_default('plugin_colour', 'steelblue')
+
+phelper:add_setting('nextdaily', {help="the next time a daily can be taken", type="number", default=0, readonly=true})
+
+phelper:enable()
+
+phelper:addaardhelps{"daily"}
+
+]]>
+</script>
+</muclient>
