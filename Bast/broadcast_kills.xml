@@ -68,6 +68,7 @@ Ayla's holy rift protects a human prisoner from your attack.
 A large bat fiddles with time and your attack is just a few seconds slow.
 A ghoulish creature blends in perfectly causing you to hit nothing but air.
 The solemn knight blocks your attack with his shield.
+The mine foreman avoids your attack, almost too easily.
 
 You dodge a beaver's attack.
 You misdirect a beaver's attack.
@@ -612,8 +613,12 @@ function onwearlocchange(stuff)
     -- get wielded and second from db
     local witem = db:getitembywearslot(24)
     local sitem = db:getitembywearslot(25)
-    phelper:set('weaponsn', witem.serial, {silent=true})
-    phelper:set('secondsn', sitem.serial, {silent=true})
+    if witem then
+      phelper:set('weaponsn', witem.serial, {silent=true})
+    end
+    if sitem then
+      phelper:set('secondsn', sitem.serial, {silent=true})
+    end
   end
 end
 
