@@ -10,8 +10,9 @@ Aarddb = Sqlitedb:subclass()
 function Aarddb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "/aardinfo.db"
-  self.version = 2
+  self.version = 3
   self.versionfuncs[2] = self.resetplanestable
+  self.versionfuncs[3] = self.convertroomnotes
 
   self:addtable('planespools',[[CREATE TABLE planespools(
       pool_id INTEGER NOT NULL PRIMARY KEY autoincrement,
@@ -53,10 +54,15 @@ function Aarddb:initialize(args)
   self:addtable('notes', [[CREATE TABLE notes(
       note_id INTEGER NOT NULL PRIMARY KEY autoincrement,
       area TEXT NOT NULL,
-      room INT default -1,
       keywords TEXT NOT NULL,
       note TEXT NOT NULL
         )]], nil, nil, 'note_id')
+        
+  self:addtable('roomnotes', [[CREATE TABLE roomnotes(
+      rnote_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+      room INT default -1,
+      notenum INT
+        )]], nil, nil, 'rnote_id')        
 
   self:postinit() -- this is defined in sqlitedb.lua, it checks for upgrades and creates all tables
 end
@@ -122,6 +128,59 @@ function Aarddb:lookupnotes(notestr)
     self:close('lookupnotes')
   end
   return results
+end
+
+function Aarddb:getnotesforroom(ruid)
+  local results = {}
+  local sqlcmd = [[SELECT *
+                    FROM roomnotes r
+                    INNER JOIN notes n ON n.note_id = r.notenum
+                    WHERE r.room = %s
+                    ORDER BY r.notenum ASC
+                    ]]  
+  if self:open('getnotesforroom') then
+    local stmt = self.db:prepare(string.format(sqlcmd, ruid))
+    if not stmt then
+      phelper:plugin_header('getnotesforroom')
+      print('The lookup arguments do not create a valid sql statement to get notes')
+    else
+      for a in stmt:nrows() do
+        table.insert(results, a)
+      end
+    end
+    self:close('getnotesforroom')
+  end                    
+  return results
+end
+
+function Aarddb:getroomsfornote(note_id)
+  local results = {}
+  local sqlcmd = [[SELECT *
+                    FROM roomnotes
+                    WHERE notenum = %s
+                    ]]  
+  if self:open('getroomsfornotes') then
+    local stmt = self.db:prepare(string.format(sqlcmd, note_id))
+    if not stmt then
+      phelper:plugin_header('getroomsfornotes')
+      print('The lookup arguments do not create a valid sql statement to get notes')
+    else
+      for a in stmt:nrows() do
+        table.insert(results, a)
+      end
+    end
+    self:close('getroomsfornotes')
+  end                    
+  return results  
+end
+
+function Aarddb:addnotetoroom(roomnum, note_id)
+  if self:open('addnotetoroom') then
+    local sqls = 'INSERT INTO roomnotes VALUES (NULL, %s, %s)'
+    local sqlp = string.format(sqls, roomnum, note_id)
+    self.db:exec(sqlp)
+    self:close('addnotetoroom')
+  end
 end
 
 function Aarddb:resetplanestable()
@@ -409,6 +468,53 @@ function Aarddb:clearhelptable()
   end
   self:checktable('helps')
   self:checktable('helplookup')
+end
+
+function Aarddb:convertroomnotes()
+  local oldnotes = self:getallnotes()
+  self:open('convertroomnotes')
+  self.db:exec([[DROP TABLE IF EXISTS notes;]])
+  self.db:exec([[DROP TABLE IF EXISTS roomnotes;]])
+  self:close('convertroomnotes', true)
+  self:open('convertroomnotes2')    
+  self.db:exec([[CREATE TABLE notes(
+    note_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+    area TEXT NOT NULL,
+    keywords TEXT NOT NULL,
+    note TEXT NOT NULL
+      )]])
+  self.db:exec([[CREATE TABLE roomnotes(
+    rnote_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+    room INT default -1,
+    notenum INT
+      )]])            
+  self:close('convertroomnotes2', true)    
+  
+  if oldnotes and next(oldnotes) then
+    self:open('convertroomnotes3')    
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare[[ INSERT INTO notes VALUES (:note_id, :area, :keywords,
+                                                              :note) ]]
+
+    for i,v in tableSort(oldnotes, 'note_id') do
+      stmt:bind_names(v)
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    local stmt2 = self.db:prepare[[ INSERT INTO roomnotes VALUES (NULL, :room, 
+                                                                  :note_id) ]]                       
+    for i,v in tableSort(oldnotes, 'note_id') do
+      if v['room'] and tonumber(v['room']) then
+        stmt2:bind_names(v)
+        stmt2:step()
+        stmt2:reset()          
+      end
+    end
+    stmt2:finalize()
+    assert (self.db:exec("COMMIT"))    
+    self:close('convertroomnotes3', true)    
+  end
 end
 
 planespools = {
