@@ -88,6 +88,7 @@ function Aarddb:removenote(notenum)
     tchanges = self.db:total_changes()
     self.db:exec("DELETE FROM notes WHERE note_id= " .. tostring(notenum))
     tchanges = self.db:total_changes() - tchanges
+    self.db:exec("DELETE FROM roomnotes WHERE notenum = " .. tostring(notenum))
     self:close('removenote')
   end
   timer_end('Aarddb:removenote')
@@ -180,6 +181,15 @@ function Aarddb:addnotetoroom(roomnum, note_id)
     local sqlp = string.format(sqls, roomnum, note_id)
     self.db:exec(sqlp)
     self:close('addnotetoroom')
+  end
+end
+
+function Aarddb:removenotefromroom(roomnum, note_id)
+  if self:open('removenotefromroom') then
+    local sqls = 'DELETE FROM roomnotes WHERE room = %s and notenum = %s '
+    local sqlp = string.format(sqls, roomnum, note_id)
+    self.db:exec(sqlp)
+    self:close('removenotefromroom')
   end
 end
 
