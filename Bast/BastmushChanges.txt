@@ -1,5 +1,21 @@
 Bastmush Changes List
 
+r2052 snapshot
+  - broadcast_daily.xml, miniwin_daily.xml
+     - new: a couple of new plugins to show when a daily blessing can
+         be taken 
+  - lua/formatitem.lua
+     - new: add functions to show items, inventory, and eq in output
+  - eqDB.xml
+     - new: can now override the inventory, equipment and "look in"
+         see "eqdb set" and the overload variables
+  - eqSets.xml
+     - new: item outputs now use the functions in formatitem
+  - StatDB.xml
+     - new: now takes t9 redos into account
+  - notes.xml
+     - new: can now attach notes to multiple rooms
+
 r2031 snapshot
   - General
      - new: sqlite changes to make sqlite3 databases easier to work with
