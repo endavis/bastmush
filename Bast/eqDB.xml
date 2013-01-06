@@ -16,16 +16,26 @@
 
 <description trim="y">
 <![CDATA[
-when you override the inventory command (also works with l i <container>)
+when you override the inventory command (also works with l i <container> and eq)
 inv can have several arguments
  : a single level (inv 100) - will show any items level 100 or above
  : two levels (inv 1 100) - will show any items from level 1 to level 100
- : "nog" - don't group items
- : an item type: such as weapon, armor, container, food, etc see "eqdb translate objecttypes"
+ : "-g" - don't group items
+ : "+g" - group items (this is default)
+ : "-f" - don't show flags
+ : "+f" - show flags (this is default)
+ : "+se" - show serial #s (default for inventory command)
+ : "+sc" - show score
+ : an item type: such as weapon, armor, container, food, etc see 
+       "eqdb translate objecttypes"
  : a word: the items shortname will contain this word
  : a sort field: +level, -level will sort by level
  
-If you override the inventory commands on the mud, you can type the full command to bypass eqdb
+If you override the inventory commands on the mud, you can type the full
+command to bypass eqdb
+
+If you think your inventory does not reflect your actual inventory,
+then type "eqdb refresh"
 ]]>
 </description>
 </plugin>
@@ -1249,6 +1259,16 @@ function parse_inv_args(args)
       table.insert(extras['otype'], v)
     elseif tonumber(v) then
       table.insert(extras['levels'], v)
+    elseif v == '-g' then
+      extras['group'] = false
+    elseif v == '+g' then
+      extras['group'] = true      
+    elseif v == '+sc' then
+      extras['score'] = true
+    elseif v == '+se' then
+      extras['serial'] = true
+    elseif v == '-f' then
+      extras['flags'] = false
     elseif string.find(v, '-') then
       local field = string.sub(v, 2, #v)
       if db.tables['items'].columnsbykeys[field] then
@@ -1261,16 +1281,6 @@ function parse_inv_args(args)
         extras['sort']['dir'] = 'ASC'
         extras['sort']['field'] = string.sub(v, 2, #v)
       end
-    elseif v == 'nog' or v == 'nogroup' then
-      extras['group'] = false
-    elseif v == 'group' then
-      extras['group'] = true
-    elseif v == 'serial' then
-      extras['serial'] = true
-    elseif v == 'score' then
-      extras['score'] = true
-    elseif v == 'nof' or v == 'noflags' then
-      extras['flags'] = false
     else
       table.insert(extras['name'], v)
     end
@@ -1490,12 +1500,24 @@ function OnPluginSend (sText)
   if inventoryp and item ~= 'filter' and phelper.overloadinventory then
     table.remove(cmd, 1)
     --print('overloading inventory')
-    show_container('Inventory', cmd)
+    if cmd[1] == 'help' then
+      Note("")
+      Note(GetPluginInfo (GetPluginID (), 3))    
+      Note("")
+    else
+      show_container('Inventory', cmd)
+    end
     return false
   elseif eqp and phelper.overloadinventory then
     --print('overloading equipment')
     table.remove(cmd, 1)
-    show_container('Worn', cmd)
+    if cmd[1] == 'help' then
+      Note("")
+      Note(GetPluginInfo (GetPluginID (), 3))    
+      Note("")
+    else    
+      show_container('Worn', cmd)
+    end
     return false
   -- wear and remove
   elseif wearp or removep then
@@ -1631,8 +1653,8 @@ phelper:add_cmd('translate', {func=cmd_translate, help="show what strings mean f
 
 phelper:add_setting('showoutput', {help="show tags", type="bool", default=verify_bool(false), after=aftershowset})
 phelper:add_setting('overloadid', {help="overload the identify command to use getitem", type="bool", default=verify_bool(false)})
-phelper:add_setting('overloadinventory', {help="overload the inventory command", type="bool", default=verify_bool(false)})
-phelper:add_setting('groupitems', {help="groupitems that are the same when inventory is overloaded", type="bool", default=verify_bool(false)})
+phelper:add_setting('overloadinventory', {help="overload the inventory, equipment and 'look in' commands", type="bool", default=verify_bool(false)})
+phelper:add_setting('groupitems', {help="groupitems that are the same when inventory is overloaded", type="bool", default=verify_bool(true)})
 
 phelper:enable()
 ]]>
