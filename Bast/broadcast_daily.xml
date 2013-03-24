@@ -14,6 +14,45 @@
    save_state="y"
    >
 <description trim="y">
+[FOR PLUGIN AUTHORS ONLY] 
+-- add the following code to the specified functions (if you are not using a plugin based on bastmush)
+function OnPluginBroadcast (msg, id, name, text)
+  if id == "aaa66a81c5408278ccda7100" and msg == -2 then
+    local id = GetPluginID()
+    local cmd = 'CallPlugin("aaa66a81c5408278ccda7100", "registerevent", "' .. tostring(id) .. '", "dailytimechange", "ondailychange")'
+    DoAfterSpecial(2, cmd, 12)
+  end
+end
+
+function OnPluginEnable()
+  ldplugin ("broadcast_daily", "aaa66a81c5408278ccda7100")
+
+  local id = GetPluginID()
+  local cmd = 'CallPlugin("aaa66a81c5408278ccda7100", "registerevent", "' .. tostring(id) .. '", "dailytimechange", "ondailychange")'
+  DoAfterSpecial(2, cmd, 12)
+end
+
+function OnPluginDisable ()
+  local cmd = 'CallPlugin("aaa66a81c5408278ccda7100", "unregisterevent", "' .. tostring(id) .. '", "dailytimechange", "ondailychange")'
+end -- OnPluginDisable
+--------------------------------------------------------------------------
+-- if you are using a plugin based on bastmush
+function OnPluginEnable ()
+  ldplugin ("broadcast_daily", "aaa66a81c5408278ccda7100")
+
+  phelper:register_remote("aaa66a81c5408278ccda7100", "dailytimechange", "updatedaily")
+
+  phelper:OnPluginEnable()
+end -- OnPluginEnable
+
+
+---------------------------------------------------------------------------
+-- this is the function that gets the data (use this function no matter what)
+function ondailychange(stuff)
+  require "tprint"
+  local tstuff = assert (loadstring ('return ' .. stuff or ""))()
+  tprint(tstuff)
+end
 
 </description>
 
@@ -185,7 +224,6 @@ function updatedaily()
   if phelper.nextdaily ~= 0 then
     local ndaily = phelper.nextdaily
     tilldaily = ndaily - GetInfo(304)
-
   end
 
   event_dailytime_change(tilldaily)
