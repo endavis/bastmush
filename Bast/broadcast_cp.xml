@@ -332,7 +332,17 @@ Broadcast 3
    group="campaigndone"
   >
   </trigger>
-
+  
+  <trigger
+   enabled="n"
+   match="*"
+   name="catchall"
+   script="nextline"
+   group="getnextline"
+   sequence="101"
+  >
+  </trigger>
+  
  <trigger
    enabled="n"
    match="Campaign cleared."
@@ -487,12 +497,21 @@ function cp_time (name, line, wildcards)
 end -- cp_time
 
 function campaign_done (name, line, wildcards)
+  phelper:enabletriggroup("getnextline", true)  
+end -- campaign_done
+
+function nextline(name, line, wildcards)
+  phelper:enabletriggroup("getnextline", false)
+  if string.find(line, 'first campaign completed today') then
+    local bonusqp = string.match(line, "^You receive (%d*) quest points bonus for your first campaign completed today.$")
+    cp_info['bonusqp'] = bonusqp
+  end
   cp_info['oncp'] = false
   var.cp_info = serialize.save( "cp_info", cp_info )
   SaveState()
   phelper:broadcast(3, var.cp_info)
   cp_none()
-end -- campaign_done
+end -- nextline
 
 function campaign_fail (name, line, wildcards)
   cp_info.failed = 1
@@ -562,6 +581,7 @@ function cp_new()
   cp_info['gold'] = 0
   cp_info['tp'] = 0
   cp_info['qp'] = 0
+  cp_info['bonusqp'] = 0
   cp_info['failed'] = 0
   cp_info['level'] =  curlevel
   cp_info['starttime'] = GetInfo(304)
