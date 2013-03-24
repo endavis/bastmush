@@ -72,6 +72,7 @@ function updatedaily(stuff)
     dailywin.tabcolour = 'red'
     style.textcolour = 'black'
   end
+  table.insert(alines, {style})
   dailywin:addtab('Default', alines)
   dailywin:tabbroadcast(true, {style})
 
