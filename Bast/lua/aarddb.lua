@@ -194,9 +194,12 @@ function Aarddb:removenotefromroom(roomnum, note_id)
 end
 
 function Aarddb:resetplanestable()
+  self:close(true)
   if self:open() then
     self.db:exec([[DROP TABLE IF EXISTS planespools;]])
     self.db:exec([[DROP TABLE IF EXISTS planesmobs;]])
+    self:close(true)
+    self:open()
     self:checktable('planespools')
     self:checktable('planesmobs')
   end
@@ -204,7 +207,7 @@ end
 
 function Aarddb:createplanespoolstable()
   if self:open() then
-    self.db:exec([[BEGIN TRANSACTION;]])
+    self.db:exec([[BEGIN TRANSACTION]])
     local stmt = self.db:prepare(self:converttoinsert('planespools'))
     for _,item in pairs(planespools) do
       stmt:bind_names(  item  )
@@ -212,14 +215,14 @@ function Aarddb:createplanespoolstable()
       stmt:reset()
     end
     stmt:finalize()
-    self.db:exec([[COMMIT;]])
+    self.db:exec([[COMMIT]])
     self:close()
   end
 end
 
 function Aarddb:createplanesmobstable()
   if self:open() then
-    self.db:exec([[BEGIN TRANSACTION;]])
+    self.db:exec([[BEGIN TRANSACTION]])
     local stmt = self.db:prepare(self:converttoinsert('planesmobs'))
     for _,item in pairs(planesmobs) do
       stmt:bind_names(  item  )
@@ -227,7 +230,7 @@ function Aarddb:createplanesmobstable()
       stmt:reset()
     end
     stmt:finalize()
-    self.db:exec([[COMMIT;]])
+    self.db:exec([[COMMIT]])
     self:close()
   end
 
@@ -236,7 +239,9 @@ end
 function Aarddb:planeslookup(mob)
   local tmobs = {}
   if self:open() then
-    for a in self.db:nrows( "SELECT DISTINCT(planesmobs.mobname), planespools.poollayer, planespools.poolnum FROM planesmobs, planespools  WHERE planesmobs.mobname LIKE '%" .. mob .. "%' and planesmobs.poolnum == planespools.poolnum" ) do
+    for a in self.db:nrows( [[SELECT DISTINCT(planesmobs.mobname), planespools.poollayer, planespools.poolnum 
+                              FROM planesmobs, planespools  WHERE planesmobs.mobname LIKE '%]] .. mob .. [[%' 
+                              and planesmobs.poolnum == planespools.poolnum]] ) do
       table.insert(tmobs, a)
     end
     self:close()
@@ -528,73 +533,73 @@ function Aarddb:convertroomnotes()
 end
 
 planespools = {
-  {poolname = 'Gladsheim', poolnum = 1},
-  {poolname = 'Pandemonium', poolnum = 2},
-  {poolname = 'Hades', poolnum = 3},
-  {poolname = 'Gehenna', poolnum = 4},
-  {poolname = 'Acheron', poolnum = 5},
-  {poolname = 'Twin Paradises', poolnum = 6},
-  {poolname = 'Arcadia', poolnum = 7},
-  {poolname = 'Seven Heavens', poolnum = 8},
-  {poolname = 'Elysium', poolnum = 10},
-  {poolname = 'Beastlands', poolnum = 11},
+  {poollayer = 'Gladsheim', poolnum = 1},
+  {poollayer = 'Pandemonium', poolnum = 2},
+  {poollayer = 'Hades', poolnum = 3},
+  {poollayer = 'Gehenna', poolnum = 4},
+  {poollayer = 'Acheron', poolnum = 5},
+  {poollayer = 'Twin Paradises', poolnum = 6},
+  {poollayer = 'Arcadia', poolnum = 7},
+  {poollayer = 'Seven Heavens', poolnum = 8},
+  {poollayer = 'Elysium', poolnum = 10},
+  {poollayer = 'Beastlands', poolnum = 11},
 }
 
 planesmobs = {
-  {name='A paladin einheriar', pool=1},
-  {name='A psionic einheriar', pool=1},
-  {name='A cleric einheriar', pool=1},
-  {name='A ranger einheriar', pool=1},
-  {name='A warrior einheriar', pool=1},
-  {name='A thief einheriar', pool=1},
-  {name='A mage einheriar', pool=1},
-  {name='A titan', pool=1},
-  {name='A per', pool=1},
-  {name='A bariaur', pool=1},
-  {name='A malelephant', pool=2},
-  {name='A nightmare', pool=2},
-  {name='A larva', pool=2},
-  {name='A hordling', pool=3},
-  {name='A yagnoloth', pool=3},
-  {name='A night hag', pool=3},
-  {name='An ultroloth', pool=4},
-  {name='An arcanaloth', pool=4},
-  {name='A dergholoth', pool=4},
-  {name='A hydroloth', pool=4},
-  {name='A mezzoloth', pool=4},
-  {name='A psicloth', pool=4},
-  {name='A nycaloth', pool=4},
-  {name='A vaporighu', pool=4},
-  {name='General of Gehenna', pool=4},
-  {name='An ultroloth', pool=5},
-  {name='A dergholoth', pool=5},
-  {name='A hydroloth', pool=5},
-  {name='A mezzoloth', pool=5},
-  {name='A psicloth', pool=5},
-  {name='A nycaloth', pool=5},
-  {name='An adamantite dragon', pool=6},
-  {name='An air sentinel', pool=6},
-  {name='A monadic deva', pool=6},
-  {name='An agathinon aasimon', pool=7},
-  {name='An astral deva', pool=7},
-  {name='A translator', pool=7},
-  {name="A t'uen-rin", pool=7},
-  {name='A lantern archon', pool=8},
-  {name='A tome archon', pool=8},
-  {name='A noctral', pool=8},
-  {name='A planetar aasimon', pool=8},
-  {name='A warden archon', pool=8},
-  {name='A hound archon', pool=8},
-  {name='A sword archon', pool=8},
-  {name='A zoveri', pool=8},
-  {name='A light aasimon', pool=10},
-  {name='A solar aasimon', pool=10},
-  {name='A movanic deva', pool=10},
-  {name='A balanea', pool=10},
-  {name='A phoenix', pool=10},
-  {name='A moon dog', pool=10},
-  {name='A mortai', pool=11},
-  {name='An animal spirit', pool=11},
-  {name='An animal lord', pool=11},
-  {name='A warden beast', pool=11},
+  {mobname='A paladin einheriar', poolnum=1},
+  {mobname='A psionic einheriar', poolnum=1},
+  {mobname='A cleric einheriar', poolnum=1},
+  {mobname='A ranger einheriar', poolnum=1},
+  {mobname='A warrior einheriar', poolnum=1},
+  {mobname='A thief einheriar', poolnum=1},
+  {mobname='A mage einheriar', poolnum=1},
+  {mobname='A titan', poolnum=1},
+  {mobname='A per', poolnum=1},
+  {mobname='A bariaur', poolnum=1},
+  {mobname='A malelephant', poolnum=2},
+  {mobname='A nightmare', poolnum=2},
+  {mobname='A larva', poolnum=2},
+  {mobname='A hordling', poolnum=3},
+  {mobname='A yagnoloth', poolnum=3},
+  {mobname='A night hag', poolnum=3},
+  {mobname='An ultroloth', poolnum=4},
+  {mobname='An arcanaloth', poolnum=4},
+  {mobname='A dergholoth', poolnum=4},
+  {mobname='A hydroloth', poolnum=4},
+  {mobname='A mezzoloth', poolnum=4},
+  {mobname='A psicloth', poolnum=4},
+  {mobname='A nycaloth', poolnum=4},
+  {mobname='A vaporighu', poolnum=4},
+  {mobname='General of Gehenna', poolnum=4},
+  {mobname='An ultroloth', poolnum=5},
+  {mobname='A dergholoth', poolnum=5},
+  {mobname='A hydroloth', poolnum=5},
+  {mobname='A mezzoloth', poolnum=5},
+  {mobname='A psicloth', poolnum=5},
+  {mobname='A nycaloth', poolnum=5},
+  {mobname='An adamantite dragon', poolnum=6},
+  {mobname='An air sentinel', poolnum=6},
+  {mobname='A monadic deva', poolnum=6},
+  {mobname='An agathinon aasimon', poolnum=7},
+  {mobname='An astral deva', poolnum=7},
+  {mobname='A translator', poolnum=7},
+  {mobname="A t'uen-rin", poolnum=7},
+  {mobname='A lantern archon', poolnum=8},
+  {mobname='A tome archon', poolnum=8},
+  {mobname='A noctral', poolnum=8},
+  {mobname='A planetar aasimon', poolnum=8},
+  {mobname='A warden archon', poolnum=8},
+  {mobname='A hound archon', poolnum=8},
+  {mobname='A sword archon', poolnum=8},
+  {mobname='A zoveri', poolnum=8},
+  {mobname='A light aasimon', poolnum=10},
+  {mobname='A solar aasimon', poolnum=10},
+  {mobname='A movanic deva', poolnum=10},
+  {mobname='A balanea', poolnum=10},
+  {mobname='A phoenix', poolnum=10},
+  {mobname='A moon dog', poolnum=10},
+  {mobname='A mortai', poolnum=11},
+  {mobname='An animal spirit', poolnum=11},
+  {mobname='An animal lord', poolnum=11},
+  {mobname='A warden beast', poolnum=11},
 }
