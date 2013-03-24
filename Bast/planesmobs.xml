@@ -66,6 +66,18 @@ function cmd_find(cmddict)
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument 1 is the mob to find")    
   end
 end
+
+function cmd_reset(cmddict)
+  if cmddict[1] == 'help' then
+    phelper:plugin_header('reset')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " mreset")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "reset the planesmobs tables")   
+  else
+    aarddb:resetplanestable()
+    phelper:plugin_header('mreset')
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Reset the tables")    
+  end
+end
 ]]>
 </script>
 
@@ -123,7 +135,7 @@ phelper:set_default('cmd', 'plookup')
 phelper:set_default('plugin_colour', 'red')
 
 phelper:add_cmd('find', {func=cmd_find, help="find a planes mob", default=true})
-
+phelper:add_cmd('mreset', {func=cmd_reset, help="reset planesmobs table"})
 
 phelper:enable()
 
