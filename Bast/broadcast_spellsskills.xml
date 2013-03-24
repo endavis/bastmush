@@ -296,6 +296,7 @@ function request_slist()
      --print('requesting slist')
      SendNoEcho("slist noprompt")
      SendNoEcho("slist spellup noprompt")
+     SendNoEcho("slist learned noprompt")
    end
    --SendNoEcho("slist affected noprompt")
 end
