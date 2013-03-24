@@ -481,11 +481,12 @@ for i,v in ipairs(damtypes) do
 end
 
 function checkcorrectwearlocation(itemwearloc, where)
+  --print(itemwearloc, where)
   if itemwearloc == where then
     return true
   elseif (where == 'second' or where == 'wielded') and itemwearloc == 'wield' then
     return true
-  elseif string.find(where, itemwearloc) then
+  elseif string.find(itemwearloc, where) then
     return true
   end
   return false
