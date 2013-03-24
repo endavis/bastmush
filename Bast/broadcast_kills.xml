@@ -70,13 +70,15 @@ A ghoulish creature blends in perfectly causing you to hit nothing but air.
 The solemn knight blocks your attack with his shield.
 The mine foreman avoids your attack, almost too easily.
 
+You blink out of existence and avoid a small crow's attack.
 You dodge a beaver's attack.
 You misdirect a beaver's attack.
 You create a time shift and calmly step away from a beaver's attack.
 You get lucky and manage to escape a giant lizard's attack.
 Ayla's holy rift protects you from A mangled person's attack.
 You sense divine intervention as a Giant Shark's attack narrowly misses you.
-
+You parry ice devil's attack.
+You blend perfectly with your surroundings and avoid Valkur's lab guard's attack.
  -->
 <include name="constants.lua"/>
 
@@ -172,7 +174,7 @@ You sense divine intervention as a Giant Shark's attack narrowly misses you.
   <trigger
    enabled="y"
    regexp="y"
-   match="^Ayla gives you (.+) for the perforated corpse of (.+).$"
+   match="^Ayla gives you (.+) for the .+ corpse of (.+).$"
    name="saccorpse"
    script="mobname"
    sequence="100"
