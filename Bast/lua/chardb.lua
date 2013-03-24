@@ -31,7 +31,7 @@ Statdb = Sqlitedb:subclass()
 function Statdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "\\stats.db"
-  self.version = 11
+  self.version = 12
   self.versionfuncs[2] = self.updatedblqp -- update double qp flag
   self.versionfuncs[3] = self.updatemobkills -- slit, assassinate, etc..
   self.versionfuncs[4] = self.addmobsblessing -- add blessing xp to mobs table
@@ -42,7 +42,8 @@ function Statdb:initialize(args)
   self.versionfuncs[9] = self.updategqmobfields
   self.versionfuncs[10] = self.updategqcomplete
   self.versionfuncs[11] = self.addstatsredos
-
+  self.versionfuncs[12] = self.addbonusqpcp
+  
   self:addtable('stats', [[CREATE TABLE stats(
           stat_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           name TEXT NOT NULL,
@@ -69,7 +70,7 @@ function Statdb:initialize(args)
           totaltrivia INT default 0,
           time INT default 0,
           milestone TEXT,
-          redos INT default 0
+          redos INT default 0;
         )]], nil, nil, 'stat_id')
 
   self:addtable('quests', [[CREATE TABLE quests(
@@ -99,6 +100,7 @@ function Statdb:initialize(args)
           starttime INT default 0,
           finishtime INT default 0,
           qp INT default 0,
+          bonusqp INT default 0,
           gold INT default 0,
           tp INT default 0,
           trains INT default 0,
@@ -1328,3 +1330,46 @@ function Statdb:addstatsredos()
     self:close('addstatsredos', true)
   end
 end
+
+function Statdb:addbonusqpcp()
+  if not self:checktableexists('campaigns') then
+    return
+  end
+  if self:open('addbonusqpcp') then
+    local oldcps = {}
+    for a in self.db:nrows("SELECT * FROM campaigns") do
+      oldcps[a.cp_id] = a
+    end
+    self:close('addbonusqpcp', true)
+    self:open('addbonusqpcp2')
+    self.db:exec([[DROP TABLE IF EXISTS campaigns;]])
+    self:close('addbonusqpcp2', true)
+    self:open('addbonusqpcp3')
+    self.db:exec([[CREATE TABLE campaigns(
+          cp_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+          starttime INT default 0,
+          finishtime INT default 0,
+          qp INT default 0,
+          bonusqp INT default 0,
+          gold INT default 0,
+          tp INT default 0,
+          trains INT default 0,
+          pracs INT default 0,
+          level INT default -1,
+          failed INT default 0
+        )]])
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare(self:converttoinsert('campaigns'))
+
+    for i,v in tableSort(oldcps, 'cp_id') do
+      v['bonusqp'] = 0
+      stmt:bind_names(v)
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    assert (self.db:exec("COMMIT"))
+    self:close('addbonusqpcp3')
+  end
+end
+
