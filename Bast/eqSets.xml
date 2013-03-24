@@ -183,7 +183,7 @@ function cmd_add(cmddict)
       return
     end      
     if args['serial'] and args['wearloc'] and args['container'] and args['level'] then
-      if ditem.level > args['level'] then
+      if ditem and ditem.level > args['level'] then
         phelper:plugin_header('Add')
         ColourNote(RGBColourToName(phelper.plugin_colour), "black", "This item is too high a level for set " .. tostring(args['level']))
         return
@@ -196,6 +196,7 @@ function cmd_add(cmddict)
         ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("There is already an item set at level %s for wearloc %s", args['level'], args['wearloc']))      
         return
       elseif not checkcorrectwearlocation(ditem.wearable, args['wearloc']) then
+        print(ditem.wearable)
         phelper:plugin_header('Add')
         ColourNote(RGBColourToName(phelper.plugin_colour), "black", string.format("Cannot wear this item at the wear location %s", args['wearloc']))      
         return      
@@ -338,7 +339,7 @@ end
 function wearitem(item, sitem, shitem, hitem)
   if item and item.containerid ~= 'Worn' then
     local ditem = eqdb:getitemdetails(item.serial)
-    if ditem.level > (tonumber(char.status.level) + (char.base.tier * 10)) then
+    if ditem and ditem.level > (tonumber(char.status.level) + (char.base.tier * 10)) then
       TextToColourTell('Will not wear ' .. ditem.cname .. ' at location ' .. item.wearloc .. ' because of level restriction')
       ColourNote("", "", "")
       return
