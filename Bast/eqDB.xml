@@ -1581,7 +1581,7 @@ function OnPluginSend (sText)
         end
       end
     else
-      local nitem = db:getitem(item)
+      local nitem = db:getitem(item, true)
       local citem = nil
       if cont then
         citem = db:getitem(cont)
