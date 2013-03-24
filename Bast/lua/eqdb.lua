@@ -850,14 +850,14 @@ function EQdb:getitembyserial(serial)
   return item
 end
 
-function EQdb:getitem(itemident)
+function EQdb:getitem(itemident, nowearslot)
   --print('getitem', itemident)
   timer_start('EQdb:getitem')
   local item = self:getitembyserial(itemident)
   if item == nil then
     item = self:getitembyidentifier(itemident)
   end
-  if item == nil and wearlocreverse[itemident] then
+  if not nowearslot and item == nil and wearlocreverse[itemident] then
     item = self:getitembywearslot(wearlocreverse[itemident])
   end
   --print('getitem', item)
