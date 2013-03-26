@@ -32,11 +32,6 @@ function Sqlitedb:initialize(args)
   self.versionfuncs = {}
   self.tableids = {}
   self.tables = {}
-
-  self:addtable('version', [[CREATE TABLE version(
-        version_id INTEGER NOT NULL PRIMARY KEY autoincrement,
-        version INT default 1
-      )]])
 end
 
 function Sqlitedb:addtable(tablename, sql, prefunc, postfunc, keyfield)
@@ -80,13 +75,32 @@ function Sqlitedb:checktable(tablename)
 end
 
 function Sqlitedb:checkversion(args)
-  self:checkversiontable()
+  if self:checktableexists('version') then
+    if self:open('getversion') then
+      for a in self.db:nrows('SELECT * FROM version WHERE version_id = 1') do
+        version = a['version']
+      end
+      self:setversion(version)
+      self:close('getversion', true)
+      self:open('getversion2')
+      self.db:exec([[DROP TABLE IF EXISTS version;]])
+      self:close('getversion2', true)    
+    end
+  end
   local dbversion = self:getversion()
   if self.version < dbversion then
     return
   end
   if self.version > dbversion then
     self:updateversion(dbversion, self.version)
+  end
+end
+
+function Sqlitedb:setversion(version)
+  stmt = string.format('PRAGMA user_version=%s;', version)
+  if self:open('setversion') then
+    assert(self.db:exec(stmt))
+    self:close('setversion')
   end
 end
 
@@ -103,10 +117,9 @@ function Sqlitedb:checkversiontable()
 end
 
 function Sqlitedb:getversion()
-  local version = -1
   if self:open('getversion') then
-    for a in self.db:nrows('SELECT * FROM version WHERE version_id = 1') do
-      version = a['version']
+    for a in self.db:nrows('PRAGMA user_version;') do
+      version=a['user_version']
     end
     self:close('getversion')
   end
@@ -121,12 +134,7 @@ function Sqlitedb:updateversion(oldversion, newversion)
       self.versionfuncs[i](self)
       print('finished updating to version', i)
     end
-    if self:open('updateversion2') then
-      if self:checktableexists('version') then
-        self.db:exec(string.format('update version set version=%s where version_id = 1', newversion))
-      end
-      self:close('updateversion2')
-    end
+    self:setversion(newversion)
   end
   print('Done upgrading!')
 end
