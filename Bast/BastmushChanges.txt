@@ -1,9 +1,21 @@
 Bastmush Changes List
 
+r2078 snapshot
+  - StatMonitor.xml, chardb.lua
+     - new: added qp for first daily cp into StatMonitor
+     - new: bonus qp for daily cp is saved in database
+  - aarddb.lua, planesmobs.xml
+     - new: fix planes table
+     - new: added command to reset planes table
+  - eqdb.lua, eqDB.xml, eqSets.xml
+     - bug fix: checks when wearing items
+  - broadcast_level
+     - new: handles daily blessing pups
+
 r2052 snapshot
   - broadcast_daily.xml, miniwin_daily.xml
      - new: a couple of new plugins to show when a daily blessing can
-         be taken 
+         be taken
   - lua/formatitem.lua
      - new: add functions to show items, inventory, and eq in output
   - eqDB.xml
