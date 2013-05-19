@@ -78,6 +78,14 @@ Broadcasts
   </trigger>
   <trigger
    enabled="y"
+   match="You gain a powerup."
+   name="pupbless"
+   script="level"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
    match="You raise a level! You are now level *."
    name="level"
    script="level"
@@ -271,6 +279,9 @@ function level ( name, line, wildcards )
   resetinfo()
   if name == 'levelbless' then
     name = 'level'
+  end
+  if name == 'pupbless' then
+    name = 'pup'
   end
   if name == 'pup' then
     levelinfo.level = tonumber(char.status.level)
