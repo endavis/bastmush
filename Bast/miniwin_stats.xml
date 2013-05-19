@@ -176,7 +176,7 @@ function build_level_window()
                                  SUM(trains + bonustrains + blessingtrains) as totaltrains,
                                  SUM(pracs) as totalpracs,
                                  COUNT(*) as indb
-                                 FROM levels where type = 'level']]) do
+                                 FROM levels where type = 'level' and trains > 0]]) do
       stats.levels['avetrains'] = a['avetrains'] or 0
       stats.levels['avebonustrains'] = a['avebonustrains'] or 0
       stats.levels['aveblessingtrains'] = a['aveblessingtrains'] or 0
@@ -186,7 +186,7 @@ function build_level_window()
       stats.levels['indb'] = a['indb'] or 0
     end
 
-    for a in db.db:rows("SELECT AVG(finishtime - starttime) FROM levels where type = 'level' and finishtime <> -1" ) do
+    for a in db.db:rows("SELECT AVG(finishtime - starttime) FROM levels where type = 'level' and finishtime <> -1 and trains > 0" ) do
       stats.levels['avetime'] = a[1] or 0
     end
 
