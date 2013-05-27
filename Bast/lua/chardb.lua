@@ -70,7 +70,7 @@ function Statdb:initialize(args)
           totaltrivia INT default 0,
           time INT default 0,
           milestone TEXT,
-          redos INT default 0;
+          redos INT default 0
         )]], nil, nil, 'stat_id')
 
   self:addtable('quests', [[CREATE TABLE quests(
