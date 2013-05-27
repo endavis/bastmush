@@ -91,7 +91,9 @@ function Sqlitedb:checkversion(args)
   if self.version < dbversion then
     return
   end
-  if self.version > dbversion then
+  if dbversion == 0 then
+    self:setversion(self.version)
+  elseif self.version > dbversion then
     self:updateversion(dbversion, self.version)
   end
 end
