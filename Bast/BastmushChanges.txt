@@ -1,5 +1,12 @@
 Bastmush Changes List
 
+r2082 snapshot
+  - General
+     - bug fix: database plugins should work initialize correctly on new
+          installs
+  - update_checker
+     - new: change the way it works, no windows or popups
+
 r2078 snapshot
   - StatMonitor.xml, chardb.lua
      - new: added qp for first daily cp into StatMonitor
