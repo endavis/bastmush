@@ -405,7 +405,7 @@ function formatcp()
     table.insert(tmsg, colourwrap(cp_stuff.qp, 'stat'))
     if cp_stuff.bonusqp and tonumber(cp_stuff.bonusqp) > 0 then
       table.insert(tmsg, colourwrap('+'))
-      table.insert(tmsg, colourwrap(cp_stuff.bonusqp, 'stat'))    
+      table.insert(tmsg, colourwrap(cp_stuff.bonusqp, 'stat'))
       table.insert(tmsg, colourwrap('B='))
       table.insert(tmsg, colourwrap(tonumber(cp_stuff.qp) + tonumber(cp_stuff.bonusqp), 'stat'))
     end
@@ -545,7 +545,7 @@ function StatReport(minutes)
       end
     end
     if db:getlastrowid('campaigns') > 0 then
-      for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp), SUM(gold), SUM(tp) FROM campaigns where finishtime > %d and failed = 0;", starttime)) do
+      for a in db.db:rows(string.format("SELECT COUNT(*), SUM(qp+bonusqp), SUM(gold), SUM(tp) FROM campaigns where finishtime > %d and failed = 0;", starttime)) do
         cpstats.total = a[1]
         cpstats.qp = a[2]
         cpstats.gold = a[3]
