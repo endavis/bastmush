@@ -1,5 +1,15 @@
 Bastmush Changes List
 
+r2087 snapshot
+  - update_checker
+     - bug fix: no longer crashes when "bup check" is run
+  - StatMonitor
+     - new: show bonus qp for first cp of the day
+  - miniwin_eq
+     - new: added a menu item to copy item id to clipboard
+  - bast_spellup
+     - bug fix: no longer has an error when checking skills to practice
+
 r2082 snapshot
   - General
      - bug fix: database plugins should work initialize correctly on new
