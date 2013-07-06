@@ -63,7 +63,7 @@ bsp help    --> this message
 
 <!--  Triggers  -->
 <triggers>
-  
+
   <trigger
    enabled="y"
    match="^There is nobody here to help you practice.$"
@@ -73,7 +73,7 @@ bsp help    --> this message
    regexp="y"
    omit_from_output="n"
   >
-  </trigger>  
+  </trigger>
 
 </triggers>
 
@@ -525,11 +525,11 @@ function cmd_sablocker(cmddict)
     end
   else
     phelper:plugin_header('sba')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " sba <blockspell:isactive> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add a blocker for a spell on self")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a pair of spells seperated by a colon (:)")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " sba <blockspell:isactive> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add a blocker for a spell on self")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a pair of spells seperated by a colon (:)")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  The leftside of the colon is the spell that will not be cast")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", '  if the spell on the rightside of the colon is active')  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", '  if the spell on the rightside of the colon is active')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", 'Example: ')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", ' block protection good from being cast if inertial barrier is active')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", ' ' .. phelper.cmd .. ' sba 68:121')
@@ -558,14 +558,14 @@ function cmd_sdblocker(cmddict)
     end
   else
     phelper:plugin_header('sbr')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " sbr <blockspell:isactive> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove a blocker for a spell on self")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a pair of spells seperated by a colon (:)")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " sbr <blockspell:isactive> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove a blocker for a spell on self")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a pair of spells seperated by a colon (:)")
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  The leftside of the colon is the spell that will not be cast")
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", '  if the spell on the rightside of the colon is active')  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", '  if the spell on the rightside of the colon is active')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", 'Example: ')
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", ' remove the blocker: protection good from being cast if inertial barrier is active')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", ' ' .. phelper.cmd .. ' sbr 68:121')  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", ' ' .. phelper.cmd .. ' sbr 68:121')
   end
   return true
 end
@@ -597,9 +597,9 @@ function cmd_sdisable(cmddict)
     end
   else
     phelper:plugin_header('sdisable')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " sdisable <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "disable a spell from being cast on self")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell")  
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " sdisable <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "disable a spell from being cast on self")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell")
   end
 end
 
@@ -631,9 +631,9 @@ function cmd_senable(cmddict)
     end
   else
     phelper:plugin_header('senable')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " senable <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "enable a spell to be cast on self")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " senable <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "enable a spell to be cast on self")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell")
   end
 end
 
@@ -750,9 +750,9 @@ function cmd_info(cmddict)
     end
   else
     phelper:plugin_header('info')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " info <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show info about a spell")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")    
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " info <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "show info about a spell")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")
   end
 end
 
@@ -779,9 +779,9 @@ function cmd_togglespellup(cmddict)
     local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "unsetclientspellup", serialize.save_simple(uspells))
   else
     phelper:plugin_header('togglespellup')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " togglespellup <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "toggle a spell to be a spellup")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")        
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " togglespellup <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "toggle a spell to be a spellup")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")
   end
 end
 
@@ -816,9 +816,9 @@ function cmd_toggleclanskill(cmddict)
     local res, text = CallPlugin("aaa72f3b5453567e2bba9d50", "unsetclanskill", serialize.save_simple(uspells))
   else
     phelper:plugin_header('toggleclanskill')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " toggleclanskill <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "toggle a spell to be a clanskill, which will make a spell be able to be cast if you have not practiced it")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")          
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " toggleclanskill <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "toggle a spell to be a clanskill, which will make a spell be able to be cast if you have not practiced it")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")
   end
 end
 
@@ -833,11 +833,11 @@ function cmd_other(cmddict)
 
   if not who then
     phelper:plugin_header('other')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " other <target> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "spellup another person")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a character or mob in the same room")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if the keyword 'fast' is used, then it will cast all spellup spells")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  and not just the ones in the other list")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " other <target> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "spellup another person")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a character or mob in the same room")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if the keyword 'fast' is used, then it will cast all spellup spells")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  and not just the ones in the other list")
     return
   end
   if cmddict[2] == 'fast' then
@@ -901,9 +901,9 @@ function cmd_oadd(cmddict)
     end
   else
     phelper:plugin_header('oadd')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " oadd <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add a spell to be cast on others")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")       
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " oadd <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add a spell to be cast on others")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")
   end
 end
 
@@ -939,9 +939,9 @@ function cmd_oremove(cmddict)
     end
   else
     phelper:plugin_header('oremove')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " oremove <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove a spell to be cast on others")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")     
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " oremove <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove a spell to be cast on others")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")
   end
 end
 
@@ -971,9 +971,9 @@ function cmd_odisable(cmddict)
     end
   else
     phelper:plugin_header('odisable')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " odisable <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "disable a spell to be cast on others")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")     
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " odisable <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "disable a spell to be cast on others")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")
   end
 end
 
@@ -1003,9 +1003,9 @@ function cmd_oenable(cmddict)
     end
   else
     phelper:plugin_header('oenable')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " oenable <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "enable a spell to be cast on others")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")     
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " oenable <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "enable a spell to be cast on others")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")
   end
 end
 
@@ -1082,19 +1082,19 @@ function cmd_sremove(cmddict)
     end
   else
     phelper:plugin_header('sremove')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " sremove <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove a spell to be cast on self")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")     
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " sremove <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "remove a spell to be cast on self")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")
   end
 end
 
 function cmd_searg(cmddict)
   if #cmddict ~= 2 then
     phelper:plugin_header('searg')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " searg <spell> <argument>")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add an argument to cast with a a spell")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument to the spell, 'None' to remove the argument for the spell")   
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " searg <spell> <argument>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add an argument to cast with a a spell")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) argument to the spell, 'None' to remove the argument for the spell")
     return
   end
   local aspell = find_spell(cmddict[1])
@@ -1182,13 +1182,13 @@ function cmd_sadd(cmddict)
         --make_askedself_xrefs()
         nextspellup("added new spells")
       end
-    end 
+    end
   else
     phelper:plugin_header('sadd')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " sadd <spell> ")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add a spell to be cast on self")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")      
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if the keyword 'all' is used, then all spellup spells you have practiced will be added")      
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " sadd <spell> ")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "add a spell to be cast on self")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(required) a spell, can be multiple")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if the keyword 'all' is used, then all spellup spells you have practiced will be added")
   end
 end
 
@@ -1250,7 +1250,7 @@ end
 function notrainer(name, line, wildcards)
   if practicing ~= -1 then
     practicing = -1
-    phelper:unregister_remote("aaa72f3b5453567e2bba9d50", "skillprac", "onskillgain", true)  
+    phelper:unregister_remote("aaa72f3b5453567e2bba9d50", "skillprac", "onskillgain", true)
   end
 end
 
@@ -1258,7 +1258,7 @@ function onskillgain(args)
   local targs = assert (loadstring ('return ' .. args or ""))()
   --tprint(targs)
   --print('pracs', tonumber(char.worth.pracs))
-  spells['all'][tonumber(targs.sn)]['percent'] = tonumber(targs.percent)  
+  spells['all'][tonumber(targs.sn)]['percent'] = tonumber(targs.percent)
   if (practicing == tonumber(targs.sn) and tonumber(targs.percent) >= tonumber(phelper.practo)) or char.worth and tonumber(char.worth.pracs) == 0 then
     practicing = -1
     if not spells['learned'][tonumber(targs.sn)] then
@@ -1272,7 +1272,7 @@ function onskillgain(args)
     SendNoEcho('practice ' .. tostring(practicing))
     return
   end
-  if char.worth and tonumber(char.worth.pracs) > 0 then
+  if char and char.worth and tonumber(char.worth.pracs) > 0 then
     pracskill()
   end
 end
@@ -1280,16 +1280,16 @@ end
 function pracskill(sn)
   --print('autoprac', phelper.autoprac)
   --print('char.status.state', char.status.state)
-  --print('trainer room', string.find(room.details, "trainer"))  
+  --print('trainer room', string.find(room.details, "trainer"))
   --print('practicing', practicing)
-  if not char.worth or tonumber(char.worth.pracs) == 0 then
+  if not char or not char.worth or tonumber(char.worth.pracs) == 0 then
     return
   end
   if phelper.autoprac and tonumber(char.status.state) == 3 and string.find(room.details, "trainer") then
     --print('got this far')
     if practicing ~= -1 and practicing > 0 and sn then
       phelper:register_remote("aaa72f3b5453567e2bba9d50", "skillprac", "onskillgain", true)
-      char.worth.pracs = tonumber(char.worth.pracs) - 1      
+      char.worth.pracs = tonumber(char.worth.pracs) - 1
       SendNoEcho('practice ' .. tostring(sn))
     else
       --print('checking all spells')
@@ -1300,7 +1300,7 @@ function pracskill(sn)
           --print('practicing', sn)
           practicing = sn
           phelper:register_remote("aaa72f3b5453567e2bba9d50", "skillprac", "onskillgain", true)
-          char.worth.pracs = tonumber(char.worth.pracs) - 1          
+          char.worth.pracs = tonumber(char.worth.pracs) - 1
           SendNoEcho('practice ' .. tostring(sn))
         end
       end
