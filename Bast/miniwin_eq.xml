@@ -120,6 +120,7 @@ function buildmenu(item)
   local container = item.containerid
   local menu = item.name .. "|"
   if item.type ~= 11 then
+    menu = menu .. "| Copy ID to Clipboard"
     menu = menu  .. "| >Put "
     for i,v in pairs(db:getcontainers()) do
       menu = menu .. ' | ' .. ' in ' .. v.serial .. ' - ' .. strip_colours(v.name)
@@ -262,6 +263,9 @@ function mouseleft(item, result)
   elseif result:match("Recite") then
     putobjectininv(item)
     SendNoEcho('recite ' .. tostring(item.serial))
+  elseif result:match("Copy ID to Clipboard") then
+    SetClipboard(item.serial)
+    Note("copied id " .. item.serial .. " to Clipboard")
   end
 end
 
