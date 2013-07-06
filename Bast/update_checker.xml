@@ -122,7 +122,7 @@ function OnPluginListChanged()
 end
 
 function manualCheck()
-   DeleteTemporaryTimers()
+   --DeleteTemporaryTimers()
    main()
 end
 
