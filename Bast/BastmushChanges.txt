@@ -1,5 +1,9 @@
 Bastmush Changes List
 
+r2089 snapshot
+  - lua/aardutils.lua
+     - bug fix: works with wear locations that have multiple names
+     
 r2087 snapshot
   - update_checker
      - bug fix: no longer crashes when "bup check" is run
