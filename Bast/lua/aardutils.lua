@@ -310,7 +310,7 @@ statabb = {
   ['hit roll'] = 'HR',
 }
 
-  
+
 damages = {
 'misses',
 'tickles',
@@ -369,7 +369,7 @@ damages = {
 'does UNIMAGINABLE things to',
 'does UNBELIEVABLE things to',
 'pimpslaps'
-}  
+}
 
 local damagerev = {}
 for i,v in ipairs(damages) do
@@ -382,8 +382,8 @@ for i,v in ipairs(damages) do
   local chars = {'%', '[', '(', ')', '.', '+', '-', '*', '?', '^', '$'}
   for cin,char in ipairs(chars) do
     dam = string.gsub(dam, "%" .. char, "%%" .. char)
-  end 
-  damageforregex[dam] = i  
+  end
+  damageforregex[dam] = i
 end
 
 function parsedamageline(line)
@@ -423,58 +423,58 @@ end
 
 
 damtypes = {
-  'acidic bite',      
-  'air',     
-  'beating', 
-  'bite',    
-  'blast',   
-  'charge',  
+  'acidic bite',
+  'air',
+  'beating',
+  'bite',
+  'blast',
+  'charge',
   'chill',
-  'chomp',   
-  'chop',    
-  'claw',    
-  'cleave',  
-  'crush',   
-  'decaying touch',  
+  'chomp',
+  'chop',
+  'claw',
+  'cleave',
+  'crush',
+  'decaying touch',
   'digestion',
-  'divine power',    
-  'drain',   
-  'earth',   
-  'flame',   
-  'flaming bite',    
-  'freezing bite',   
+  'divine power',
+  'drain',
+  'earth',
+  'flame',
+  'flaming bite',
+  'freezing bite',
   'friction',
-  'grep',    
+  'grep',
   'hit',
   'light',
   'life drain',
-  'magic',   
-  'mental energy',   
-  'mind force',       
+  'magic',
+  'mental energy',
+  'mind force',
   'peck',
-  'pierce',  
-  'pound',   
-  'punch',   
-  'scratch', 
-  'shock',   
-  'shadow',  
+  'pierce',
+  'pound',
+  'punch',
+  'scratch',
+  'shock',
+  'shadow',
   'shocking bite',
-  'slap',    
-  'slash',   
-  'slice',   
-  'slime',   
-  'smash',   
-  'stab',    
+  'slap',
+  'slash',
+  'slice',
+  'slime',
+  'smash',
+  'stab',
   'sting',
-  'suction', 
-  'thrust',  
-  'thwack',  
-  'wail',    
-  'water blast',     
-  'whip',    
+  'suction',
+  'thrust',
+  'thwack',
+  'wail',
+  'water blast',
+  'whip',
   'wrath',
 }
- 
+
 damtypesrev = {}
 for i,v in ipairs(damtypes) do
   damtypesrev[v] = true
@@ -486,7 +486,7 @@ function checkcorrectwearlocation(itemwearloc, where)
     return true
   elseif (where == 'second' or where == 'wielded') and itemwearloc == 'wield' then
     return true
-  elseif string.find(itemwearloc, where) then
+  elseif string.find(where, itemwearloc) then
     return true
   end
   return false
