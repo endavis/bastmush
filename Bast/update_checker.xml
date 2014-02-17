@@ -43,8 +43,11 @@ require "ldplugin"
 require "findfile"
 require "stringfuncs"
 
-http = require "socket.http"	-- loads http and various dlls
-download_url = "http://code.google.com/p/bastmush/downloads/detail?name=bastmush.zip"
+require("socket")
+https = require("ssl.https")
+
+version_url = "https://raw.github.com/endavis/bastmush/release/Bast/BastmushChanges.txt"
+download_url = "https://github.com/endavis/bastmush"
 window_title = "Bastmush Package Update Checker"
 ErrorMessage = ""
 
@@ -165,10 +168,10 @@ end
 
 function checkRemoteFile()
    -- grab the download page
-   page, status, headers = http.request(download_url)
+   page, status, headers, full_status = https.request(version_url)
 
    if status == 200 then -- 200 is the HTTP status code for "OK"
-      update_list, latest_version = string.match(page, "Bastmush Changes List\r\n\r\n(r(%d+) snapshot.*)")
+      update_list, latest_version = string.match(page, "Bastmush Changes List\n\n(r(%d+) snapshot.*)")
       -- extract the snapshot revision number
       latest_version = tonumber(latest_version)
    else -- http access error
