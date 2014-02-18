@@ -265,7 +265,7 @@ function OnPluginBroadcast (msg, id, name, text)
         onquest = false
         update_timer()
         SaveState()
-      elseif stuff.action == 'fail' then
+      elseif stuff.action == 'fail' or stuff.action == 'timeout' then
         when_required = os.time () + (stuff.wait * 60)  -- 15 mins to go
         onquest = false
         update_timer()
