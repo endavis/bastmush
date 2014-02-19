@@ -1,4 +1,4 @@
--- $Id$
+-- $Id: aardutils.lua 2088 2013-07-07 01:08:07Z endavis $
 --[[
 http://code.google.com/p/bastmush
  - Documentation and examples
@@ -481,12 +481,14 @@ for i,v in ipairs(damtypes) do
 end
 
 function checkcorrectwearlocation(itemwearloc, where)
-  --print(itemwearloc, where)
+  --print('itemwearloc', itemwearloc, 'where', where)
   if itemwearloc == where then
     return true
   elseif (where == 'second' or where == 'wielded') and itemwearloc == 'wield' then
     return true
   elseif string.find(where, itemwearloc) then
+    return true
+  elseif where == 'portal' and string.find(itemwearloc, where) then
     return true
   end
   return false
