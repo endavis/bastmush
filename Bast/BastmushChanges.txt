@@ -1,9 +1,17 @@
 Bastmush Changes List
 
+r2090 snapshot
+  - bast_hunt
+     - new: added new hunt messages
+  - lua/aardutils
+     - bug fix: can now add/remove portals to eqSets
+  - update_checker
+     - new: change download and version url to github
+
 r2089 snapshot
   - lua/aardutils.lua
      - bug fix: works with wear locations that have multiple names
-     
+
 r2087 snapshot
   - update_checker
      - bug fix: no longer crashes when "bup check" is run
