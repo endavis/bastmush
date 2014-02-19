@@ -1,5 +1,5 @@
 -- miniwin.lua
--- $Id$
+-- $Id: miniwin.lua 1835 2012-06-22 14:42:58Z endavis $
 -- class for creating miniwindows
 
 -- Author: Eric Davis - 28th September 2008
@@ -1930,7 +1930,7 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
 
     -- make sure we start with @ or gsub doesn't work properly
     if Text:sub (1, 1) ~= "@" then
-      Text =  DEFAULT_COLOUR .. Text
+      Text =  DEFAULT_TEXTCOLOUR .. Text
     end -- if
 
     for colour, text in Text:gmatch ("@(%a)([^@]+)") do
