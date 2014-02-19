@@ -55,6 +55,15 @@
 
   <trigger
     enabled="n"
+    match="^The trail of (.*?) is confusing, but you're reasonably sure .*? is (.*?)\.$"
+    script="huntnext"
+    group="hunt"
+    regexp="y"
+    >
+  </trigger>
+
+  <trigger
+    enabled="n"
     match="^You are almost certain that (.*?) is (.*?) from here\.$"
     script="huntnext"
     group="hunt"
@@ -65,6 +74,15 @@
   <trigger
     enabled="n"
     match="^You are certain that (.*?) is (.*?) from here\.$"
+    script="huntnext"
+    group="hunt"
+    regexp="y"
+    >
+  </trigger>
+
+  <trigger
+    enabled="n"
+    match="^You have no idea what you're doing, but maybe (.*?) is (.*?)\?$"
     script="huntnext"
     group="hunt"
     regexp="y"
@@ -298,10 +316,10 @@ end
 function cmd_auto(cmddict)
   if cmddict[1] == 'help' then
     phelper:plugin_header('trick')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " auto <mobname>")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "autohunt a mob")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 1 is the mob to hunt") 
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if no mob is specified, the plugin will hunt the last mob that was tried") 
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " auto <mobname>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "autohunt a mob")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 1 is the mob to hunt")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if no mob is specified, the plugin will hunt the last mob that was tried")
     return true
   end
   mob = false
@@ -329,10 +347,10 @@ end
 function cmd_trick(cmddict)
   if #cmddict == 0 or cmddict[1] == 'help' then
     phelper:plugin_header('trick')
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " trick <mobname>")    
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "use the hunt trick to find the room a mob is in")   
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 1 is the mob to find") 
-    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if no mob is specified, the plugin will find the last mob that was tried") 
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Usage: " .. phelper.cmd .. " trick <mobname>")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "use the hunt trick to find the room a mob is in")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "(optional) argument 1 is the mob to find")
+    ColourNote(RGBColourToName(phelper.plugin_colour), "black", "  if no mob is specified, the plugin will find the last mob that was tried")
     return true
   end
   if cmddict[1] then
