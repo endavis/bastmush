@@ -5,7 +5,7 @@ MUSHclient scripts for Aardwolf MUD
 
 Documentation is currently at: https://code.google.com/p/bastmush/wiki/Intro
 
-Current Version: r2090
+Current Version: r2091
 
 Requires Aardwolf MUSHclient r1791 or better due to SSL support
 
