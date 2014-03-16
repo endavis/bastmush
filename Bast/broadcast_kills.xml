@@ -153,6 +153,15 @@ You blend perfectly with your surroundings and avoid Valkur's lab guard's attack
 
   <trigger
    enabled="y"
+   match="You receive * 'rare kill' experience bonus."
+   name="rarexp"
+   script="mobxp"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
    regexp="y"
    match="^You get (.+) gold coins (.+) corpse of (.+)\.$"
    name="mobgold"
@@ -209,7 +218,7 @@ You blend perfectly with your surroundings and avoid Valkur's lab guard's attack
    name="vorpmob"
    script="vorpmob"
    other_back_colour="red"
-   other_text_colour="black"   
+   other_text_colour="black"
    sequence="100"
   >
   </trigger>
@@ -303,7 +312,7 @@ You blend perfectly with your surroundings and avoid Valkur's lab guard's attack
     name="banish"
     >
   </trigger>
-  
+
   <trigger
    enabled="y"
    match="^\[(.*)\] Your (.*) \[(.*)\]$"
@@ -324,27 +333,27 @@ You blend perfectly with your surroundings and avoid Valkur's lab guard's attack
    regexp="y"
    omit_from_output="n"
   >
-  </trigger>  
-  
+  </trigger>
+
   <trigger
    enabled="y"
-   match="^You spin around (.*), catching it off guard, and execute a vicious double backstab.$"
+   match="^You spin around (.*), catching (.*) off guard, and execute a vicious double backstab.$"
    name="incombat"
    script="incombat"
-   regexp="y"   
+   regexp="y"
    sequence="100"
   >
-  </trigger>  
-  
+  </trigger>
+
   <trigger
    enabled="y"
    match="^(.*) is unaffected by your (.*)!$"
    name="immunity"
    script="immunity"
-   regexp="y"   
+   regexp="y"
    sequence="100"
   >
-  </trigger>    
+  </trigger>
 </triggers>
 
 
@@ -372,7 +381,7 @@ function damagedef()
   local tdamage = {}
   tdamage['hits'] = 0
   tdamage['misses'] = 0
-  tdamage['damage'] = 0 
+  tdamage['damage'] = 0
   return tdamage
 end
 
@@ -387,6 +396,7 @@ function reset_kill()
   kill_info.disintegrate = 0
   kill_info.banishment = 0
   kill_info.xp = 0
+  kill_info.rarexp = 0
   kill_info.bonusxp = 0
   kill_info.blessingxp = 0
   kill_info.totalxp = 0
@@ -436,23 +446,23 @@ function addtodamage(tdam, damtable)
   if not damtable[damtype] then
     damtable[damtype] = damagedef()
   end
-  
+
   if tdam['damverb'] == 'misses' then
     damtable[damtype]['misses'] = damtable[damtype]['misses'] + tdam['hits']
   else
     damtable[damtype]['hits'] = damtable[damtype]['hits'] + tdam['hits']
     damtable[damtype]['damage'] = damtable[damtype]['damage'] + tdam['damage']
-  end  
+  end
   return damtable
 end
 
 function damage(name, line, wildcards)
-  
+
   local tdam = parsedamageline(line)
   local damtype = tdam['damtype']
-  
+
   if not kill_info['starttime'] then
-    kill_info['starttime'] = GetInfo(304)  
+    kill_info['starttime'] = GetInfo(304)
   end
   if tdam['enemy'] and kill_info.name ~= '' and tdam['enemy'] ~= kill_info.name then
     if not mobdamcache[tdam['enemy']] then
@@ -461,7 +471,7 @@ function damage(name, line, wildcards)
     addtodamage(tdam, mobdamcache[tdam['enemy']])
     return
   end
-  
+
   if mobdamcache[tdam['enemy']] then
       kill_info.damage = mobdamcache[tdam['enemy']]
       mobdamcache[tdam['enemy']] = nil
@@ -509,6 +519,8 @@ function mobxp( name, line, wildcards )
     kill_info.bonusxp = tonumber(wildcards[1])
   elseif name == 'blessingxp' then
     kill_info.blessingxp = tonumber(wildcards[1])
+  elseif name == 'rarexp' then
+    kill_info.rarexp = tonumber(wildcards[1])
   end
 end
 
