@@ -31,7 +31,7 @@ Statdb = Sqlitedb:subclass()
 function Statdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "\\stats.db"
-  self.version = 12
+  self.version = 13
   self.versionfuncs[2] = self.updatedblqp -- update double qp flag
   self.versionfuncs[3] = self.updatemobkills -- slit, assassinate, etc..
   self.versionfuncs[4] = self.addmobsblessing -- add blessing xp to mobs table
@@ -43,7 +43,8 @@ function Statdb:initialize(args)
   self.versionfuncs[10] = self.updategqcomplete
   self.versionfuncs[11] = self.addstatsredos
   self.versionfuncs[12] = self.addbonusqpcp
-  
+  self.versionfuncs[13] = self.addrarexp_v13
+
   self:addtable('stats', [[CREATE TABLE stats(
           stat_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           name TEXT NOT NULL,
@@ -141,6 +142,7 @@ function Statdb:initialize(args)
           mk_id INTEGER NOT NULL PRIMARY KEY autoincrement,
           name TEXT default "Unknown",
           xp INT default 0,
+          rarexp INT default 0,
           bonusxp INT default 0,
           blessingxp INT default 0,
           totalxp INT default 0,
@@ -314,7 +316,7 @@ function Statdb:addmilestone(milestone)
     stats['milestone'] = milestone
     stats['time'] = GetInfo(304)
     assert (self.db:exec("BEGIN TRANSACTION"))
-    local stmt = self.db:prepare(self:converttoinsert('stats', true))    
+    local stmt = self.db:prepare(self:converttoinsert('stats', true))
     stmt:bind_names(  stats  )
     stmt:step()
     stmt:finalize()
@@ -1373,3 +1375,53 @@ function Statdb:addbonusqpcp()
   end
 end
 
+function Statdb:addrarexp_v13()
+  if not self:checktableexists('mobkills') then
+    return
+  end
+  oldmobst = self:runselect('SELECT * FROM mobkills ORDER BY mk_id ASC')
+
+  if self:open('addrarexp_v13_1') then
+    self.db:exec('DROP TABLE IF EXISTS mobkills;')
+    self:close('addrarexp_v13_1', true)
+  end
+
+  if self:open('addrarexp_v13_2') then
+    self.db:exec([[CREATE TABLE mobkills(
+          mk_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+          name TEXT default "Unknown",
+          xp INT default 0,
+          rarexp INT default 0,
+          bonusxp INT default 0,
+          blessingxp INT default 0,
+          totalxp INT default 0,
+          gold INT default 0,
+          tp INT default 0,
+          time INT default -1,
+          vorpal INT default 0,
+          banishment INT default 0,
+          assassinate INT default 0,
+          slit INT default 0,
+          disintegrate INT default 0,
+          deathblow INT default 0,
+          wielded_weapon TEXT default '',
+          second_weapon TEXT default '',
+          room_id INT default 0,
+          level INT default -1
+        )]])
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    stmt2 = [[INSERT INTO mobkills VALUES (:mk_id, :name, :xp, 0,
+                  :bonusxp, :blessingxp, :totalxp, :gold, :tp, :time, :vorpal,
+                  :banishment, :assassinate, :slit, :disintegrate, :deathblow,
+                  :wielded_weapon, :second_weapon, :room_id, :level)]]
+    stmt = self.db:prepare(stmt2)
+    for i,v in tableSort(oldmobst, 'mk_id') do
+      stmt:bind_names(v)
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    assert (self.db:exec("COMMIT"))
+    self:close('addrarexp_v13_2')
+  end
+end
