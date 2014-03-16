@@ -1592,6 +1592,7 @@ function build_kills_window()
     end
 
     for a in db.db:nrows([[SELECT SUM(xp) AS xp,
+                                 SUM(rarexp) AS rarexp,
                                  SUM(bonusxp) AS bonusxp,
                                  SUM(blessingxp) AS blessingxp,
                                  AVG(xp) AS avexp,
@@ -1607,6 +1608,7 @@ function build_kills_window()
                                  AVG(gold) AS avegold,
                                  COUNT(*) AS indb FROM mobkills]]) do
       stats['xp'] = a['xp'] or 0
+      stats['rarexp'] = a['rarexp'] or 0
       stats['bonusxp'] = a['bonusxp'] or 0
       stats['blessingxp'] = a['blessingxp'] or 0
       stats['avexp'] = a['avexp'] or 0
@@ -1621,6 +1623,11 @@ function build_kills_window()
       stats['gold'] = a['gold'] or 0
       stats['avegold'] = a['avegold'] or 0
       stats['indb'] = a['indb'] or 0
+    end
+
+    for a in db.db:rows("SELECT AVG(rarexp), COUNT(*) FROM mobkills where rarexp > 0") do
+      stats['averarexp'] = a[1]
+      stats['rarexpindb'] = a[2]
     end
 
     for a in db.db:rows("SELECT AVG(bonusxp), COUNT(*) FROM mobkills where bonusxp > 0") do
@@ -1644,6 +1651,9 @@ function build_kills_window()
       local linestyles = format_row("Total Overall", stats['overall'] or 0, stats['indb'] or 0)
       table.insert(allstyles, linestyles)
 
+      local linestyles = format_row("Mobs w/ Rare", "", stats['rarexpindb'] or 0)
+      table.insert(allstyles, linestyles)
+
       local linestyles = format_row("Mobs w/ Bonus", "", stats['bonusxpindb'] or 0)
       table.insert(allstyles, linestyles)
 
@@ -1660,6 +1670,9 @@ function build_kills_window()
       local linestyles = format_row("XP", stats['xp'] or 0, string.format("%.3f", stats['avexp'] or 0) .. '/Kill')
       table.insert(allstyles, linestyles)
 
+      local linestyles = format_row("Rare XP", stats['rarexp'] or 0, string.format("%.3f", stats['averarexp'] or 0) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
       local linestyles = format_row("Double XP", stats['bonusxp'] or 0, string.format("%.3f", stats['avebonusxp'] or 0) .. '/Kill')
       table.insert(allstyles, linestyles)
 
@@ -1670,6 +1683,9 @@ function build_kills_window()
       table.insert(allstyles, linestyles)
 
       local linestyles = format_row("Gold", stats['gold'] or 0, string.format("%.3f", stats['avegold'] or 0) .. '/Kill')
+      table.insert(allstyles, linestyles)
+
+      local linestyles = format_row("TP", stats['tp'] or 0, string.format("%.3f", stats['tp'] / stats['indb']) .. '/Kill')
       table.insert(allstyles, linestyles)
 
       local linestyles = format_row("Vorpal", stats['vorpal'] or 0, string.format("%.3f", (stats['vorpal'] or 0) / (stats['indb'] or 1)) .. '/Kill')
@@ -1795,6 +1811,9 @@ function build_kills_window()
         style.textcolour = "white"
         style.mouseup = nofunc
         local ttext = tostring(v.xp) .. "(XP)"
+        if v.rarexp ~= 0 then
+          ttext = ttext .. " + " .. tostring(v.rarexp) .. "(Rare)"
+        end
         if v.bonusxp ~= 0 then
           ttext = ttext .. " + " .. tostring(v.bonusxp) .. "(Dbl)"
         end
