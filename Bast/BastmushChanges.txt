@@ -1,5 +1,14 @@
 Bastmush Changes List
 
+r2091 snapshot
+  - chardb.lua
+     - new: add rarexp column to mobkills table
+  - broadcast_kills
+     - new: add rarexp to broadcast info
+  - miniwin_stats
+     - new: add rarexp into mobs tab
+     - new: add tp into mobs tab
+
 r2090 snapshot
   - bast_hunt
      - new: added new hunt messages
