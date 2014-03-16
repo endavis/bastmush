@@ -178,7 +178,7 @@ function formatpup()
         table.insert( tmsg, colourwrap("s ") )
       end
       if db:getlastrowid('mobkills') > 0 then
-        for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where time > %d and time < %d and xp > 0", starttime, finishtime)) do
+        for a in db.db:rows(string.format("SELECT count(*), AVG(totalxp) FROM mobkills where time > %d and time < %d and xp > 0", starttime, finishtime)) do
           mobskilled = a[1]
           mobsavexp = a[2]
         end
@@ -292,7 +292,7 @@ function formatlevel()
         end
       end
         if db:getlastrowid('mobkills') > 0 then
-        for a in db.db:rows(string.format("SELECT count(*), AVG(xp + bonusxp) FROM mobkills where level = %d and xp > 0", oldlevel)) do
+        for a in db.db:rows(string.format("SELECT count(*), AVG(totalxp) FROM mobkills where level = %d and xp > 0", oldlevel)) do
           mobskilled = a[1]
           mobsavexp = a[2]
         end
