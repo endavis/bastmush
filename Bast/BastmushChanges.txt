@@ -1,5 +1,9 @@
 Bastmush Changes List
 
+r2092 snapshot
+  - update_checker
+     - bug fix: github change of url for raw files
+
 r2091 snapshot
   - chardb.lua
      - new: add rarexp column to mobkills table
