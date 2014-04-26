@@ -46,7 +46,7 @@ require "stringfuncs"
 require("socket")
 https = require("ssl.https")
 
-version_url = "https://raw.github.com/endavis/bastmush/release/Bast/BastmushChanges.txt"
+version_url = "https://raw.githubusercontent.com/endavis/bastmush/release/Bast/BastmushChanges.txt"
 download_url = "https://github.com/endavis/bastmush"
 window_title = "Bastmush Package Update Checker"
 ErrorMessage = ""
