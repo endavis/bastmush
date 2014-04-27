@@ -1,6 +1,6 @@
 Bastmush Changes List
 
-r2092 snapshot
+r2093 snapshot
   - broadcast_kills
      - bug fix: trivia bonus mob message was wrong
 
