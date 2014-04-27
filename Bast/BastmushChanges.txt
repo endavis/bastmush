@@ -1,6 +1,10 @@
 Bastmush Changes List
 
 r2092 snapshot
+  - broadcast_kills
+     - bug fix: trivia bonus mob message was wrong
+
+r2092 snapshot
   - update_checker
      - bug fix: github change of url for raw files
 
