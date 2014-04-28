@@ -51,7 +51,7 @@ info = {}
 info['host'] = "https://github.com"
 info['rawhost'] = "https://raw.githubusercontent.com/"
 info['project_url'] = info['host'] .. "/endavis/bastmush"
-info['release_url'] = info['host'] .. "/endavis/bastmush/releases"
+info['release_url'] = info['host'] .. "/endavis/bastmush/releases/latest"
 info['rssfeed_url'] = info['host'] .. "/endavis/bastmush/tags.atom"
 
 ErrorMessage = {}
