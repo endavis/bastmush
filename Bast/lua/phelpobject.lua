@@ -50,6 +50,10 @@ function checkLocalFile()
     -- open the local version file
     local changesfile = scan_dir_for_file (GetInfo(60), "BastmushChanges.txt")
 
+    if not changesfile then
+      return false
+    end
+
     version_file,err = io.open (changesfile, "r")
     if not version_file then -- the file is missing or unreadable
        ErrorMessage = "The file \'BastmushChanges.txt\' appears to be missing or unreadable (this is bad), so the version check cannot proceed.\n\nThe system returned the error:\n"..err.."\n\nYou should download the latest development snapshot from:"
@@ -85,7 +89,10 @@ function Phelpobject:initialize(args)
   self.cname = args.name or "Default"
 
   self.bastmushversion = 'Unkn'
-  self.bastmushversion = getversion()
+  version = getversion()
+  if version then
+    self.bastmushversion = version
+  end
 
   self.id = GetPluginID() .. '_' .. self.cname
   self:mdebug('phelpobject __init self.cname', self.cname)
@@ -121,7 +128,7 @@ function Phelpobject:register_remote(id, eventname, callback, now)
         CallPlugin(id, "registerevent", GetPluginID(), eventname, callback)
       else
        local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback .. '")'
-       DoAfterSpecial(2, cmd, 12)         
+       DoAfterSpecial(2, cmd, 12)
       end
     end
     self.registered_events[id][eventname] = {}
@@ -148,7 +155,7 @@ function Phelpobject:reregister_remote(id)
      for eventname,callback in pairs(self.registered_events[id]) do
        --print('registering', id, eventname, callback, 'after 2 seconds')
        local cmd = 'CallPlugin("' .. id .. '", "registerevent", "' .. GetPluginID() .. '", "' .. eventname .. '", "' .. callback.callback .. '")'
-       DoAfterSpecial(2, cmd, 12)     
+       DoAfterSpecial(2, cmd, 12)
      end
    end
 end
@@ -477,7 +484,7 @@ function Phelpobject:print_settings_helper(ttype)
     ColourNote(RGBColourToName(var.plugin_colour), "black", "")
     ColourNote(RGBColourToName(var.plugin_colour), "black", "Specific settings for this plugin")
   end
-  
+
   local defhelp = false
   for v,t in tableSort(self.set_options, 'sortlev', 50) do
 
@@ -485,7 +492,7 @@ function Phelpobject:print_settings_helper(ttype)
       defhelp = true
       ColourNote("", "", "")
       ColourNote(RGBColourToName(var.plugin_colour), "black", "Generic settings for this plugin")
-    end    
+    end
     self:print_setting_helper(v, self[v], t.help, t.type, t.readonly, t.istable, t.formatfunc)
   end
   ColourNote("", "", "")
@@ -577,7 +584,7 @@ function Phelpobject:add_cmd(name, stuff)
     end
     if not stuff.prio then
       stuff.prio = 50
-    end    
+    end
     self.cmds_table[name] = stuff
     if not self.cmds_groups_sequence_lookup[stuff.sortgroup] then
       if stuff.sortgroup == 'Default' then
