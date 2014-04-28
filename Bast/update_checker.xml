@@ -42,14 +42,150 @@ require "commas"
 require "ldplugin"
 require "findfile"
 require "stringfuncs"
+require "findrelease"
 
 require("socket")
 https = require("ssl.https")
 
-version_url = "https://raw.githubusercontent.com/endavis/bastmush/release/Bast/BastmushChanges.txt"
-download_url = "https://github.com/endavis/bastmush"
-window_title = "Bastmush Package Update Checker"
-ErrorMessage = ""
+info = {}
+info['host'] = "https://github.com"
+info['rawhost'] = "https://raw.githubusercontent.com/"
+info['project_url'] = info['host'] .. "/endavis/bastmush"
+info['release_url'] = info['host'] .. "/endavis/bastmush/releases"
+info['rssfeed_url'] = info['host'] .. "/endavis/bastmush/tags.atom"
+
+ErrorMessage = {}
+
+function geturl(url)
+  page, status, headers, full_status = https.request(url)
+
+  if status == 200 then
+    return true, page
+  else
+    table.insert(ErrorMessage, "Could not download:")
+    table.insert(ErrorMessage, url)
+    return false, page
+  end
+end
+
+function getremoteinfo()
+
+  retval, feed = geturl(info['rssfeed_url'])
+  if not retval then
+    return false
+  end
+
+  sversion, release_url = parse_feed(feed)
+
+  if not sversion then
+    table.insert(ErrorMessage, "Could not get version from RSS feed")
+    return false
+  elseif not release_url then
+    table.insert(ErrorMessage, "Could not version url from RSS feed")
+    return false
+  end
+
+  info['sversion'] = sversion
+  info['latestrelease_url'] = info['host'] .. release_url
+  tlist = utils.split(release_url, '/')
+  info['release_name'] = tlist[#tlist]
+  info['latest_version'] = tonumber(string.match(sversion, "r(%d+)"))
+  info['changes_url'] = info['rawhost'] .. string.format('endavis/bastmush/%s/Bast/BastmushChanges.txt', info['release_name'])
+
+  return true
+end
+
+function getlocalinfo()
+  -- open the local version file
+  local changesfile = scan_dir_for_file(GetInfo(60), "BastmushChanges.txt")
+
+  if not changesfile then -- the file is missing
+      table.insert(ErrorMessage, "The file \'BastmushChanges.txt\' appears to be missing so")
+      table.insert(ErrorMessage, "the version check cannot proceed.")
+      return false
+  end
+
+  version_file, err = io.open(changesfile, "r")
+  if not version_file then -- the file is unreadable
+      table.insert(ErrorMessage, "The file \'BastmushChanges.txt\' appears to be")
+      table.insert(ErrorMessage, "unreadable (this is bad), so the version check cannot")
+      table.insert(ErrorMessage, "proceed. The system returned the error:")
+      table.insert(ErrorMessage, err)
+      return false
+  end
+  --- read the snapshot revision from the third line
+  line = version_file:read("*l") -- read one line
+  line = version_file:read("*l") -- read one line
+  line = version_file:read("*l") -- read one line
+  local_version = nil
+  if line then -- if we got something
+      info['local_version'] = tonumber(string.match(line, "r(%d+) snapshot"))
+  end
+  if not info['local_version'] then -- the file is messed up such that the third line doesn't contain "r<###> snapshot"
+      table.insert(ErrorMessage, "The file \'BastmushChanges.txt\' appears to have been")
+      table.insert(ErrorMessage, "modified (this is bad), so the version check cannot proceed")
+      return false
+  end
+  version_file:close ()
+  return true
+end
+
+function checkversion()
+  if info['local_version'] and info['latest_version'] then
+    if info['local_version'] < info['latest_version'] then
+      retval, changes = geturl(info['changes_url'])
+
+      if not retval then
+        return false
+      end
+
+      update_list, latest_version = string.match(changes, "Bastmush Changes List\n\n(r(%d+) snapshot.*)")
+
+      final_update_list = (string.match(update_list,"(.*)r" .. info['local_version'] .. " snapshot") or "<ERROR! Please don't modify your BastmushChanges.txt file>\r\n")
+      final_update_list = convertHTMLcodesToStandardText(final_update_list)
+      updatetooutput(final_update_list)
+    elseif info['local_version'] > info['latest_version'] then
+      table.insert(ErrorMessage, "Oh, dear...this is embarrassing. The Bastmush update")
+      table.insert(ErrorMessage, "checker has detected that you have a version NEWER than")
+      table.insert(ErrorMessage, "what is available online! Go to the following url in your")
+      table.insert(ErrorMessage, "browser to get the latest package and contact Bast about")
+      table.insert(ErrorMessage, "this message, because clearly this situation is impossible. :/")
+      return false
+    else
+      ColourNote("yellow", "", "Your Bastmush package version r" .. info['local_version'] .. " appears to be up-to-date.")
+    end
+  else
+    return false
+  end
+  return true
+end
+
+function updatetooutput(update_list)
+    local divider = "+------------------------------------------------------------------+"
+    local tlen = #divider
+    ColourNote("cyan", "", divider)
+    ColourNote("cyan", "", jcenter("Bastmush Update Checker", tlen, '|'))
+    ColourNote("cyan", "", divider)
+    ColourNote("cyan", "", jcenter("Version " .. info['latest_version'] .. " of Bastmush is available", tlen, '|'))
+    ColourNote("cyan", "", jcenter("Please see the release at:", tlen, '|'))
+    if info['latestrelease_url'] then
+      ColourNote("cyan", "", jcenter(info['latestrelease_url'], tlen, '|'))
+    else
+      ColourNote("cyan", "", jcenter(info['release_url'], tlen, '|'))
+    end
+    ColourNote("cyan","", jcenter(string.format("Run the '%s go' command to open a browser", var.cmd), tlen, '|'))
+    ColourNote("cyan", "", divider)
+    tmsg = utils.split(update_list, '\n')
+    if #tmsg > 0 then
+      --ColourNote("cyan", "", left(v, tlen, '|'))
+      for i,v in ipairs(tmsg) do
+        if v ~= '\r' and v ~= '\n' and v ~= '' and v then
+          ColourNote("cyan", "", jleft(v, tlen, '|'))
+        end
+      end
+      ColourNote("cyan", "", divider)
+    end
+end
 
 -- converts special character codes in html source to their ascii
 -- equivalents for display. Also specially escapes things that need to be.
@@ -71,6 +207,43 @@ function convertHTMLcodesToStandardText(str)
     return str
 end
 
+loaded = false
+function OnPluginListChanged()
+   if not loaded then
+      -- only fire on start after loading all plugins
+      loaded = true
+      DoAfterSpecial(20, "main()", sendto.script)
+   end
+end
+
+-- Something went wrong when trying to check for updates
+function errorMessage(msg)
+  local divider = "+------------------------------------------------------------------+"
+  local tlen = #divider
+  ColourNote("white","red", divider)
+  ColourNote("white","red", jcenter("Bastmush Update Check Error", tlen, '|'))
+  ColourNote("white","red", divider)
+  for i,v in ipairs(ErrorMessage) do
+    ColourNote("white","red", jcenter(v, tlen, '|'))
+  end
+  ColourNote("white","red", jcenter("The latest release is always available at:", tlen, '|'))
+  ColourNote("white","red", jcenter(info['release_url'], tlen, '|'))
+  ColourNote("white","red", jcenter(string.format("Run the '%s go' command to open a browser", var.cmd), tlen, '|'))
+  ColourNote("white","red", divider)
+end
+
+function checkErrors()
+    if #ErrorMessage > 0 then
+       errorMessage(ErrorMessage)
+       return true
+    end
+    return false
+end
+
+function manualCheck()
+   main()
+end
+
 function browse(url)
    local res = OpenBrowser(url)
    if res ~= 0 then
@@ -82,151 +255,24 @@ function browse(url)
    end
 end
 
--- Shows an editbox dialog detailing the posted differences between
--- the newest available download and the currently downloaded package
-function updateDialog(message,list)
-   if utils.editbox(message,window_title,list,nil,nil,{ok_button="Ok, Show Me", cancel_button="Ignore", read_only=true, no_default=true}) then
-      browse(download_url)
-   else
-      Note("")
-      ColourNote("cyan", "", "+----------------------------------------------------------------+")
-      ColourNote("cyan", "", "|                   Bastmush Update Checker                      |")
-      ColourNote("cyan", "", "+----------------------------------------------------------------+")
-      ColourNote("cyan", "", "|                                                                |")
-      ColourNote("cyan", "", "| You have chosen to ignore snapshot r"..latest_version.."."..string.rep(" ",65-string.len("| You have chosen to ignore snapshot r"..latest_version..".")).."|")
-      ColourNote("cyan", "", "| You will be alerted again when another snapshot is released.   |")
-      ColourNote("cyan", "", "|                                                                |")
-      ColourNote("cyan", "", "| Remember, you can always get the latest snapshot at:           |")
-      ColourNote("cyan", "", "| https://github.com/endavis/bastmush                            |")
-      ColourNote("cyan", "", "|                                                                |")
-      ColourNote("cyan", "", "+----------------------------------------------------------------+")
-      Note("")
-      phelper:set('sleepver', latest_version)
-   end
-end
-
--- Something went wrong when trying to check for updates
-function errorMessage(msg)
-   -- if utils.inputbox(msg,"ERROR: "..window_title,download_url,nil,nil,{ok_button="Ok, Show Me", cancel_button="Maybe Later", read_only=true, no_default=true}) then
-   --    browse(download_url)
-   -- end
-   ColourNote("white","red","Bastmush Update Check Error:")
-   ColourNote("white","red",msg)
-   ColourNote("white","red",download_url)
-end
-
-loaded = false
-function OnPluginListChanged()
-   if not loaded then
-      -- only fire on start after loading all plugins
-      loaded = true
-      DoAfterSpecial(20, "main()", sendto.script)
-   end
-end
-
-function manualCheck()
-   --DeleteTemporaryTimers()
-   main()
+function cmd_go()
+  if info['latestrelease_url'] then
+    browse(info['latestrelease_url'])
+  else
+    browse(info['release_url'])
+  end
 end
 
 function main()
     SetStatus("Checking online for Bastmush script package updates")
-    ErrorMessage = ""
-    if checkLocalFile() then
-        if checkRemoteFile() then
-            showUpdate()
-        end
+    ErrorMessage = {}
+    if getlocalinfo() then
+      if getremoteinfo() then
+        checkversion()
+      end
     end
     checkErrors()
     SetStatus("")
-end
-
-function checkLocalFile()
-    -- open the local version file
-    local changesfile = scan_dir_for_file (GetInfo(60), "BastmushChanges.txt")
-
-    version_file,err = io.open (changesfile, "r")
-    if not version_file then -- the file is missing or unreadable
-       ErrorMessage = "The file \'BastmushChanges.txt\' appears to be missing or unreadable (this is bad), so the version check cannot proceed.\n\nThe system returned the error:\n"..err.."\n\nYou should download the latest development snapshot from:"
-       return false
-    end
-    --- read the snapshot revision from the third line
-    line = version_file:read ("*l") -- read one line
-    line = version_file:read ("*l") -- read one line
-    line = version_file:read ("*l") -- read one line
-    local_version = nil
-    if line then -- if we got something
-       local_version = tonumber(string.match(line, "r(%d+) snapshot"))
-    end
-    if not local_version then -- the file is messed up such that the third line doesn't contain "r<###> snapshot"
-       ErrorMessage = "The file \'BastmushChanges.txt\' appears to have been modified (this is bad), so the version check cannot proceed. You should download the latest development snapshot from:"
-       return false
-    end
-    version_file:close ()
-    return true
-end
-
-function checkRemoteFile()
-   -- grab the download page
-   page, status, headers, full_status = https.request(version_url)
-
-   if status == 200 then -- 200 is the HTTP status code for "OK"
-      update_list, latest_version = string.match(page, "Bastmush Changes List\n\n(r(%d+) snapshot.*)")
-      -- extract the snapshot revision number
-      latest_version = tonumber(latest_version)
-   else -- http access error
-      ErrorMessage = "Could not access the Bastmush download page to check for the latest version number. Please make sure that you are able to access the url below in your browser and then type \'bup check\' to try again..."
-      return false
-   end
-
-   if not latest_version then -- string.match failed to find the right pattern above
-      ErrorMessage = "There appears to be a problem with the version information on the Bastmush download page (below). Please alert Bast about this."
-      return false
-   end
-
-   if latest_version <= phelper.sleepver then
-      return false
-   end
-
-   return true
-end
-
-function updatetooutput(message, update_list)
-    ColourNote("cyan", "", "+----------------------------------------------------------------+")
-    ColourNote("cyan", "", "|                   Bastmush Update Checker                      |")
-    ColourNote("cyan", "", "+----------------------------------------------------------------+")
-    ColourNote("cyan", "", "|           Version " .. latest_version .. " of Bastmush is available                |")
-    ColourNote("cyan", "", "|                  Please see the website at:                    |")
-    ColourNote("cyan", "", "|              https://github.com/endavis/bastmush               |")
-    ColourNote("cyan", "", "+----------------------------------------------------------------+")
-end
-
-function showUpdate()
-   if local_version and latest_version then -- sanity check
-      if local_version < latest_version then
-         final_update_list = (string.match(update_list,"(.*)r"..local_version.." snapshot") or "<ERROR! Please don't modify your BastmushChanges.txt file>\r\n").."\r\nGet it from: "..download_url
-         final_update_list = convertHTMLcodesToStandardText(final_update_list)
-         message = "There's a new Bastmush available. You currently have version r"..local_version.." and the newest version is r"..latest_version..".\n\nThe major differences between your version and the latest version are:"
-         updatetooutput(message, final_update_list)
-      elseif local_version > latest_version then
-         ErrorMessage = "Oh, dear...this is embarrassing. The Bastmush update checker has detected that you have a version NEWER than what is available online! Go to the following url in your browser to get the latest package and contact Bast about this message, because clearly this situation is impossible. :/"
-         return false
-      else
-         ColourNote("yellow", "", "Your Bastmush package version r"..local_version.." appears to be up-to-date.")
-      end
-   else
-      ErrorMessage = "Impossible Error"
-      return false
-   end
-   return true
-end
-
-function checkErrors()
-    if ErrorMessage ~= "" then
-       errorMessage(ErrorMessage)
-       return true
-    end
-    return false
 end
 
 ]]>
@@ -292,6 +338,7 @@ phelper:add_setting('sleepver', {help="the version that the sleep button was hit
 phelper:add_setting('tooutput', {help="show all output to the output screen", type="bool", default=false})
 
 phelper:add_cmd('check', {func=manualCheck, help="check for an update for the Bastmush script package"})
+phelper:add_cmd('go', {func=cmd_go, help="open a browser to the Bastmush release page"})
 
 phelper:enable()
 
