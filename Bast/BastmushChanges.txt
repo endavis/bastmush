@@ -1,5 +1,9 @@
 Bastmush Changes List
 
+r2094 snapshot
+  - update_checker
+     - new: convert to using github releases
+
 r2093 snapshot
   - broadcast_kills
      - bug fix: trivia bonus mob message was wrong
