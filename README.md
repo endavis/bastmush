@@ -9,5 +9,5 @@ Current Version: r2093
 
 Requires Aardwolf MUSHclient r1791 or better due to SSL support
 
-There is a download link at the bottom of the right sidebar.
+Get the download from https://github.com/endavis/bastmush/releases
 
