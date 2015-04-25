@@ -1068,6 +1068,7 @@ function timer_end(name)
 end
 
 function getmemoryusage()
+  collectgarbage('collect')
   return collectgarbage('count')
 end
 
