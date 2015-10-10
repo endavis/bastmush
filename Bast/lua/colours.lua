@@ -26,3 +26,22 @@ function getcolourlengthdiff(colouredstring)
   local addspace = lencolour - lennocolour
   return addspace
 end
+
+function centercolourline(s, length, outside, middle, middlecolour)
+  if middlecolour == nil then
+    middlecolour = ''
+  end
+  if middle == nil then
+    middle = ' '
+  end
+  slen = #strip_colours(s)
+  half = math.floor((length - slen)/ 2)
+  nstr = outside .. middlecolour .. string.rep(middle, half) .. s .. middlecolour .. string.rep(middle, half)
+  if #strip_colours(nstr) ~= length then
+    nstr = nstr .. ' '
+  elseif #strip_colours(nstr) > length then
+    print('huh')
+  end
+  nstr = nstr .. outside
+  return nstr
+end
