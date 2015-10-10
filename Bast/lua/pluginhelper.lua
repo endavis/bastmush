@@ -486,7 +486,7 @@ function Pluginhelper:showhelptext()
              RGBColourToName(var.plugin_colour), "black", self.cmds_table[cmd].help)
     end
   end
-  
+
   ColourNote("white", "black", "")
   ColourTell(RGBColourToName(var.plugin_colour), "black", 'Objects: ')
   for i,v in pairs(self.pobjects) do
@@ -615,12 +615,12 @@ function Pluginhelper:createhelp()
   for i,v in tableSort(self.cmds_groups_sequence) do
     local style = {}
     style.text = ''
-    table.insert(ttext, {style})        
+    table.insert(ttext, {style})
     local style = {}
     style.text = string.format("------- %s -------", v)
-    table.insert(ttext, {style})    
+    table.insert(ttext, {style})
     for cmd,cmdgt in tableSort(self.cmds_groups[v], 'prio', 50) do
-      if self.cmds_table[cmd].help ~= '' then  
+      if self.cmds_table[cmd].help ~= '' then
         local tline = {}
         local style2 = {}
         style2.text = string.format("%-15s", cmd)
@@ -639,7 +639,7 @@ function Pluginhelper:createhelp()
       end
     end
   end
-  
+
   local style = {}
   style.text = '  '
   table.insert(ttext, {style})
@@ -895,41 +895,64 @@ function SecondsToDHMS(sSeconds)
   end
 end
 
-function format_time(length, nosec)
+function format_time(length, nosec, tcolour)
+  if tcolour == nil then
+    tcolour = ''
+  end
   -- returns time in the format 10d:3h:4m:3s
   local tmsg = {}
   local years, days, hours, mins, secs = SecondsToDHMS(length)
   if years > 0 then
     table.insert( tmsg, string.format( "%d", years or 0 ) )
-    table.insert( tmsg, "y" )
+    if tcolour == '' then
+      table.insert( tmsg, "y"  )
+    else
+      table.insert( tmsg, tcolour .. "y@x")
+    end
   end
   if days > 0 then
     if years > 0 then
       table.insert( tmsg, string.format( ":" ) )
     end
     table.insert( tmsg, string.format( "%02d", days or 0 ) )
-    table.insert( tmsg, "d" )
+    if tcolour == '' then
+      table.insert( tmsg, "d"  )
+    else
+      table.insert( tmsg, tcolour .. "d@x")
+    end
   end
   if hours > 0 then
     if years > 0 or days > 0 then
       table.insert( tmsg, string.format( ":" ) )
     end
     table.insert( tmsg, string.format( "%02d", hours or 0 ) )
-    table.insert( tmsg, "h" )
+    if tcolour == '' then
+      table.insert( tmsg, "h"  )
+    else
+      table.insert( tmsg, tcolour .. "h@x")
+    end
   end
   if mins > 0 then
     if years > 0 or days > 0 or hours > 0 then
       table.insert( tmsg, string.format( ":" ) )
     end
     table.insert( tmsg, string.format( "%02d", mins or 0 ) )
-    table.insert( tmsg, "m" )
+    if tcolour == '' then
+      table.insert( tmsg, "m"  )
+    else
+      table.insert( tmsg, tcolour .. "m@x")
+    end
   end
   if (secs > 0 or #tmsg == 0) and nosec == nil then
     if years > 0 or days > 0 or hours > 0 or mins > 0 then
       table.insert( tmsg, string.format( ":" ) )
     end
     table.insert( tmsg, string.format( "%02d", secs or 0 ) )
-    table.insert( tmsg, "s " )
+    if tcolour == '' then
+      table.insert( tmsg, "s"  )
+    else
+      table.insert( tmsg, tcolour .. "s@x")
+    end
   end
   return strjoin("", tmsg)
 end
