@@ -87,10 +87,13 @@ function trimr(s)
   return s:find('^%s*$') and '' or s:match('^(.*%S)')
 end
 
-function jcenter(s, length, outside)
+function jcenter(s, length, outside, middle)
+  if middle == nil then
+    middle = ' '
+  end
   slen = #s
   half = math.floor((length - slen - 2)/ 2)
-  nstr = outside .. string.rep(' ', half) .. s .. string.rep(' ', half)
+  nstr = outside .. string.rep(middle, half) .. s .. string.rep(middle, half)
   if #nstr + 1 ~= length then
     nstr = nstr .. ' '
   elseif #nstr > length then
