@@ -57,12 +57,12 @@ function Aarddb:initialize(args)
       keywords TEXT NOT NULL,
       note TEXT NOT NULL
         )]], nil, nil, 'note_id')
-        
+
   self:addtable('roomnotes', [[CREATE TABLE roomnotes(
       rnote_id INTEGER NOT NULL PRIMARY KEY autoincrement,
       room INT default -1,
       notenum INT
-        )]], nil, nil, 'rnote_id')        
+        )]], nil, nil, 'rnote_id')
 
   self:postinit() -- this is defined in sqlitedb.lua, it checks for upgrades and creates all tables
 end
@@ -138,7 +138,7 @@ function Aarddb:getnotesforroom(ruid)
                     INNER JOIN notes n ON n.note_id = r.notenum
                     WHERE r.room = %s
                     ORDER BY r.notenum ASC
-                    ]]  
+                    ]]
   if self:open('getnotesforroom') then
     local stmt = self.db:prepare(string.format(sqlcmd, ruid))
     if not stmt then
@@ -150,7 +150,7 @@ function Aarddb:getnotesforroom(ruid)
       end
     end
     self:close('getnotesforroom')
-  end                    
+  end
   return results
 end
 
@@ -159,7 +159,7 @@ function Aarddb:getroomsfornote(note_id)
   local sqlcmd = [[SELECT *
                     FROM roomnotes
                     WHERE notenum = %s
-                    ]]  
+                    ]]
   if self:open('getroomsfornotes') then
     local stmt = self.db:prepare(string.format(sqlcmd, note_id))
     if not stmt then
@@ -171,8 +171,8 @@ function Aarddb:getroomsfornote(note_id)
       end
     end
     self:close('getroomsfornotes')
-  end                    
-  return results  
+  end
+  return results
 end
 
 function Aarddb:addnotetoroom(roomnum, note_id)
@@ -239,8 +239,8 @@ end
 function Aarddb:planeslookup(mob)
   local tmobs = {}
   if self:open() then
-    for a in self.db:nrows( [[SELECT DISTINCT(planesmobs.mobname), planespools.poollayer, planespools.poolnum 
-                              FROM planesmobs, planespools  WHERE planesmobs.mobname LIKE '%]] .. mob .. [[%' 
+    for a in self.db:nrows( [[SELECT DISTINCT(planesmobs.mobname), planespools.poollayer, planespools.poolnum
+                              FROM planesmobs, planespools  WHERE planesmobs.mobname LIKE '%]] .. mob .. [[%'
                               and planesmobs.poolnum == planespools.poolnum]] ) do
       table.insert(tmobs, a)
     end
@@ -314,11 +314,18 @@ function Aarddb:lookupareasbyexactname(area)
   return areas
 end
 
-function Aarddb:lookupareasbykeyword(keyword)
+function Aarddb:lookupareasbykeyword(keyword, exact)
+
   local areas = {}
-  local keyword = fixsql(keyword, true)
+  local tkeyword = fixsql(keyword, true)
+  local sqlstmt = "SELECT * FROM areas WHERE keyword LIKE " .. tkeyword
+  if exact ~= nil then
+    tkeyword = fixsql(keyword)
+    sqlstmt = "SELECT * FROM areas WHERE LOWER(keyword) = LOWER(" .. tkeyword ..")"
+  end
+
   if self:open() and self:checktable('areas')  then
-    for a in self.db:nrows( "SELECT * FROM areas WHERE keyword LIKE " .. keyword ) do
+    for a in self.db:nrows(sqlstmt) do
       table.insert(areas, a)
     end
     self:close()
@@ -491,7 +498,7 @@ function Aarddb:convertroomnotes()
   self.db:exec([[DROP TABLE IF EXISTS notes;]])
   self.db:exec([[DROP TABLE IF EXISTS roomnotes;]])
   self:close('convertroomnotes', true)
-  self:open('convertroomnotes2')    
+  self:open('convertroomnotes2')
   self.db:exec([[CREATE TABLE notes(
     note_id INTEGER NOT NULL PRIMARY KEY autoincrement,
     area TEXT NOT NULL,
@@ -502,11 +509,11 @@ function Aarddb:convertroomnotes()
     rnote_id INTEGER NOT NULL PRIMARY KEY autoincrement,
     room INT default -1,
     notenum INT
-      )]])            
-  self:close('convertroomnotes2', true)    
-  
+      )]])
+  self:close('convertroomnotes2', true)
+
   if oldnotes and next(oldnotes) then
-    self:open('convertroomnotes3')    
+    self:open('convertroomnotes3')
     assert (self.db:exec("BEGIN TRANSACTION"))
     local stmt = self.db:prepare[[ INSERT INTO notes VALUES (:note_id, :area, :keywords,
                                                               :note) ]]
@@ -517,18 +524,18 @@ function Aarddb:convertroomnotes()
       stmt:reset()
     end
     stmt:finalize()
-    local stmt2 = self.db:prepare[[ INSERT INTO roomnotes VALUES (NULL, :room, 
-                                                                  :note_id) ]]                       
+    local stmt2 = self.db:prepare[[ INSERT INTO roomnotes VALUES (NULL, :room,
+                                                                  :note_id) ]]
     for i,v in tableSort(oldnotes, 'note_id') do
       if v['room'] and tonumber(v['room']) then
         stmt2:bind_names(v)
         stmt2:step()
-        stmt2:reset()          
+        stmt2:reset()
       end
     end
     stmt2:finalize()
-    assert (self.db:exec("COMMIT"))    
-    self:close('convertroomnotes3', true)    
+    assert (self.db:exec("COMMIT"))
+    self:close('convertroomnotes3', true)
   end
 end
 
