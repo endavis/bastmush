@@ -895,66 +895,45 @@ function SecondsToDHMS(sSeconds)
   end
 end
 
-function format_time(length, nosec, tcolour)
+function format_time(length, nosec, tcolour, ncolour, fmin)
+  resetc = '@w'
   if tcolour == nil then
     tcolour = ''
   end
+  if ncolour == nil then
+    ncolour = ''
+  end
+  if ncolour == '' and tcolour == '' then
+    resetc = ''
+  end
+  if fmin == nil then
+    fmin = false
+  end
+
   -- returns time in the format 10d:3h:4m:3s
   local tmsg = {}
   local years, days, hours, mins, secs = SecondsToDHMS(length)
   if years > 0 then
-    table.insert( tmsg, string.format( "%d", years or 0 ) )
-    if tcolour == '' then
-      table.insert( tmsg, "y"  )
-    else
-      table.insert( tmsg, tcolour .. "y@x")
-    end
+    table.insert( tmsg, string.format( "%s%d%sy%s", tcolour, years or 0,
+                                                      ncolour, resetc ) )
   end
   if days > 0 then
-    if years > 0 then
-      table.insert( tmsg, string.format( ":" ) )
-    end
-    table.insert( tmsg, string.format( "%02d", days or 0 ) )
-    if tcolour == '' then
-      table.insert( tmsg, "d"  )
-    else
-      table.insert( tmsg, tcolour .. "d@x")
-    end
+    table.insert( tmsg, string.format( "%s%02d%sd%s", tcolour, days or 0,
+                                                      ncolour, resetc ) )
   end
   if hours > 0 then
-    if years > 0 or days > 0 then
-      table.insert( tmsg, string.format( ":" ) )
-    end
-    table.insert( tmsg, string.format( "%02d", hours or 0 ) )
-    if tcolour == '' then
-      table.insert( tmsg, "h"  )
-    else
-      table.insert( tmsg, tcolour .. "h@x")
-    end
+    table.insert( tmsg, string.format( "%s%02d%sh%s", tcolour, hours or 0,
+                                                      ncolour, resetc ) )
   end
-  if mins > 0 then
-    if years > 0 or days > 0 or hours > 0 then
-      table.insert( tmsg, string.format( ":" ) )
-    end
-    table.insert( tmsg, string.format( "%02d", mins or 0 ) )
-    if tcolour == '' then
-      table.insert( tmsg, "m"  )
-    else
-      table.insert( tmsg, tcolour .. "m@x")
-    end
+  if mins > 0 or fmin then
+    table.insert( tmsg, string.format( "%s%02d%sm%s", tcolour, mins or 0,
+                                                      ncolour, resetc ) )
   end
   if (secs > 0 or #tmsg == 0) and nosec == nil then
-    if years > 0 or days > 0 or hours > 0 or mins > 0 then
-      table.insert( tmsg, string.format( ":" ) )
-    end
-    table.insert( tmsg, string.format( "%02d", secs or 0 ) )
-    if tcolour == '' then
-      table.insert( tmsg, "s"  )
-    else
-      table.insert( tmsg, tcolour .. "s@x")
-    end
+    table.insert( tmsg, string.format( "%s%02d%ss%s", tcolour, secs or 0,
+                                                      ncolour, resetc ) )
   end
-  return strjoin("", tmsg)
+  return strjoin(":", tmsg)
 end
 
 function convert_ticks(ticks)
