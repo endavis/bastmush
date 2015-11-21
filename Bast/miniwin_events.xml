@@ -56,6 +56,7 @@ level = nil
 curlevel = nil
 showcpwin = false
 onquest = false
+ingq = false
 
 function set_show()
   showcpwin = true
@@ -405,23 +406,25 @@ function OnPluginBroadcast (msg, id, name, text)
     end
 
   elseif id == "aaa77f81c5408278ccda7100" then
-    if msg == 1 then
+    if msg == 7 then
       -- gquest available
       --local style = {}
       --style.text = " GQ "
       --style.textcolour = "red"
       --gqwin:tabbroadcast(true, {style})
-      local style = {}
-      style.text = "GQuest Available"
-      style.backcolour = 'quest_avail_bg_colour'
-      style.textcolour = 'quest_avail_colour'
-      local tstyle = {}
-      table.insert(tstyle, style)
-      tstyle.backcolour = "quest_avail_bg_colour"
-      gqflag = true
-      show_gq({tstyle})
-      eventwin.tabcolour = eventwin:get_colour('quest_avail_bg_colour')
-      eventwin:tabbroadcast(true)
+      if not ingq then
+        local style = {}
+        style.text = "GQuest Available"
+        style.backcolour = 'quest_avail_bg_colour'
+        style.textcolour = 'quest_avail_colour'
+        local tstyle = {}
+        table.insert(tstyle, style)
+        tstyle.backcolour = "quest_avail_bg_colour"
+        gqflag = true
+        show_gq({tstyle})
+        eventwin.tabcolour = eventwin:get_colour('quest_avail_bg_colour')
+        eventwin:tabbroadcast(true)
+      end
     elseif msg == 2 then
       -- gquest joined
       show_gq({"GQuest Joined - Waiting"})
@@ -429,14 +432,19 @@ function OnPluginBroadcast (msg, id, name, text)
       local pvar = GetPluginVariable(  "aaa77f81c5408278ccda7100", "mobs" )
       -- get the mobs
       loadstring( pvar )()
+      ingq = true
       gqmobs = mobs
       build_gq()
     elseif msg == 4 or msg == 5 or msg == 6 then
+      ingq = false
+    elseif msg == 8 then
       -- reward
-      gqflag = false
-      eventwin:removetab('GQ')
-      eventwin.tabcolour = eventwin.bg_colour
-      eventwin:tabbroadcast(true)
+      if not ingq then
+        gqflag = false
+        eventwin:removetab('GQ')
+        eventwin.tabcolour = eventwin.bg_colour
+        eventwin:tabbroadcast(true)
+      end
     end
   end
 

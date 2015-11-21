@@ -45,6 +45,7 @@ gqwin:set_default('header_height', 0)
 
 gqmobs = {}
 mobcount = 0
+ingq = false
 
 function build_gq ()
 
@@ -105,25 +106,32 @@ end -- show_quest_text
 
 function OnPluginBroadcast (msg, id, name, text)
   if id == "aaa77f81c5408278ccda7100" then
-    if msg == 1 then
+    if msg == 7 then
       -- gquest available
-      local style = {}
-      style.text = " GQ "
-      style.textcolour = "red"
-      gqwin:tabbroadcast(true, {style})
-      show_gq({"GQuest Available"})
+      if not ingq then
+        local style = {}
+        style.text = " GQ "
+        style.textcolour = "red"
+        gqwin:tabbroadcast(true, {style})
+        show_gq({"GQuest Available"})
+      end
     elseif msg == 2 then
       -- gquest joined
       show_gq({"GQuest Joined - Waiting"})
     elseif msg == 3 then
+      ingq = true
       local pvar = GetPluginVariable(  "aaa77f81c5408278ccda7100", "mobs" )
       -- get the mobs
       loadstring( pvar )()
       gqmobs = mobs
       build_gq()
-    elseif msg == 4 or msg == 5 then
+    elseif msg == 4 or msg == 5 or msg == 6 then
+      ingq = false
+    elseif msg == 8 then
       -- reward
-      gqwin:disable()
+      if not ingq then
+        gqwin:disable()
+      end
     end
 
   end -- gq broadcast
