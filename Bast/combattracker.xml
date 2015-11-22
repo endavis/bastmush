@@ -29,7 +29,7 @@
 
 <triggers>
 
-  
+
 </triggers>
 
 
@@ -60,18 +60,46 @@ require "ldplugin"
 damagetable = {}
 
 function formatdamage(damaget)
-  local tstring = ''
+  local linelen = 72
+  local timestring = ''
   if damaget['finishtime'] and damaget['starttime'] then
-    tstring = format_time(damaget['finishtime'] - damaget['starttime'])
+    timestring = format_time(damaget['finishtime'] - damaget['starttime'], nil, var.infocolour)
   end
-  ColourNote(RGBColourToName(var.plugin_colour), "black", "Combat Stats for " .. damaget['name'] .. ": " .. tstring)
+  TextToColourTell(var.infocolour .. string.rep('-', linelen) .. '@w')
+  ColourNote("", "", "")
+
+  tstring = var.statcolour .. damaget['name'] .. '@w'
+  if timestring ~= '' then
+    tstring = tstring .. ' ' .. var.infocolour .. ':@w ' .. var.statcolour .. timestring .. '@w'
+  end
+  tstring = tstring .. ' ' .. var.infocolour .. ':@w ' .. var.statcolour .. tostring(damaget['totalxp']) .. var.infocolour .. 'xp@w'
+  tstring = '  ' .. tstring .. '  '
+
+  tstringn = centercolourline(tstring, linelen, '', '-', var.infocolour)
+  TextToColourTell(tstringn)
+  ColourNote("", "", "")
+  TextToColourTell(var.infocolour .. string.rep('-', linelen) .. '@w')
+  ColourNote("", "", "")
+
   local totald = 0
   local totalm = 0
   local totalh = 0
-  local bstring = "%-20s: Hits: %-4d  Damage: %-6d  Misses: %-4d  Per Hit: %-4.2f" 
+  local bstring = var.statcolour .. "%-20s " .. var.infocolour .. ": " .. var.statcolour .. "%6s   %9s    (%3.0f%%) %7s  %8.0f"
+  hstring = var.infocolour .. "Dam Type             :    Hits      Damage   (  0%)   Misses    Average "
+  TextToColourTell(var.infocolour .. hstring)
+  ColourNote("", "", "")
+  TextToColourTell(var.infocolour .. string.rep('-', linelen) .. '@w')
+  ColourNote("", "", "")
+
+
   for i,v in pairs(damaget['damage']) do
     if i ~= 'enemy' and i ~= 'starttime' and i ~= 'finishtime' then
       totald = totald + v['damage']
+    end
+  end
+
+  for i,v in pairs(damaget['damage']) do
+    if i ~= 'enemy' and i ~= 'starttime' and i ~= 'finishtime' then
       totalm = totalm + v['misses']
       totalh = totalh + v['hits']
       local damt = i
@@ -82,12 +110,19 @@ function formatdamage(damaget)
       if v['hits'] == 0 then
         avedamage =  0
       end
-      
-      ColourNote(RGBColourToName(var.plugin_colour), "black", string.format(bstring, damt, v['hits'], v['damage'], v['misses'], avedamage))
+
+      tper = (v['damage'] / totald) * 100
+
+      TextToColourTell(string.format(bstring, damt, v['hits'], v['damage'], tper, v['misses'], avedamage))
+      ColourNote("", "", "")
     end
   end
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.rep('-', 79))
-  ColourNote(RGBColourToName(var.plugin_colour), "black", string.format(bstring, 'Total', totalh, totald, totalm, totald / totalh))
+  TextToColourTell(var.infocolour .. string.rep('-', linelen) .. '@w')
+  ColourNote("", "", "")
+  TextToColourTell(string.format(bstring, 'Total', totalh, totald, '100', totalm, totald / totalh))
+  ColourNote("", "", "")
+  TextToColourTell(var.infocolour .. string.rep('-', linelen) .. '@w')
+  ColourNote("", "", "")
 end
 
 function cmd_last(cmddict)
@@ -99,7 +134,7 @@ function cmd_last(cmddict)
     if index > 0 and index <= #damagetable then
       formatdamage(damagetable[index])
     else
-      ColourNote("red", "black", "No combat stats")    
+      ColourNote("red", "black", "No combat stats")
     end
   else
     ColourNote("red", "black", "No combat stats")
@@ -119,7 +154,7 @@ end
 
 function OnPluginBroadcast (msg, id, name, text)
   phelper:OnPluginBroadcast(msg, id, name, text)
-  
+
 end
 
 function OnPluginInstall ()
@@ -134,9 +169,9 @@ end -- OnPluginClose
 
 function OnPluginEnable ()
   ldplugin('broadcast_kills', 'aaa61c4570508448e19c7c14')
-   
+
   phelper:OnPluginEnable()
-  
+
   phelper:register_remote('aaa61c4570508448e19c7c14', "mobdeath", "onmobdeath")
 
 end -- OnPluginEnable
@@ -169,6 +204,9 @@ end -- function OnPluginSaveState
 
 phelper:set_default('cmd', 'btr')
 phelper:set_default('plugin_colour', 'orange')
+
+phelper:add_setting("statcolour", {help="the background colour for a cp mob", type="aardcolour", default="@W", sortlev=1, longname="color for stats"})
+phelper:add_setting("infocolour", {help="the text colour for a cp mob", type="aardcolour", default="@x178", sortlev=1, longname="color for info"})
 
 phelper:add_cmd('last', {func=cmd_last, help="show stats for last combat", sortgroup="Get information about damage"})
 

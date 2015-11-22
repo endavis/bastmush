@@ -1809,6 +1809,9 @@ function build_kills_window()
         local style = {}
         style.text = string.format("%3d ", tonumber(v.totalxp or 0) or 0)
         style.textcolour = "white"
+        if v.noexp == 1 then
+          style.textcolour = "red"
+        end
         style.mouseup = nofunc
         local ttext = tostring(v.xp) .. "(XP)"
         if v.rarexp ~= 0 then
@@ -1836,6 +1839,9 @@ function build_kills_window()
         end
         style.text = string.format("%3s ", ttext)
         style.textcolour = "white"
+        if v.noexp == 1 then
+          style.textcolour = "red"
+        end
         style.mouseup = nofunc
         style.hint = thint
         table.insert(lstyle, style)

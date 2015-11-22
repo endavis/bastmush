@@ -31,7 +31,7 @@ Statdb = Sqlitedb:subclass()
 function Statdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "\\stats.db"
-  self.version = 13
+  self.version = 14
   self.versionfuncs[2] = self.updatedblqp -- update double qp flag
   self.versionfuncs[3] = self.updatemobkills -- slit, assassinate, etc..
   self.versionfuncs[4] = self.addmobsblessing -- add blessing xp to mobs table
@@ -44,6 +44,7 @@ function Statdb:initialize(args)
   self.versionfuncs[11] = self.addstatsredos
   self.versionfuncs[12] = self.addbonusqpcp
   self.versionfuncs[13] = self.addrarexp_v13
+  self.versionfuncs[14] = self.addnoexp_v14
 
   self:addtable('stats', [[CREATE TABLE stats(
           stat_id INTEGER NOT NULL PRIMARY KEY autoincrement,
@@ -146,6 +147,7 @@ function Statdb:initialize(args)
           bonusxp INT default 0,
           blessingxp INT default 0,
           totalxp INT default 0,
+          noexp INT default 0,
           gold INT default 0,
           tp INT default 0,
           time INT default -1,
@@ -1423,5 +1425,58 @@ function Statdb:addrarexp_v13()
     stmt:finalize()
     assert (self.db:exec("COMMIT"))
     self:close('addrarexp_v13_2')
+  end
+end
+
+function Statdb:addnoexp_v14()
+  if not self:checktableexists('mobkills') then
+    return
+  end
+  oldmobst = self:runselect('SELECT * FROM mobkills ORDER BY mk_id ASC')
+
+  if self:open('addnoexp_v14_1') then
+    self.db:exec('DROP TABLE IF EXISTS mobkills;')
+    self:close('addnoexp_v14_1', true)
+  end
+
+  if self:open('addnoexp_v14_2') then
+    self.db:exec([[CREATE TABLE mobkills(
+          mk_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+          name TEXT default "Unknown",
+          xp INT default 0,
+          rarexp INT default 0,
+          bonusxp INT default 0,
+          blessingxp INT default 0,
+          totalxp INT default 0,
+          noexp INT default 0,
+          gold INT default 0,
+          tp INT default 0,
+          time INT default -1,
+          vorpal INT default 0,
+          banishment INT default 0,
+          assassinate INT default 0,
+          slit INT default 0,
+          disintegrate INT default 0,
+          deathblow INT default 0,
+          wielded_weapon TEXT default '',
+          second_weapon TEXT default '',
+          room_id INT default 0,
+          level INT default -1
+        )]])
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    stmt2 = [[INSERT INTO mobkills VALUES (:mk_id, :name, :xp, :rarexp,
+                  :bonusxp, :blessingxp, :totalxp, 0, :gold, :tp, :time,
+                  :vorpal, :banishment, :assassinate, :slit, :disintegrate,
+                  :deathblow, :wielded_weapon, :second_weapon, :room_id,
+                  :level)]]
+    stmt = self.db:prepare(stmt2)
+    for i,v in tableSort(oldmobst, 'mk_id') do
+      stmt:bind_names(v)
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    assert (self.db:exec("COMMIT"))
+    self:close('addnoexp_v14_2')
   end
 end

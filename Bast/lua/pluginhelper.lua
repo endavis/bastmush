@@ -486,7 +486,7 @@ function Pluginhelper:showhelptext()
              RGBColourToName(var.plugin_colour), "black", self.cmds_table[cmd].help)
     end
   end
-  
+
   ColourNote("white", "black", "")
   ColourTell(RGBColourToName(var.plugin_colour), "black", 'Objects: ')
   for i,v in pairs(self.pobjects) do
@@ -615,12 +615,12 @@ function Pluginhelper:createhelp()
   for i,v in tableSort(self.cmds_groups_sequence) do
     local style = {}
     style.text = ''
-    table.insert(ttext, {style})        
+    table.insert(ttext, {style})
     local style = {}
     style.text = string.format("------- %s -------", v)
-    table.insert(ttext, {style})    
+    table.insert(ttext, {style})
     for cmd,cmdgt in tableSort(self.cmds_groups[v], 'prio', 50) do
-      if self.cmds_table[cmd].help ~= '' then  
+      if self.cmds_table[cmd].help ~= '' then
         local tline = {}
         local style2 = {}
         style2.text = string.format("%-15s", cmd)
@@ -639,7 +639,7 @@ function Pluginhelper:createhelp()
       end
     end
   end
-  
+
   local style = {}
   style.text = '  '
   table.insert(ttext, {style})
@@ -895,43 +895,45 @@ function SecondsToDHMS(sSeconds)
   end
 end
 
-function format_time(length, nosec)
+function format_time(length, nosec, tcolour, ncolour, fmin)
+  resetc = '@w'
+  if tcolour == nil then
+    tcolour = ''
+  end
+  if ncolour == nil then
+    ncolour = ''
+  end
+  if ncolour == '' and tcolour == '' then
+    resetc = ''
+  end
+  if fmin == nil then
+    fmin = false
+  end
+
   -- returns time in the format 10d:3h:4m:3s
   local tmsg = {}
   local years, days, hours, mins, secs = SecondsToDHMS(length)
   if years > 0 then
-    table.insert( tmsg, string.format( "%d", years or 0 ) )
-    table.insert( tmsg, "y" )
+    table.insert( tmsg, string.format( "%s%d%sy%s", tcolour, years or 0,
+                                                      ncolour, resetc ) )
   end
   if days > 0 then
-    if years > 0 then
-      table.insert( tmsg, string.format( ":" ) )
-    end
-    table.insert( tmsg, string.format( "%02d", days or 0 ) )
-    table.insert( tmsg, "d" )
+    table.insert( tmsg, string.format( "%s%02d%sd%s", tcolour, days or 0,
+                                                      ncolour, resetc ) )
   end
   if hours > 0 then
-    if years > 0 or days > 0 then
-      table.insert( tmsg, string.format( ":" ) )
-    end
-    table.insert( tmsg, string.format( "%02d", hours or 0 ) )
-    table.insert( tmsg, "h" )
+    table.insert( tmsg, string.format( "%s%02d%sh%s", tcolour, hours or 0,
+                                                      ncolour, resetc ) )
   end
-  if mins > 0 then
-    if years > 0 or days > 0 or hours > 0 then
-      table.insert( tmsg, string.format( ":" ) )
-    end
-    table.insert( tmsg, string.format( "%02d", mins or 0 ) )
-    table.insert( tmsg, "m" )
+  if mins > 0 or fmin then
+    table.insert( tmsg, string.format( "%s%02d%sm%s", tcolour, mins or 0,
+                                                      ncolour, resetc ) )
   end
   if (secs > 0 or #tmsg == 0) and nosec == nil then
-    if years > 0 or days > 0 or hours > 0 or mins > 0 then
-      table.insert( tmsg, string.format( ":" ) )
-    end
-    table.insert( tmsg, string.format( "%02d", secs or 0 ) )
-    table.insert( tmsg, "s " )
+    table.insert( tmsg, string.format( "%s%02d%ss%s", tcolour, secs or 0,
+                                                      ncolour, resetc ) )
   end
-  return strjoin("", tmsg)
+  return strjoin(":", tmsg)
 end
 
 function convert_ticks(ticks)
@@ -1068,6 +1070,7 @@ function timer_end(name)
 end
 
 function getmemoryusage()
+  collectgarbage('collect')
   return collectgarbage('count')
 end
 

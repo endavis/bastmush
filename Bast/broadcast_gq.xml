@@ -20,15 +20,18 @@
 
 Broadcasts when anything happens in a gquest
 Broadcasts
-   1 - gquest available
+   1 - gquest declared
    2 - gquest joined
-   3 - Mob list, get var.mobs and loadstring it
+   3 - Mob list, get mobs and loadstring it
        mobs = { 1 = {name = 'Some name', location = 'Some location', clean = 'A name with some stuff removed', num=number},
               2 = {name = 'Another name', location = 'Another location', clean = 'Another name with some stuff removed', num=number}, }
        It will be resent when a mob is killed and will be nil when a gquest is not active
-   4 - rewards get var.gq_info and loadstring it
+   4 - rewards get gq_info and loadstring it
        see below
-   5 - gquest over
+   5 - gquest quit
+   6 - gquest over
+   7 - gquest available
+   8 - no gquests available
 
 Example
   function OnPluginBroadcast (msg, id, name, text)
@@ -152,9 +155,9 @@ Global Quest: No active players remaining, global quest is now over.
 
   <trigger
    enabled="y"
-   match="^Global Quest: Global quest \# (.*) has been declared for levels (.*) to (.*)\.$"
-   name="gq_declared"
-   script="gq_declared"
+   match="^Global Quest: Global quest \# *(?&lt;gqnum&gt;\d+) has been declared for levels (.*) to (.*)\.$"
+   name="gqdeclared"
+   script="gqdeclared"
    sequence="100"
    regexp="y"
    omit_from_output="n"
@@ -164,9 +167,9 @@ Global Quest: No active players remaining, global quest is now over.
 
  <trigger
    enabled="y"
-   match="^You have now joined the quest. See 'help gquest' for available commands\.$"
-   name="gq_join"
-   script="gq_join"
+   match="^You have now joined Global Quest \# *(?&lt;gqnum&gt;\d+)\. .*$"
+   name="gqjoin"
+   script="gqjoin"
    sequence="100"
    regexp="y"
    omit_from_output="n"
@@ -174,11 +177,10 @@ Global Quest: No active players remaining, global quest is now over.
   </trigger>
 
  <trigger
-   enabled="n"
-   match="^Global Quest: The global quest for levels (.*) to (.*) has now started.$"
-   name="gq_start"
-   script="gq_start"
-   group="gq_start"
+   enabled="y"
+   match="^Global Quest: Global quest \# *(?&lt;gqnum&gt;\d+) .* has now started.$"
+   name="gqstarted"
+   script="gqstarted"
    sequence="100"
    regexp="y"
    omit_from_output="n"
@@ -186,10 +188,30 @@ Global Quest: No active players remaining, global quest is now over.
   </trigger>
 
   <trigger
+   enabled="y"
+   match="^Global Quest: Global quest \# *(?&lt;gqnum&gt;\d+) has been cancelled due to lack of (activity|participants)\.$"
+   name="gqcancelled"
+   script="gqcancelled"
+   sequence="101"
+   regexp="y"
+  >
+  </trigger>
+
+ <trigger
+   enabled="y"
+   match="^You are no longer part of Global Quest \# *(?&lt;gqnum&gt;\d+) and will be unable to rejoin.$"
+   sequence="100"
+   name="gqquit"
+   script="gqquit"
+   regexp="y"
+  >
+  </trigger>
+
+  <trigger
    enabled="n"
-   match="You are not on a global quest."
-   name="gq_none"
-   script="gq_none"
+   match="You are not in a global quest."
+   name="gqnone"
+   script="notstarted"
    sequence="100"
    group="gqcheck"
   >
@@ -198,8 +220,8 @@ Global Quest: No active players remaining, global quest is now over.
   <trigger
    enabled="n"
    match="^You still have to kill(?&lt;num&gt;[ \d]*) \* (?&lt;name&gt;.*?) \((?&lt;location&gt;.*?)(?&lt;dead&gt; - Dead|)\)(|\.)$"
-   name="gq_item"
-   script="gq_item"
+   name="gqitem"
+   script="gqitem"
    sequence="100"
    regexp="y"
    group="gqcheck"
@@ -209,20 +231,22 @@ Global Quest: No active players remaining, global quest is now over.
 
   <trigger
    enabled="n"
-   match="*"
-   name="finishgqcheck"
-   script="gq_item"
-   group="gqcheckfin"
+   match="^Global Quest \# *(?&lt;gqnum&gt;\d+) has not yet started."
+   name="notstarted"
+   script="notstarted"
+   group="gqcheck"
+   regexp="y"
    sequence="101"
   >
   </trigger>
 
   <trigger
    enabled="n"
-   match="The global quest has not yet started."
-   name="notstarted"
-   script="gq_item"
+   match="^You may win (.*) more gquests? at this level\.$"
+   name="gqwins"
+   script="gqwins"
    group="gqcheck"
+   regexp="y"
    sequence="101"
   >
   </trigger>
@@ -231,7 +255,8 @@ Global Quest: No active players remaining, global quest is now over.
    enabled="n"
    match="^(\s*)Reward of (?&lt;amount&gt;\d+) (?&lt;type&gt;.+) (.+) added\.$"
    sequence="100"
-   script="gq_reward"
+   name="gqreward"
+   script="gqreward"
    group="gqrew"
    regexp="y"
   >
@@ -242,7 +267,8 @@ Global Quest: No active players remaining, global quest is now over.
    match="Congratulations, that was one of the GLOBAL QUEST mobs!"
    send_to="10"
    sequence="100"
-   script="gq_mob_dead"
+   name="gqmobdead"
+   script="gqmobdead"
    group="gqin"
   >
   </trigger>
@@ -251,66 +277,19 @@ Global Quest: No active players remaining, global quest is now over.
    enabled="n"
    match="You were the first to complete this quest!"
    sequence="100"
-   script="gq_complete"
+   name="gqwon"
+   script="gqwon"
    group="gqin"
   >
   </trigger>
 
  <trigger
    enabled="n"
-   match="CONGRATULATIONS! You were the first to complete this quest!"
+   match="^Global Quest: Global Quest \# *(?&lt;gqnum&gt;\d+) has been won by (?&lt;winner&gt;.*) - (.*) win\.$"
    sequence="100"
-   script="gq_complete"
+   name="gqwonannounce"
+   script="gqwonannounce"
    group="gqin"
-  >
-  </trigger>
-
- <trigger
-   enabled="n"
-   match="^Global Quest: The global quest has been won by (.*) - (.*) win.$"
-   sequence="100"
-   script="getnextline"
-   group="gqdone"
-   regexp="y"
-  >
-  </trigger>
-
-  <trigger
-   enabled="n"
-   match="*"
-   name="catchall"
-   script="nextafterfinish"
-   group="getnextline"
-   sequence="101"
-  >
-  </trigger>
-
- <trigger
-   enabled="n"
-   match="^You are no longer part of the current quest.$"
-   sequence="100"
-   script="gq_quit"
-   group="gqdone"
-   regexp="y"
-  >
-  </trigger>
-
- <trigger
-   enabled="n"
-   match="^Global Quest: The extended global quest is now over.$"
-   sequence="100"
-   script="gq_none"
-   group="gqext"
-   regexp="y"
-  >
-  </trigger>
-
- <trigger
-   enabled="n"
-   match="^Global Quest: No active players remaining, global quest is now over.$"
-   sequence="100"
-   script="gq_none"
-   group="gqext"
    regexp="y"
   >
   </trigger>
@@ -319,9 +298,29 @@ Global Quest: No active players remaining, global quest is now over.
    enabled="n"
    match="^You have finished this global quest.$"
    sequence="100"
-   script="gq_none"
-   group="gqext"
-   name="completed"
+   name="gqextfin"
+   script="gqextfin"
+   group="gqin"
+   regexp="y"
+  >
+  </trigger>
+
+ <trigger
+   enabled="y"
+   match="^INFO: New post \#(?&lt;bdnum&gt;.*) in forum Gquest from Aardwolf Subj: Lvl (?&lt;low&gt;.*) to (?&lt;high&gt;.*) - Global quest \# *(?&lt;gqnum&gt;\d+)$"
+   sequence="100"
+   name="gqnote"
+   script="gqnote"
+   regexp="y"
+  >
+  </trigger>
+
+ <trigger
+   enabled="y"
+   match="^You have reached the maximum (.*) kills for which you can earn quest points this level\.$"
+   sequence="100"
+   name="gqmaxkills"
+   script="gqmaxkills"
    regexp="y"
   >
   </trigger>
@@ -334,7 +333,7 @@ Global Quest: No active players remaining, global quest is now over.
 <aliases>
   <alias
    name="gq_check"
-   script="gq_check"
+   script="gqcheck"
    match="^(gq|gquest) check$"
    enabled="y"
    regexp="y"
@@ -371,172 +370,21 @@ rewardtable = {
   practice = 'pracs',
   }
 
-mobsleft = {}
-gq_info = {}
-enemy = ""
-
-function getnextline(name, line, wildcards)
-  --print('in getnextline')
-  if gq_info['won'] == 1 then
-    --print('I won, so no extra!')
-    gq_none()
-  else
-    --print('enabling getnextline')
-    phelper:enabletriggroup("getnextline", true)
-  end
-end
-
-function nextafterfinish(name, line, wildcards)
-  phelper:enabletriggroup("getnextline", false)
-
-  if line == 'Global Quest: The global quest will go into extended time for 3 more minutes.' then
-    --print('found extended gquest')
-    phelper:enabletriggroup("gqext", true)
-  else
-    gq_none()
-  end
-end
 
 function cleanname(name)
   return string.lower(string.gsub(name, ",", ""))
 end
 
-function gq_declared (name, line, wildcards)
-  check( EnableTrigger ("gq_join", true) )
-  phelper:enabletriggroup("gqdone", true)
-  phelper:enabletriggroup("gq_start", true)
-  phelper.declared = true
-  phelper:broadcast(1)
-end
+linecount = 0
 
-function gq_join (name, line, wildcards)
-  phelper:enabletriggroup("gq_start", true)
-  phelper:set('joined', true)
-  phelper:enabletriggroup("gqdone", true)
-  mobsleft = {}
-  gq_new()
-  phelper:broadcast(2)
-  if phelper.started or not phelper.declared  then
-    gq_start()
-  end
-end
+mobsleft = {}
+gq_info = {}
+gqsdeclared = {}
+gqsstarted = {}
+enemy = ""
+charname = ""
 
-function gq_start (name, line, wildcards)
-  if name == 'gq_start' then
-    check( EnableTrigger ("gq_start", false) )
-  end
-  phelper:set('started', true)
-  if phelper.joined then
-    gq_info['starttime'] = GetInfo(304)
-    phelper:enabletriggroup("gqin", true)
-
-    Execute("gq check")
-  end
-end
-
-function gq_item (name, line, wildcards)
-  if name == 'notstarted' then
-    phelper:enabletriggroup("gqcheck", false)
-    check( EnableTrigger ("finishgqcheck", false) )
-    check( EnableTrigger ("gq_start", true) )
-    return
-  elseif name == "finishgqcheck" and trim(line) == "" then
-    if not next(gq_info['mobs']) then
-      gq_info['mobs'] = copytable.deep(mobsleft)
-      SaveState()
-    end
-    phelper:enabletriggroup("gqcheck", false)
-    check( EnableTrigger ("finishgqcheck", false) )
-    var.mobs = serialize.save( "mobs", mobsleft )
-    phelper:broadcast(3, var.mobs)
-    return
-  elseif name == "finishgqcheck"  then
-    return
-  end
-
-  check( EnableTrigger ("finishgqcheck", true) )
-  name = wildcards.name
-  location = wildcards.location
-  num = trim(wildcards.num)
-  if not name or not location or not num then
-    print("error parsing line: ", line)
-    tprint(wildcards)
-  else
-    table.insert(mobsleft, {name=name, location=location, clean=cleanname(name), num=num})
-  end
-end -- campaign_item
-
-function gq_mob_dead (name, line, wildcards)
-  local tenemy = enemy
-  local found = false
-  gq_info.qpmobs = gq_info.qpmobs + 3
-  for i,v in ipairs(mobsleft) do
-    if v.clean == string.lower(tenemy) then
-      found = true
-      if tonumber(v.num) == 1 then
-        table.remove(mobsleft, i)
-      else
-        v.num = tonumber(v.num) - 1
-      end
-      break
-    end
-  end
-  if found then
-    var.mobs = serialize.save( "mobs", mobsleft )
-    phelper:broadcast(3, var.mobs)
-  else
-    print("GQ: could not find mob", enemy)
-    Execute("gq check")
-  end
-end
-
-function gq_reward (name, line, wildcards)
-  local type = wildcards.type
-  local amount = wildcards.amount
-  gq_info[rewardtable[type]] = amount
-  gq_info['won'] = 1
-end
-
-function gq_complete(name, line, wildcards)
-  --print('setting won')
-  gq_info['won'] = 1
-  phelper:enabletriggroup("gqrew", true)
-end
-
-function gq_check( name, line, wildcards)
-  mobsleft = {}
-  phelper:enabletriggroup("gqcheck", true)
-end -- cp_check
-
-function gq_none( name, line, wildcards)
-  gq_info['finishtime'] = GetInfo(304)
-  if name == 'completed' then
-    gq_info['completed'] = 1
-  end
-  var.gq_info = serialize.save( "gq_info", gq_info )
-  SaveState()
-  if phelper.joined then
-    phelper:broadcast(4, var.gq_info)
-  end
-  phelper:broadcast(5)
-  check( EnableTrigger ("gq_start", false) )
-  phelper:enabletriggroup("gqcheck", false)
-  phelper:enabletriggroup("gqin", false)
-  phelper:enabletriggroup("gqrew", false)
-  phelper:enabletriggroup("gqdone", false)
-  phelper:enabletriggroup("gqext", false)
-  phelper:set('joined', false, {silent=true})
-  phelper:set('started', false, {silent=true})
-  phelper:set('declared', false, {silent=true})
-end
-
-function gq_quit()
-  phelper:set('joined', false)
-  phelper:set('started', false)
-  phelper:broadcast(6)
-end
-
-function gq_new()
+function gqnew()
   gq_info = {}
   gq_info['mobs'] = {}
   gq_info['trains'] = 0
@@ -551,7 +399,235 @@ function gq_new()
   gq_info['length'] = 0
   gq_info['won'] = 0
   gq_info['completed'] = 0
+  phelper:set('maxkills', 'default', {silent=true})
   SaveState()
+end
+
+function gqdeclared (name, line, wildcards)
+  --print('gqdeclared')
+  gqsdeclared[verify_number(wildcards.gqnum)] = true
+  checkgqavailable()
+  raisegq(1)
+end
+
+function gqjoin (name, line, wildcards)
+  --print('gqjoin')
+  gqnew()
+  phelper:set('joined', wildcards.gqnum, {silent=true})
+  mobsleft = {}
+
+  if gqsstarted[verify_number(wildcards.gqnum)] then
+    gqstarted(name, line, wildcards)
+  elseif not (gqsdeclared[verify_number(wildcards.gqnum)]) then
+    gqsdeclared[verify_number(wildcards.gqnum)] = true
+    gqstarted(name, line, wildcards)
+  end
+  raisegq(2)
+
+end
+
+function gqstarted (name, line, wildcards)
+  --print('gqstart')
+
+  if not (gqsstarted[verify_number(wildcards.gqnum)]) then
+    gqsstarted[verify_number(wildcards.gqnum)] = true
+    checkgqavailable()
+  end
+  if phelper.joined == verify_number(wildcards.gqnum) then
+    gq_info['starttime'] = GetInfo(304)
+    phelper:enabletriggroup("gqin", true)
+    Execute("gq check")
+  end
+
+end
+
+function gqcancelled(name, line, wildcards)
+  --print('gqcancelled')
+  if verify_number(wildcards.gqnum) == phelper.joined then
+    raisegq(6)
+    if gq_info['qpmobs'] > 0 then
+      gq_info['finishtime'] = GetInfo(304)
+      raisegq(4, 'gq_info', gq_info)
+    end
+    gqreset(phelper.joined)
+
+  else
+    if gqsdeclared[verify_number(wildcards.gqnum)] then
+      gqsdeclared[verify_number(wildcards.gqnum)] = nil
+    end
+    if gqsstarted[verify_number(wildcards.gqnum)] then
+      gqsstarted[verify_number(wildcards.gqnum)] = nil
+    end
+    checkgqavailable()
+  end
+end
+
+function gqitem(name, line, wildcards)
+  --print('gqitem')
+  name = wildcards.name
+  location = wildcards.location
+  num = trim(wildcards.num)
+  if not name or not location or not num then
+    print("error parsing line: ", line)
+    tprint(wildcards)
+  else
+    table.insert(mobsleft, {name=name, location=location, clean=cleanname(name), num=num})
+  end
+end -- campaign_item
+
+function notstarted(name, line, wildcards)
+  --print('notstarted')
+  phelper:enabletriggroup("gqcheck", false)
+  phelper:enabletriggroup("gqin", false)
+end
+
+function gqwins(name, line, wildcards)
+  --print('gqwins')
+  if not next(gq_info['mobs']) then
+    gq_info['mobs'] = copytable.deep(mobsleft)
+    SaveState()
+  end
+  phelper:enabletriggroup("gqcheck", false)
+  raisegq(3, 'mobs', mobsleft)
+end
+
+function gqmobdead (name, line, wildcards)
+  --print('mobdead')
+  local tenemy = enemy
+  local found = false
+  if not phelper.maxkills then
+    gq_info.qpmobs = gq_info.qpmobs + 3
+  end
+  for i,v in ipairs(mobsleft) do
+    if v.clean == string.lower(tenemy) then
+      found = true
+      if verify_number(v.num) == 1 then
+        table.remove(mobsleft, i)
+      else
+        v.num = verify_number(v.num) - 1
+      end
+      break
+    end
+  end
+  if found then
+    raisegq(3, 'mobs', mobsleft)
+  else
+    print("GQ: could not find mob", enemy)
+    Execute("gq check")
+  end
+end
+
+function gqmaxkills(name, line, wildcards)
+  --print('gqmaxkills')
+  phelper:set('maxkills', true, {silent=true})
+end
+
+function gqwon(name, line, wildcards)
+  --print('gqwon')
+  gq_info['won'] = 1
+  gq_info['finishtime'] = GetInfo(304)
+  phelper:enabletriggroup("gqrew", true)
+end
+
+function gqwonannounce(name, line, wildcards)
+  --print('gqwonannounce')
+  if charname == wildcards.winner then
+    raisegq(4, 'gq_info', gq_info)
+    gqreset(phelper.joined)
+  end
+end
+
+function gqreward (name, line, wildcards)
+  --print('gqreward')
+  local type = wildcards.type
+  local amount = verify_number(wildcards.amount)
+  gq_info[rewardtable[type]] = amount
+  gq_info['won'] = 1
+end
+
+function gqcheck( name, line, wildcards)
+  --print('gqcheck')
+  mobsleft = {}
+  phelper:enabletriggroup("gqcheck", true)
+end -- gq_check
+
+function gqquit(name, line, wildcards)
+  --print('gqquit')
+  if gq_info['qpmobs'] > 0 then
+    gq_info['finishtime'] = GetInfo(304)
+    raisegq(4, 'gq_info', gq_info)
+  end
+  gqreset(phelper.joined)
+  raisegq(5)
+end
+
+function gqextfin(name, line, wildcards)
+  --print('gqextfin')
+  if gq_info['qpmobs'] > 0 then
+    gq_info['completed'] = 1
+    gq_info['finishtime'] = GetInfo(304)
+    raisegq(4, 'gq_info', gq_info)
+    gqreset(phelper.joined)
+  end
+end
+
+function gqnote(name, line, wildcards)
+  --print('gqnote')
+  if verify_number(wildcards.gqnum) == phelper.joined then
+    raisegq(6)
+    if gq_info['qpmobs'] > 0 then
+      gq_info['finishtime'] = GetInfo(304)
+      raisegq(4, 'gq_info', gq_info)
+    end
+    gqreset(phelper.joined)
+  end
+  if gqsdeclared[verify_number(wildcards.gqnum)] then
+    gqsdeclared[verify_number(wildcards.gqnum)] = nil
+  end
+  if gqsstarted[verify_number(wildcards.gqnum)] then
+    gqsstarted[verify_number(wildcards.gqnum)] = nil
+  end
+  checkgqavailable()
+end
+
+function raisegq(number, dataname, data)
+  if dataname ~= nil then
+    var[dataname] = serialize.save(dataname, data)
+    phelper:broadcast(number, var[dataname])
+  else
+    phelper:broadcast(number)
+  end
+  SaveState()
+end
+
+function gqreset(gqnum)
+  --print('gqreset')
+
+  gqnum = verify_number(gqnum)
+
+  if gqnum then
+    if gqsdeclared[gqnum] then
+      gqsdeclared[gqnum] = nil
+    end
+    if gqsstarted[gqnum] then
+      gqsstarted[gqnum] = nil
+    end
+    checkgqavailable()
+  end
+  phelper:enabletriggroup("gqcheck", false)
+  phelper:enabletriggroup("gqin", false)
+  phelper:enabletriggroup("gqrew", false)
+  phelper:set('joined', 'default', {silent=true})
+  phelper:set('maxkills', 'default', {silent=true})
+  SaveState()
+end
+
+function checkgqavailable()
+  if tableCountItems(gqsdeclared) > 0 then
+    raisegq(7)
+  else
+    raisegq(8)
+  end
 end
 
 ]]>
@@ -570,6 +646,10 @@ function OnPluginBroadcast (msg, id, name, text)
       if tt['status'] then
         curlevel = tt.status.level
         enemy = tt.status.enemy
+      end
+
+      if tt['base'] then
+        charname = tt.base.name
       end
 
     end
@@ -626,9 +706,9 @@ end -- function OnPluginSaveState
 phelper:set_default('cmd', 'bgq')
 phelper:set_default('plugin_colour', 'orange')
 
-phelper:add_setting('started', {help="true if a gquest has started, false otherwise", type="bool", default=false, readonly=true})
-phelper:add_setting('joined', {help="true if joined a gquest, false otherwise", type="bool", default=false, readonly=true})
-phelper:add_setting('declared', {help="true if a gquest has been declared, false otherwise", type="bool", default=false, readonly=true})
+
+phelper:add_setting('joined', {help="the gq number joined", type="number", default=-1, readonly=true})
+phelper:add_setting('maxkills', {help="true if maxkills", type="bool", default=false, readonly=true})
 
 phelper:enable()
 

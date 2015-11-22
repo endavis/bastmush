@@ -85,11 +85,41 @@ You blend perfectly with your surroundings and avoid Valkur's lab guard's attack
 <triggers>
   <trigger
    enabled="y"
-   match="^You receive (\d+(?:\+\d+)*) experience points?\.$"
+   match="^You (don't )?receive (\d+(?:\+\d+)*) experience points?\.$"
    regexp="y"
    name="mobxp"
    script="mobxp"
    sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="^You (don't )?receive (\d+) bonus experience points? from your daily blessing\.$"
+   name="blessingxp"
+   script="bonusxp"
+   regexp="y"
+   sequence="99"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="^You (don't )?receive (\d+) bonus experience points *"
+   name="bonusxp"
+   script="bonusxp"
+   regexp="y"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   match="^You (don't )?receive (\d+) 'rare kill' experience bonus."
+   name="rarexp"
+   script="bonusxp"
+   sequence="100"
+   regexp="y"
   >
   </trigger>
 
@@ -135,33 +165,6 @@ You blend perfectly with your surroundings and avoid Valkur's lab guard's attack
 
   <trigger
    enabled="y"
-   match="You receive * bonus experience points from your daily blessing*"
-   name="blessingxp"
-   script="mobxp"
-   sequence="99"
-  >
-  </trigger>
-
-  <trigger
-   enabled="y"
-   match="You receive * bonus experience points *"
-   name="bonusxp"
-   script="mobxp"
-   sequence="100"
-  >
-  </trigger>
-
-  <trigger
-   enabled="y"
-   match="You receive * 'rare kill' experience bonus."
-   name="rarexp"
-   script="mobxp"
-   sequence="100"
-  >
-  </trigger>
-
-  <trigger
-   enabled="y"
    regexp="y"
    match="^You get (.+) gold coins (.+) corpse of (.+)\.$"
    name="mobgold"
@@ -174,6 +177,7 @@ You blend perfectly with your surroundings and avoid Valkur's lab guard's attack
    enabled="y"
    regexp="y"
    match="^You get (.+) corpse of (.+)\.$"
+
    name="mobname"
    script="mobname"
    sequence="101"
@@ -410,6 +414,7 @@ function reset_kill()
   kill_info.bonusxp = 0
   kill_info.blessingxp = 0
   kill_info.totalxp = 0
+  kill_info.noexp = 0
   kill_info.gold = 0
   kill_info.tp = 0
   kill_info.name = ""
@@ -504,33 +509,40 @@ function mobname(name, line, wildcards)
   end
 end
 
+function bonusxp(name, line, wildcards)
+  if name == 'bonusxp' then
+    kill_info.bonusxp = tonumber(wildcards[2])
+  elseif name == 'blessingxp' then
+    kill_info.blessingxp = tonumber(wildcards[2])
+  elseif name == 'rarexp' then
+    kill_info.rarexp = tonumber(wildcards[2])
+  end
+end
+
 function mobxp( name, line, wildcards )
   if name == 'mobxppointless' then
-    wildcards[1] = '0'
+    wildcards[2] = '0'
   end
   if name == 'mobxp' or name == "mobxppointless" then
     kill_info.bonusxp = 0
-    if string.find(wildcards[1], '+') then
-      tlist = utils.split(wildcards[1], '+')
+    if string.find(wildcards[2], '+') then
+      tlist = utils.split(wildcards[2], '+')
       local newxp = 0
       for i,v in ipairs(tlist) do
         newxp = newxp + tonumber(v)
       end
       kill_info.xp = newxp
     else
-      kill_info.xp = tonumber(wildcards[1])
+      kill_info.xp = tonumber(wildcards[2])
     end
     kill_info.time = GetInfo(304)
     kill_info.bcasted = false
+    if string.find(line, "don't") then
+      kill_info.noexp = 1
+    end
     --DoAfterSpecial(.2, 'broadcast_kill()', 12)
     EnableTrigger ("deadtrig", true)
     -- enable deadtrig
-  elseif name == 'bonusxp' then
-    kill_info.bonusxp = tonumber(wildcards[1])
-  elseif name == 'blessingxp' then
-    kill_info.blessingxp = tonumber(wildcards[1])
-  elseif name == 'rarexp' then
-    kill_info.rarexp = tonumber(wildcards[1])
   end
 end
 

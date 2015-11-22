@@ -18,6 +18,8 @@
 <![CDATA[
 [FOR PLUGIN AUTHORS ONLY]
 
+TODO: add a variable to prevent cp check command
+
 Broadcasts when anything happens in a campaign
 Broadcasts
    1 - Mob list, get var.mobs and loadstring it
@@ -332,7 +334,7 @@ Broadcast 3
    group="campaigndone"
   >
   </trigger>
-  
+
   <trigger
    enabled="n"
    match="*"
@@ -342,7 +344,7 @@ Broadcast 3
    sequence="101"
   >
   </trigger>
-  
+
  <trigger
    enabled="n"
    match="Campaign cleared."
@@ -497,7 +499,7 @@ function cp_time (name, line, wildcards)
 end -- cp_time
 
 function campaign_done (name, line, wildcards)
-  phelper:enabletriggroup("getnextline", true)  
+  phelper:enabletriggroup("getnextline", true)
 end -- campaign_done
 
 function nextline(name, line, wildcards)

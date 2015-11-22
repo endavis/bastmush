@@ -144,7 +144,7 @@
     script="huntdone"
     group="hunt"
     name="notinarea"
-    match="^No one in this area by that name\.$"
+    match="^No one in this area by the name '(.*)'\.$"
     regexp="y"
       >
   </trigger>
