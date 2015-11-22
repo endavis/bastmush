@@ -1,5 +1,22 @@
 Bastmush Changes List
 
+r2095 snapshot
+  - broadcast_gq
+     - new: updated for new gq formats and messages
+  - miniwin_gq, miniwin_events
+     - new: updated for broadcasts from broadcast_gq
+  - broadcast_kills
+     - new: updated for new exp messages when noexp is turned off
+  - chardb
+     - new: add noexp field to mob kills
+  - statDB
+     - new: shows experience that was gained during noexp in red
+  - bast_hunt
+     - bug fix: fixed message when no mob is found in the area
+  - combattracker
+     - new: changed layout of damage table after mob kill
+  - removed areaDB_lookup and broadcast_area
+
 r2094 snapshot
   - update_checker
      - new: convert to using github releases
