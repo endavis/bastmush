@@ -220,9 +220,10 @@ Broadcast 3
 
   <trigger
    enabled="y"
-   match="Commander Barcett tells you 'Type 'campaign info' to see what you must kill.'"
+   match=".* tells you 'Type 'campaign info' to see what you must kill.'"
    sequence="100"
    send_to="10"
+   regexp="y"
    script="cp_new"
   >
   <send>cp check</send>
