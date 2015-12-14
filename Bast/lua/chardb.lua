@@ -242,6 +242,11 @@ function Statdb:addtostat(stat, add)
   if tonumber(add) == 0 then
     return true
   end
+  if add == nil then
+    ColourNote("red", "", "Trying to add a nil value to " .. tostring(stat) .. ", please report this to Bast")
+    ColourNote("red", "", "please type 'whois' to reset current stats")
+    return false
+  end
   if self:open('addtostat') then
     local tstat = nil
     for a in self.db:nrows('SELECT * FROM stats WHERE milestone = "current"') do
