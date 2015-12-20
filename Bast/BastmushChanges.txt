@@ -1,5 +1,13 @@
 Bastmush Changes List
 
+r2096 snapshot
+  - PotionQuaffer
+     - bug fix: works for both long and short flags
+  - broadcast_cp
+     - bug fix: track campaigns from any mob
+  - chardb
+     - new: add an error message when trying to add 0 to a stat
+
 r2095 snapshot
   - broadcast_gq
      - new: updated for new gq formats and messages
