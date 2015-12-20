@@ -102,7 +102,7 @@ To use a heal potion, or mana potion.
    enabled="y"
    expand_variables="y"
    ignore_case="y"
-   match="^You buy((\s(.*)\s\*\s)|\sa\s)(?:@healdesc) from (.*) for (\d+) gold.$"
+   match="^You buy (\d*) \* @healdesc from (.*) for (.*) gold.$"
    name="Shop_Heal"
    regexp="y"
    script="Shop_Heal"
@@ -113,7 +113,18 @@ To use a heal potion, or mana potion.
    enabled="y"
    expand_variables="y"
    ignore_case="y"
-   match="^You buy((\s(.*)\s\*\s)|\sa\s)(?:@manadesc) from (.*) for (\d+) gold.$"
+   match="^You buy @healdesc from (.*) for (.*) gold.$"
+   name="Shop_Heal2"
+   regexp="y"
+   script="Shop_Heal"
+   sequence="50"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   expand_variables="y"
+   ignore_case="y"
+   match="^You buy (\d*) \* @manadesc from (.*) for (.*) gold.$"
    name="Shop_Mana"
    regexp="y"
    script="Shop_Mana"
@@ -124,8 +135,30 @@ To use a heal potion, or mana potion.
    enabled="y"
    expand_variables="y"
    ignore_case="y"
-   match="^You buy((\s(.*)\s\*\s)|\sa\s)(?:@buffdesc) from (.*) for (\d+) gold.$"
+   match="^You buy @manadesc from (.*) for (.*) gold.$"
+   name="Shop_Mana2"
+   regexp="y"
+   script="Shop_Mana"
+   sequence="50"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   expand_variables="y"
+   ignore_case="y"
+   match="^You buy (\d*) \* @buffdesc from (.*) for (.*) gold.$"
    name="Shop_Buff"
+   regexp="y"
+   script="Shop_Buff"
+   sequence="50"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   expand_variables="y"
+   ignore_case="y"
+   match="^You buy @buffdesc from (.*) for (.*) gold.$"
+   name="Shop_Buff2"
    regexp="y"
    script="Shop_Buff"
    sequence="50"
@@ -181,7 +214,7 @@ To use a heal potion, or mana potion.
    expand_variables="y"
    group="PotionMonitor"
    ignore_case="y"
-   match="^\s*\((\s\d|\d*)\)\s(?:\((\w+)\))*\s*(@healdesc)\s\((.*)\)$"
+   match="^\s*\((\s\d|\d*)\)(?:\s?\((\w*)\))*\s*(@healdesc)\s\((.*)\)$"
    name="Locate_Heal"
    regexp="y"
    script="Heal_Found"
@@ -193,7 +226,7 @@ To use a heal potion, or mana potion.
    expand_variables="y"
    group="PotionMonitor"
    ignore_case="y"
-   match="^\s*\((\s\d|\d*)\)\s(?:\((\w+)\))*\s*(@manadesc)\s\((.*)\)$"
+   match="^\s*\((\s\d|\d*)\)(?:\s?\((\w*)\))*\s*(@manadesc)\s\((.*)\)$"
    name="Locate_Mana"
    regexp="y"
    script="Mana_Found"
@@ -205,7 +238,7 @@ To use a heal potion, or mana potion.
    expand_variables="y"
    group="PotionMonitor"
    ignore_case="y"
-   match="^\s*\((\s\d|\d*)\)\s(?:\((\w+)\))*\s*(@buffdesc)\s\((.*)\)$"
+   match="^\s*\((\s\d|\d*)\)(?:\s?\((\w*)\))*\s*(@buffdesc)\s\((.*)\)$"
    name="Locate_Buff"
    regexp="y"
    script="Buff_Found"
@@ -374,6 +407,7 @@ To use a heal potion, or mana potion.
 
 <script>
 <![CDATA[
+require 'tprint'
 
 function resetvar(var, value, hreset)
   if GetVariable(var) == nil or GetVariable(var) == "" or hreset then
@@ -383,10 +417,10 @@ end
 
 function Shop_Heal(sName,sLine,wildcards)
   local num = tonumber(GetVariable("healnum"))
-  if tonumber(wildcards[3]) == nil then
+  if tonumber(wildcards[1]) == nil then
     num = num + 1
   else
-    num = num + tonumber(wildcards[3])
+    num = num + tonumber(wildcards[1])
   end -- if
   SetVariable("healnum",num)
   SetStatus("[PotionQuaffer v2] Heals: " .. GetVariable("healnum") .. " Manas: " .. GetVariable("mananum") .. " Buffs: " .. GetVariable("buffnum"))
@@ -394,10 +428,10 @@ end -- Shop_Heal
 
 function Shop_Mana(sName,sLine,wildcards)
   local num = tonumber(GetVariable("mananum"))
-  if tonumber(wildcards[3]) == nil then
+  if tonumber(wildcards[1]) == nil then
     num = num + 1
   else
-    num = num + tonumber(wildcards[3])
+    num = num + tonumber(wildcards[1])
   end -- if
   SetVariable("mananum",num)
   SetStatus("[PotionQuaffer v2] Heals: " .. GetVariable("healnum") .. " Manas: " .. GetVariable("mananum") .. " Buffs: " .. GetVariable("buffnum"))
@@ -405,10 +439,10 @@ end -- Shop_Mana
 
 function Shop_Buff(sName,sLine,wildcards)
   local num = tonumber(GetVariable("buffnum"))
-  if tonumber(wildcards[3]) == nil then
+  if tonumber(wildcards[1]) == nil then
     num = num + 1
   else
-    num = num + tonumber(wildcards[3])
+    num = num + tonumber(wildcards[1])
   end -- if
   SetVariable("buffnum",num)
   SetStatus("[PotionQuaffer v2] Heals: " .. GetVariable("healnum") .. " Manas: " .. GetVariable("mananum") .. " Buffs: " .. GetVariable("buffnum"))
