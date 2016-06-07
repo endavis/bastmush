@@ -3,7 +3,7 @@ bastmush
 
 MUSHclient scripts for Aardwolf MUD
 
-Documentation is currently at: https://code.google.com/p/bastmush/wiki/Intro
+Documentation is currently [here](https://web.archive.org/web/20151219113026/https://code.google.com/p/bastmush/wiki/Intro).
 
 Current Version: r2094
 
