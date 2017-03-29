@@ -1,5 +1,13 @@
 Bastmush Changes List
 
+r2097 snapshot
+  - miniwin
+     - updates for changes to the AardMUSH client
+  - bast_spellup
+     - add an 'all' function to the senable command
+  - broadcast_kills
+     - add a trivia point mob message
+
 r2096 snapshot
   - PotionQuaffer
      - bug fix: works for both long and short flags

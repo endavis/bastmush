@@ -213,12 +213,20 @@ You blend perfectly with your surroundings and avoid Valkur's lab guard's attack
    sequence="100"
   >
   </trigger>
-
   <trigger
    enabled="y"
    regexp="y"
    match="^You killed a Triv bonus mob!! Triv point added\.$"
    name="trivmob2"
+   script="trivmob"
+   sequence="100"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   regexp="y"
+   match="^You killed a Trivia Point bonus mob!! Trivia point added\.$"
+   name="trivmob3"
    script="trivmob"
    sequence="100"
   >
