@@ -1949,7 +1949,7 @@ function Miniwin:colourtext (font_id, Text, Left, Top, Right, Bottom, Capitalize
 
       if #text > 0 then
         x = x + wfunction (self.winid, font_id, text, x, Top, Right, Bottom,
-                            colour_conversion [colour] or self.text_colour)
+                               atletter_to_color_value[colour] or self.text_colour)
       end -- some text to display
 
     end -- for each colour run
