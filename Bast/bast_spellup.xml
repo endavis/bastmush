@@ -605,23 +605,33 @@ end
 
 function cmd_senable(cmddict)
   if #cmddict >= 1 then
-    phelper:plugin_header()
     local enabled = false
-    for i,item in ipairs(cmddict) do
-      local aspell = find_spell(item)
-      if aspell then
-        local sn = tonumber(aspell.sn)
-        if sn then
-          if askedself_xref[sn] ~= nil then
-            phelper.askedself[askedself_xref[sn]].disabled = false
-            ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " enabled")
-            enabled = true
-          else
-            ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " not in list")
-          end
+    phelper:plugin_header()
+    if cmddict[1] == 'all' then
+      for i,j in ipairs(phelper.askedself) do
+        if phelper.askedself[i].disabled then
+          phelper.askedself[i].disabled = false
+          enabled = true
         end
-      else
-        print('Enable: could not find spell', item)
+      end
+      ColourNote(RGBColourToName(var.plugin_colour), "black", "All spells enabled")
+    else
+      for i,item in ipairs(cmddict) do
+        local aspell = find_spell(item)
+        if aspell then
+          local sn = tonumber(aspell.sn)
+          if sn then
+            if askedself_xref[sn] ~= nil then
+              phelper.askedself[askedself_xref[sn]].disabled = false
+              ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " enabled")
+              enabled = true
+            else
+              ColourNote(RGBColourToName(var.plugin_colour), "black", aspell.name .. " not in list")
+            end
+          end
+        else
+          print('Enable: could not find spell', item)
+        end
       end
     end
     if enabled then
@@ -1307,6 +1317,19 @@ function pracskill(sn)
     end
   end
 end
+
+function loadall()
+  load_spells("all")
+  --load_spells_xrefs()
+  load_spells("affected")
+  load_spells("spellup", true)
+  load_spells("learned")
+  load_spells("notpracticed")
+  load_spells("notlearned")
+  --print('loading recoveries in enable')
+  load_recoveries("all")
+  load_recoveries("affected")
+end
 ]]>
 </script>
 
@@ -1331,7 +1354,8 @@ function OnPluginBroadcast (msg, id, name, text)
       phelper.pause = true
       event_status_change()
     elseif msg == 6 or msg == 8 then
-      DoAfterSpecial(5, 'tresume()', 12)
+      DoAfterSpecial(5, 'loadall()', 12)
+      DoAfterSpecial(10, 'tresume()', 12)
     end
   end
   if id == '3e7dedbe37e44942dd46d264' then
@@ -1422,9 +1446,11 @@ function OnPluginBroadcast (msg, id, name, text)
         if askedself_xref[tonumber(tag.sn)] ~= nil then
           local tagsn = tonumber(tag.sn)
           if tagsn == waiting then
-            phelper.askedself[askedself_xref[tagsn]].disabled = true
-            ColourNote("red", "black", spells['all'][tagsn].name .. " disabled because you can't cast this spell.")
-            make_askedself_xrefs()
+            if not spells['notlearned'][tag.sn] then
+              phelper.askedself[askedself_xref[tagsn]].disabled = true
+              ColourNote("red", "black", spells['all'][tagsn].name .. " disabled because you can't cast this spell.")
+              make_askedself_xrefs()
+            end
             setwaiting(false)
             nextspellup('spell fail')
           end
