@@ -87,7 +87,7 @@ function Pluginhelper:initialize(args)
   self:add_setting('cmd', {help="the command to type for this plugin", type="string", after="set_plugin_alias", default="mb", longname="Plugin Command", sortlev=99})
   self:add_setting('time', {help="show function timers", type="bool", default=false, sortlev=99})
 
-  self:addlink('Plugin', "Bast's MUSHclient plugins homepage", "http://code.google.com/p/bastmush",
+  self:addlink('Plugin', "Bast's MUSHclient plugins homepage", "https://github.com/endavis/bastmush",
                         "Go to Bast's MUSHclient plugins homepage")
   self:addlink('MUSHclient', "Get Dina a monospace bitmap font. (recommended)", "http://www.donationcoder.com/Software/Jibz/Dina/index.html",
                         "Follow the instruction on the site to install the font.")
