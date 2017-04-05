@@ -310,9 +310,17 @@ function formatquest()
     table.insert(tmsg, colourwrap('+'))
     table.insert(tmsg, colourwrap(quest_stuff.mccp, 'stat'))
   end
-  if quest_stuff.tier and tonumber(quest_stuff.tier) > 0 then
+  if quest_stuff.tierqp and tonumber(quest_stuff.tierqp) > 0 then
     table.insert(tmsg, colourwrap('+'))
-    table.insert(tmsg, colourwrap(quest_stuff.tier, 'stat'))
+    table.insert(tmsg, colourwrap(quest_stuff.tierqp, 'stat'))
+  end
+  if quest_stuff.opk and tonumber(quest_stuff.opk) > 0 then
+    table.insert(tmsg, colourwrap('+'))
+    table.insert(tmsg, colourwrap(quest_stuff.opk, 'stat'))
+  end
+  if quest_stuff.hardcore and tonumber(quest_stuff.hardcore) > 0 then
+    table.insert(tmsg, colourwrap('+'))
+    table.insert(tmsg, colourwrap(quest_stuff.hardcore, 'stat'))
   end
   if quest_stuff.daily and tonumber(quest_stuff.daily) == 1 then
     table.insert(tmsg, colourwrap('+'))
