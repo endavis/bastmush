@@ -1,5 +1,15 @@
 Bastmush Changes List
 
+r2098 snapshot
+  - pluginhelper
+    - change web address
+  - broadcast_quest
+    - added qp for hardcore and opk
+  - statdb
+    - added columns for hardcore and opk qp
+  - miniwin_stats
+    - added output for hardcore and opk qp
+
 r2097 snapshot
   - miniwin
      - updates for changes to the AardMUSH client
