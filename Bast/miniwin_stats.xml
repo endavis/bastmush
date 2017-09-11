@@ -508,13 +508,17 @@ function build_quest_window()
     end
     for a in db.db:nrows([[SELECT AVG(finishtime - starttime) as avetime,
                                  SUM(qp) as qp,
-                                 SUM(tier) as tier,
-                                 AVG(tier) as avetier,
+                                 AVG(qp) as qpquestave,
+                                 SUM(tierqp) as tierqp,
+                                 AVG(tierqp) as tierqpave,
                                  SUM(mccp) as mccp,
                                  AVG(mccp) as mccpave,
                                  SUM(lucky) as lucky,
-                                 AVG(qp) as qpquestave,
-                                 AVG(lucky) as luckave,
+                                 AVG(lucky) as luckyave,
+                                 SUM(hardcore) as hardcore,
+                                 AVG(hardcore) as hardcoreave,
+                                 SUM(opk) as opk,
+                                 AVG(opk) as opkave,
                                  SUM(tp) as tp,
                                  AVG(tp) as tpave,
                                  SUM(trains) as trains,
@@ -528,16 +532,20 @@ function build_quest_window()
                                  AVG(gold) as avegold FROM quests where failed = 0]]) do
       stats['avetime'] = a['avetime']
       stats['qp'] = a['qp']
-      stats['tier'] = a['tier']
-      stats['avetier'] = a['avetier'] or 0
-      if stats['avetier'] == "" then
-        stats['avetier'] = 0
+      stats['qpquestave'] = a['qpquestave']
+      stats['tierqp'] = a['tierqp']
+      stats['tierqpave'] = a['tierqpave'] or 0
+      if stats['tierqpave'] == "" then
+        stats['tierqpave'] = 0
       end
       stats['mccp'] = a['mccp']
       stats['mccpave'] = a['mccpave']
+      stats['hardcore'] = a['hardcore']
+      stats['hardcoreave'] = a['hardcoreave']
+      stats['opk'] = a['opk']
+      stats['opkave'] = a['opkave']
       stats['lucky'] = a['lucky']
-      stats['qpquestave'] = a['qpquestave']
-      stats['luckyave'] = a['luckave']
+      stats['luckyave'] = a['luckyave']
       stats['tp'] = a['tp']
       stats['tpave'] = a['tpave']
       stats['trains'] = a['trains']
@@ -586,8 +594,16 @@ function build_quest_window()
           string.format("%.3f", stats['luckyave'] or 0) .. '/quest')
       table.insert(allstyles, linestyles)
       local linestyles = format_row("Tier",
-          stats['tier'],
-          string.format("%.3f", stats['avetier'] or 0) .. '/quest')
+          stats['tierqp'],
+          string.format("%.3f", stats['tierqpave'] or 0) .. '/quest')
+      table.insert(allstyles, linestyles)
+      local linestyles = format_row("PK",
+          stats['opk'],
+          string.format("%.3f", stats['opkave'] or 0) .. '/quest')
+      table.insert(allstyles, linestyles)
+      local linestyles = format_row("HC",
+          stats['hardcore'],
+          string.format("%.3f", stats['hardcoreave'] or 0) .. '/quest')
       table.insert(allstyles, linestyles)
       local linestyles = format_row("QP Per Quest", "", string.format("%.3f", stats['dboverallave'] or 0) .. '/quest')
       table.insert(allstyles, linestyles)
@@ -756,7 +772,7 @@ function build_quest_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.tier or 0)
+        style.text = string.format("%2d ", v.tierqp or 0)
         style.mouseup = nofunc
         style.hint = hint
         style.textcolour = "white"
@@ -793,17 +809,23 @@ function build_quest_window()
         if v.mccp > 0 then
           thint = thint .. "+" .. tostring(v.mccp) .. "(mccp)"
         end
-        if v.tier > 0 then
-          thint = thint .. "+" .. tostring(v.tier) .. "(tier)"
+        if v.tierqp > 0 then
+          thint = thint .. "+" .. tostring(v.tierqp) .. "(tier)"
         end
         if v.lucky > 0 then
           thint = thint .. "+" .. tostring(v.lucky) .. "(lucky)"
         end
+        if v.hardcore > 0 then
+          thint = thint .. "+" .. tostring(v.hardcore) .. "(hardcore)"
+        end
+        if v.opk > 0 then
+          thint = thint .. "+" .. tostring(v.opk) .. "(opk)"
+        end
         if v.double == 1 then
-          thint = thint .. "+" .. "D"
+          thint = thint .. "+" .. "Double"
         end
         if v.daily == 1 then
-          thint = thint .. "+" .. "E"
+          thint = thint .. "+" .. "Daily"
         end
         style.hint = thint
         style.textcolour = "white"

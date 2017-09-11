@@ -184,7 +184,12 @@ function Phelpobject:registerevent(tevent, object, tfunction, plugin)
     end
   end
   if not found then
-    table.insert(self.events[tevent], {object=object or {}, func=tfunction, plugin=plugin})
+    if not plugin then
+      pluginname = 'None'
+    else
+      pluginname = GetPluginInfo(plugin, 1)
+    end
+    table.insert(self.events[tevent], {object=object or {}, func=tfunction, plugin=plugin, name=pluginname})
   end
 end
 
@@ -208,6 +213,7 @@ function Phelpobject:processevent(tevent, args)
       end
       DoAfterSpecial(.1, funcstr, sendto.script)
     else
+
       if v.func then
         v.func(v.object, args)
       end

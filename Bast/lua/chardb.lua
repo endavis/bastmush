@@ -28,10 +28,14 @@ require 'tablefuncs'
 
 Statdb = Sqlitedb:subclass()
 
+function donothing(args)
+
+end
+
 function Statdb:initialize(args)
   super(self, args)   -- notice call to superclass's constructor
   self.dbname = "\\stats.db"
-  self.version = 14
+  self.version = 16
   self.versionfuncs[2] = self.updatedblqp -- update double qp flag
   self.versionfuncs[3] = self.updatemobkills -- slit, assassinate, etc..
   self.versionfuncs[4] = self.addmobsblessing -- add blessing xp to mobs table
@@ -45,6 +49,8 @@ function Statdb:initialize(args)
   self.versionfuncs[12] = self.addbonusqpcp
   self.versionfuncs[13] = self.addrarexp_v13
   self.versionfuncs[14] = self.addnoexp_v14
+  self.versionfuncs[15] = donothing
+  self.versionfuncs[16] = self.addhardcoreopk_v16
 
   self:addtable('stats', [[CREATE TABLE stats(
           stat_id INTEGER NOT NULL PRIMARY KEY autoincrement,
@@ -87,9 +93,11 @@ function Statdb:initialize(args)
           daily INT default 0,
           totqp INT default 0,
           gold INT default 0,
-          tier INT default 0,
+          tierqp INT default 0,
           mccp INT default 0,
           lucky INT default 0,
+          opk INT default 0,
+          hardcore INT default 0,
           tp INT default 0,
           trains INT default 0,
           pracs INT default 0,
@@ -1483,5 +1491,62 @@ function Statdb:addnoexp_v14()
     stmt:finalize()
     assert (self.db:exec("COMMIT"))
     self:close('addnoexp_v14_2')
+  end
+end
+
+function Statdb:addhardcoreopk_v16()
+  if not self:checktableexists('quests') then
+    return
+  end
+  if self:open('addhardcoreopk_v161') then
+    local oldquests = {}
+    for a in self.db:nrows("SELECT * FROM quests") do
+      oldquests[a.quest_id] = a
+      oldquests[a.quest_id]['hardcore'] = 0
+      oldquests[a.quest_id]['opk'] = 0
+      oldquests[a.quest_id]['tierqp'] = a.tier
+    end
+    self:close('addhardcoreopk_v161', true)
+    self:open('addhardcoreopk_v162')
+    self.db:exec([[DROP TABLE IF EXISTS quests;]])
+    self:close('addhardcoreopk_v162', true)
+    self:open('addhardcoreopk_v163')
+    self.db:exec([[CREATE TABLE quests(
+        quest_id INTEGER NOT NULL PRIMARY KEY autoincrement,
+        starttime INT default 0,
+        finishtime INT default 0,
+        mobname TEXT default "Unknown",
+        mobarea TEXT default "Unknown",
+        mobroom TEXT default "Unknown",
+        qp INT default 0,
+        double INT default 0,
+        daily INT default 0,
+        totqp INT default 0,
+        gold INT default 0,
+        tierqp INT default 0,
+        mccp INT default 0,
+        lucky INT default 0,
+        opk INT default 0,
+        hardcore INT default 0,
+        tp INT default 0,
+        trains INT default 0,
+        pracs INT default 0,
+        level INT default -1,
+        failed INT default 0
+    )]])
+    assert (self.db:exec("BEGIN TRANSACTION"))
+    local stmt = self.db:prepare[[ INSERT INTO quests VALUES (:quest_id, :starttime, :finishtime,
+                    :mobname, :mobarea, :mobroom, :qp, :double, :daily, :totqp,
+                    :gold, :tierqp, :mccp, :lucky, :opk, :hardcore, :tp,
+                    :trains, :pracs, :level, :failed) ]]
+
+    for i,v in tableSort(oldquests, 'quest_id') do
+      stmt:bind_names(v)
+      stmt:step()
+      stmt:reset()
+    end
+    stmt:finalize()
+    assert (self.db:exec("COMMIT"))
+    self:close('addhardcoreopk_v163')
   end
 end

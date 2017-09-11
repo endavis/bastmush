@@ -149,13 +149,15 @@ function blankquest ()
   quest_info.double = 0
   quest_info.qp = 0
   quest_info.gold = 0
-  quest_info.tier = 0
+  quest_info.tierqp = 0
   quest_info.mccp = 0
   quest_info.lucky = 0
   quest_info.tp = 0
   quest_info.trains = 0
   quest_info.pracs = 0
   quest_info.failed = 0
+  quest_info.hardcore = 0
+  quest_info.opk = 0
   return quest_info
 end
 
@@ -243,7 +245,7 @@ function OnPluginBroadcast (msg, id, name, text)
       elseif stuff.action == 'comp' then
         phelper.tquest['qp'] = stuff.qp
         phelper.tquest['gold'] = stuff.gold
-        phelper.tquest['tier'] = stuff.tierqp
+        phelper.tquest['tierqp'] = stuff.tierqp
         phelper.tquest['lucky'] = stuff.lucky
         phelper.tquest['mccp'] = stuff.mccp
         phelper.tquest['tp'] = stuff.tp
@@ -252,6 +254,8 @@ function OnPluginBroadcast (msg, id, name, text)
         phelper.tquest['finishtime'] = GetInfo(304)
         phelper.tquest['double'] = 0
         phelper.tquest['daily'] = 0
+        phelper.tquest['hardcore'] = stuff.hardcore
+        phelper.tquest['opk'] = stuff.opk
         phelper.tquest['totqp'] = tonumber(stuff.totqp)
         if tonumber(stuff.double) == 1 then
           phelper.tquest['double'] = 1
