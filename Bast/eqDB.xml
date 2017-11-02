@@ -89,14 +89,18 @@ then type "eqdb refresh"
   </trigger>
 
  <trigger
-   enabled="y"
+   enabled="n"
    match="^{eqdata}$"
    script="eqdata_redirect"
    omit_from_output="n"
    name="start_eqdata"
    sequence="100"
    regexp="y"
+   send_to="12"
   >
+  <send>
+   EnableTrigger("start_eqdata", false)
+  </send>
   </trigger>
 
   <trigger
@@ -122,15 +126,19 @@ then type "eqdb refresh"
   </trigger>
 
  <trigger
-   enabled="y"
+   enabled="n"
    match="^{invdata\s*(?&lt;container&gt;.*)}$"
    script="invdata_redirect"
    omit_from_output="n"
    name="start_invdata"
    sequence="100"
    regexp="y"
+   send_to="12"
   >
-  </trigger>
+  <send>
+  EnableTrigger("start_invdata", false)
+  </send>
+ </trigger>
 
   <trigger
    enabled="n"
@@ -154,14 +162,18 @@ then type "eqdb refresh"
   >
   </trigger>
  <trigger
-   enabled="y"
+   enabled="n"
    match="^{invdetails}$"
    script="invdetails_redirect"
    omit_from_output="n"
    name="start_invdetails"
    sequence="100"
    regexp="y"
+   send_to="12"
   >
+  <send>
+   EnableTrigger("start_invdetails", false)
+  </send>
   </trigger>
 
   <trigger
@@ -327,11 +339,14 @@ function getdata(type)
     return
   end
   if type == 'Inventory' then
+    EnableTrigger("start_invdata")
     sendcmd('invdata')
   elseif type == 'Worn' then
+    EnableTrigger("start_eqdata")
     sendcmd('eqdata')
   else
-    sendcmd('invdata ' .. tostring(type))
+   EnableTrigger("start_invdata")
+   sendcmd('invdata ' .. tostring(type))
   end
   waiting[type] = true
 end
@@ -708,16 +723,19 @@ function getitemdetails(id, override, show)
       waitingforid[id] = true
       togglehideoutput("y")
       if titem2.containerid == 'Inventory' then
+        EnableTrigger("start_invdetails")
         SendNoEcho('invdetails ' .. tostring(id))
         phelper:enabletriggroup('identify', true)
         Execute('identify ' .. tostring(id))
       elseif titem2.containerid == 'Worn' then
+        EnableTrigger("start_invdetails")
         SendNoEcho('invdetails ' .. tostring(id))
         phelper:enabletriggroup('identify', true)
         Execute('identify ' .. tostring(id) .. ' worn')
       else
         putobjectininv(titem2)
         phelper:enabletriggroup('identify', true)
+        EnableTrigger("start_invdetails")
         SendNoEcho('invdetails ' .. tostring(id))
         Execute('identify ' .. tostring(id))
         putincontainer[tonumber(titem2.serial)] = titem2.containerid
