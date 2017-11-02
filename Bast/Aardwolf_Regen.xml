@@ -106,12 +106,11 @@ function wear_regen()
   if trywear then
     return
   end
-  --print('trywear', trywear)
-  --print('tryremove', tryremove)
   if not verify_bool(phelper.regenworn) or tryremove then
     --print('setting trywear = true')
     trywear = true
     if phelper.regensn then
+      SendNoEcho("get " .. phelper.regensn)
       SendNoEcho("wear " .. phelper.regensn .. " lfinger")
     else
       SendNoEcho("wear regen lfinger")
@@ -243,8 +242,12 @@ function OnPluginBroadcast (msg, id, name, text)
       oldregen  = verify_bool(phelper.inregen)
       phelper:set('inregen', check_room(current_room.id), {silent=true})
 
-      if not phelper.inregen and phelper.regenworn then
-        remove_regen()
+      if status.statestring == 'active' then
+        if phelper.inregen and not phelper.regenworn then
+          wear_regen()
+        elseif not phelper.inregen and phelper.regenworn then
+          remove_regen()
+        end
       end
 
     elseif text:find("char.status") then
@@ -258,7 +261,7 @@ function OnPluginBroadcast (msg, id, name, text)
     end
   elseif id == "aaabe45678afa22343c5a327" then
     if msg == 1 then
-      if phelper.inregen and not phelper.regenworn then
+      if phelper.inregen and not phelper.regenworn and status.statestring == 'active' then
         --print('wearing regen from idle')
         wear_regen()
       end
