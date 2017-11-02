@@ -1,5 +1,11 @@
 Bastmush Changes List
 
+r2099 snapshot
+  - eqDB.xml
+    - don't pre-enable eq tag triggers
+  - Aardwolf_regen
+    - change logic when removing or wearing ring
+
 r2098 snapshot
   - pluginhelper
     - change web address
