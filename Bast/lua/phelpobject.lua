@@ -691,6 +691,7 @@ function Phelpobject:enabletriggroup(group, flag)
     end
     print("")
   end
+  self:mdebug('enabletriggroup ' .. group .. " - " .. tostring(flag))
 end
 
 function Phelpobject:cmd_update(cmd, key, value)
