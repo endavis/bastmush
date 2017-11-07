@@ -385,6 +385,7 @@ enemy = ""
 charname = ""
 
 function gqnew()
+  phelper:mdebug('creating new gq')
   gq_info = {}
   gq_info['mobs'] = {}
   gq_info['trains'] = 0
@@ -404,14 +405,14 @@ function gqnew()
 end
 
 function gqdeclared (name, line, wildcards)
-  --print('gqdeclared')
+  phelper:mdebug('gqdeclared')
   gqsdeclared[verify_number(wildcards.gqnum)] = true
   checkgqavailable()
   raisegq(1)
 end
 
 function gqjoin (name, line, wildcards)
-  --print('gqjoin')
+  phelper:mdebug('gqjoin')
   gqnew()
   phelper:set('joined', wildcards.gqnum, {silent=true})
   mobsleft = {}
@@ -427,7 +428,7 @@ function gqjoin (name, line, wildcards)
 end
 
 function gqstarted (name, line, wildcards)
-  --print('gqstart')
+  phelper:mdebug('gqstarted')
 
   if not (gqsstarted[verify_number(wildcards.gqnum)]) then
     gqsstarted[verify_number(wildcards.gqnum)] = true
@@ -442,7 +443,7 @@ function gqstarted (name, line, wildcards)
 end
 
 function gqcancelled(name, line, wildcards)
-  --print('gqcancelled')
+  phelper:mdebug('gqcancelled')
   if verify_number(wildcards.gqnum) == phelper.joined then
     raisegq(6)
     if gq_info['qpmobs'] > 0 then
@@ -463,7 +464,7 @@ function gqcancelled(name, line, wildcards)
 end
 
 function gqitem(name, line, wildcards)
-  --print('gqitem')
+  phelper:mdebug('gqitem')
   name = wildcards.name
   location = wildcards.location
   num = trim(wildcards.num)
@@ -476,13 +477,13 @@ function gqitem(name, line, wildcards)
 end -- campaign_item
 
 function notstarted(name, line, wildcards)
-  --print('notstarted')
+  phelper:mdebug('notstarted')
   phelper:enabletriggroup("gqcheck", false)
   phelper:enabletriggroup("gqin", false)
 end
 
 function gqwins(name, line, wildcards)
-  --print('gqwins')
+  phelper:mdebug('gqwins')
   if not next(gq_info['mobs']) then
     gq_info['mobs'] = copytable.deep(mobsleft)
     SaveState()
@@ -492,7 +493,7 @@ function gqwins(name, line, wildcards)
 end
 
 function gqmobdead (name, line, wildcards)
-  --print('mobdead')
+  phelper:mdebug('gqmobdead')
   local tenemy = enemy
   local found = false
   if not phelper.maxkills then
@@ -518,19 +519,19 @@ function gqmobdead (name, line, wildcards)
 end
 
 function gqmaxkills(name, line, wildcards)
-  --print('gqmaxkills')
+  phelper:mdebug('gqmaxkills')
   phelper:set('maxkills', true, {silent=true})
 end
 
 function gqwon(name, line, wildcards)
-  --print('gqwon')
+  phelper:mdebug('gqwon')
   gq_info['won'] = 1
   gq_info['finishtime'] = GetInfo(304)
   phelper:enabletriggroup("gqrew", true)
 end
 
 function gqwonannounce(name, line, wildcards)
-  --print('gqwonannounce')
+  phelper:mdebug('gqwonannounce')
   if charname == wildcards.winner then
     raisegq(4, 'gq_info', gq_info)
     gqreset(phelper.joined)
@@ -538,7 +539,7 @@ function gqwonannounce(name, line, wildcards)
 end
 
 function gqreward (name, line, wildcards)
-  --print('gqreward')
+  phelper:mdebug('gqreward')
   local type = wildcards.type
   local amount = verify_number(wildcards.amount)
   gq_info[rewardtable[type]] = amount
@@ -546,13 +547,13 @@ function gqreward (name, line, wildcards)
 end
 
 function gqcheck( name, line, wildcards)
-  --print('gqcheck')
+  phelper:mdebug('gqcheck')
   mobsleft = {}
   phelper:enabletriggroup("gqcheck", true)
 end -- gq_check
 
 function gqquit(name, line, wildcards)
-  --print('gqquit')
+  phelper:mdebug('gqquit')
   if gq_info['qpmobs'] > 0 then
     gq_info['finishtime'] = GetInfo(304)
     raisegq(4, 'gq_info', gq_info)
@@ -562,7 +563,7 @@ function gqquit(name, line, wildcards)
 end
 
 function gqextfin(name, line, wildcards)
-  --print('gqextfin')
+  phelper:mdebug('gqextfin')
   if gq_info['qpmobs'] > 0 then
     gq_info['completed'] = 1
     gq_info['finishtime'] = GetInfo(304)
@@ -572,7 +573,7 @@ function gqextfin(name, line, wildcards)
 end
 
 function gqnote(name, line, wildcards)
-  --print('gqnote')
+  phelper:mdebug('gqnote')
   if verify_number(wildcards.gqnum) == phelper.joined then
     raisegq(6)
     if gq_info['qpmobs'] > 0 then
@@ -601,7 +602,7 @@ function raisegq(number, dataname, data)
 end
 
 function gqreset(gqnum)
-  --print('gqreset')
+  phelper:mdebug('gqreset')
 
   gqnum = verify_number(gqnum)
 
