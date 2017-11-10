@@ -1,5 +1,10 @@
 Bastmush Changes List
 
+r2100 snapshot
+  - eqDB.xml
+    - fix bug when getting multiple containers before the first
+        was finished
+
 r2099 snapshot
   - eqDB.xml
     - don't pre-enable eq tag triggers
