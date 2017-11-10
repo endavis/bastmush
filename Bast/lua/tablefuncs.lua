@@ -65,7 +65,7 @@ function tableSort(ttable, sortkey, default, reverse)
         end
       end
       if akey == nil or bkey == nil then
-        if akey == nil then          
+        if akey == nil then
           print('BUG: akey: ', sortkey, ' - is nil for item', a)
         elseif bkey == nil then
           print('BUG: bkey: ', sortkey, ' - is nil for item', b)
@@ -128,7 +128,7 @@ function tableCountItems(ttable)
   if count == 0 then
     for i,v in ipairs(ttable) do
       count = count + 1
-    end    
+    end
   end
   return count
 end
@@ -141,6 +141,15 @@ function tableCountKeys(ttable, key, value, tnot)
     elseif not tnot and v[key] == value then
       count = count + 1
     end
-  end  
+  end
   return count
+end
+
+function tableRandomItem(t) --Selects a random item from a table
+  local keys = {}
+  for key, value in pairs(t) do
+      keys[#keys+1] = key --Store keys in another table
+  end
+  index = keys[math.random(1, #keys)]
+  return index, t[index]
 end
