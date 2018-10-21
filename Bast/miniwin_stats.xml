@@ -902,7 +902,7 @@ function build_cp_window()
       stats['campaignsfld'] = a[2]
       stats['totallevels'] = a[3]
     end
-    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp), AVG(qp), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*), SUM(gold), AVG(gold) FROM campaigns where failed = 0") do
+    for a in db.db:rows("SELECT AVG(finishtime - starttime), SUM(qp+bonusqp), AVG(qp+bonusqp), SUM(tp), AVG(tp), SUM(trains), AVG(trains), SUM(pracs), AVG(pracs), COUNT(*), SUM(gold), AVG(gold) FROM campaigns where failed = 0") do
       stats['avetime'] = a[1]
       stats['qp'] = a[2]
       stats['qpcpave'] = a[3]
@@ -1078,8 +1078,11 @@ function build_cp_window()
         table.insert(lstyle, style)
 
         local style = {}
-        style.text = string.format("%2d ", v.qp or 0)
+        qp = v.qp + v.bonusqp
+        style.text = string.format("%2d ", qp or 0)
+        style.hint = string.format('QP: %s\nBonus: %s', v.qp, v.bonusqp)
         style.textcolour = "white"
+        style.mouseup = nofunc
         table.insert(lstyle, style)
 
         local style = {}
