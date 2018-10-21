@@ -183,6 +183,16 @@
     enabled="n"
     script="opendoor"
     group="huntdoor"
+    name="nokey2"
+    match="^You do not have a key .*\.$"
+    regexp="y"
+      >
+  </trigger>
+
+  <trigger
+    enabled="n"
+    script="opendoor"
+    group="huntdoor"
     name="dooropen"
     match="^You open .*\.$"
     regexp="y"
@@ -250,7 +260,7 @@ function huntreset()
 end
 
 function opendoor(name, line, wildcards)
-  if name == 'nokey' and opening then
+  if (name == 'nokey' or name == 'nokey2') and opening then
     opening = false
     ColourNote(RGBColourToName(phelper.plugin_colour), "black", "Could not open door")
     huntdone()
