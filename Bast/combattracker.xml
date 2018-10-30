@@ -56,11 +56,15 @@ require "pluginhelper"
 require "verify"
 require "copytable"
 require "ldplugin"
+require "aardutils"
+require "tprint"
 
 damagetable = {}
+totaldamage = {}
 
-function formatdamage(damaget)
-  local linelen = 72
+linelen = 72
+
+function killheader(damaget)
   local timestring = ''
   if damaget['finishtime'] and damaget['starttime'] then
     timestring = format_time(damaget['finishtime'] - damaget['starttime'], nil, var.infocolour)
@@ -78,12 +82,23 @@ function formatdamage(damaget)
   tstringn = centercolourline(tstring, linelen, '', '-', var.infocolour)
   TextToColourTell(tstringn)
   ColourNote("", "", "")
+end
+
+function damageheader()
   TextToColourTell(var.infocolour .. string.rep('-', linelen) .. '@w')
   ColourNote("", "", "")
 
+  tstringn = centercolourline('  Overall Damage  ', linelen, '', '-', var.infocolour)
+  TextToColourTell(tstringn)
+  ColourNote("", "", "")
+end
+
+function formatdamage(damage)
   local totald = 0
   local totalm = 0
   local totalh = 0
+  TextToColourTell(var.infocolour .. string.rep('-', linelen) .. '@w')
+  ColourNote("", "", "")
   local bstring = var.statcolour .. "%-20s " .. var.infocolour .. ": " .. var.statcolour .. "%6s   %9s    (%3.0f%%) %7s  %8.0f"
   hstring = var.infocolour .. "Dam Type             :    Hits      Damage   (  0%)   Misses    Average "
   TextToColourTell(var.infocolour .. hstring)
@@ -92,19 +107,23 @@ function formatdamage(damaget)
   ColourNote("", "", "")
 
 
-  for i,v in pairs(damaget['damage']) do
+  for i,v in pairs(damage) do
     if i ~= 'enemy' and i ~= 'starttime' and i ~= 'finishtime' then
       totald = totald + v['damage']
     end
   end
 
-  for i,v in pairs(damaget['damage']) do
+  for i,v in pairs(damage) do
     if i ~= 'enemy' and i ~= 'starttime' and i ~= 'finishtime' then
       totalm = totalm + v['misses']
       totalh = totalh + v['hits']
       local damt = i
-      if i == 'backstab' and v['incombat'] then
-        damt = i .. " (in)"
+      if i == 'backstab' then
+        if v['incombat'] then
+          damt = i .. " (incom)"
+        else
+          damt = i .. " (startcom)"
+        end
       end
       local avedamage = v['damage'] / v['hits']
       if v['hits'] == 0 then
@@ -125,6 +144,36 @@ function formatdamage(damaget)
   ColourNote("", "", "")
 end
 
+function cmd_damage(cmddict)
+	if #damagetable == 0 then
+		ColourNote("red", "black", "No combat stats")
+		return
+	else
+    damageheader()
+    formatdamage(totaldamage, false)
+  end
+end
+
+function addtotaldamage(damage)
+  for i,v in pairs(damage) do
+    if i ~= 'enemy' and i ~= 'starttime' and i ~= 'finishtime' then
+      if i == 'backstab' then
+        if v['incombat'] then
+          i = 'backstab (incom)'
+        else
+          i = 'backstab (startcom)'
+        end
+      end
+      if totaldamage[i] == nil then
+        totaldamage[i] = {["damage"] = 0, ["hits"] = 0, ["misses"] = 0}
+      end
+      totaldamage[i]['damage'] = totaldamage[i]['damage'] + v['damage']
+      totaldamage[i]['hits'] = totaldamage[i]['hits'] + v['hits']
+      totaldamage[i]['misses'] = totaldamage[i]['misses'] + v['misses']
+    end
+  end
+end
+
 function cmd_last(cmddict)
   if #damagetable > 0 then
     local index = #damagetable
@@ -132,7 +181,8 @@ function cmd_last(cmddict)
       index = index - tonumber(cmddict[1])
     end
     if index > 0 and index <= #damagetable then
-      formatdamage(damagetable[index])
+      killheader(damagetable[index])
+      formatdamage(damagetable[index]['damage'])
     else
       ColourNote("red", "black", "No combat stats")
     end
@@ -144,7 +194,10 @@ end
 function onmobdeath(stuff)
   local tstuff = assert (loadstring ('return ' .. stuff or ""))()
   table.insert(damagetable , tstuff)
-  cmd_last({})
+  addtotaldamage(tstuff['damage'])
+  if phelper.battledisplay then
+	  cmd_last({})
+  end
 end
 ]]>
 </script>
@@ -207,9 +260,10 @@ phelper:set_default('plugin_colour', 'orange')
 
 phelper:add_setting("statcolour", {help="the background colour for a cp mob", type="aardcolour", default="@W", sortlev=1, longname="color for stats"})
 phelper:add_setting("infocolour", {help="the text colour for a cp mob", type="aardcolour", default="@x178", sortlev=1, longname="color for info"})
+phelper:add_setting("battledisplay", {help="show stats after each fight", type="bool", default=verify_bool(true), sortlevel=1, longname="end of battle display"})
 
 phelper:add_cmd('last', {func=cmd_last, help="show stats for last combat", sortgroup="Get information about damage"})
-
+phelper:add_cmd('damage', {func=cmd_damage, help="show stats for each damage type", sortgroup="Get information about damage"})
 phelper:enable()
 
 ]]>
