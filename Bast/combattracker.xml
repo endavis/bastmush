@@ -88,7 +88,7 @@ function damageheader()
   TextToColourTell(var.infocolour .. string.rep('-', linelen) .. '@w')
   ColourNote("", "", "")
 
-  tstringn = centercolourline('  Overall Damage  ', linelen, '', '-', var.infocolour)
+  tstringn = centercolourline('  @wOverall Damage@x  ', linelen, '', '-', var.infocolour)
   TextToColourTell(tstringn)
   ColourNote("", "", "")
 end
