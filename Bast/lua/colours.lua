@@ -15,7 +15,7 @@ end
 function TextToColourTell (Text)
     local newstyles = ColoursToStyles(Text)
     for i,v in ipairs(newstyles) do
-      ColourTell(RGBColourToName(v.textcolour), v.backcolour and RGBColourToName(v.backcolour) or '', v.text)
+      ColourTell(RGBColourToName(v.textcolour), v.backcolour and RGBColourToName(v.backcolour) or "", v.text)
     end
 
 end  -- TextToColourTell
